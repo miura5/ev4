@@ -1211,3 +1211,57 @@ test('B-450: the page’s plan writes are core composers: his settings and Appro
   assert.equal(EV.planViews([draft], [{ id: 'E5', ...a.data }])[0].id, 'E5-2', 'the draft is the plan in force');
   assert.throws(() => EV.studyPlanApproveSet([], { ...draft, section: undefined }, { now: NOW }), /study plan draft/);
 });
+
+test('B-450: Make a plan plans toward its card’s exam; an exam marked done is never the section’s, even on its day', () => {
+  const ex = (id, date, status = 'upcoming') => ({ id, course: 'NUR 112', date, title: `Exam ${id}`, status });
+  const exams = [ex('E4', '2026-10-28', 'done'), ex('E5', '2026-11-17'), ex('E6', '2026-12-08')];
+  assert.equal(EV.studyPlanSection({ exams, course: 'NUR 112', date: '2026-10-28' }).exam.id, 'E5');
+  assert.equal(EV.studyPlanSection({ exams, course: 'NUR 112', date: '2026-10-28', examId: 'E4' }), null);
+  const job = EV.studyPlanJob({ course: 'NUR 112', exams, date: '2026-10-28', examId: 'E6' });
+  assert.match(job.brief, /\(E6\)/, 'the card’s exam is named in the brief the Worker reads');
+  assert.match(EV.studyPlanJob({ course: 'NUR 112', exams, date: '2026-10-28' }).brief, /\(E5\)/);
+});
+
+test('B-450: Ask for changes on a plan’s card edits that plan, whatever exam is next; with none named, the default', () => {
+  const at = NOW.toISOString();
+  const plan = (id, exam, section) => ({
+    id,
+    schema: 1,
+    writer: 'worker',
+    at,
+    source: 'x',
+    exam,
+    ...(section ? { section } : {}),
+    days: [],
+  });
+  const exams = [
+    { id: 'E5', course: 'NUR 112', date: '2026-11-17', title: 'Exam 5' },
+    { id: 'E6', course: 'NUR 112', date: '2026-12-08', title: 'Exam 6' },
+  ];
+  const plansRaw = [
+    plan('E5', 'E5', { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' }),
+    plan('E6', 'E6', { course: 'NUR 112', from: '2026-11-18', to: '2026-12-08' }),
+    plan('ATI-DOSE', 'ATI-DOSE'),
+  ];
+  const base = {
+    said: 'make the weekends lighter',
+    brief: 'make the weekends lighter',
+    exams,
+    plansRaw,
+    planedits: [],
+    date: '2026-10-28',
+  };
+  assert.equal(
+    EV.studyPlanChatAsk({ ...base, title: 'NUR 112 plan' }).edit.revise,
+    'E5',
+    'the default: the next exam’s'
+  );
+  assert.deepEqual(EV.studyPlanChatAsk({ ...base, revise: 'E6' }).edit, {
+    course: 'NUR 112',
+    revise: 'E6',
+    said: 'make the weekends lighter',
+  });
+  assert.equal(EV.studyPlanChatAsk({ ...base, revise: 'ATI-DOSE' }).edit.revise, 'ATI-DOSE', 'a plan for no exam');
+  const job = EV.studyPlanJob({ revise: 'ATI-DOSE', changes: base.brief });
+  assert.equal(job.revise, 'ATI-DOSE');
+});

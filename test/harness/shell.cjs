@@ -755,14 +755,25 @@ const statusShown = page =>
             return true;
           });
         if (await probe()) {
+          // each step finds the fold again inside the page (a repaint between steps may replace it)
           const read = async () => {
-            await page.locator('[data-fold-probe]').first().click();
-            await page.waitForTimeout(350);
             await probe();
-            return [
-              await page.$eval('[data-fold-probe]', e => e.getAttribute('aria-expanded')),
-              await dur('[data-fold-probe] .chev'),
-            ];
+            await page.$eval('[data-fold-probe]', e => e.click());
+            await page.waitForTimeout(350);
+            return page.evaluate(() => {
+              const e = [...document.querySelectorAll('[aria-expanded]')].find(
+                x => x.querySelector('.chev') && x.getClientRects().length && !x.closest('[hidden]')
+              );
+              const c = e.querySelector('.chev');
+              return [
+                e.getAttribute('aria-expanded'),
+                Math.max(
+                  ...getComputedStyle(c)
+                    .transitionDuration.split(',')
+                    .map(x => parseFloat(x) * 1000)
+                ),
+              ];
+            });
           };
           const r = Object.fromEntries([await read(), await read()]);
           brief = { open: r.true, closed: r.false };

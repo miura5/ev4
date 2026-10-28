@@ -1262,6 +1262,25 @@ const skeleton = b =>
 // (the next exam: its objectives fold to one line, its tasks carry badges, one has none) and E5's (a later exam, with
 // E.V.'s one question). Then the plan settings, Approve, a tick and the done count. Ends with E4's plan as it was.
 async function studyPlanChecks(page) {
+  const pickCourse = async c => {
+    await page.$eval(`#study-course button[aria-label="${c}"]`, b => b.click());
+    await page.waitForTimeout(250);
+  };
+  // a plan for no exam (the dosage plan, B-194) shows on a course tab with no exam ahead too (BIO 201 here)
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  await pickCourse('BIO 201');
+  const bio = await page.evaluate(() => ({
+    exam: !!document.querySelector('#ov-card .ov-ex') && /No exam/.test(document.getElementById('ov-card').textContent),
+    cards: [...document.querySelectorAll('#ov-plans:not([hidden]) .pl-card')].map(c => c.dataset.plan),
+  }));
+  ok(
+    'a plan for no exam shows on a course tab with no exam ahead (B-450)',
+    bio.cards.includes('ATI-DOSE'),
+    JSON.stringify(bio)
+  );
+  await pickCourse('NUR 112');
   const d = n => new Date(Date.parse(today + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
   const at = new Date(DAYTIME.getTime() - 3600e3).toISOString();
   const T = (id, text, tag, kind, minutes) => ({
@@ -1497,6 +1516,69 @@ async function studyPlanChecks(page) {
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${shots}/plan-draft-${w}.png`, fullPage: true });
   }
+  // Ask for changes on a later exam's card edits that plan (E5's draft), not the next exam's (B-450)
+  await page.locator('#ov-plans .pl-card.dr[data-plan="E5"] .plan-sum button', { hasText: 'Ask for changes' }).click();
+  await page.waitForTimeout(250);
+  const typed = await page.$eval('#ev-input', i => i.value);
+  await page.evaluate(() => {
+    window.__chatScript = [
+      { tool: 'start_job', input: { kind: 'exam-plan', title: 'Plan changes', brief: 'lighter weekends' } },
+    ];
+    window.__chatReply = 'Changing it.';
+  });
+  await send(page, typed + 'lighter weekends');
+  await page.waitForTimeout(600);
+  const edits = await page.evaluate(() =>
+    Object.values(window.__db.jobs || {})
+      .filter(j => j.kind === 'exam-plan' && j.brief === 'lighter weekends')
+      .map(j => j.revise)
+  );
+  ok(
+    'Ask for changes on a plan’s card sends the edit to that plan (E5’s draft, not the next exam’s)',
+    /Exam 5 plan/.test(typed) && edits.includes('E5'),
+    JSON.stringify([typed, edits])
+  );
+  await page.evaluate(() => {
+    window.__chatScript = null;
+    window.__chatReply = null;
+  });
+  // Make a plan plans toward its card's exam, and the card shows it making (B-450)
+  await page.evaluate(async () => {
+    const db = await window.claude.use('db');
+    const day = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+    await db.collection('exams').doc('B9H').set({
+      schema: 2,
+      writer: 'page',
+      at: new Date().toISOString(),
+      source: 'Told E.V.',
+      course: 'BIO 201',
+      kind: 'practical',
+      date: day,
+      title: 'Harness practical',
+      status: 'upcoming',
+    });
+  });
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  await pickCourse('BIO 201');
+  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
+  await page.waitForTimeout(400);
+  const made = await page.evaluate(() => ({
+    briefs: Object.values(window.__db.jobs || {})
+      .filter(j => j.kind === 'exam-plan' && j.course === 'BIO 201')
+      .map(j => j.brief),
+    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
+  }));
+  ok(
+    'Make a plan names its card’s exam in the job, and the card shows it making',
+    made.briefs.some(b => /\(B9H\)/.test(b)) && made.button === 'Making…',
+    JSON.stringify(made)
+  );
+  await page.evaluate(async () => {
+    const db = await window.claude.use('db');
+    await db.collection('exams').doc('B9H').update({ status: 'done' }); // out of the way of the checks after this one
+  });
+  await pickCourse('NUR 112');
   // Approve (from the panel at 1280): the draft is the plan in force, Today opens, a tick moves the done count by one
   await page.setViewportSize({ width: 1280, height: 860 });
   await page.waitForTimeout(250);

@@ -152,7 +152,9 @@ export function makeStudyPlans(core) {
   function studyPlanSection({ exams, course, date, examId = null }) {
     const mine = (exams || []).filter(e => e && DAY.test(String(e.date || '')) && sameCourse(e.course, course));
     mine.sort(byDate);
-    const exam = examId ? mine.find(e => e.id === examId && e.date >= date) : mine.find(e => e.date >= date);
+    // B-450: an exam marked done is behind him, even on its own day: never the section's exam (still its last one)
+    const ahead = mine.filter(e => e.date >= date && e.status !== 'done');
+    const exam = examId ? ahead.find(e => e.id === examId) : ahead[0];
     if (!exam) return null;
     const last = mine.filter(e => e.date < exam.date).pop() || null;
     const after = last ? addDays(last.date, 1) : date;
@@ -376,8 +378,18 @@ export function makeStudyPlans(core) {
    * newplan card whose brief is his line, never the model's) when he typed a line and has no plan yet or his line
    * plainly asks for a whole new one; null when there is no line of his (a retry, a read-along), whatever the brief.
    */
-  function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date }) {
+  function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date, revise = null }) {
     const his = chipBrief(said);
+    // B-450: Ask for changes on a plan's card names that plan: the edit is of it, whatever exam is next
+    const shown = revise ? (plansRaw || []).find(p => p.id === revise) : null;
+    if (shown) {
+      const c = (shown.section && shown.section.course) || studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);
+      return {
+        course: c,
+        edit: { ...(c ? { course: c } : {}), revise: shown.id, ...(his ? { said: his } : {}) },
+        offer: c && his && studyPlanLooksNew(his) ? { type: 'newplan', course: c, brief: his } : null,
+      };
+    }
     const course = studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);
     const sec = course && studyPlanSection({ exams, course, date });
     const cur =
@@ -675,14 +687,15 @@ export function makeStudyPlans(core) {
    * The jobs/<id> fields that ask for a plan: make for a course (remake is the same ask), or edit a draft with his
    * request (D-356). The page adds the envelope and fires it as any job.
    */
-  function studyPlanJob({ course, changes, revise, exams, date } = {}) {
+  function studyPlanJob({ course, changes, revise, exams, date, examId = null } = {}) {
     if (revise) {
       const words = String(changes || '').trim();
       if (!words) throw new Error('say what to change');
       return { kind: 'exam-plan', title: 'Plan changes', brief: words.slice(0, 1500), revise: String(revise) };
     }
     if (!course) throw new Error('name the course to plan');
-    const s = studyPlanSection({ exams, course, date });
+    // B-450: the card's exam when the page names it (its id in the brief is what the Worker plans toward)
+    const s = studyPlanSection({ exams, course, date, examId }) || studyPlanSection({ exams, course, date });
     return {
       kind: 'exam-plan',
       title: `Study plan: ${course}`,

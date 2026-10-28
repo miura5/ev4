@@ -52,13 +52,18 @@
       return { plan, draft };
     }
     /** The newest exam-plan job for an exam (a change names one of its plans; a new plan names its course). */
+    const namesExam = (j, id) =>
+      new RegExp('\\(' + String(id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\)').test(String(j.brief || ''));
     function planJobFor(ex, course) {
       const mine = j =>
         j.kind === 'exam-plan' &&
         (j.revise
           ? (S.plansRaw.find(p => p.id === j.revise) || {}).exam === ex.id
           : E.studyPlanCourse(j, S.exams) === course &&
-            (E.studyPlanSection({ exams: S.exams, course, date: today }) || { exam: {} }).exam.id === ex.id);
+            // B-450: the exam its brief names (Make a plan names its card's), else the course's next
+            (namesExam(j, ex.id) ||
+              (!S.exams.some(e => namesExam(j, e.id)) &&
+                (E.studyPlanSection({ exams: S.exams, course, date: today }) || { exam: {} }).exam.id === ex.id)));
       return (
         S.jobs.filter(mine).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))[0] ||
         null
@@ -92,9 +97,9 @@
     }
 
     // ---------------------------------------------------------------- asks: make, change, approve, answer
-    async function makePlan(b, course) {
+    async function makePlan(b, course, ex) {
       return guard(b, async () => {
-        const r = await startJob(E.studyPlanJob({ course, exams: S.exams, date: today }));
+        const r = await startJob(E.studyPlanJob({ course, exams: S.exams, date: today, examId: ex && ex.id }));
         if (!r.fired.ok) toast('Couldn’t start it: ' + fireCopy(r.fired.error));
         render();
       });
@@ -102,13 +107,14 @@
     /** D-362: a new plan starts only from his tap: Remake, beside Ask for changes, is the same ask as Make a plan (a new
      *  plan from today that keeps what is done). Held while a plan ask for the exam runs. */
     function remakeBtn(ex, course) {
-      const b = btn('Remake', ev => makePlan(ev.currentTarget, course), { cls: 'btn ghost' });
+      const b = btn('Remake', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn ghost' });
       b.title = 'A new plan from today; what you ticked stays done';
       b.disabled = !!planJobState(ex, course, null).working;
       return b;
     }
-    function askForChanges(ex) {
-      // through the chat: his words go to the Haiku edit (D-356, D-362); a new plan is Remake's
+    function askForChanges(ex, p) {
+      // through the chat: his words go to the Haiku edit (D-356, D-362) of this card's plan; a new plan is Remake's
+      T.planInView = p ? { id: p.id, at: Date.now() } : null;
       showTab('ev');
       const i = $('ev-input');
       i.value = `Change my ${exShortOf(ex)} plan: `;
@@ -120,7 +126,7 @@
     }
     // E.V.'s one question: kept as one element per job, so his answer and the focus outlast a repaint
     const askEls = new Map();
-    function askBlock(j, course) {
+    function askBlock(j, course, ex) {
       if (askEls.has(j.id)) return askEls.get(j.id);
       const box = el('div', 'pm-ask');
       box.append(svgEl(PL_SPARK));
@@ -137,7 +143,7 @@
           const tail = ` His answer to “${j.result.text}”: ${a}`;
           const job = j.revise
             ? E.studyPlanJob({ revise: j.revise, changes: String(j.brief || '') + tail })
-            : { ...E.studyPlanJob({ course, exams: S.exams, date: today }) };
+            : { ...E.studyPlanJob({ course, exams: S.exams, date: today, examId: ex && ex.id }) };
           if (!j.revise) job.brief = String(job.brief || '') + tail;
           return guard(ev.currentTarget, async () => {
             const r = await startJob(job);
@@ -449,7 +455,7 @@
       ap.prepend(svgEl('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'));
       ap.disabled = !!ask;
       act.append(
-        btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }),
+        btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }),
         ap,
         remakeBtn(ex, course)
       );
@@ -499,7 +505,7 @@
         d.append(r);
       }
       const act = el('div', 'pm-act');
-      act.append(btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }));
+      act.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
       if (p.section) act.append(remakeBtn(ex, course));
       d.append(act);
       return d;
@@ -543,12 +549,12 @@
       if (bf) card.append(bf.seg);
       card.append(planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone }));
       const foot = el('div', 'pl-foot');
-      foot.append(btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }));
+      foot.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
       if (p.section) foot.append(remakeBtn(ex, course));
       card.append(foot);
       return { card, panel: () => planSummary(p, ex, course, c) };
     }
-    function draftCard(p, ex, course, js) {
+    function draftCard(p, ex, course, js, panelled) {
       const ts = taskList(p);
       const card = el('div', 'ui-card pl-card dr');
       card.dataset.plan = p.id;
@@ -560,9 +566,10 @@
           el('span', 'meta', `${plural(planDays(p).length, 'day')} · ${plural(ts.length, 'task')}`),
         ])
       );
-      if (js.ask) card.append(askBlock(js.ask, course));
+      if (js.ask) card.append(askBlock(js.ask, course, ex));
       if (js.working) card.append(el('p', 'mini pl-working', 'E.V. is changing this plan. The new draft shows here.'));
-      if (!PANEL.matches) card.append(draftSummary(p, ex, course, { ask: js.ask, inCard: true }));
+      // the panel holds one draft's summary; any other draft (a later exam's) carries its own
+      if (!PANEL.matches || !panelled) card.append(draftSummary(p, ex, course, { ask: js.ask, inCard: true }));
       const bf = badgeFilter(p, ts);
       if (bf) card.append(bf.seg);
       const rows = planRowsFor(p, ex, { draft: true, f: bf ? bf.f : 'all', isDone: () => false });
@@ -608,13 +615,13 @@
         )
       );
       card.append(g);
-      const mk = btn(js.working ? 'Making…' : 'Make a plan', ev => makePlan(ev.currentTarget, course), {
+      const mk = btn(js.working ? 'Making…' : 'Make a plan', ev => makePlan(ev.currentTarget, course, ex), {
         cls: 'btn neutral',
       });
       mk.disabled = !!js.working;
       card.append(mk);
       const out = [card];
-      if (js.ask) out.unshift(askBlock(js.ask, course));
+      if (js.ask) out.unshift(askBlock(js.ask, course, ex));
       return out;
     }
     function noPlanPanel(ex, fullName) {
@@ -663,6 +670,20 @@
      * plan; then each later exam of the course that has a plan, its card and its plan. Returns the panel (from 1200 px)
      * the plans want, or null.
      */
+    /** Plans in force for no exam in the record (a dosage plan, B-194) that still have days ahead. */
+    const ownPlans = () =>
+      S.plans.filter(
+        p => !p.section && !S.exams.some(e => e.id === (p.exam || p.id)) && planDays(p).some(d => d.date >= today)
+      );
+    const ownPlanCards = course =>
+      ownPlans().map(
+        p =>
+          approvedCard(
+            p,
+            { id: p.exam || p.id, title: p.title || 'Plan', date: planDays(p).slice(-1)[0].date, own: true },
+            course
+          ).card
+      );
     function renderStudyPlans(cur, fullName, hasObjectives) {
       let box = $('ov-plans');
       if (!box) {
@@ -670,9 +691,12 @@
         box.id = 'ov-plans';
         $('ov-card').after(box);
       }
+      // a plan in force for no exam in the record (a dosage plan, B-194) shows on every course tab while it has days,
+      // an exam ahead or not
+      const own = ownPlanCards(cur ? cur.course : '');
       if (!cur || !cur.exam) {
-        box.replaceChildren();
-        box.hidden = true;
+        box.replaceChildren(...own);
+        box.hidden = !own.length;
         return null;
       }
       box.hidden = false;
@@ -695,21 +719,12 @@
           if (!panel) panel = a.panel;
         }
         if (draft) {
-          const dr = draftCard(draft, ex, cur.course, js);
+          const dr = draftCard(draft, ex, cur.course, js, !draftPanel);
           kids.push(dr.card);
           if (!draftPanel) draftPanel = dr.panel;
         }
       };
       one(cur.exam, true);
-      // a plan in force for no exam in the record (a dosage plan, B-194) shows on every course tab while it has days
-      for (const p of S.plans.filter(
-        p => !p.section && !S.exams.some(e => e.id === (p.exam || p.id)) && planDays(p).some(d => d.date >= today)
-      )) {
-        const last = planDays(p).slice(-1)[0].date;
-        kids.push(
-          approvedCard(p, { id: p.exam || p.id, title: p.title || 'Plan', date: last, own: true }, cur.course).card
-        );
-      }
       for (const ex of S.exams
         .filter(
           e =>
@@ -721,7 +736,7 @@
         )
         .sort((a, b) => a.date.localeCompare(b.date)))
         one(ex, false);
-      box.replaceChildren(...kids);
+      box.replaceChildren(...kids, ...own);
       const want = draftPanel || panel;
       return PANEL.matches && want ? want() : null;
     }

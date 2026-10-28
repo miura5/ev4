@@ -355,7 +355,10 @@
                 plansRaw: S.plansRaw,
                 planedits: S.planedits,
                 date: today,
+                // B-450: Ask for changes on a plan's card names that plan (for half an hour)
+                revise: T.planInView && Date.now() - T.planInView.at < 30 * 60000 ? T.planInView.id : null,
               });
+              T.planInView = null;
               if (go.offer) addCard(go.offer);
               if (!go.edit)
                 return go.offer

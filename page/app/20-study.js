@@ -363,7 +363,7 @@
             el('p', 'empty ov-none', 'Its next exam, its objectives and its plan show here once they’re in the record.')
           );
         } else card.replaceChildren(d);
-        renderStudyPlans(null);
+        renderStudyPlans(cur || null); // B-450: plans for no exam still show
         renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(cur || null);
         return;
