@@ -8156,5 +8156,47 @@
    "outcome": "task",
    "at": "2026-10-28T01:23:09.693Z"
   }
+ },
+ {
+  "id": "B-443",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Keep weak spots from past exams and past units as a separate history pool that never counts toward the upcoming exam's weak spots or crowds its practice, but can be reviewed in downtime, with the current unit always first.",
+  "dod": "Weak spots split by a derived current/past rule (no data change): the badge, practice sets and morning reviews count current only; a collapsed 'From past units' section in Study > Weak spots with each row's exam, Drill, and a 'Review old material' set; answers credit history; core unit tests per branch; harness check at 390 and 1280; npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Keep weak spots from past exams and past units as a separate history pool that never counts toward the upcoming exam's weak spots or crowds its practice, but can be reviewed in downtime, with the current unit always first.",
+  "reportedAt": "2026-10-28T01:24:41.056Z",
+  "board": {
+   "row": "v4 B-443: Keep weak spots from past exams and past units as a separate history…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T01:24:42.128Z"
+  }
+ },
+ {
+  "id": "B-444",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Let him mark text in a note as need to know (terminology, rationales, figures, formulas) so quizzes and practice sets include it; E.V. may suggest such points from the note and probe them sparingly, proposing a weak spot when he misses one, without a flood of distractions; nursing courses framed NCLEX, others exam-style.",
+  "dod": "Plan from the design (k run mark as the single truth; suggestions only on demand or at session end, accepted per quote; practice weights key points about 2 of 5 with course framing; probes only on marked points at most one per 15 minutes; misses proposed as weak spots); split into 4 build tasks before building; each with tests; npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Let him mark text in a note as need to know (terminology, rationales, figures, formulas) so quizzes and practice sets include it; E.V. may suggest such points from the note and probe them sparingly, proposing a weak spot when he misses one, without a flood of distractions; nursing courses framed NCLEX, others exam-style.",
+  "reportedAt": "2026-10-28T01:24:43.458Z",
+  "board": {
+   "row": "v4 B-444: Let him mark text in a note as need to know (terminology, rationales,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T01:24:44.517Z"
+  }
  }
 ]
