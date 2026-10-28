@@ -8695,5 +8695,22 @@
    "outcome": "task",
    "at": "2026-10-28T21:12:36.618Z"
   }
+ },
+ {
+  "id": "B-468",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): brief's health read (D-180) still points at the record's ArtifactData copy of health/current, which froze at the Oct 27 move to the Worker and D1, so brief calls live health stale (44 h) while the Worker's health/current is 2 h old and clean; brief should print the Worker pull (api pull health) as the read.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, Oct 28 evening",
+  "words": "brief's health read (D-180) still points at the record's ArtifactData copy of health/current, which froze at the Oct 27 move to the Worker and D1, so brief calls live health stale (44 h) while the Worker's health/current is 2 h old and clean; brief should print the Worker pull (api pull health) as the read.",
+  "reportedAt": "2026-10-28T21:21:36.410Z",
+  "board": {
+   "row": "v4 B-468: brief's health read (D-180) still points at the record's ArtifactData…"
+  }
  }
 ]

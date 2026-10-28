@@ -540,3 +540,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-468 | bug | 2026-10-28T21:21:36.410Z | brief's health read (D-180) still points at the record's ArtifactData copy of health/current, which froze at the Oct 27 move to the Worker and D1, so brief calls live health stale (44 h) while the Worker's health/current is 2 h old and clean; brief should print the Worker pull (api pull health) as the read. | build manager, Oct 28 evening | inbox |  |
