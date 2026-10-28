@@ -5,8 +5,8 @@
 //   npm run check [-- --record <dir>] [--shots <dir>] [--touched [--since <sha>]]
 // --touched (B-219, Matt Oct 22): npm test, the build, and only the harnesses whose paths the change since the last
 // staging deploy touched (harnessesFor below; a path it does not know runs them all), the look pass at the four first
-// sizes. The full check stays the nightly (nightly.yml) and the gate before live: a full GREEN writes
-// dist/check-full.json for the build's commit, and ship live refuses a commit without it or a green nightly (R-06).
+// sizes. The full check runs nightly (nightly.yml); a red nightly is filed as a bug and never gates a live release
+// (D-366 ended R-06, B-466). A full GREEN here still writes dist/check-full.json for the build's commit, as a record.
 // --record: a folder of <collection>/<id>.json for the harnesses (default: the synthetic record, built fresh by
 // test/data/synthetic.cjs; a real export stays outside the repository). --shots: where screenshots go (default
 // /tmp/ev4-check).
@@ -195,7 +195,8 @@ export function main(argv = process.argv.slice(2)) {
     );
     return 1;
   }
-  // B-219 (R-06): a full GREEN on a clean tree is the record ship live reads for this build's commit.
+  // B-219: a full GREEN on a clean tree is recorded for this build's commit. Nothing gates on it since D-366 ended
+  // R-06 (B-466); it is kept as the record of the last full check here.
   if (!touched && !process.env.LOOK_SIZES) {
     const m = JSON.parse(fs.readFileSync(path.join(ROOT, 'dist', 'manifest.json'), 'utf8'));
     if (!m.dirty)

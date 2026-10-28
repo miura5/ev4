@@ -3,10 +3,10 @@
 // .github/workflows/pwa-live.yml, in the GitHub environment "live", whose required reviewer is Matt; a build session
 // dispatches it only under dist/live-ok for that commit (tools/hooks.mjs live-guard). Nothing here deploys, writes the
 // live record or prints a token.
-//   node tools/pwa-live.mjs gate <commit>          in the workflow's gate job (GH_TOKEN set): refuses unless the commit
-//                                                   is on main, its spec turns the live app on, origin/main's Chart
-//                                                   records a GREEN staging ship at it (R-02) and a nightly full check
-//                                                   passed at it (R-06), as ship live refuses
+//   node tools/pwa-live.mjs gate <commit>          in the workflow's gate job (no secrets): refuses unless the commit
+//                                                   is on main, its spec turns the live app on and origin/main's Chart
+//                                                   records a GREEN staging ship at it (R-02), as ship live refuses
+//                                                   (D-366 ended R-06: no full check or nightly gates live)
 //   node tools/pwa-live.mjs check <worker url>     in the deploy job, EV_TOKEN set: 401 without the token and with a
 //                                                   wrong one, 200 with it; prints the collections and counts only
 //   node tools/pwa-live.mjs cutover [--apply]      the cutover commit's spec change (docs/cutover.md), printed; with
@@ -22,10 +22,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { buildCommitOf } from './build.mjs'; // one build-commit rule for the gate, ship live and the copy
+import { buildCommitOf } from './build.mjs'; // one build-commit rule for the gate and the copy
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const REPO = 'miura5/ev4';
 
 const readSpec = (root = ROOT) => JSON.parse(fs.readFileSync(path.join(root, 'spec', 'ev.spec.json'), 'utf8'));
 const git = (root, a) =>
@@ -42,18 +41,9 @@ export function stagingGreen(deploys, commit) {
   );
 }
 
-/** R-06 (D-226): a green nightly full check whose head is this commit or builds it (its build commit, so a later
- * bookkeeping commit on main is the same build). runs: [{headSha, conclusion}]. ship live's R-06 (tools/chart.mjs
- * fullCheckRefusal) calls this too, so the workflow's gate and ship live take the same runs. */
-export const NIGHTLY_RUNS = 50;
-export function nightlyGreen(runs, commit, buildCommit) {
-  return (runs || []).some(
-    r => r.conclusion === 'success' && r.headSha && (r.headSha === commit || buildCommit(r.headSha) === commit)
-  );
-}
-
-/** Every reason the workflow refuses this commit; empty when it may deploy. */
-export function gateRefusals({ commit, onMain, spec, deploys, runs, buildCommit }) {
+/** Every reason the workflow refuses this commit; empty when it may deploy. B-466 (D-366): no nightly or full check
+ * is read here any more; R-06 is ended in chart/rules.json, so a commit with no green nightly passes on R-02 alone. */
+export function gateRefusals({ commit, onMain, spec, deploys, buildCommit }) {
   const out = [];
   if (!/^[0-9a-f]{40}$/.test(commit || '')) return ['the commit input is not a full 40-character sha'];
   if (!onMain) out.push(`${commit.slice(0, 7)} is not on origin/main`);
@@ -69,10 +59,6 @@ export function gateRefusals({ commit, onMain, spec, deploys, runs, buildCommit 
   if (!stagingGreen(deploys, commit))
     out.push(
       `R-02 (D-049): no GREEN staging ship of ${commit.slice(0, 7)} in the Chart on origin/main: ship staging at it first`
-    );
-  if (!nightlyGreen(runs, commit, buildCommit))
-    out.push(
-      `R-06 (D-226): no green nightly full check at ${commit.slice(0, 7)}: gh workflow run nightly.yml --ref main while main's head builds it, wait for it green, then dispatch again (docs/cutover.md step 2)`
     );
   return out;
 }
@@ -93,24 +79,6 @@ function gate(commit, root = ROOT) {
     /* no spec at that commit */
   }
   const deploys = JSON.parse(git(root, ['show', 'origin/main:chart/deploys.json']));
-  const runs = JSON.parse(
-    execFileSync(
-      'gh',
-      [
-        'run',
-        'list',
-        '--repo',
-        process.env.GITHUB_REPOSITORY || REPO,
-        '--workflow',
-        'nightly.yml',
-        '--limit',
-        String(NIGHTLY_RUNS),
-        '--json',
-        'headSha,conclusion,databaseId',
-      ],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 60000 }
-    )
-  );
   const memo = new Map();
   const buildCommit = rev => {
     if (!memo.has(rev))
@@ -121,7 +89,7 @@ function gate(commit, root = ROOT) {
       }
     return memo.get(rev);
   };
-  return gateRefusals({ commit, onMain, spec, deploys, runs, buildCommit });
+  return gateRefusals({ commit, onMain, spec, deploys, buildCommit });
 }
 
 /** The live Worker's checks, as [{ok, what}]: 401 without the token and with a wrong one; 200 with it on the run

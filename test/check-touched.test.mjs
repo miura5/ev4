@@ -1,13 +1,12 @@
-// B-219 (D-226, Matt Oct 22): npm run check -- --touched runs only the harnesses a change touched; the full check stays
-// the nightly and the gate before live (R-06).
+// B-219 (D-226, Matt Oct 22): npm run check -- --touched runs only the harnesses a change touched; the full check runs
+// nightly. B-466 (D-366): a red nightly is a filed bug and never gates a live release; R-06 is ended.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { flatSource } from './helpers.mjs';
+import { chartCopy, flatSource } from './helpers.mjs';
 import { HARNESSES, harnessesFor, steps } from '../tools/check.mjs';
-import { fullCheckRefusal } from '../tools/chart.mjs';
+import * as chart from '../tools/chart.mjs';
 
 test('B-219: each harness is chosen by a path it covers (planted), and only it', () => {
   const planted = {
@@ -71,20 +70,25 @@ test('B-219: --touched keeps npm test and the build and drops the harnesses not 
   assert.equal(steps({ record: 'synthetic', shots: '/tmp/x' }).length, 12, 'the full check runs every step');
   const src = flatSource('tools/check.mjs');
   assert.match(src, /LOOK_SIZES = FIRST\.join/, 'the touched look pass shoots the four first sizes');
-  assert.match(src, /check-full\.json/, 'a full GREEN is recorded for ship live');
+  assert.match(src, /check-full\.json/, 'a full GREEN is still recorded, as the record of the last full check here');
 });
 
-test('B-219: ship live refuses a commit no full check passed (R-06), and takes a full GREEN here or a green nightly', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ev-r06-'));
-  fs.mkdirSync(path.join(root, 'dist'));
-  const sha = 'a'.repeat(40);
-  assert.match(fullCheckRefusal(root, sha, []), /^R-06 \(D-226\)/);
-  assert.equal(fullCheckRefusal(root, sha, [{ headSha: sha, conclusion: 'success' }]), null, 'a green nightly at it');
-  assert.match(fullCheckRefusal(root, sha, [{ headSha: sha, conclusion: 'failure' }]), /R-06/, 'a red nightly is none');
-  fs.writeFileSync(path.join(root, 'dist', 'check-full.json'), JSON.stringify({ commit: 'b'.repeat(40) }));
-  assert.match(fullCheckRefusal(root, sha, []), /last full check here was at bbbbbbb/);
-  fs.writeFileSync(path.join(root, 'dist', 'check-full.json'), JSON.stringify({ commit: sha }));
-  assert.equal(fullCheckRefusal(root, sha, []), null, 'a full GREEN here at the commit');
-  assert.match(flatSource('tools/chart.mjs'), /r\.check === 'fullCheck' && !r\.ended/, 'ship live enforces R-06');
+test('B-466 (D-366): the full check gates nothing: R-06 is ended in the Chart, and ship live has no fullCheck step', () => {
+  const rules = chart.loadChart(chartCopy()).rules; // a copy of the record (B-153), never the real one
+  const r06 = rules.find(r => r.id === 'R-06');
+  assert.ok(r06, 'R-06 is kept in chart/rules.json (nothing deleted)');
+  assert.equal(r06.check, 'fullCheck');
+  assert.match(r06.ended || '', /^D-366/, 'ended, citing D-366');
+  assert.equal(
+    rules.some(r => r.check === 'fullCheck' && !r.ended),
+    false,
+    'no live-enforced fullCheck rule'
+  );
+  // ship live's rules step: R-04 stays, R-06 is gone, and nothing reads a nightly or dist/check-full.json for it.
+  const ship = flatSource('tools/chart.mjs');
+  assert.match(ship, /R-04 \(D-083\): a live deploy needs Matt's explicit OK/, 'R-04 is still enforced');
+  assert.doesNotMatch(ship, /fullCheckRefusal|r\.check === 'fullCheck'|nightlyGreen|NIGHTLY_RUNS|check-full\.json/);
+  assert.equal(chart.fullCheckRefusal, undefined, 'the R-06 refusal is retired, not kept dead');
   assert.match(flatSource('CLAUDE.md'), /--touched/, 'CLAUDE.md step 5 says when to run which');
+  assert.match(flatSource('CLAUDE.md'), /R-06 is ended by D-366/, 'CLAUDE.md step 5 says R-06 is ended');
 });

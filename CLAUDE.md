@@ -152,15 +152,14 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    each tab, a check-off, a review answer and a Your-turn reply at 390 and 1280, in about 10 seconds; the smoke
    workflow runs it on every push but bookkeeping and docs), and `npm run check -- --touched` once before ship staging (B-219, D-226: npm test,
    the build, only the harnesses the change since the last staging deploy touched, the look pass at 390x844, 735x830,
-   1706x1240 and 2560x1240), and look at the screenshots it lists. The full `npm run check` runs nightly and before live:
-   `ship live` refuses a commit with no full GREEN here (dist/check-full.json) or green nightly at it (R-06).
+   1706x1240 and 2560x1240), and look at the screenshots it lists. The full `npm run check` runs nightly only; a red
+   nightly is filed as a bug and never gates a live release (R-06 is ended by D-366, B-466).
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
    Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
-   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-06 a full check green at the
-   commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
-   reaches live only through staging.
+   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-01, R-05 and R-06 are ended, D-145,
+   D-262 and D-366, and kept in `chart/rules.json` marked ended), so a build reaches live only through staging.
 7. (Superseded by D-366 for ordinary work: no per-task review; one whole-release code review for data, cost, security and crashes.) Before step 6's `ship staging` (and so before a task is marked done), once the proofs of step 5 are green, a change to data
    writes, pipelines, chart tooling or deploy gets the review skill (`.claude/skills/review`) in a fresh subagent that
    has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, goes in the task's done

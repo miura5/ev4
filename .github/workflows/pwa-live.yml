@@ -1,8 +1,8 @@
 # B-320 (D-330, D-331): the live app. The ev-live Worker over the ev-live D1, on Matt's Cloudflare account, deployed at
 # one commit and read back. Started by hand only (workflow_dispatch), from main, and only after two gates:
 #   - the gate job (no secrets) refuses unless the commit is on main, its spec turns the live app on
-#     (spec.registry.records.live.app.ready), origin/main's Chart records a GREEN staging ship at it (R-02) and a nightly
-#     full check passed at it (R-06), as ship live refuses (tools/pwa-live.mjs gate);
+#     (spec.registry.records.live.app.ready) and origin/main's Chart records a GREEN staging ship at it (R-02), as ship
+#     live refuses (tools/pwa-live.mjs gate); no full check or nightly gates it (D-366 ended R-06, B-466);
 #   - the live job runs in the GitHub environment "live", whose required reviewer is Matt: it waits for his approval
 #     in GitHub before any step, and only it sees the environment's secrets.
 # A build session dispatches this only under dist/live-ok for that commit, which deploy live --matt-ok or ship live
@@ -47,9 +47,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: the commit is on main, turns the live app on, and passed staging and the full check (R-02, R-06)
+      - name: the commit is on main, turns the live app on, and passed staging (R-02)
         env:
-          GH_TOKEN: ${{ github.token }}
           COMMIT: ${{ inputs.commit }}
         run: node tools/pwa-live.mjs gate "$COMMIT"
 

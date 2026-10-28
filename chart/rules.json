@@ -48,6 +48,7 @@
   "decision": "D-226",
   "task": "B-219",
   "command": "ship live",
-  "check": "fullCheck"
+  "check": "fullCheck",
+  "ended": "D-366: the full check runs nightly only; a red nightly is a filed bug and never gates a live release (Oct 28)"
  }
 ]

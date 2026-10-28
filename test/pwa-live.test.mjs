@@ -5,17 +5,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, preCutoverSpec } from './helpers.mjs';
-import {
-  stagingGreen,
-  nightlyGreen,
-  gateRefusals,
-  check,
-  cutoverSpec,
-  workerDoc,
-  liveApp,
-} from '../tools/pwa-live.mjs';
+import { stagingGreen, gateRefusals, check, cutoverSpec, workerDoc, liveApp } from '../tools/pwa-live.mjs';
 import { buildPages, loadSchemas, appSource, buildCommitOf } from '../tools/build.mjs';
-import { fullCheckRefusal } from '../tools/chart.mjs';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { appsOf, appCalls } from '../tools/pwa-app.mjs';
@@ -129,36 +120,38 @@ test('B-320: the live D1 is found or created with the schema only: never seeded,
   );
 });
 
-test('B-320 (R-02, R-06): the gate refuses what ship live refuses, and passes a commit with both', () => {
+test('B-320 (R-02), B-466 (D-366): the gate refuses what ship live refuses, and passes a commit with staging GREEN and no nightly at all', () => {
   const short = C.slice(0, 7);
   const deploys = [{ target: 'staging', commit: short, verify: 'green' }];
-  const runs = [{ headSha: 'b'.repeat(40), conclusion: 'success' }];
-  const build = rev => (rev === 'b'.repeat(40) ? C : rev); // a later bookkeeping head builds the same commit
-  const base = { commit: C, onMain: true, spec: on(), deploys, runs, buildCommit: build };
+  const build = rev => rev;
+  // no runs: R-06 is ended, so the gate reads no nightly and a commit with none (or a red one) passes on R-02
+  const base = { commit: C, onMain: true, spec: on(), deploys, buildCommit: build };
   assert.deepEqual(gateRefusals(base), []);
+  assert.deepEqual(gateRefusals({ ...base, runs: [] }), [], 'a runs list, if one is passed, is not read');
   const why = o => gateRefusals({ ...base, ...o }).join(' | ');
   assert.match(why({ onMain: false }), /not on origin\/main/);
   assert.match(why({ spec: off() }), /does not turn the live app on/, 'the spec at that commit has ready false');
   assert.match(why({ deploys: [] }), /R-02/);
   assert.match(why({ deploys: [{ ...deploys[0], verify: 'red' }] }), /R-02/);
   assert.match(why({ deploys: [{ target: 'live', commit: short, verify: 'green' }] }), /R-02/);
-  assert.match(why({ runs: [] }), /R-06/);
-  assert.match(why({ runs: [{ ...runs[0], conclusion: 'failure' }] }), /R-06/);
   assert.match(why({ buildCommit: () => 'c'.repeat(40) }), /bookkeeping commit/);
+  assert.doesNotMatch(why({ deploys: [], onMain: false }), /R-06|nightly/, 'no R-06 refusal, whatever else fails');
   assert.deepEqual(gateRefusals({ ...base, commit: short }), ['the commit input is not a full 40-character sha']);
   assert.equal(
     stagingGreen([{ target: 'staging', commit: 'abc', verify: 'green' }], 'abc' + C.slice(3)),
     false,
     'a short sha names nothing'
   );
-  assert.equal(
-    nightlyGreen(runs, C, () => null),
-    false
-  );
+  // the gate's own source reads no nightly run and names no R-06 (D-366 ended it; B-466)
+  const src = fs.readFileSync(path.join(ROOT, 'tools/pwa-live.mjs'), 'utf8');
+  assert.doesNotMatch(src, /nightly\.yml|nightlyGreen|NIGHTLY_RUNS|'gh'/);
+  const gate = jobOf('gate');
+  assert.match(gate, /passed staging \(R-02\)/);
+  assert.doesNotMatch(gate, /R-06|nightly|GH_TOKEN/, 'the gate job names R-02 only and needs no token');
 });
 
-test('B-320 (R-06): the gate and ship live take the same nightly: at the build commit, or at a bookkeeping head on it', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-r06-'));
+test("B-320: the gate names a bookkeeping commit's build commit, as build.mjs finds it", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ev4-gate-'));
   const git = (...a) =>
     execFileSync('git', ['-C', dir, '-c', 'user.email=t@t', '-c', 'user.name=t', ...a], { encoding: 'utf8' }).trim();
   git('init', '-q');
@@ -171,25 +164,16 @@ test('B-320 (R-06): the gate and ship live take the same nightly: at the build c
   };
   const build = commit('a.js', 'the build');
   const books = commit('chart/deploys.json', 'ship staging recorded');
-  const later = commit('b.js', 'another build after it');
   assert.equal(buildCommitOf(dir, books), build, "the bookkeeping head's build commit");
   const memo = rev => buildCommitOf(dir, rev);
   const base = {
-    commit: build,
     onMain: true,
     spec: on(),
     deploys: [{ target: 'staging', commit: build, verify: 'green' }],
     buildCommit: memo,
   };
-  for (const [head, green] of [
-    [build, true],
-    [books, true],
-    [later, false],
-  ]) {
-    const runs = [{ headSha: head, conclusion: 'success' }];
-    assert.equal(gateRefusals({ ...base, runs }).length === 0, green, `the gate, a nightly at ${head.slice(0, 7)}`);
-    assert.equal(fullCheckRefusal(dir, build, runs) === null, green, `ship live, a nightly at ${head.slice(0, 7)}`);
-  }
+  assert.deepEqual(gateRefusals({ ...base, commit: build }), [], 'the build commit, staging GREEN at it, no nightly');
+  assert.match(gateRefusals({ ...base, commit: books }).join(' | '), /bookkeeping commit: name its build commit/);
 });
 
 test('B-320 (D-330): the live app in the spec, on from the cutover sitting; ship live dispatches it on his OK', () => {
