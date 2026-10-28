@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 28 | v4 staging deployed at f0bd996 (16:43 CT), from a81e819: Study > Plan interface for study plans: a sliders button opening his…; Per D-366 the full check runs nightly only and must not gate a live… (B-450, B-466). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at a81e819 (14:29 CT), from 048427d: Making a study plan holds one request open, silent, for the minutes… (B-459). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at 048427d (14:01 CT), from c8a819f: Making a study plan holds one request open, silent, for the minutes… (B-459). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at c8a819f (13:12 CT), from e26d231: A request to change one plan task with a remake word, such as 'scrap…; Making a study plan holds one request open, silent, for the minutes… (B-456, B-459). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |

@@ -5675,5 +5675,22 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "f0bd996",
+  "time": "2026-10-28T21:43:11.357Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a81e819",
+  "tasks": [
+   "B-450",
+   "B-466"
+  ],
+  "summary": "Study > Plan interface for study plans: a sliders button opening his…; Per D-366 the full check runs nightly only and must not gate a live…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
