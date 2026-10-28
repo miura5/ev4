@@ -8135,5 +8135,26 @@
    "outcome": "task",
    "at": "2026-10-28T01:17:57.450Z"
   }
+ },
+ {
+  "id": "B-442",
+  "kind": "request",
+  "title": "Request (reported Oct 27): When a chat is opened from a note, attach the whole note once with prompt caching, send later edits as changes instead of rereading the note, condense older turns, and offer an optional 'Ask E.V.' chip on selected text.",
+  "dod": "From a note, the chat sends the open note once as a cached prefix (cache_control in the Worker request), later questions add only what changed since E.V. last saw it (a full resend after the cache window or a large change), older turns are condensed past a limit, and selecting text offers an Ask E.V. chip that quotes it; tests show the token count of 10 follow-ups on a 3,000-token note falls by at least half; npm test green; staging proof with /api/claude/usage.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27 (recommendation accepted as the plan)",
+  "words": "When a chat is opened from a note, attach the whole note once with prompt caching, send later edits as changes instead of rereading the note, condense older turns, and offer an optional 'Ask E.V.' chip on selected text.",
+  "reportedAt": "2026-10-28T01:23:09.422Z",
+  "board": {
+   "row": "v4 B-442: When a chat is opened from a note, attach the whole note once with…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T01:23:09.693Z"
+  }
  }
 ]

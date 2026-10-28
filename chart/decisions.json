@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-351",
+  "date": "Oct 27",
+  "title": "The build manager never builds: every task goes to a builder agent or lane, probes and designs to research or planning agents",
+  "why": "Matt noticed the build manager fixing post-release bugs itself, against the workflow map; that spends its context on code instead of Matt, the backlog and releases, and mixes writing with coordinating. Post-release work is many small asks at once, so small tasks go to builder agents in their own worktrees (2 to 4 at a time) to stay fast. Matt keeps one development chat; no separate intake role.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-350",
   "date": "Oct 27",
   "title": "A live deploy no longer waits for a running study session (R-03 ended)",
