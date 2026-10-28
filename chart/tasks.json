@@ -8165,7 +8165,7 @@
   "milestone": "After Notes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Matt's answer: answering a past weak spot right never clears it from history; it moves it along a confidence scale (e.g. not yet, getting there, solid) and it stays, tagged by exam and objective and grouped by exam. Clearing is not offered until the study algorithms are much stronger, and even then spots stay recorded.",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Keep weak spots from past exams and past units as a separate history pool that never counts toward the upcoming exam's weak spots or crowds its practice, but can be reviewed in downtime, with the current unit always first.",
