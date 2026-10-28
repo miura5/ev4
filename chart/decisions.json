@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-353",
+  "date": "Oct 27",
+  "title": "A note's session counts writing time: it counts up, pauses after 2 idle minutes, and saves itself after 60 paused minutes",
+  "why": "Matt (B-438): keep the timer going in a note and count only active writing, apart from read-along. Supersedes D-333 for Notes sessions only (Today tasks keep their countdown). The 60-minute self-save is the build manager's, so a session left alone is not open forever; its minutes stop at his last writing.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-352",
   "date": "Oct 27",
   "title": "Claude ceilings count tokens as billed: cache reads at a tenth, cache writes at 1.25",
