@@ -7,6 +7,7 @@
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails. The shell's own checks are test/harness/shell.cjs.
 const { chromium } = require('playwright');
 const { paintAnswer, painted, studyView, openSet: openSetById } = require('./paint.cjs');
+const { rowProblems } = require('./rows.cjs');
 // B-303: a set's id from its title, for openSet (paint.cjs)
 const byTitle = (page, title) =>
   page.evaluate(t => (Object.entries(window.__db.sets || {}).find(([, x]) => x.title === t) || [t])[0], title);
@@ -1427,6 +1428,8 @@ async function studyPlanChecks(page) {
             id,
             l: Math.round(r.left),
             r: Math.round(r.right),
+            top: Math.round(r.top),
+            bottom: Math.round(r.bottom),
             clip: b.scrollWidth > b.clientWidth + 1,
             t: b.textContent.trim(),
             shown: vis(b),
@@ -1451,14 +1454,13 @@ async function studyPlanChecks(page) {
       JSON.stringify([m.e5sum, m.dosefoot])
     );
     if (w === 390) {
-      const bar = m.bar.filter(x => x.shown);
+      // Row-aware: the buttons may wrap (CI's fonts put Start session on its own row); on each row none overlaps and
+      // each is 4 px clear of the last, nothing is clipped and all three are shown inside the 390 viewport.
+      const probs = rowProblems(m.bar, { gap: 4, width: 390 });
       ok(
-        '[390] the toolbar row of Quiz me, Weak spots and Start session: nothing clipped, a gap between each (B-450)',
-        bar.length === 3 &&
-          bar.every(x => !x.clip) &&
-          bar.every((x, i) => !i || x.l >= bar[i - 1].r + 4) &&
-          / new$|^Weak spots( · \d+)?$/.test(bar[1].t),
-        JSON.stringify(bar)
+        '[390] the toolbar of Quiz me, Weak spots and Start session: all shown, nothing clipped, a gap between each on its row (B-450)',
+        m.bar.length === 3 && !probs.length && / new$|^Weak spots( · \d+)?$/.test(m.bar[1].t),
+        JSON.stringify([probs, m.bar])
       );
     }
     ok(`[${w}] the Study toolbar has the plan settings`, m.settings);
