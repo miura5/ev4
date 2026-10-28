@@ -8574,5 +8574,23 @@
   "board": {
    "row": "v4 B-462: A finished job's finish time is stamped with its start time, which…"
   }
+ },
+ {
+  "id": "B-463",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): A plan edit's reply named the wrong weekday (said Tue 28 Oct for a Wednesday)",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging proof of B-459 (job -9)",
+  "words": "A plan edit's reply named the wrong weekday (said Tue 28 Oct for a Wednesday)",
+  "reworded": true,
+  "reportedAt": "2026-10-28T19:54:05.715Z",
+  "board": {
+   "row": "v4 B-463: A plan edit's reply named the wrong weekday (said Tue 28 Oct for a…"
+  }
  }
 ]
