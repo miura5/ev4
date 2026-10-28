@@ -25,7 +25,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { briefOf, jobReply, PLANTS, STUB_TEXT } from './job-stub.mjs';
+import { briefOf, jobReply, PLANTS, STUB_TEXT, toSse } from './job-stub.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -482,8 +482,9 @@ async function main() {
     req.on('end', () => {
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
       calls.push([scheme, body]);
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify(stubAnswer(body)));
+      // B-459: a plan's asks stream, so they are answered as the stand-in reply's events
+      res.writeHead(200, { 'content-type': body.stream ? 'text/event-stream' : 'application/json' });
+      res.end(body.stream ? toSse(stubAnswer(body)) : JSON.stringify(stubAnswer(body)));
     });
   });
   const stubPort = await new Promise(ok => stub.listen(0, '127.0.0.1', () => ok(stub.address().port)));

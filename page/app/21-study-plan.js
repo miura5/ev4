@@ -121,7 +121,8 @@
         null
       );
     }
-    /** What the newest job means for the card: working, E.V.'s one question (until he answers or skips), or nothing. */
+    /** What the newest job means for the card: working, E.V.'s one question (until he answers or skips), a new plan
+     * that didn't finish (B-459), or nothing. */
     function planJobState(ex, course, newest) {
       const j = planJobFor(ex, course);
       if (!j) return {};
@@ -131,6 +132,9 @@
         return { working: j };
       if (j.status === 'done' && j.result && j.result.asked && j.result.text && store.get('plan-skip') !== j.id)
         return { ask: j };
+      // B-459: a new plan that didn't finish says so, with its reason, until he tries again
+      const why = E.studyPlanJobFailed(j);
+      if (why) return { failed: j, why };
       return {};
     }
     const planDays = p => (p.days || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
@@ -682,20 +686,27 @@
       const card = el('div', 'ui-card pl-card pl-none');
       card.append(svgEl(PL_SPARK));
       const g = el('div', 'grow');
+      const failed = !making && js.failed; // B-459: never a silent "No study plan yet" after a plan that failed
       g.append(
-        el('span', 'h', `No study plan for ${exShortOf(ex)} yet`),
+        el('span', 'h', failed ? `Study plan for ${exShortOf(ex)}` : `No study plan for ${exShortOf(ex)} yet`),
         el(
           'span',
-          'mini',
+          failed ? 'mini pl-failed' : 'mini',
           making
             ? 'E.V. is making your plan. It shows here in a few minutes.'
-            : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
+            : failed
+              ? `Your last plan didn’t finish: ${js.why}`
+              : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
         )
       );
       card.append(g);
-      const mk = btn(making ? 'Making…' : 'Make a plan', ev => makePlan(ev.currentTarget, course, ex), {
-        cls: 'btn neutral',
-      });
+      const mk = btn(
+        making ? 'Making…' : failed ? 'Try again' : 'Make a plan',
+        ev => makePlan(ev.currentTarget, course, ex),
+        {
+          cls: 'btn neutral',
+        }
+      );
       mk.disabled = !!making;
       card.append(mk);
       const out = [card];

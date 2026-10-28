@@ -1684,11 +1684,12 @@ async function studyPlanChecks(page) {
     disabled: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
     mini: (document.querySelector('#ov-plans .pl-none .mini') || {}).textContent,
   }));
+  // B-459: and the card says the last plan didn't finish, why, and offers Try again (never a silent "No plan yet")
   ok(
-    'A new plan with no result 2 minutes after it was asked frees Make a plan, with no record change',
-    freed.button === 'Make a plan' &&
+    'A new plan with no result 2 minutes after it was asked frees the card as Try again, says why, with no record change',
+    freed.button === 'Try again' &&
       freed.disabled === false &&
-      !/making your plan/.test(freed.mini || '') &&
+      /^Your last plan didn’t finish: It didn’t start/.test(freed.mini || '') &&
       jobsBefore === (await page.evaluate(() => JSON.stringify(window.__db.jobs || {}))),
     JSON.stringify(freed)
   );
@@ -1696,7 +1697,7 @@ async function studyPlanChecks(page) {
   await page.evaluate(() => delete window.claude.host);
   const nJobs = () => page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
   const n0 = await nJobs();
-  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
+  await page.locator('#ov-plans .pl-none button', { hasText: 'Try again' }).click();
   await page.waitForTimeout(400);
   const said = await page.evaluate(() => ({
     toast: document.getElementById('toast').textContent,
@@ -1706,7 +1707,7 @@ async function studyPlanChecks(page) {
     'On the claude.ai page Make a plan writes no job and points to the E.V. app',
     (await nJobs()) === n0 &&
       said.toast === 'Study plans are made in the E.V. app. Open it on your phone or computer to make one.' &&
-      said.button === 'Make a plan',
+      said.button === 'Try again',
     JSON.stringify(said)
   );
   await page.evaluate(async () => {

@@ -304,6 +304,62 @@ export async function claimRead(env, read, ms = Date.now()) {
   };
 }
 
+/**
+ * B-459: a streamed Messages API answer (its server-sent events, as text) put back together as the one reply a plain
+ * request returns: {complete: true, message} once message_stop came, else {complete: false, why, message} (what came).
+ * Text blocks join their text deltas, tool_use blocks parse their joined input JSON, and usage is message_start's with
+ * message_delta's counts laid over it (output_tokens is cumulative there).
+ */
+export function assembleStream(sse) {
+  const message = { type: 'message', role: 'assistant', content: [], stop_reason: null, usage: {} };
+  const parts = [];
+  let stopped = false;
+  let why = 'the stream ended before message_stop';
+  for (const line of String(sse || '').split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    let ev;
+    try {
+      ev = JSON.parse(line.slice(5).trim());
+    } catch {
+      continue;
+    }
+    if (!ev || typeof ev !== 'object') continue;
+    if (ev.type === 'message_start' && ev.message) {
+      const { content, usage, ...rest } = ev.message;
+      Object.assign(message, rest, { content: [], usage: { ...(usage || {}) } });
+    } else if (ev.type === 'content_block_start' && ev.content_block) {
+      message.content[ev.index] = { ...ev.content_block };
+      if (ev.content_block.type === 'tool_use') parts[ev.index] = '';
+    } else if (ev.type === 'content_block_delta' && ev.delta) {
+      const b = message.content[ev.index];
+      if (!b) continue;
+      if (ev.delta.type === 'text_delta') b.text = (b.text || '') + ev.delta.text;
+      else if (ev.delta.type === 'input_json_delta') parts[ev.index] = (parts[ev.index] || '') + ev.delta.partial_json;
+    } else if (ev.type === 'content_block_stop') {
+      const b = message.content[ev.index];
+      if (b && b.type === 'tool_use') {
+        try {
+          b.input = parts[ev.index] ? JSON.parse(parts[ev.index]) : {};
+        } catch {
+          b.input = null; // read as no answer (jobs.mjs answerOf), never a guess
+        }
+      }
+    } else if (ev.type === 'message_delta') {
+      if (ev.delta) {
+        if ('stop_reason' in ev.delta) message.stop_reason = ev.delta.stop_reason;
+        if ('stop_sequence' in ev.delta) message.stop_sequence = ev.delta.stop_sequence;
+      }
+      for (const [k, v] of Object.entries(ev.usage || {})) if (v != null) message.usage[k] = v;
+    } else if (ev.type === 'message_stop') stopped = true;
+    else if (ev.type === 'error') {
+      why = 'an error mid-answer (' + String((ev.error && (ev.error.type || ev.error.message)) || 'error') + ')';
+      break;
+    }
+  }
+  message.content = message.content.filter(Boolean);
+  return stopped ? { complete: true, message } : { complete: false, why, message };
+}
+
 /** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?, purpose?, max_tokens?, job?}, and GET
  * /api/claude/usage. B-459: `signal` (the Worker's own plan run only) aborts the ask at the run's deadline; an ask so
  * aborted may still have been answered and billed, so it keeps its Sonnet claim and counts an estimate. */
@@ -396,6 +452,10 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
       console.log('claude_usage: the estimate was not counted:', est, String(e2));
     }
   };
+  // B-459: a study plan's asks (make, fix and edit) stream. Sent whole, a Sonnet plan sat silent for minutes and the
+  // Claude API's own edge answered 524 at about two minutes (staging, Oct 28); streamed, events flow all the while.
+  // The events are put back together here into the one Messages API reply the callers read.
+  const stream = !!use.purpose;
   let r;
   try {
     r = await fetch(apiUrl(env), {
@@ -410,6 +470,7 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
         model: use.model, // B-449 (D-355): the Worker's choice, by purpose; never the page's
         max_tokens: use.maxTokens,
         messages: markedMessages(messages, marks), // B-442: only the Worker's own cache marks reach the API
+        ...(stream ? { stream: true } : {}), // B-459: a study plan's ask streams, so no hop sits silent for minutes
         ...(tools && tools.length
           ? { tools: withoutCacheControl(tools), ...(tool_choice ? { tool_choice } : {}) }
           : {}),
@@ -432,6 +493,16 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
     return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
   }
   if (!r.ok) await unclaim();
+  if (stream && r.ok) {
+    const got = assembleStream(text);
+    if (!got.complete) {
+      // cut in transit (or an error event mid-answer): Claude may have answered and billed, so as a lost body above
+      await keepAndEstimate();
+      await unclaim();
+      return json({ error: 'the Claude API’s answer was cut off: ' + got.why }, 502);
+    }
+    text = JSON.stringify(got.message);
+  }
   let used = 0;
   try {
     used = tokensOf(JSON.parse(text), use.scale);

@@ -11,12 +11,12 @@ import { DatabaseSync } from 'node:sqlite';
 import { execFileSync } from 'node:child_process';
 import worker from '../pwa/worker.js';
 import { PlanJob, runPlanJob, PLAN_DEADLINE_MS } from '../pwa/planjob.js';
-import { apiUrl } from '../pwa/claude.js';
+import { apiUrl, assembleStream } from '../pwa/claude.js';
 import { jobReply } from '../pwa/job-stub.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 import { jobsSpec } from '../tools/build-pwa.mjs';
 import { staleRuns, STALE_MS, FIX_MIN_MS, APP_SOURCE } from '../pwa/jobs.mjs';
-import { PLANTS } from '../pwa/job-stub.mjs';
+import { PLANTS, toSse } from '../pwa/job-stub.mjs';
 import EV from '../core/evcore.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -128,7 +128,9 @@ function setup({
     });
     const r = await Promise.race([reply(body), aborted]);
     if (r instanceof Response) return r;
-    return new Response(JSON.stringify({ ...r, usage: { input_tokens: 1000, output_tokens: 500 } }), { status: 200 });
+    const full = { ...r, usage: { input_tokens: 1000, output_tokens: 500 } };
+    // B-459: a plan's asks stream
+    return new Response(body.stream ? toSse(full) : JSON.stringify(full), { status: 200 });
   };
   const restore = () => (globalThis.fetch = realFetch);
   const start = async (jobId = id) => {
@@ -429,4 +431,99 @@ test('B-459: the page sends every study plan job, new or a change, to the app, a
     /\(doc\.kind === 'exam-plan' \? startWorkerJob : runAppJob\)\(id\)/,
     'a plan job runs in the Worker'
   );
+});
+
+test('B-459: a streamed answer is put back together: text, tool_use input and usage, as one Messages API reply', () => {
+  const reply = {
+    content: [
+      { type: 'text', text: 'Here is the plan, with a long line '.repeat(5) },
+      {
+        type: 'tool_use',
+        id: 'tu_1',
+        name: 'answer',
+        input: { text: 'Plan ready.', plan: { days: [{ date: '2026-11-02' }] } },
+      },
+    ],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 1200, cache_read_input_tokens: 300, output_tokens: 845 },
+  };
+  const got = assembleStream(toSse(reply).replace(/\n/g, '\r\n')); // CRLF lines read the same
+  assert.equal(got.complete, true);
+  assert.deepEqual(got.message.content, reply.content);
+  assert.equal(got.message.stop_reason, 'tool_use');
+  assert.deepEqual(got.message.usage, reply.usage, 'input from message_start, output from message_delta');
+  // a cut stream (no message_stop) and an error event mid-answer are incomplete, never a reply
+  const cut = assembleStream(toSse(reply, { cut: true }));
+  assert.equal(cut.complete, false);
+  assert.match(cut.why, /before message_stop/);
+  const err = assembleStream(
+    toSse(reply, { cut: true }) + 'event: error\ndata: {"type":"error","error":{"type":"overloaded_error"}}\n\n'
+  );
+  assert.equal(err.complete, false);
+  assert.match(err.why, /overloaded_error/);
+  // a tool_use whose input JSON is broken reads as no input, never a guess
+  const ev = (type, d) => `event: ${type}\ndata: ${JSON.stringify({ type, ...d })}\n\n`;
+  const broken = assembleStream(
+    ev('message_start', { message: { content: [], usage: { input_tokens: 5 } } }) +
+      ev('content_block_start', { index: 0, content_block: { type: 'tool_use', id: 't', name: 'answer', input: {} } }) +
+      ev('content_block_delta', { index: 0, delta: { type: 'input_json_delta', partial_json: '{"text": "Pla' } }) +
+      ev('content_block_stop', { index: 0 }) +
+      ev('message_delta', { delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 3 } }) +
+      ev('message_stop', {})
+  );
+  assert.equal(broken.complete, true);
+  assert.equal(broken.message.content[0].input, null);
+});
+
+test('B-459: a plan’s asks stream; a stream cut in transit fails the job, keeps the Sonnet claim and counts an estimate', async () => {
+  const s = setup({
+    reply: body =>
+      new Response(toSse({ ...jobReply(body), usage: { input_tokens: 10, output_tokens: 10 } }, { cut: true }), {
+        status: 200,
+      }),
+  });
+  try {
+    await s.start();
+    await s.object().alarm();
+    assert.equal(s.sent[0].body.stream, true, 'sent with stream: true');
+    const res = s.doc('jobresults');
+    assert.equal(res.status, 'failed');
+    assert.match(res.error, /cut off/);
+    assert.equal(s.claims().n, 1, 'the claim stays');
+    assert.ok(s.used() >= 24000 * 3, 'a conservative estimate is counted');
+  } finally {
+    s.restore();
+  }
+});
+
+test('B-459: a new plan that failed shows in Study with its plain reason and Try again, never a silent "No plan yet"', () => {
+  const now = Date.now();
+  const job = { kind: 'exam-plan', course: 'NUR 112', at: new Date(now - 5 * 60000).toISOString() };
+  const failed = {
+    ...job,
+    status: 'failed',
+    result: {
+      text: 'I couldn’t finish this one: x',
+      failed: 'Claude couldn’t be reached (the Worker answered 524). Try again.',
+    },
+  };
+  assert.equal(EV.studyPlanJobFailed(failed, now), 'Claude couldn’t be reached (the Worker answered 524).');
+  assert.equal(
+    EV.studyPlanJobFailed(
+      { ...failed, result: { failed: 'it took longer than 14 minutes, so E.V. stopped it. Try again.' } },
+      now
+    ),
+    'It took longer than 14 minutes, so E.V. stopped it.'
+  );
+  assert.match(
+    EV.studyPlanJobFailed({ ...job, status: 'queued', at: new Date(now - 3 * 60000).toISOString() }, now),
+    /^It didn’t start/
+  );
+  assert.equal(EV.studyPlanJobFailed({ ...failed, revise: 'E4' }, now), null, 'an edit is not a new plan');
+  assert.equal(EV.studyPlanJobFailed({ ...job, status: 'running', startedAt: job.at }, now), null);
+  assert.equal(EV.studyPlanJobFailed({ ...job, status: 'done' }, now), null);
+  const page = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
+  assert.match(page, /const why = E\.studyPlanJobFailed\(j\);\s*if \(why\) return \{ failed: j, why \};/);
+  assert.match(page, /`Your last plan didn’t finish: \$\{js\.why\}`/);
+  assert.match(page, /making \? 'Making…' : failed \? 'Try again' : 'Make a plan'/);
 });

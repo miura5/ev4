@@ -114,7 +114,7 @@ async function askVia(env, body, signal) {
   const said = (own && own.error && typeof own.error === 'object' ? own.error.message : own && own.error) || '';
   const words = String(said).replace(/\s+/g, ' ').trim().slice(0, 160);
   throw Object.assign(
-    new Error(words ? `Claude refused the ask (${r.status}): ${words}` : 'the Worker answered ' + r.status),
+    new Error(words ? `Claude refused the ask (${r.status}): ${words}` : 'the Claude API answered ' + r.status),
     { code: words ? 'refused' : null, status: r.status }
   );
 }

@@ -464,6 +464,25 @@ export function makeStudyPlans(core) {
       return 'It stopped before it finished. Tap Make a plan to try again.';
     return null;
   }
+  /** B-459: why a new-plan job didn't finish, in plain words for the Study card, else null: a failed result's own
+   *  reason (its "Try again" left to the card's button), or a stall's. */
+  function studyPlanJobFailed(j, nowMs = Date.now()) {
+    if (!j || j.kind !== 'exam-plan' || j.revise) return null;
+    const plain = t =>
+      String(t || '')
+        .replace(/\s*(Tap Make a plan to try again|Try again)\.?\s*$/i, '')
+        .trim();
+    if (j.status === 'failed') {
+      const why = plain((j.result && (j.result.failed || j.result.text)) || '').replace(
+        /^I couldn’t finish this one:\s*/,
+        ''
+      );
+      const s = why || 'it stopped before it finished';
+      return s.charAt(0).toUpperCase() + s.slice(1).replace(/([^.!?])$/, '$1.');
+    }
+    const stalled = studyPlanJobStalled(j, nowMs);
+    return stalled ? plain(stalled) : null;
+  }
   /** D-362 (B-456): a new-plan job's id, the same in every tab for the course's next new plan of the day, so two tabs
    * that both start one write one document (the second create is refused or merges into the first, never a second
    * job). */
@@ -766,6 +785,7 @@ export function makeStudyPlans(core) {
     studyPlanChipStarted,
     studyPlanNewJobRunning,
     studyPlanJobStalled,
+    studyPlanJobFailed,
     studyPlanNewJobId,
     studyPlanScoreOk,
     studyPlanDoc,

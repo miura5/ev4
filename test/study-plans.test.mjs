@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import EV from '../core/evcore.mjs';
 import * as J from '../pwa/jobs.mjs';
-import { jobReply, PLANTS } from '../pwa/job-stub.mjs';
+import { jobReply, PLANTS, toSse } from '../pwa/job-stub.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 import { loadSchemas } from '../core/schemas.mjs';
 import { makeValidator, validateAgainst } from '../core/validate.mjs';
@@ -859,12 +859,13 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
   const sent = [];
   const real = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
-    sent.push(JSON.parse(init.body));
-    if (api) return api(sent.length);
-    return new Response(
-      JSON.stringify({ content: [], stop_reason: 'end_turn', usage: { input_tokens: 900, output_tokens: 100 } }),
-      { status: 200 }
-    );
+    const body = JSON.parse(init.body);
+    sent.push(body);
+    const r = api ? await api(sent.length) : null;
+    const full = { content: [], stop_reason: 'end_turn', usage: { input_tokens: 900, output_tokens: 100 } };
+    if (r && !(r instanceof Response && r.status === 200 && body.stream)) return r;
+    // B-459: a plan's asks stream; a 200 the test planted is answered as the same reply's events
+    return new Response(body.stream ? toSse(r ? await r.json() : full) : JSON.stringify(full), { status: 200 });
   };
   const out = [];
   const replies = [];

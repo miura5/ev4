@@ -198,3 +198,45 @@ export function jobReply(body) {
     usage: { input_tokens: 0, output_tokens: 0 },
   };
 }
+
+/** B-459: a Messages API reply as the server-sent events a streamed ask answers with (text and tool_use blocks, usage
+ * split as the API splits it: input on message_start, output on message_delta). `cut` stops before message_stop. */
+export function toSse(reply, { cut = false } = {}) {
+  const { content = [], usage = {}, stop_reason = 'end_turn', ...rest } = reply || {};
+  const { output_tokens = 0, ...input } = usage;
+  const ev = (type, data) => `event: ${type}\ndata: ${JSON.stringify({ type, ...data })}\n\n`;
+  let out = ev('message_start', {
+    message: {
+      id: 'msg_stub',
+      role: 'assistant',
+      model: 'stub',
+      ...rest,
+      content: [],
+      usage: { ...input, output_tokens: 1 },
+    },
+  });
+  content.forEach((b, index) => {
+    if (b.type === 'tool_use') {
+      out += ev('content_block_start', {
+        index,
+        content_block: { type: 'tool_use', id: b.id, name: b.name, input: {} },
+      });
+      const j = JSON.stringify(b.input);
+      for (let i = 0; i < j.length; i += 40)
+        out += ev('content_block_delta', {
+          index,
+          delta: { type: 'input_json_delta', partial_json: j.slice(i, i + 40) },
+        });
+    } else {
+      out += ev('content_block_start', { index, content_block: { type: 'text', text: '' } });
+      const t = String(b.text || '');
+      for (let i = 0; i < t.length; i += 40)
+        out += ev('content_block_delta', { index, delta: { type: 'text_delta', text: t.slice(i, i + 40) } });
+    }
+    out += ev('content_block_stop', { index });
+    if (index === 0) out += ev('ping', {});
+  });
+  out += ev('message_delta', { delta: { stop_reason, stop_sequence: null }, usage: { output_tokens } });
+  if (!cut) out += ev('message_stop', {});
+  return out;
+}
