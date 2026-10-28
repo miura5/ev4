@@ -82,7 +82,7 @@ async function withApi(usage, fn, vars = {}) {
 }
 
 test('B-418: tokens are counted from the API’s usage numbers, kept in D1 and readable at /api/claude/usage', async () => {
-  assert.equal(tokensOf({ usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 5 } }), 125);
+  assert.equal(tokensOf({ usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 50 } }), 125);
   assert.equal(tokensOf({}), 0);
   await withApi(1000, async ({ ask, usage, env }) => {
     assert.equal((await ask()).status, 200);
@@ -349,4 +349,53 @@ test('B-442: the page names cache marks, never raw cache_control; the Worker che
     assert.equal((await ask({ messages: msgs, cache: [{ m: 1, b: 0 }] })).status, 400);
     assert.equal(sent.length, 2);
   });
+});
+
+test('D-352: the ceilings count tokens as billed: a cache read at 0.1, a cache write at 1.25; a plain call unchanged', async () => {
+  assert.equal(tokensOf({ usage: { input_tokens: 300, output_tokens: 40 } }), 340);
+  assert.equal(
+    tokensOf({
+      usage: { input_tokens: 300, output_tokens: 40, cache_creation_input_tokens: 4000, cache_read_input_tokens: 0 },
+    }),
+    5340
+  );
+  assert.equal(tokensOf({ usage: { input_tokens: 300, output_tokens: 40, cache_read_input_tokens: 6000 } }), 940);
+  assert.equal(tokensOf({ usage: { input_tokens: 1, cache_read_input_tokens: 3 } }), 1); // rounded to whole tokens
+  // the Worker's counter and GET /api/claude/usage carry the weighted count
+  const env = { EV_TOKEN: 't', ANTHROPIC_API_KEY: 'k', DB: fakeD1(), ASSETS: { fetch: () => new Response('') } };
+  const realFetch = globalThis.fetch;
+  const usages = [
+    { input_tokens: 300, output_tokens: 40, cache_creation_input_tokens: 4000 },
+    { input_tokens: 300, output_tokens: 40, cache_read_input_tokens: 4000 },
+  ];
+  globalThis.fetch = async () =>
+    new Response(
+      JSON.stringify({ content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn', usage: usages.shift() }),
+      { status: 200 }
+    );
+  const call = (pathname, init = {}) =>
+    worker.fetch(
+      new Request('https://ev.example' + pathname, {
+        ...init,
+        headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+      }),
+      env
+    );
+  try {
+    for (let i = 0; i < 2; i++)
+      assert.equal(
+        (
+          await call('/api/claude', {
+            method: 'POST',
+            body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }] }),
+          })
+        ).status,
+        200
+      );
+    const u = await (await call('/api/claude/usage')).json();
+    assert.equal(u.hour, 5340 + 740);
+    assert.equal(u.day, 5340 + 740);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

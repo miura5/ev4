@@ -12,7 +12,7 @@
 // B-435 (D-349): the ceilings are a setting, kept in D1 (claude_settings) and changed with PUT /api/claude/limits
 // {hour, day} with no release; a stored value wins over the Worker's vars, which win over the defaults here.
 
-/** The default ceilings, in tokens (input, output and cache together); D-349 (Matt's option A): 500,000 an hour and
+/** The default ceilings, in tokens (input, output and cache together, cache weighted as billed: D-352); D-349 (Matt's option A): 500,000 an hour and
  * 1,500,000 a day, the Console's monthly spend limit being the hard money stop. */
 export const HOUR_TOKENS = 500000;
 export const DAY_TOKENS = 1500000;
@@ -72,12 +72,19 @@ const clockOf = ms =>
     .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' })
     .toLowerCase();
 
-/** Tokens one Messages API answer used, from its usage numbers (0 when it has none). */
+/** D-352: the ceilings count tokens as billed: input and output as they are, a cache write at 1.25 and a cache read
+ * at 0.1 of plain input. */
+export const TOKEN_WEIGHTS = {
+  input_tokens: 1,
+  output_tokens: 1,
+  cache_creation_input_tokens: 1.25,
+  cache_read_input_tokens: 0.1,
+};
+/** Tokens one Messages API answer used, from its usage numbers, weighted as billed (D-352) and rounded to a whole
+ * number (0 when it has none). */
 export function tokensOf(res) {
   const u = (res && res.usage) || {};
-  return ['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens']
-    .map(k => Number(u[k]) || 0)
-    .reduce((a, b) => a + Math.max(0, b), 0);
+  return Math.round(Object.entries(TOKEN_WEIGHTS).reduce((a, [k, w]) => a + Math.max(0, Number(u[k]) || 0) * w, 0));
 }
 
 /** This hour's and today's tokens. */
