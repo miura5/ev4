@@ -8375,7 +8375,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: fixed in fef5c6b (answerIndex: exact trimmed text first, a symbol-stripped match only when it names one choice, else refused); tests for arrows, > 5/< 5, Rh+/Rh- and the numeric branch; npm test 853/0. Waiting on review and ship staging.",
+  "notes": "builder: review round: the fallback folds case, spacing and trailing punctuation but keeps symbols",
   "commit": null,
   "source": "review of B-446 (second round)",
   "words": "A Quiz me matrix question whose columns differ only by a symbol, such as up and down arrows, is saved with every row keyed to the first column instead of being refused.",
