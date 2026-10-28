@@ -5659,5 +5659,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a81e819",
+  "time": "2026-10-28T19:29:11.217Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "048427d",
+  "tasks": [
+   "B-459"
+  ],
+  "summary": "Making a study plan holds one request open, silent, for the minutes…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
