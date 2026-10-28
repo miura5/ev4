@@ -8615,9 +8615,9 @@
   "id": "B-465",
   "kind": "bug",
   "title": "Bug (reported Oct 28): Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No exam yet' even after he gave E.V. the Chapter 9 lab exam (today) and Chapter 9 exam (Sunday), which landed on the calendar but not as exams, so Make a plan can't run for it. Exams should be detected for every course, and he should be able to add one himself by its date, so any course can get a study plan.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Exams are detected for every course, not only NUR 112: a calendar event whose title marks it as an exam (exam, test, lab exam, final, midterm, quiz counted as the spec says) for any of Matt's courses becomes that course's exam, so Study shows it and Make a plan can run for it; Matt can add an exam himself from Study (course, title, date; stored in his record as an exam, nothing deleted or overwritten); npm test covers detection and the add path; proved on staging by BIO 201 showing its exams and getting a plan in one real run.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8627,6 +8627,10 @@
   "reportedAt": "2026-10-28T20:21:15.052Z",
   "board": {
    "row": "v4 B-465: Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:10:43.106Z"
   }
  },
  {
