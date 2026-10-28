@@ -8503,9 +8503,9 @@
   "id": "B-459",
   "kind": "bug",
   "title": "Bug (reported Oct 28): Making a study plan holds one request open, silent, for the minutes Sonnet takes to write; anything that drops a quiet connection (the phone backgrounding the app, a proxy) loses the plan, so the job should run without the page holding the request (stream it, or have the Worker run it in the background and the page read the result).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A study-plan job (an exam-plan make with its one fix ask, and a plan edit) runs to completion inside the Worker, in a Durable Object alarm, whatever the page does: the page starts it with one request that answers 202 at once and reads the result from jobresults as before; the jobresult ends done or failed, a Worker-side deadline fails it with a plain reason; one tap starts one run; the D-362 guard and the Worker's Sonnet binding (job check, 2-ask cap, claim released only on a refusal, estimates for cut answers) hold; the page's stall rule agrees with the deadline; tests for the 202 hand-off, a run to done, failed with a reason, the deadline and one run per job; npm test, npm run smoke and smoke:pwa green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8515,6 +8515,10 @@
   "reportedAt": "2026-10-28T11:57:39.727Z",
   "board": {
    "row": "v4 B-459: Making a study plan holds one request open, silent, for the minutes…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T17:14:56.896Z"
   }
  }
 ]
