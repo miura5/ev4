@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-365",
+  "date": "Oct 28",
+  "title": "A study plan's Sonnet ask may write up to 48k tokens, and the plan's wording is compact",
+  "why": "Oct 28 staging proof: the full chain worked (202, Durable Object, streamed call, 177 s), but a 19-day NUR 112 plan hit the 24k output cap and was rightly refused as cut short. At the measured ~135 tokens/s, 48k takes about 6 minutes, inside the 14-minute deadline; the instructions also ask for compact tasks (short titles, doneWhen of at most about 10 words, no prose), which keeps most plans well under the cap. Cost per new plan is about $0.40 to $0.90; the 2-ask cap and ceilings are unchanged; the fix ask runs only with time left.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-364",
   "date": "Oct 28",
   "title": "Reverts D-361: never more than two review rounds (a review, one fix, a final review) and at most two fix waves per release; anything still open goes on the release card and the next batch",
