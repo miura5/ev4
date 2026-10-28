@@ -8679,9 +8679,9 @@
   "id": "B-467",
   "kind": "bug",
   "title": "Bug (reported Oct 28): The nightly full check at 5c4e68a (run 40766119523) went red in its 'npm run check' step after about 25 minutes, as did the two before it at effd28d and 7fc5576 (both red after about 9 minutes); the log and check-shots artifact cannot be read from the build sandbox (the GitHub results store is outside its network allowlist), so the failing check is to be read from the GitHub Actions page or a run on a machine that can reach it.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The failing check in nightly 40766119523 (and the two red runs before it) is named and either fixed or, when it only pins a retired look, rewritten or retired (D-366); the next nightly at main is green. Never blocks a release Matt has tested (D-366).",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8690,6 +8690,10 @@
   "reportedAt": "2026-10-28T21:11:58.887Z",
   "board": {
    "row": "v4 B-467: The nightly full check at 5c4e68a (run 40766119523) went red in its…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:12:36.618Z"
   }
  }
 ]
