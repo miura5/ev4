@@ -213,7 +213,7 @@ export function ceilingProblem(used, limits, ms = Date.now()) {
   return null;
 }
 
-async function addUsage(env, tokens, ms = Date.now()) {
+export async function addUsage(env, tokens, ms = Date.now()) {
   await env.DB.prepare(
     'INSERT INTO claude_usage (hour, day, tokens, calls) VALUES (?, ?, ?, 1) ' +
       'ON CONFLICT (hour) DO UPDATE SET tokens = tokens + excluded.tokens, calls = calls + 1'
@@ -221,6 +221,23 @@ async function addUsage(env, tokens, ms = Date.now()) {
     .bind(Math.floor(ms / HOUR_MS), dayOf(ms), tokens)
     .run();
 }
+
+/** B-449, B-459: a conservative count for an ask Claude may have answered and billed whose answer was lost (the body
+ * cut in transit, or a Worker-side study plan run stopped at its deadline mid-ask): the request's input at about 3.5
+ * characters a token plus its whole answer allowance, at its model's weight. `use` is purposeOf's answer. */
+export const estimateTokens = (body, use) =>
+  Math.round(
+    (Math.ceil(JSON.stringify({ messages: body && body.messages, tools: body && body.tools }).length / 3.5) +
+      use.maxTokens) *
+      (use.scale || 1)
+  );
+
+/** B-459: where an ask goes: the Claude API, or, for the local smoke's stand-in only, a CLAUDE_API_URL on this machine
+ * (any other value is ignored, so the key never leaves for another host). */
+export const apiUrl = env =>
+  /^http:\/\/(127\.0\.0\.1|localhost):\d+\//.test(String(env.CLAUDE_API_URL || ''))
+    ? env.CLAUDE_API_URL
+    : 'https://api.anthropic.com/v1/messages';
 
 const READ_NOTE = /^[A-Za-z0-9._-]{1,120}$/;
 const READ_HASH = /^[A-Za-z0-9-]{1,64}$/;
@@ -288,8 +305,9 @@ export async function claimRead(env, read, ms = Date.now()) {
 }
 
 /** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?, purpose?, max_tokens?, job?}, and GET
- * /api/claude/usage. */
-export async function handleClaude(request, env, url) {
+ * /api/claude/usage. B-459: `signal` (the Worker's own plan run only) aborts the ask at the run's deadline; an ask so
+ * aborted may still have been answered and billed, so it keeps its Sonnet claim and counts an estimate. */
+export async function handleClaude(request, env, url, { signal = null } = {}) {
   if (url.pathname === '/api/claude/usage' && request.method === 'GET')
     return json({ ...(await usageNow(env)), limits: await limitsOf(env) });
   // B-435: the ceilings are changed here, with no release; each change is a row's new value (nothing is deleted)
@@ -369,10 +387,20 @@ export async function handleClaude(request, env, url) {
       console.log('claude_reads: the mark was not given back:', String(e));
     }
   };
+  const keepAndEstimate = async () => {
+    planClaim = null;
+    const est = estimateTokens({ messages, tools }, use);
+    try {
+      await addUsage(env, est);
+    } catch (e2) {
+      console.log('claude_usage: the estimate was not counted:', est, String(e2));
+    }
+  };
   let r;
   try {
-    r = await fetch('https://api.anthropic.com/v1/messages', {
+    r = await fetch(apiUrl(env), {
       method: 'POST',
+      ...(signal ? { signal } : {}),
       headers: {
         'content-type': 'application/json',
         'x-api-key': env.ANTHROPIC_API_KEY,
@@ -388,6 +416,7 @@ export async function handleClaude(request, env, url) {
       }),
     });
   } catch (e) {
+    if (signal && signal.aborted) await keepAndEstimate();
     await unclaim();
     return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
   }
@@ -396,19 +425,9 @@ export async function handleClaude(request, env, url) {
   try {
     text = await r.text();
   } catch (e) {
-    if (r.ok) {
-      // B-449: Claude answered, and billed, but the body was lost: the Sonnet claim stays (the cap counts billed asks)
-      // and a conservative estimate (the request's input plus its whole answer allowance) is counted to the ceilings
-      planClaim = null;
-      const est = Math.round(
-        (Math.ceil(JSON.stringify({ messages, tools }).length / 3.5) + use.maxTokens) * (use.scale || 1)
-      );
-      try {
-        await addUsage(env, est);
-      } catch (e2) {
-        console.log('claude_usage: the estimate was not counted:', est, String(e2));
-      }
-    }
+    // B-449: Claude answered, and billed, but the body was lost: the Sonnet claim stays (the cap counts billed asks)
+    // and a conservative estimate (the request's input plus its whole answer allowance) is counted to the ceilings
+    if (r.ok || (signal && signal.aborted)) await keepAndEstimate();
     await unclaim();
     return json({ error: 'the Claude API could not be reached: ' + String((e && e.message) || e).slice(0, 200) }, 502);
   }

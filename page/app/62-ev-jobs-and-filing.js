@@ -64,9 +64,9 @@
       // The record is read right before the write: a new-plan job queued or running there is the answer, and the id
       // is the course's next of the day in every tab, so two tabs that both start one make one document.
       let planId = null;
-      // B-456: a new plan is made in the app only; here nothing is written and the caller says where to make it
-      if (kind === 'exam-plan' && !revise && !inApp())
-        return { id: null, fired: { at: now(), ok: false, error: 'app_only' } };
+      // B-456: a study plan, new or a change to one, is made in the app only (B-459: the cloud worker refuses every
+      // exam-plan job); here nothing is written and the caller says where to make it
+      if (kind === 'exam-plan' && !inApp()) return { id: null, fired: { at: now(), ok: false, error: 'app_only' } };
       if (kind === 'exam-plan' && !revise && course) {
         const fresh = await freshJobs();
         const busy = E.studyPlanNewJobRunning(fresh, course);
@@ -96,8 +96,17 @@
       const fired = await fire(TASKS.worker, jobText(id));
       await write({ op: 'update', collection: 'jobs', id, data: { fired } });
       // B-456: in the app there is no connector: its bridge takes the job recorded as mcp_unavailable, records the
-      // hand-off as made and runs it through the Worker (pwa/bridge.js jobHandOff), so for the caller it started
-      if (!fired.ok && fired.error === 'mcp_unavailable' && inApp()) return { id, fired: { at: fired.at, ok: true } };
+      // hand-off as made and runs it through the Worker (pwa/bridge.js jobHandOff), so for the caller it started. B-459:
+      // only when the saved job says so: a hand-off the bridge declined (its job spec unreadable) did not start
+      if (!fired.ok && fired.error === 'mcp_unavailable' && inApp()) {
+        const saved = await db
+          .collection('jobs')
+          .doc(id)
+          .get()
+          .catch(() => null);
+        const f = saved && saved.exists ? (saved.data() || {}).fired : null;
+        if (f && f.ok === true) return { id, fired: { at: f.at || fired.at, ok: true } };
+      }
       return { id, fired };
     }
     // B-180 (D-194): a message starting build:, bug: or idea: is a build ask, with no model call: the build-ask row

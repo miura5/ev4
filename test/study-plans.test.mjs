@@ -725,8 +725,11 @@ test('B-456: Making… never sticks: a new plan with no result after 2 minutes, 
   // Matt's staging job: running since 11:58:32 and never finished; held while a plan can still be running, then freed
   const running = view('running', { startedAt: '2026-10-28T11:58:32.079Z' });
   assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(10 * 60)).id, base.id);
-  assert.match(EV.studyPlanJobStalled(running, t(16 * 60)), /stopped before it finished/);
-  assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(16 * 60)), null);
+  // B-459: held past the Worker's 14-minute deadline and its 15-minute wall limit, so a second tap never races a run
+  assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(16 * 60)).id, base.id);
+  assert.equal(EV.studyPlanJobStalled(running, t(19 * 60)), null);
+  assert.match(EV.studyPlanJobStalled(running, t(21 * 60)), /stopped before it finished/);
+  assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(21 * 60)), null);
   // only a new plan's job: an edit, a failed firing or another kind is never called stalled
   for (const j of [
     view('queued', { revise: 'E4' }),
@@ -757,7 +760,8 @@ test('B-456: Making… never sticks: a new plan with no result after 2 minutes, 
   // in the app (no connector), a job its bridge hands to the Worker started: no “needs a remote connector” toast
   assert.match(
     jobsJs,
-    /if \(!fired\.ok && fired\.error === 'mcp_unavailable' && inApp\(\)\) return \{ id, fired: \{ at: fired\.at, ok: true \} \};/
+    // B-459: only when the saved job records the hand-off as made (a declined hand-off did not start)
+    /if \(!fired\.ok && fired\.error === 'mcp_unavailable' && inApp\(\)\) \{[\s\S]*?if \(f && f\.ok === true\) return \{ id, fired: \{ at: f\.at \|\| fired\.at, ok: true \} \};/
   );
 });
 
@@ -768,8 +772,9 @@ test('B-456: on the claude.ai page Make a plan, Remake and the chip write no job
     jobsJs,
     /app_only: 'Study plans are made in the E\.V\. app\. Open it on your phone or computer to make one\.'/
   );
-  // the refusal comes before the record is read or written, and only for a new plan (an edit is not refused here)
-  const refuse = jobsJs.indexOf("if (kind === 'exam-plan' && !revise && !inApp())");
+  // the refusal comes before the record is read or written, for every plan job (B-459: an edit too; the cloud worker
+  // refuses every exam-plan job)
+  const refuse = jobsJs.indexOf("if (kind === 'exam-plan' && !inApp())");
   assert.ok(refuse > 0 && refuse < jobsJs.indexOf('const fresh = await freshJobs()'), 'refused before the read');
   assert.ok(refuse < jobsJs.indexOf("collection: 'jobs',"), 'refused before the write');
   assert.match(jobsJs, /!inApp\(\)\)\s*return \{ id: null, fired: \{ at: now\(\), ok: false, error: 'app_only' \} \};/);

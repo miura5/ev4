@@ -20,6 +20,7 @@
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -71,12 +72,28 @@ function prepare() {
 }
 
 // 2. wrangler dev over that D1, with the smoke's own token; ready once /api/db answers 401 without it.
-async function serve(dir) {
+async function serve(dir, claudeUrl) {
   const port = await freePort();
   const log = [];
   const proc = spawn(
     WRANGLER,
-    ['dev', '--local', '--persist-to', dir, '--ip', '127.0.0.1', '--port', String(port), '--var', 'EV_TOKEN:' + TOKEN],
+    [
+      'dev',
+      '--local',
+      '--persist-to',
+      dir,
+      '--ip',
+      '127.0.0.1',
+      '--port',
+      String(port),
+      '--var',
+      'EV_TOKEN:' + TOKEN,
+      // B-459: a study plan job runs in the Worker, which asks the stand-in below (never the Claude API)
+      '--var',
+      'ANTHROPIC_API_KEY:smoke-not-a-key',
+      '--var',
+      'CLAUDE_API_URL:' + claudeUrl,
+    ],
     { cwd: PWA, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, WRANGLER_SEND_METRICS: 'false' } }
   );
   proc.stdout.on('data', d => log.push(String(d)));
@@ -456,17 +473,31 @@ async function notesOffline(browser, origin) {
 async function main() {
   const t0 = Date.now();
   const dir = prepare();
-  const { origin, proc } = await serve(dir);
   const calls = []; // every request that reached the stub: [viewport, body]
+  // B-459: the stand-in Claude API the Worker asks for a study plan job (the page's own asks are routed in the browser)
+  let scheme = '';
+  const stub = http.createServer((req, res) => {
+    const chunks = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => {
+      const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      calls.push([scheme, body]);
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(stubAnswer(body)));
+    });
+  });
+  const stubPort = await new Promise(ok => stub.listen(0, '127.0.0.1', () => ok(stub.address().port)));
+  const { origin, proc } = await serve(dir, `http://127.0.0.1:${stubPort}/v1/messages`);
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
   try {
     PHOTO = await photo(browser);
-    for (const [scheme, viewport] of [
+    for (const [width, viewport] of [
       ['390', { width: 390, height: 844 }],
       ['1280', { width: 1280, height: 860 }],
     ]) {
+      scheme = width;
       const tag = `[${scheme}]`;
       // The service worker is kept out so every request passes the routes below (it never caches /api anyway).
       const context = await browser.newContext({ viewport, colorScheme: 'dark', serviceWorkers: 'block' });
@@ -947,6 +978,10 @@ async function main() {
       // result read back from D1 (once, at the first width: the record is shared). A planted bad reply writes nothing it
       // made.
       if (scheme === '390') {
+        // B-459: a study plan job now writes its message into talk from the Worker while the page writes the
+        // conversation too, so a page save can meet a talk document changed since (409); the shim reads it again and
+        // saves once more (B-389). Those 409s are the browser's own resource lines here, not page errors.
+        const jobErrAt = errors.length;
         const got = async () =>
           fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
             .then(r => r.json())
@@ -1040,6 +1075,8 @@ async function main() {
         )
           held.push('plant-plan: its plan was written');
         ok(`${tag} a planted reply that fails the checks writes nothing it made`, held.length === 0, held.join(' | '));
+        const jobErrs = errors.splice(jobErrAt).filter(m => !/status of 409 \(Conflict\)/.test(m));
+        errors.push(...jobErrs);
       }
 
       await page.screenshot({ path: `${shots}/smoke-pwa-${scheme}.png` });
@@ -1050,6 +1087,7 @@ async function main() {
   } finally {
     await browser.close();
     proc.kill();
+    stub.close();
     fs.rmSync(dir, { recursive: true, force: true });
   }
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');

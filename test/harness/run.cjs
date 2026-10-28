@@ -1606,7 +1606,9 @@ async function studyPlanChecks(page) {
     await page.waitForTimeout(150);
     await page.screenshot({ path: `${shots}/plan-draft-${w}.png`, fullPage: true });
   }
-  // Ask for changes on a later exam's card edits that plan (E5's draft), not the next exam's (B-450)
+  // Ask for changes on a later exam's card edits that plan (E5's draft), not the next exam's (B-450). B-459: plan edits
+  // are made in the E.V. app too (its host is ev-app), as new plans are (below)
+  await page.evaluate(() => (window.claude.host = 'ev-app'));
   await page.locator('#ov-plans .pl-card.dr[data-plan="E5"] .plan-sum button', { hasText: 'Ask for changes' }).click();
   await page.waitForTimeout(250);
   const typed = await page.$eval('#ev-input', i => i.value);
@@ -1631,6 +1633,7 @@ async function studyPlanChecks(page) {
   await page.evaluate(() => {
     window.__chatScript = null;
     window.__chatReply = null;
+    delete window.claude.host;
   });
   // Make a plan plans toward its card's exam, and the card shows it making (B-450)
   await page.evaluate(async () => {

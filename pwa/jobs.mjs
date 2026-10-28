@@ -389,7 +389,10 @@ export function planProblem(spec, prepared, answer) {
  * own score only); to edit one, the ask and up to `lookups` rounds of lookups. {reply, answer}; the tokens used go in
  * ctx.planUsage. Throws {code: 'room'} when the ceilings have no room for the first ask.
  */
-async function planAsks({ spec, prepared, ask, usage, db }) {
+/** B-459: a fix ask goes only with at least this long left before the run's deadline (a whole Sonnet plan written
+ * again can take minutes); with less, the first plan is saved as it is. */
+export const FIX_MIN_MS = 7 * 60000;
+async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
   const u = { asks: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   prepared.ctx.planUsage = u;
   let body = request(spec, prepared);
@@ -466,6 +469,7 @@ async function planAsks({ spec, prepared, ask, usage, db }) {
     ],
   };
   if (await noRoom(usage, fix)) return { reply, answer }; // no room for the fix: the first plan is saved as it is
+  if (timeLeft && timeLeft() < FIX_MIN_MS) return { reply, answer }; // B-459: no time for it before the deadline
   let again;
   try {
     again = await ask(fix);
@@ -482,9 +486,23 @@ async function planAsks({ spec, prepared, ask, usage, db }) {
  * One job, start to end. `ask(body)` sends a Messages API request through the Worker and returns its reply;
  * `write(writes, db)` writes all of them or none (the run API's batch), and throws an error with `conflict` when a document
  * it would create appeared meanwhile (`pinned` decides that against `db`, the record the writes were planned over); then `reload()` gives the record as it is now and the reply is folded once more
- * over it (with no new ask). Returns {status, problems?, said}.
+ * over it (with no new ask). `timeLeft()` (B-459), when given, says how long the run has before its deadline: a study
+ * plan's fix ask goes only with FIX_MIN_MS left. Returns {status, problems?, said}.
  */
-export async function runJob({ db, spec, schemas, jobId, ask, write, reload, usage, now = new Date(), release, dir }) {
+export async function runJob({
+  db,
+  spec,
+  schemas,
+  jobId,
+  ask,
+  write,
+  reload,
+  usage,
+  now = new Date(),
+  release,
+  dir,
+  timeLeft = null, // B-459: ms left before the Worker's deadline, when the run has one
+}) {
   const prepared = prepare({ db, spec, jobId, now, release, dir });
   if (prepared.skip) return { status: 'skipped', said: prepared.skip };
   // `plan(db)` gives the writes over a record. A conflict (a document changed while the job ran: another job's
@@ -522,7 +540,7 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, usa
     if (plan && prepared.brief.context.refused)
       // B-449: nothing to plan (no course named, no exam ahead, no such draft): said plainly, with no ask
       answer = { text: 'I couldn’t make the plan.', failed: String(prepared.brief.context.refused).slice(0, 300) };
-    else if (plan) ({ reply, answer } = await planAsks({ spec, prepared, ask, usage, db }));
+    else if (plan) ({ reply, answer } = await planAsks({ spec, prepared, ask, usage, db, timeLeft }));
     else {
       reply = await ask(request(spec, prepared));
       answer = cutShort(reply) ? null : answerOf(reply);
@@ -556,6 +574,18 @@ export async function runJob({ db, spec, schemas, jobId, ask, write, reload, usa
   }
   const done = r.writes.find(w => w.collection === 'jobresults');
   return { status: done ? done.data.status : 'done', said: `job ${jobId}: ${r.writes.length} writes` };
+}
+
+/** B-459: an app job still running this long after it started has stopped: a study plan's Worker run ends by its
+ * 14-minute deadline (under the alarm's 15-minute wall limit), a page run within a minute or two. The same window as
+ * the page's stall rule (core studyPlanJobStalled). */
+export const STALE_MS = 20 * 60000;
+/** B-459: the app's jobs still marked running STALE_MS after they started, in a record as a run reads it: the ids, for
+ * the app to mark failed at boot (bridge.js) through its own path, so no result stays running forever. */
+export function staleRuns(db, nowMs = Date.now(), ms = STALE_MS) {
+  return (db.jobresults || [])
+    .filter(r => r && r.status === 'running' && r.source === APP_SOURCE && nowMs - Date.parse(r.startedAt || r.at) > ms)
+    .map(r => r.id);
 }
 
 /** The record as a run reads it, from {collection: {id: doc}}: {collection: [{...doc, id}]}. */

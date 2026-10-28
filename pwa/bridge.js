@@ -18,7 +18,8 @@
 //   jobs:   B-324 (D-308): a job runs here at once, through the Worker, instead of waiting on the scheduled worker. The
 //           page saves jobs/<id>, then asks to fire the worker; with no mcp that ask comes back mcp_unavailable, and the
 //           page records it on the job. For a worker kind the shim records the hand-off as made instead and runs the
-//           job (jobs.mjs, the worker's own brief, fold and checks), writing what passes through the run API.
+//           job (jobs.mjs, the worker's own brief, fold and checks), writing what passes through the run API. B-459: a
+//           study plan job instead runs in the Worker (POST /api/jobs/<id>/run, planjob.js), whatever the page does.
 (function () {
   const KEY = 'ev.token';
   const read = () => {
@@ -378,6 +379,7 @@
     await adopt(); // the notes a closed tab (or this app before a reload) left waiting
     tell();
     if (net.online && pending()) replay();
+    if (net.online) failStale();
     const refresh = () =>
       pull()
         .then(ch => {
@@ -505,7 +507,7 @@
     setVer(c, id, saved.version);
     keepCopy();
     emit(c);
-    if (job) runAppJob(id);
+    if (job) (doc.kind === 'exam-plan' ? startWorkerJob : runAppJob)(id);
   }
 
   // ---- B-404: notes offline. A save with no connection is kept in the outbox and shown at once; replay() sends the
@@ -838,6 +840,83 @@
     } finally {
       running.delete(id);
     }
+  }
+  // B-459: a study plan job (Sonnet's make and its fix ask, or a plan edit) runs in the Worker (planjob.js), whatever
+  // the page does: the page asks it to start once, and reads the result from jobresults/<id> as it does every job's.
+  // A start that never reached the Worker is tried twice more; one the Worker refused is marked failed with its reason.
+  // The Worker starts at most one run per job, so a retry never starts a second.
+  async function startWorkerJob(id) {
+    if (running.has(id)) return;
+    running.add(id);
+    try {
+      const meta = document.querySelector('meta[name="ev-release"]');
+      let r = null;
+      for (let tries = 0; tries < 3; tries++) {
+        if (tries) await new Promise(ok => setTimeout(ok, 2000 * tries));
+        try {
+          r = await api('jobs/' + encodeURIComponent(id) + '/run', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ release: meta ? meta.content : 'v4' }),
+          });
+        } catch (e) {
+          r = null;
+          continue;
+        }
+        if (r.status < 500) break;
+      }
+      if (r && !r.ok && r.status !== 409) {
+        const own = await r.json().catch(() => null);
+        const J = await import('./jobs.mjs');
+        const ctx = J.contextFor({ jobId: id, now: new Date(), release: meta ? meta.content : 'v4' });
+        const why =
+          'it couldn’t start (' +
+          String((own && own.error) || 'the Worker answered ' + r.status).slice(0, 160) +
+          '). Try again.';
+        await batch([J.statusWrite(ctx, 'failed', why)], J.asRunDb(db)).catch(() => {});
+      }
+      // while it runs, the record is read every few seconds (not every 10), so the Worker's writes reach this page soon:
+      // the running mark, then the plan and its message, and the page's own saves meet fewer documents changed since
+      if (r && r.status === 202) watchJob(id);
+    } finally {
+      running.delete(id);
+    }
+  }
+  const watching = new Set();
+  function watchJob(id) {
+    if (watching.has(id)) return;
+    watching.add(id);
+    const until = Date.now() + 15 * 60000; // past the Worker's deadline
+    const look = () =>
+      pull()
+        .then(
+          ch => ch instanceof Set && ch.forEach(emit),
+          () => {}
+        )
+        .then(() => {
+          const res = (db.jobresults || {})[id];
+          if ((res && res.status !== 'running') || Date.now() > until) watching.delete(id);
+          else setTimeout(look, 3000);
+        });
+    setTimeout(look, 1500);
+  }
+  // B-459: at boot, an app job still marked running long after it started (jobs.mjs staleRuns: a run the app or the
+  // Worker lost) is marked failed through the app's own batch, so its result never stays running forever
+  async function failStale() {
+    try {
+      const J = await import('./jobs.mjs');
+      const all = J.asRunDb(db);
+      for (const id of J.staleRuns(all)) {
+        if (running.has(id)) continue;
+        const left = db.jobresults[id];
+        const ctx = {
+          ...J.contextFor({ jobId: id, now: new Date(), release: left.release }),
+          startedAt: left.startedAt,
+        };
+        const w = J.statusWrite(ctx, 'failed', 'it stopped before it finished. Try again.');
+        await (writeLock = writeLock.catch(() => {}).then(() => batch([w], J.asRunDb(db)))).catch(() => {});
+      }
+    } catch (e) {}
   }
   let writeLock = Promise.resolve();
   async function batch(writes, seen) {

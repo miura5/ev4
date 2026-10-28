@@ -445,11 +445,13 @@ export function makeStudyPlans(core) {
         .sort((a, b) => String(b.createdAt || b.at || '').localeCompare(String(a.createdAt || a.at || '')))[0] || null
     );
   }
-  // B-456: a new plan runs in the app at once (the app writes jobresults/<id> running within seconds of the job), so a
-  // job with no result START_MS after its `at` never started, and one still running RUN_MS after it started stopped
-  // (the app was closed or lost its connection mid-run). Either no longer holds the course's guard, with no record change.
+  // B-456, B-459: a new plan runs in the Worker (pwa/planjob.js), which writes jobresults/<id> running within seconds
+  // of the page's start, so a job with no result START_MS after its `at` never started. The Worker fails a run still
+  // going at its deadline (14 minutes, under its 15-minute wall limit) with its own reason; RUN_MS waits past both, so the
+  // guard is never freed while the Worker could still be running the job, and a run still marked running then was lost
+  // by the Worker itself (the app also marks it failed at boot, pwa/jobs.mjs staleRuns). Either no longer holds the course's guard, with no record change.
   const NEW_JOB_START_MS = 2 * 60000;
-  const NEW_JOB_RUN_MS = 15 * 60000;
+  const NEW_JOB_RUN_MS = 20 * 60000;
   /** B-456: why a new-plan job (exam-plan, no revise) that is queued or running has stalled, in plain words, else null.
    *  `j` is a job view (status from jobresults/<id>, 'queued' when there is none; startedAt from it). */
   function studyPlanJobStalled(j, nowMs = Date.now()) {
@@ -459,7 +461,7 @@ export function makeStudyPlans(core) {
     if (status === 'queued' && since(j.createdAt || j.at) > NEW_JOB_START_MS)
       return 'It didn’t start: nothing came back within 2 minutes. Tap Make a plan to try again.';
     if (status === 'running' && since(j.startedAt || j.createdAt || j.at) > NEW_JOB_RUN_MS)
-      return 'It stopped before it finished (the app was likely closed while it ran). Tap Make a plan to try again.';
+      return 'It stopped before it finished. Tap Make a plan to try again.';
     return null;
   }
   /** D-362 (B-456): a new-plan job's id, the same in every tab for the course's next new plan of the day, so two tabs

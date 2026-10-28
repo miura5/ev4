@@ -12,11 +12,16 @@
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
 //   - B-398: every write (a page save here, a run API batch) stores the document in one canonical JSON form
 //     (runapi.js canonicalJson), so a Mac backup and the R2 export of the same D1 hash the same.
+//   - B-459: POST /api/jobs/<id>/run starts a study plan job's run in the Worker (planjob.js: a Durable Object per job,
+//     whose alarm runs it to its end whatever the page does) and answers 202 at once.
 import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.js';
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 import { writeProblem } from './notes.js';
 import { handleClaude } from './claude.js';
+import { startPlanJob, PlanJob } from './planjob.js';
+
+export { PlanJob };
 
 const OVERLAP_MS = 5000;
 const json = (body, status = 200) =>
@@ -142,6 +147,18 @@ export default {
     // the length cap, the token ceilings and the read-along limits set here, not by the page (D-339).
     if (url.pathname === '/api/claude' || url.pathname === '/api/claude/usage' || url.pathname === '/api/claude/limits')
       return handleClaude(request, env, url);
+
+    // B-459: a study plan job's run, started once and run in the Worker (planjob.js)
+    const jr = url.pathname.match(/^\/api\/jobs\/([^/]+)\/run$/);
+    if (jr && request.method === 'POST') {
+      let id;
+      try {
+        id = decodeURIComponent(jr[1]);
+      } catch {
+        return json({ error: 'the path is not encoded' }, 400);
+      }
+      return startPlanJob(request, env, id);
+    }
 
     return json({ error: 'no such route' }, 404);
   },

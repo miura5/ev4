@@ -43,3 +43,29 @@ workers_dev = true
 binding = "DB"
 database_name = "ev-live"
 database_id = "filled-in-by-the-pwa-live-workflow"
+
+# B-459: a study plan job runs in the Worker, in a Durable Object per job (pwa/planjob.js PlanJob) whose alarm has 15
+# minutes of wall time, whatever the page does. SQLite-backed, the kind the Workers Free plan allows. The binding is
+# given in each environment (bindings are not inherited); the migration names the class once.
+[[durable_objects.bindings]]
+name = "PLAN_JOBS"
+class_name = "PlanJob"
+
+[[env.staging.durable_objects.bindings]]
+name = "PLAN_JOBS"
+class_name = "PlanJob"
+
+[[env.live.durable_objects.bindings]]
+name = "PLAN_JOBS"
+class_name = "PlanJob"
+
+[[migrations]]
+tag = "v1-plan-jobs"
+new_sqlite_classes = ["PlanJob"]
+
+# B-459: the job runner's core modules import node:fs, node:path and node:url; in the Worker they get the same
+# stand-ins the app's browser gets (they write nothing).
+[alias]
+"node:fs" = "./node-fs.mjs"
+"node:path" = "./node-path.mjs"
+"node:url" = "./node-url.mjs"
