@@ -232,9 +232,9 @@ async function shim(env) {
     puts,
     stale: body => (stale = body),
     beforePut: fn => (beforePut = fn),
+    // the shim's focus handler is its refresh, which returns the read: awaited, never a fixed sleep (a flake under load)
     focus: async () => {
-      listeners.focus();
-      await new Promise(r => setTimeout(r, 20));
+      await listeners.focus();
     },
     data: async (c, id) => (await db.collection(c).doc(id).get()).data(),
   };
