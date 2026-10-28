@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-363",
+  "date": "Oct 28",
+  "title": "Agents never write hand-made documents into a staging or live record outside the suite collection; staging probes already written are named once in the deploy check's allowlist",
+  "why": "Oct 28: a B-449 probe job was written by hand into staging's jobs and jobresults, and the staging deploy check rightly flagged it as an unknown writer; nothing may be deleted, and jobs have no retire field. Proofs drive the app's own path (the page or the Worker job route) or write only to the suite collection. The one existing probe (job-20261028-probe-b449-tc) is listed in the check's allowlist with this decision; the check's 'E.V. app' source acceptance also requires a valid key, so a client stamping that source cannot pass.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-362",
   "date": "Oct 28",
   "title": "A new (Sonnet) study plan starts only from Matt's tap; chat words never start one; supersedes D-360's three-way router",
