@@ -2274,6 +2274,46 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-437: Enter with the caret before a heading's trailing space makes a line he can see (a block holding only
+  // spaces was drawn with no height: the caret seemed to jump to the next heading and no line appeared)
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 enter]';
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#note-body');
+    await page.keyboard.type('IM and Subcutaneous ');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Fluid Balance');
+    // both lines as headings 2, then the caret back to the first line, before its trailing space
+    for (const k of ['Home', 'ArrowUp']) await page.keyboard.press(k);
+    await page.keyboard.press('Shift+ArrowDown');
+    await page.keyboard.press((process.platform === 'darwin' ? 'Meta' : 'Control') + '+Alt+Digit2');
+    await page.keyboard.press('ArrowUp');
+    // End (as a click at the line's end) puts the caret after the last word, before the space a browser doesn't show
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await settle(page);
+    const lines = await page.evaluate(() =>
+      [...document.querySelectorAll('#note-body > .nb')].map(n => ({
+        t: n.getAttribute('data-t'),
+        text: n.textContent,
+        h: Math.round(n.getBoundingClientRect().height),
+      }))
+    );
+    const made = lines[1];
+    ok(
+      `${tag} Enter before a heading's trailing space makes a new line with height, between the two headings`,
+      lines.length === 3 && !!made && made.t === 'p' && made.h >= 18 && lines[2].text === 'Fluid Balance',
+      JSON.stringify(lines)
+    );
+    await page.screenshot({ path: path.join(shots, 'b437-enter-space-1280.png') });
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });

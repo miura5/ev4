@@ -8030,5 +8030,26 @@
    "outcome": "task",
    "at": "2026-10-27T22:57:23.089Z"
   }
+ },
+ {
+  "id": "B-437",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): In the note editor, pressing Enter at the end of some lines (headings of any level, and other formats) sometimes makes no visible new line: the caret just moves to the start of the next line. It happens inconsistently.",
+  "dod": "Enter at the visual end of a line whose text ends in a space makes a new line with height; the notes harness reproduces the old zero-height line and passes with the fix; npm test and smoke green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27 (screen recording)",
+  "words": "In the note editor, pressing Enter at the end of some lines (headings of any level, and other formats) sometimes makes no visible new line: the caret just moves to the start of the next line. It happens inconsistently.",
+  "reportedAt": "2026-10-28T00:45:22.282Z",
+  "board": {
+   "row": "v4 B-437: In the note editor, pressing Enter at the end of some lines (headings…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T00:45:22.573Z"
+  }
  }
 ]
