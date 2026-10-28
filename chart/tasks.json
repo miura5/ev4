@@ -8291,7 +8291,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: generation built and tested (settings/study-plan, section, make on Sonnet with one fix ask, edit as a Haiku patch per D-356, Worker purposes per D-355, planDay refs and minutes, chat routing); npm test and smoke green; staging proof next",
+  "notes": "builder (52499fb, c0f4603): D-357 tags. Each task's tag is one of graded, learn, practice, review, clinical-prep or skills-prep, an enum in the make answer and the edit patch. Code sets graded on a ref to a dated graded item and turns a reading tagged practice into learn. The tag reaches Today through planDay as LEARN, SKILLS PREP and so on, and Today has the Learn and Skills prep badges. The brief and the spec copy list the set. The route to a new plan now also takes a rewrite of a bad plan, plan from today and cram plans. npm test 874 pass, 0 fail. Staging plan job with usage read back is next (the manager)",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",
