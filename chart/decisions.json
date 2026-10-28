@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-354",
+  "date": "Oct 27",
+  "title": "B-449 (study plans) is an exception to the phase plan: built now, at top priority",
+  "why": "Matt's call (Oct 27): a structured exam study plan is the core of his study workflow and E.V. feels shallow without it. The plan instructions are his to edit (a Study setting seeded with docs/study-plan-brief.md), not hard-coded; the agent reads them with the course's records and asks him what it lacks. Not over-engineered: one or a few tasks.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-353",
   "date": "Oct 27",
   "title": "A note's session counts writing time: it counts up, pauses after 2 idle minutes, and saves itself after 60 paused minutes",
