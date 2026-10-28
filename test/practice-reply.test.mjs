@@ -178,7 +178,7 @@ test('B-446 (review): a mended set holds only the schema fields and validates as
   assert.equal(makeValidator(schemas)('sets', raw, { id: 'more-2026-10-28-1' }).ok, false);
 });
 
-test('B-453: columns that differ only by a symbol match on exact text, else the question is refused', () => {
+test('B-453: columns that differ only by a symbol match on exact or folded text, symbols kept, else are refused', () => {
   const N = EV.practiceReply.normalizeItem;
   const grid = (columns, keys) =>
     N({
@@ -195,30 +195,42 @@ test('B-453: columns that differ only by a symbol match on exact text, else the 
   assert.deepEqual(keyed(grid(['↑', '↓', 'No change'], ['↑', ' ↓ ', 'No change'])), [0, 1, 2]);
   assert.deepEqual(keyed(grid(['> 5', '< 5'], ['< 5', '> 5', '< 5'])), [1, 0, 1]);
   assert.deepEqual(keyed(grid(['Rh+', 'Rh-'], ['Rh-', 'Rh+', 'Rh-'])), [1, 0, 1]);
-  // no exact match, and the words name more than one column: refused, never the first column
+  // folded for case, spacing and trailing punctuation, the symbols kept: the same choice still matches
+  assert.deepEqual(keyed(grid(['> 5', '< 5'], ['>5', '<  5', '< 5'])), [0, 1, 1]);
+  assert.deepEqual(keyed(grid(['Rh+', 'Rh-'], ['rh-', 'RH+', 'Rh-.'])), [1, 0, 1]);
+  assert.deepEqual(keyed(grid(['↑', '↓', 'No change'], [' ↓ ', 'no  change', 'No change.'])), [1, 2, 2]);
+  assert.deepEqual(N({ options: ['Hypokalemia', 'Hyperkalemia'], correct: ['hyperkalemia.'] }).correct, [1]);
+  assert.deepEqual(N({ options: ['Hyperkalemia.', 'Hypokalemia'], correct: ['hyperkalemia'] }).correct, [0]);
+  assert.deepEqual(N({ options: ['> 5', '< 5', '= 5'], correct: ['< 5'] }).correct, [1]);
+  // words that name no column, or more than one: refused, the row left as written
   for (const [cols, keys] of [
     [
       ['↑', '↓', 'No change'],
       ['up', '↓', '↓'],
-    ], // "up" names no column
-    [
-      ['> 5', '< 5'],
-      ['>5', '< 5', '< 5'],
     ],
     [
-      ['Rh+', 'Rh-'],
-      ['rh-', 'Rh+', 'Rh-'],
+      ['No change', 'no change.', '↑'],
+      ['NO CHANGE', '↑', '↑'],
     ],
   ]) {
     const q = grid(cols, keys);
     assert.equal(usable(q), false, JSON.stringify(keys));
     assert.equal(keyed(q)[0], keys[0], 'the unreadable row is left as written, never keyed to a column');
   }
-  // options alike: "> 5" names its own option, ">5" names both and is refused
-  assert.deepEqual(N({ options: ['> 5', '< 5', '= 5'], correct: ['< 5'] }).correct, [1]);
-  assert.deepEqual(N({ options: ['> 5', '< 5', '= 5'], correct: ['>5'] }).correct, ['>5']);
-  // words that name one choice still read as before
-  assert.deepEqual(N({ options: ['Hypokalemia', 'Hyperkalemia'], correct: ['hyperkalemia.'] }).correct, [1]);
+  // a key whose own symbol contradicts the one choice its words name is refused (the review's inputs), as an option
+  // and as a matrix row
+  const single = (options, correct) =>
+    N({ type: 'single', stem: stem(1), options, correct, rationales: options.map(() => 'why'), cjStep: 'take-action' });
+  for (const [options, correct] of [
+    [['↑ potassium', 'No change'], ['↓ potassium']],
+    [['Rh-', 'Unknown'], ['Rh+']],
+    [['< 0.5 mL/kg/h', 'Normal'], ['> 0.5 mL/kg/h']],
+  ]) {
+    const q = single(options, correct);
+    assert.deepEqual(q.correct, correct, JSON.stringify(correct));
+    assert.equal(EV.validateItem({ ...q, id: 'x' }).ok, false, JSON.stringify(correct));
+    assert.equal(usable(grid(options, [correct[0], options[1], options[1]])), false, 'matrix ' + correct[0]);
+  }
 });
 
 test('B-453: a numeric answer or tolerance written as a string becomes the number it says', () => {

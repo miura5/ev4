@@ -326,12 +326,18 @@ export function makeItemKinds(core) {
     if (Number.isInteger(x)) return x; // the asked shape: an index, as written
     if (typeof x !== 'string') return null;
     const s = x.trim();
-    // B-453: the exact words first; then the words without symbols, only when they name one choice (columns ↑ and ↓,
-    // > 5 and < 5, Rh+ and Rh- are the same words, so a value naming either is refused, never keyed to the first)
+    // B-453: the exact words first; then the words folded for case, spacing and trailing punctuation, symbols kept
+    // (↑ and ↓, > and <, Rh+ and Rh- stay apart, so "↓ potassium" never names "↑ potassium"), and only when they name
+    // one choice: anything else is refused, never guessed
     const named = same =>
       choices.flatMap((c, i) => ((typeof c === 'string' || typeof c === 'number') && same(c) ? [i] : []));
+    const fold = t =>
+      String(t)
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/[.,;:!?]+$/, '');
     let hits = named(c => String(c).trim() === s);
-    if (!hits.length && norm(s)) hits = named(c => norm(c) === norm(s));
+    if (!hits.length && fold(s)) hits = named(c => fold(c) === fold(s));
     if (hits.length > 1) return null;
     const byText = hits.length ? hits[0] : -1;
     let byPlace = null;
