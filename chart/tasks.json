@@ -8371,9 +8371,9 @@
   "id": "B-453",
   "kind": "bug",
   "title": "Bug (reported Oct 27): A Quiz me matrix question whose columns differ only by a symbol, such as up and down arrows, is saved with every row keyed to the first column instead of being refused.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "answerIndex refuses a matrix row (or option) whose word-normalized text matches more than one choice, so columns that differ only by a symbol (up/down arrows, > 5 vs < 5, Rh+ vs Rh-) are matched on exact text or the question is refused, never keyed to the first column; tests cover those three column sets and normalizeItem's numeric branch (a string answer or tolerance turned into a number); npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8383,6 +8383,10 @@
   "reportedAt": "2026-10-28T03:53:14.190Z",
   "board": {
    "row": "v4 B-453: A Quiz me matrix question whose columns differ only by a symbol, such…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T03:53:33.106Z"
   }
  }
 ]
