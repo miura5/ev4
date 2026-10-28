@@ -271,7 +271,7 @@ export const AGENT_FOLDS = {
     } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
       // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
       const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);
-      const r = EV.applyPlanPatch(draft, answer);
+      const r = EV.applyPlanPatch(draft, answer, { dates: EV.liveDates(db.dates || [], db.dateedits || []) });
       const planId = EV.nextPlanId(db.plans || [], draft.exam || draft.id);
       if (r.skipped) result.text += ` (${r.skipped} of the changes named no task in the plan, so I left them out.)`;
       saved(planId, r.plan, r.plan.days.length);

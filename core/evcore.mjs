@@ -1314,6 +1314,8 @@ const EVCore = (() => {
     clinical: 'CLINICAL PREP',
     val: 'VALIDATION PREP',
   };
+  // D-357: a study plan's tag (it has a section) on Today: graded -> GRADED ... clinical-prep -> CLINICAL PREP
+  const planTag = (p, t) => (!p.section && PLAN_TAG_LABELS[t.tag]) || String(t.tag).replace('-', ' ').toUpperCase();
 
   // ---------------------------------------------------------------- day plan (budget in minutes across both courses)
   // Fixed items (D-086): his own time, never E.V.'s study budget.
@@ -1466,17 +1468,19 @@ const EVCore = (() => {
         }
         const done = taskDone(p, { ...t, date }, date, sets, answers);
         const fixed = FIXED_KINDS.includes(t.kind);
-        const cutRank = fixed ? 99 : PLAN_CUT[t.kind] || 20;
+        const tag = t.tag ? planTag(p, t) : t.kind === 'reading' ? 'READING' : null;
+        const graded = !!p.section && tag === 'GRADED'; // D-357: a study plan's graded work is never cut for the budget
+        const cutRank = fixed || graded ? 99 : PLAN_CUT[t.kind] || 20;
         const optional = /^optional\b|^only if\b|^if\b/i.test(t.text);
         const own = Number.isInteger(t.minutes) && t.minutes >= 0; // B-449: the plan's own estimate
         add({
           id: 'plan-' + t.id,
           kind: t.kind,
           title: t.text,
-          tag: t.tag ? PLAN_TAG_LABELS[t.tag] || t.tag.toUpperCase() : t.kind === 'reading' ? 'READING' : null,
+          tag,
           minutes: done ? 0 : own ? t.minutes : fixed ? 0 : M[t.kind] != null ? M[t.kind] : M.other,
-          required: ['graded', 'clinical', 'exam'].includes(t.kind),
-          cut: optional ? 5 : cutRank,
+          required: graded || ['graded', 'clinical', 'exam'].includes(t.kind),
+          cut: optional && !graded ? 5 : cutRank,
           done,
           plan: p.exam,
           taskId: t.id,

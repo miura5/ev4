@@ -94,10 +94,12 @@
       'ATI REVIEW': 'plum',
       PRACTICE: 'info',
       READING: 'ok',
+      LEARN: 'ok', // D-357: a study plan's Learn
       CLINICAL: 'ok',
       'CLINICAL PREP': 'ok',
       VALIDATION: 'warn',
       'VALIDATION PREP': 'warn',
+      'SKILLS PREP': 'warn',
       CANVAS: 'info',
       NOTES: '',
     };
@@ -112,12 +114,14 @@
       DRILL: ['Study', 'x-violet'],
       SKILLS: ['Practice', 'x-violet'],
       READING: ['Reading', ''],
+      LEARN: ['Learn', ''], // D-357: a study plan's badges are Graded, Learn, Practice, Review, Clinical prep, Skills prep
       NOTES: ['Note', 'x-blue'], // B-369: the demo's badge reads Note
       CANVAS: ['Canvas', 'x-blue'],
       CLINICAL: ['Clinical', ''],
       'CLINICAL PREP': ['Clinical prep', ''],
       VALIDATION: ['Validation', ''],
       'VALIDATION PREP': ['Validation prep', ''],
+      'SKILLS PREP': ['Skills prep', ''],
       GRADED: ['Graded', 'x-quiet'],
     };
     // When graded work on the list is due: its calendar entry (date-, soon-), else the graded date it names.
@@ -445,6 +449,7 @@
      */
     const LIST_KIND_OF = {
       READING: 'reading',
+      LEARN: 'reading',
       PRACTICE: 'practice',
       REVIEW: 'review',
       NOTES: 'notes',
@@ -963,7 +968,16 @@
     }
     // B-335 (D-312): the demo's filter, All / Classes / Study with the count of open rows in each. Study is the work on
     // weak spots and practice (review, practice, notes); everything else on the list is the classes' own.
-    const STUDY_TAGS = new Set(['REVIEW', 'ATI REVIEW', 'PRACTICE', 'NOTES', 'DRILL', 'SKILLS']);
+    const STUDY_TAGS = new Set([
+      'REVIEW',
+      'ATI REVIEW',
+      'PRACTICE',
+      'NOTES',
+      'DRILL',
+      'SKILLS',
+      'LEARN',
+      'SKILLS PREP',
+    ]);
     const catOf = it => (STUDY_TAGS.has(it.tag) ? 'study' : 'class');
     const FILTERS = [
       ['all', 'All'],

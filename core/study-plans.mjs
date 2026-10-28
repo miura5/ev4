@@ -21,6 +21,9 @@ export function makeStudyPlans(core) {
     taskDone,
     editBase,
   } = core;
+  /** D-357: a study plan task's one tag, from this set (the answer shapes hold the same enum); planDay shows each on
+   * Today upper-cased with its dash a space (GRADED ... CLINICAL PREP, SKILLS PREP). */
+  const TAGS = ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
 
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   /** A course name as compared: letters and digits only, any case, so spacing and dashes never split a course. */
@@ -303,9 +306,34 @@ export function makeStudyPlans(core) {
     };
   }
 
-  // D-356 (B-449): words that ask for a new plan, and words that name a change to the one he has
-  const NEW_WORDS =
-    /\b(new (study )?(plan|one|schedule)|cram|remake|redo|start(ing)? over|from scratch|from today|fresh (plan|start)|another plan|rebuild|re-?plan)\b/i;
+  // D-356 (B-449): words that ask for a new plan (a remake of a bad one, a plan from today, a cram plan), and words
+  // that name a change to the one he has. New words win: "rewrite it and add labs" is a new plan.
+  const NEW_WORDS = new RegExp(
+    '\\b(' +
+      [
+        'new (study )?(plan|one|schedule)',
+        'cram(ming)?(?! (session|block|slot|hour|day))', // a cram plan, not a cram session added to the plan
+        're-?make',
+        're-?do',
+        're-?write',
+        're-?work',
+        're-?build',
+        're-?plan',
+        'start(ing)? (over|again|fresh)',
+        'from scratch',
+        'fresh (plan|start)',
+        'another plan',
+        'scrap',
+        'throw (it|this|that) (out|away)',
+        '(plan|start|starting|begin|beginning) (from )?(today|now|tonight)',
+        'from (today|now|tonight)',
+        'plan (is|was|looks|seems) (bad|terrible|awful|useless|weak|not good|no good)',
+        '(it|this|that) (is|was) (bad|terrible|awful|useless)',
+        '(bad|terrible|awful|useless|weak) plan',
+      ].join('|') +
+      ')\\b',
+    'i'
+  );
   const CHANGE_WORDS =
     /\b(move|swap|add|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
   /** The question asked when his words don't say which (D-356). */
@@ -418,8 +446,28 @@ export function makeStudyPlans(core) {
     return [...by.values()].filter(d => d.tasks.length).sort((a, b) => a.date.localeCompare(b.date));
   }
   /**
+   * D-357: the tags code settles after the model answers, in place: a task whose ref is a dated graded item is graded,
+   * whatever the model said; a reading task (a preview or a full read) tagged practice is learn. `dates` are the dated
+   * items the refs name ({id, graded}). The number of tasks changed.
+   */
+  function settlePlanTags(days, dates) {
+    const graded = new Set((dates || []).filter(d => d && d.graded === true).map(d => 'dates/' + d.id));
+    let changed = 0;
+    for (const d of days || [])
+      for (const t of d.tasks || []) {
+        const want =
+          t.ref && graded.has(t.ref) ? 'graded' : t.kind === 'reading' && t.tag === 'practice' ? 'learn' : null;
+        if (want && t.tag !== want) {
+          t.tag = want;
+          changed++;
+        }
+      }
+    return changed;
+  }
+  /**
    * The plans/<id> fields from a plan the model made (B-449): the section and exam are code's, days outside the window
-   * and refs to dated items the record lacks are left out, task ids made unique. {plan, dropped}.
+   * and refs to dated items the record lacks are left out, task ids made unique, the tags settled (D-357).
+   * {plan, dropped, retagged}.
    */
   function studyPlanDoc(plan, { section, dates, spec, openQuestions, score, instructions }) {
     const R = rulesOf(spec);
@@ -441,6 +489,7 @@ export function makeStudyPlans(core) {
         }),
       });
     }
+    const retagged = settlePlanTags(days, dates);
     const keyDates = ((plan && plan.keyDates) || []).map(k => {
       const { ref, ...rest } = k;
       return ref && (known.has(ref) || /^exams\//.test(ref)) ? { ...rest, ref } : rest;
@@ -458,6 +507,7 @@ export function makeStudyPlans(core) {
         ...(instructions ? { instructions } : {}),
       },
       dropped,
+      retagged,
     };
   }
 
@@ -465,9 +515,10 @@ export function makeStudyPlans(core) {
    * D-356: an edit ask's patch applied to the draft, making the next draft's fields: each op in turn (add {date,
    * task}, edit {id, set}, move {id, date}, remove {id}); keyDates and openQuestions replaced when the patch gives them.
    * Every task the patch does not name stays exactly as it was. The baseline score is kept, marked edited since
-   * scoring. An op naming no task of the draft is left out and counted. {plan, applied, skipped}.
+   * scoring. An op naming no task of the draft is left out and counted. The tags are settled over `dates` (D-357).
+   * {plan, applied, skipped, retagged}.
    */
-  function applyPlanPatch(draft, patch) {
+  function applyPlanPatch(draft, patch, { dates = [] } = {}) {
     const clone = v => JSON.parse(JSON.stringify(v));
     const days = clone(draft.days || []).map(d => ({ ...d, tasks: d.tasks || [] }));
     const find = id => {
@@ -508,6 +559,7 @@ export function makeStudyPlans(core) {
       }
       applied++;
     }
+    const retagged = settlePlanTags(days, dates);
     const { id, writer, at, source, schema, revises, ...keep } = clone(draft);
     return {
       plan: {
@@ -520,6 +572,7 @@ export function makeStudyPlans(core) {
       },
       applied,
       skipped,
+      retagged,
     };
   }
 
@@ -549,7 +602,8 @@ export function makeStudyPlans(core) {
   }
 
   return {
-    STUDY_PLAN_TAGS: ['GRADED', 'PRACTICE', 'REVIEW', 'COMMITMENT PREP', 'SKILLS PREP'],
+    STUDY_PLAN_TAGS: TAGS,
+    settlePlanTags,
     studyPlanRules: rulesOf,
     studyPlanInstructions,
     studyPlanSettingsWrite,

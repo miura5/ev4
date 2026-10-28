@@ -13,7 +13,7 @@ import * as J from '../pwa/jobs.mjs';
 import { jobReply, PLANTS } from '../pwa/job-stub.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 import { loadSchemas } from '../core/schemas.mjs';
-import { makeValidator } from '../core/validate.mjs';
+import { makeValidator, validateAgainst } from '../core/validate.mjs';
 import worker from '../pwa/worker.js';
 import { tokensOf, purposeOf } from '../pwa/claude.js';
 
@@ -205,7 +205,7 @@ test('B-449: making a plan asks Sonnet once by purpose, with his instructions an
   assert.equal(plan.data.instructions, 'settings');
   assert.equal(plan.data.days[0].date, TODAY, 'a new plan starts today');
   const t2 = plan.data.days[0].tasks.find(t => t.id === 't2');
-  assert.deepEqual([t2.ref, t2.tag, t2.minutes, t2.doneWhen], ['dates/synthetic-ati', 'GRADED', 45, 'submitted']);
+  assert.deepEqual([t2.ref, t2.tag, t2.minutes, t2.doneWhen], ['dates/synthetic-ati', 'graded', 45, 'submitted']);
   assert.equal(plan.data.score.total, 88);
   assert.ok(plan.data.openQuestions.length);
   const res = writes.find(w => w.collection === 'jobresults' && w.data.status === 'done');
@@ -442,6 +442,23 @@ test('D-356: the chat’s choice: a change is a patch, new words a new plan from
   const ask = EV.studyPlanRoute('what about my plan for E4', { hasPlan: true });
   assert.deepEqual(ask, { route: 'ask', question: 'Change the current plan, or make a new one from today?' });
   assert.equal(EV.studyPlanRoute('move the drill', { hasPlan: false }).route, 'new', 'no plan yet: a new one');
+  // a rewrite of a bad plan, a plan from today and a cram plan are each a new plan (Sonnet), never a patch
+  for (const w of [
+    'this plan is bad, rewrite it',
+    'rewrite my E4 plan',
+    'the plan looks terrible',
+    'scrap it and plan from today',
+    'plan from today please',
+    'I need a plan starting today',
+    'make it start from now',
+    'cram plan for E4, add the labs too',
+    'I need to cram for the exam',
+    'cramming mode for Monday',
+    'redo the whole thing',
+  ])
+    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
+  for (const w of ['add a cram session on Sunday', 'make Thursday lighter', 'swap the drill and the preview'])
+    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'change', w);
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
   assert.match(chat, /E\.studyPlanRoute\(words, \{ hasPlan: !!cur \}\)/, 'the chat’s start_job routes through it');
   assert.match(chat, /job\.revise = cur\.id/);
@@ -575,7 +592,7 @@ test('B-449: planDay takes a plan task’s minutes and doneWhen; a ref to today�
           {
             id: 'p1',
             text: 'Preview Ch 40 headings',
-            tag: 'PRACTICE',
+            tag: 'learn',
             kind: 'reading',
             minutes: 25,
             doneWhen: '5 terms listed',
@@ -583,7 +600,7 @@ test('B-449: planDay takes a plan task’s minutes and doneWhen; a ref to today�
           {
             id: 'p2',
             text: 'Take it in the testing window',
-            tag: 'GRADED',
+            tag: 'graded',
             kind: 'graded',
             minutes: 30,
             doneWhen: 'submitted',
@@ -592,13 +609,13 @@ test('B-449: planDay takes a plan task’s minutes and doneWhen; a ref to today�
           {
             id: 'p3',
             text: 'Attend and mark what is stressed',
-            tag: 'PRACTICE',
+            tag: 'learn',
             kind: 'other',
             minutes: 50,
             doneWhen: 'notes taken',
             ref: 'dates/lec-9',
           },
-          { id: 'p4', text: 'Skills: first look', tag: 'SKILLS PREP', kind: 'val', minutes: 0, doneWhen: 'watched' },
+          { id: 'p4', text: 'Skills: first look', tag: 'skills-prep', kind: 'val', minutes: 0, doneWhen: 'watched' },
         ],
       },
     ],
@@ -628,7 +645,7 @@ test('B-449: planDay takes a plan task’s minutes and doneWhen; a ref to today�
       {
         date: '2026-11-03',
         tasks: [
-          { id: 'x1', text: 'Sit it', tag: 'GRADED', kind: 'exam', minutes: 90, doneWhen: 'done', ref: 'dates/exam-d' },
+          { id: 'x1', text: 'Sit it', tag: 'graded', kind: 'exam', minutes: 90, doneWhen: 'done', ref: 'dates/exam-d' },
         ],
       },
     ],
@@ -643,4 +660,166 @@ test('B-449: planDay takes a plan task’s minutes and doneWhen; a ref to today�
   });
   assert.equal(x.blocks.filter(b => b.kind === 'exam').length, 1);
   assert.deepEqual(x.blocks.find(b => b.kind === 'exam').planTasks, ['x1']);
+});
+
+// ---------------------------------------------------------------- D-357: one tag per task, from a fixed set
+const TAG_IDS = ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
+const examPlan = spec.jobs.kinds['exam-plan'];
+const answerTask = (over = {}) => ({
+  id: 'x',
+  text: 'Preview Ch 40',
+  tag: 'learn',
+  kind: 'reading',
+  minutes: 20,
+  doneWhen: 'skimmed',
+  ...over,
+});
+const planAnswer = tasks => ({
+  text: 'A plan.',
+  plan: {
+    exam: 'E4',
+    title: 'E4 plan',
+    section: { course: 'NUR 112', from: TODAY, to: '2026-10-27' },
+    days: [{ date: TODAY, tasks }],
+  },
+  score: { criteria: [5, 5, 5, 5, 5, 5, 5, 5], total: 100 },
+});
+
+test('D-357: a task’s tag is one of graded, learn, practice, review, clinical-prep, skills-prep: the answer shapes and the instructions hold the set', () => {
+  assert.deepEqual(EV.STUDY_PLAN_TAGS, TAG_IDS);
+  const ops = examPlan.edit.output.properties.ops.items.properties;
+  for (const s of [
+    examPlan.output.properties.plan.properties.days.items.properties.tasks.items.properties.tag,
+    ops.task.properties.tag,
+    ops.set.properties.tag,
+  ])
+    assert.deepEqual(s, { enum: TAG_IDS });
+  const shape = examPlan.output;
+  assert.ok(validateAgainst(shape, planAnswer([answerTask()])).ok);
+  for (const bad of ['PRACTICE', 'COMMITMENT PREP', 'commitment-prep', 'reading', 'Learn'])
+    assert.ok(!validateAgainst(shape, planAnswer([answerTask({ tag: bad })])).ok, `${bad} is refused`);
+  const patch = tag => ({ text: 'ok', ops: [{ op: 'edit', id: 'x', set: { tag } }] });
+  assert.ok(validateAgainst(examPlan.edit.output, patch('skills-prep')).ok);
+  assert.ok(!validateAgainst(examPlan.edit.output, patch('SKILLS PREP')).ok);
+  // the stored plan holds only what the shape allowed (plans.schema leaves tag free: an exam plan page's legend
+  // keeps its own tags, and the page's spec budget has no room for a second copy of the set)
+  // the built-in instructions and the guide tell the model the set, with Learn for previews, lectures and full reads
+  const brief = fs.readFileSync(path.join(ROOT, 'docs/study-plan-brief.md'), 'utf8');
+  for (const t of TAG_IDS) assert.match(brief, new RegExp(`^- ${t} \\(`, 'm'), t);
+  assert.doesNotMatch(brief, /COMMITMENT PREP/);
+  assert.match(brief, /^- learn \(Learn\): [^\n]*previews, lectures, full reads/m);
+  assert.match(brief, /^- clinical-prep \(Clinical prep\)/m);
+  for (const t of TAG_IDS) assert.ok(examPlan.guide.includes(t), `the guide names ${t}`);
+});
+
+test('D-357: code sets graded on a task whose ref is a dated graded item, whatever the model said; a reading tagged practice is learn', async () => {
+  const db = record();
+  const reply = body => {
+    const rep = jobReply(body);
+    const plan = rep.content[0].input.plan;
+    plan.days[0].tasks = [
+      answerTask({ id: 'pre', tag: 'practice' }), // a preview the model called practice
+      answerTask({ id: 'ati', text: 'ATI module', tag: 'review', kind: 'other', ref: 'dates/synthetic-ati' }),
+      answerTask({ id: 'q', text: 'Quiz early', tag: 'learn', kind: 'other', ref: 'dates/demo-quiz' }),
+      answerTask({ id: 'lab', text: 'Pre-lab', tag: 'skills-prep', kind: 'other', ref: 'dates/bio-lab-oct26' }),
+      answerTask({ id: 'drill', text: '15 questions', tag: 'practice', kind: 'drill' }),
+    ];
+    return rep;
+  };
+  const { r, writes } = await run(db, { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply });
+  assert.equal(r.status, 'done', r.said);
+  const saved = writes.find(w => w.collection === 'plans');
+  assert.ok(validate('plans', saved.data, { id: saved.id }).ok);
+  const tag = id => saved.data.days[0].tasks.find(t => t.id === id).tag;
+  assert.equal(tag('ati'), 'graded', 'a ref to graded work is graded');
+  assert.equal(tag('q'), 'graded');
+  assert.equal(tag('lab'), 'skills-prep', 'a ref to an ungraded item keeps the model’s tag');
+  assert.equal(tag('pre'), 'learn', 'a preview is never practice');
+  assert.equal(tag('drill'), 'practice');
+  assert.ok(saved.data.days.every(d => d.tasks.every(t => TAG_IDS.includes(t.tag))));
+  // an edit's patch is settled the same way, over the record's dates
+  const draft = { ...saved.data, id: saved.id };
+  const next = EV.applyPlanPatch(
+    draft,
+    {
+      ops: [
+        { op: 'edit', id: 'ati', set: { tag: 'review' } },
+        { op: 'add', date: TODAY, task: answerTask({ id: 'n', tag: 'learn', kind: 'other', ref: 'dates/demo-quiz' }) },
+        { op: 'edit', id: 'drill', set: { tag: 'review' } },
+      ],
+    },
+    { dates: EV.liveDates(db.dates, db.dateedits) }
+  );
+  const after = id => next.plan.days[0].tasks.find(t => t.id === id).tag;
+  assert.deepEqual([after('ati'), after('n'), after('drill')], ['graded', 'graded', 'review']);
+  assert.equal(next.retagged, 2);
+  // and through the job: the worker passes the record's dates to the patch
+  const db2 = await withDraft();
+  const forced = body => ({
+    content: [
+      {
+        type: 'tool_use',
+        id: 'tu',
+        name: 'answer',
+        input: { text: 'Changed.', ops: [{ op: 'edit', id: 't2', set: { tag: 'practice' } }] },
+      },
+    ],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 10, output_tokens: 10 },
+  });
+  const e = await run(db2, { title: 'Plan changes', brief: 'make t2 practice', revise: 'E4-2' }, { reply: forced });
+  assert.equal(e.r.status, 'done', e.r.said);
+  const p3 = e.writes.find(w => w.collection === 'plans');
+  assert.equal(p3.data.days[0].tasks.find(t => t.id === 't2').tag, 'graded');
+});
+
+test('D-357: the tag reaches Today through planDay with the task’s other fields, by its display name', () => {
+  const date = '2026-11-02';
+  const tasks = TAG_IDS.map((tag, i) => ({
+    id: 'k' + i,
+    text: `Task ${tag}`,
+    tag,
+    kind: tag === 'learn' ? 'reading' : 'other',
+    minutes: 15 + i,
+    doneWhen: `${tag} done`,
+  }));
+  const plan = {
+    id: 'E5-2',
+    exam: 'E5',
+    section: { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' },
+    days: [{ date, tasks }],
+  };
+  const d = EV.planDay({ date, dates: [], exams: [], plans: [plan], weakspots: [], objectives: [] });
+  const list = EV.buildDayList(d, {});
+  const item = i => list.items.find(x => x.id === 'plan-k' + i);
+  assert.deepEqual(
+    TAG_IDS.map((_, i) => item(i).tag),
+    ['GRADED', 'LEARN', 'PRACTICE', 'REVIEW', 'CLINICAL PREP', 'SKILLS PREP']
+  );
+  for (const [i, t] of tasks.entries()) {
+    assert.equal(item(i).minutes, t.minutes, 'its minutes');
+    assert.equal(item(i).doneWhen, t.doneWhen, 'its doneWhen');
+    assert.equal(item(i).ref, 'plans/E5#' + t.id, 'its ref');
+  }
+  const graded = d.blocks.find(b => b.id === 'plan-k0');
+  assert.deepEqual([graded.required, graded.cut], [true, 99], 'graded work is never cut for the budget');
+  // an exam plan page's legend is unchanged: its review is ATI review
+  const page = {
+    id: 'E4',
+    exam: 'E4',
+    days: [{ date, tasks: [{ id: 'r', text: 'ATI', tag: 'review', kind: 'review' }] }],
+  };
+  const pd = EV.planDay({ date, dates: [], exams: [], plans: [page], weakspots: [], objectives: [] });
+  assert.equal(pd.blocks.find(b => b.id === 'plan-r').tag, 'ATI REVIEW');
+  // Today shows each by its display name
+  const today = fs.readFileSync(path.join(ROOT, 'page/app/10-today.js'), 'utf8');
+  for (const [k, name] of [
+    ['GRADED', 'Graded'],
+    ['LEARN', 'Learn'],
+    ['PRACTICE', 'Practice'],
+    ['REVIEW', 'Review'],
+    ["'CLINICAL PREP'", 'Clinical prep'],
+    ["'SKILLS PREP'", 'Skills prep'],
+  ])
+    assert.match(today, new RegExp(`^\\s+${k}: \\['${name}',`, 'm'), name);
 });

@@ -114,12 +114,13 @@ For each exam section:
 - **Scope map or objectives map.**
 - **Open questions.**
 
-**Tags:**
-- GRADED: due or tested
-- PRACTICE: drills and practice exams
-- REVIEW: reopen finished work
-- COMMITMENT PREP: clinical or work days
-- SKILLS PREP: checkoffs and practicals
+**Tags** (each task has exactly one, written as its id):
+- graded (Graded): the graded work itself, due or tested
+- learn (Learn): first exposure and understanding: previews, lectures, full reads. Never Practice
+- practice (Practice): retrieval: drills, terminology, timed practice exams
+- review (Review): reopen finished work: second-pass drills on misses, weak spots, the taper's review
+- clinical-prep (Clinical prep): clinical or work days: the night-before prep and the reflection after
+- skills-prep (Skills prep): checkoffs and practicals: each rung of the skills ladder
 
 Remember checkmarks per task, and open on today's date. Keep wording plain and short.
 

@@ -58,7 +58,7 @@ function studyPlanAnswer(brief, later) {
             {
               id: 't1',
               text: 'Preview the next chapter: headings, figures, bold terms',
-              tag: 'PRACTICE',
+              tag: 'learn',
               kind: 'reading',
               minutes: 30,
               doneWhen: 'every heading skimmed and 5 terms listed',
@@ -68,7 +68,7 @@ function studyPlanAnswer(brief, later) {
                   {
                     id: 't2',
                     text: dated.title,
-                    tag: 'GRADED',
+                    tag: 'graded',
                     kind: dated.graded ? 'graded' : 'other',
                     minutes: 45,
                     doneWhen: 'submitted',
@@ -85,7 +85,7 @@ function studyPlanAnswer(brief, later) {
             {
               id: 't3',
               text: 'Light review, early night',
-              tag: 'REVIEW',
+              tag: 'review',
               kind: 'review',
               minutes: 20,
               doneWhen: 'in bed by 10',
@@ -122,7 +122,7 @@ function planEditAnswer(brief) {
         task: {
           id: 'stub-new',
           text: 'Stub: 10 terms',
-          tag: 'PRACTICE',
+          tag: 'practice',
           kind: 'terminology',
           minutes: 10,
           doneWhen: '10 cards',
