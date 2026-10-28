@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-356",
+  "date": "Oct 27",
+  "title": "Plan edits are cheap patches on Haiku; only a new or remade plan uses Sonnet",
+  "why": "Matt's call (Oct 27), amending D-355: the first plan gets Sonnet's judgment with the full course context, self-score and fix pass; his later change requests go to Haiku with the current draft and his words only, return a patch code applies (untouched tasks stay identical), re-send no course materials unless needed, keep the baseline score marked edited since scoring, and read the draft from cache.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-355",
   "date": "Oct 27",
   "title": "Study plans use Sonnet; every other Claude ask stays on Haiku",
