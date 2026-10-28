@@ -1304,11 +1304,14 @@
       ]
         .filter(Boolean)
         .join('\n');
-      const res = await sample.json(prompt, { modelTier: 'default', cache: false });
-      const fresh = (res && Array.isArray(res.items) ? res.items : [])
+      const res = await askItems(prompt);
+      const fresh = E.practiceReply
+        .replyItems(res)
+        .map(E.practiceReply.normalizeItem)
         .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }))
         .filter(q => E.validateItem(q).ok && refs.has(q.sourceRef));
       if (!fresh.length) {
+        unusable(res, refs);
         out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';
         say('That batch came back without usable numbers, so I binned it. Ask again in a moment.');
         return false;
@@ -1341,6 +1344,26 @@
       }
       render();
       return true;
+    }
+    /** B-446: a practice ask; a reply cut short or wrapped in words keeps every whole question it holds. */
+    async function askItems(prompt) {
+      try {
+        return await sample.json(prompt, { modelTier: 'default', cache: false });
+      } catch (e) {
+        if (e && e.code === 'invalid_json' && e.text) return { items: E.practiceReply.salvageItems(e.text) };
+        throw e;
+      }
+    }
+    /** B-446: why a batch held nothing usable, in the console for the next look (counts and checks, no question text). */
+    function unusable(res, refs) {
+      const items = E.practiceReply.replyItems(res).map(E.practiceReply.normalizeItem);
+      console.warn(
+        'E.V. practice: nothing usable in ' + items.length + ' item(s)',
+        items.map((q, i) => [
+          ...E.validateItem({ ...q, id: 'm' + (i + 1) }).errors,
+          ...(refs && !refs.has(q && q.sourceRef) ? ['sourceRef not one of the passages'] : []),
+        ])
+      );
     }
     async function morePractice(opt = {}) {
       // opt: {announce: post the result in E.V.'s conversation, topic: a focus he named}
@@ -1441,17 +1464,24 @@
         ]
           .filter(Boolean)
           .join('\n');
-        const res = await sample.json(prompt, { modelTier: 'default', cache: false });
+        const res = await askItems(prompt);
         const n = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
         const id = `more-${today}-${n}`;
-        const fresh = (res && Array.isArray(res.items) ? res.items : [])
-          .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: q.weakspotId ? 'review' : 'check' }))
+        const fresh = E.practiceReply
+          .replyItems(res)
+          .map(E.practiceReply.normalizeItem) // B-446: mend the shape's drift before it is checked
+          .map((q, i) => {
+            const item = { ...q, id: 'm' + (i + 1) };
+            // B-446: a weak spot id not in his record is left off (as a job's set does), never the question with it
+            if (item.weakspotId && !M.models.some(w => w.id === item.weakspotId)) delete item.weakspotId;
+            return { ...item, kind: item.weakspotId ? 'review' : 'check' };
+          })
           .filter(q => E.validateItem(q).ok)
           .map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })) // B-193 (D-205)
           .filter(c => !c.errors.length)
-          .map(c => c.item)
-          .filter(q => !q.weakspotId || M.models.some(w => w.id === q.weakspotId));
+          .map(c => c.item);
         if (!fresh.length) {
+          unusable(res);
           out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';
           say('That batch came back malformed, so I binned it. Ask again in a moment.');
           return false;

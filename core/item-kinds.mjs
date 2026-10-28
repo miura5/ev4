@@ -292,8 +292,135 @@ export function makeItemKinds(core) {
     return out;
   }
 
+  // B-446: Haiku's practice questions drift from the asked shape in ways that keep their meaning ("correct": 0 for
+  // [0], a letter or the option's own words, "Analyze Cues", options as {text}); validateItem refuses each, and a set
+  // whose five all drifted came back as "not a usable shape". These mend only what can be read one way; anything else
+  // is left for validateItem to refuse.
+  const norm = s =>
+    String(s || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  const slug = s => norm(s).replace(/ /g, '-');
+  const TYPE_ALIASES = {
+    single: 'single',
+    'multiple-choice': 'single',
+    mcq: 'single',
+    'single-answer': 'single',
+    'single-choice': 'single',
+    sata: 'sata',
+    'select-all': 'sata',
+    'select-all-that-apply': 'sata',
+    'multiple-response': 'sata',
+    'multi-select': 'sata',
+    matrix: 'matrix',
+    'matrix-grid': 'matrix',
+    grid: 'matrix',
+    numeric: 'numeric',
+    open: 'open',
+  };
+  /** One answer index as written: a number, "2", a letter (A is 0) or the choice's own words; null when unreadable. */
+  function answerIndex(x, choices) {
+    if (Number.isInteger(x)) return x;
+    if (typeof x !== 'string') return null;
+    const s = x.trim();
+    if (/^\d+$/.test(s)) return Number(s);
+    if (/^[A-Fa-f]$/.test(s)) {
+      const i = s.toUpperCase().charCodeAt(0) - 65;
+      if (i < choices.length) return i;
+    }
+    const i = choices.findIndex(c => typeof c === 'string' && norm(c) === norm(s));
+    return i >= 0 ? i : null;
+  }
+  /** B-446: a question as Claude wrote it, mended where its shape drifted without changing what it says. */
+  function normalizeItem(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
+    const q = { ...raw };
+    if (!q.stem)
+      for (const k of ['question', 'q', 'prompt']) if (typeof q[k] === 'string' && q[k].trim()) q.stem = q[k];
+    if (typeof q.type === 'string' && TYPE_ALIASES[slug(q.type)]) q.type = TYPE_ALIASES[slug(q.type)];
+    if (Array.isArray(q.options))
+      q.options = q.options.map(o =>
+        o && typeof o === 'object' ? (o.text ?? o.label ?? o.option ?? o) : typeof o === 'number' ? String(o) : o
+      );
+    const opts = Array.isArray(q.options) ? q.options : [];
+    if (q.correct != null && q.type !== 'numeric' && q.type !== 'open' && q.type !== 'matrix') {
+      const c = Array.isArray(q.correct) ? q.correct : [q.correct];
+      const idx = c.map(x => answerIndex(x, opts));
+      if (idx.every(i => i != null)) q.correct = idx;
+    }
+    if (q.type === 'matrix' && q.matrix && typeof q.matrix === 'object' && Array.isArray(q.matrix.rows)) {
+      const cols = Array.isArray(q.matrix.columns) ? q.matrix.columns : [];
+      q.matrix = {
+        ...q.matrix,
+        rows: q.matrix.rows.map(r => {
+          if (!r || typeof r !== 'object') return r;
+          const c = Array.isArray(r.correct) && r.correct.length === 1 ? r.correct[0] : r.correct;
+          const i = answerIndex(c, cols);
+          return i == null ? r : { ...r, correct: i };
+        }),
+      };
+    }
+    if (q.type === 'numeric') {
+      for (const k of ['answer', 'tolerance'])
+        if (typeof q[k] === 'string' && q[k].trim() && Number.isFinite(Number(q[k]))) q[k] = Number(q[k]);
+    }
+    if (typeof q.cjStep === 'string') {
+      const s = slug(q.cjStep);
+      const steps = (core.SPEC && core.SPEC.items && core.SPEC.items.cjSteps) || [];
+      if (steps.includes(s)) q.cjStep = s;
+      else if (steps.length) delete q.cjStep; // a step it could not name is no step, not a refused question
+    }
+    return q;
+  }
+  /** B-446: the questions in a practice reply: {items}, a bare array, {questions} or {set: {items}}. */
+  function replyItems(res) {
+    if (Array.isArray(res)) return res;
+    if (!res || typeof res !== 'object') return [];
+    for (const v of [res.items, res.questions, res.set && res.set.items]) if (Array.isArray(v)) return v;
+    return [];
+  }
+  /** B-446: the whole questions of a reply cut short (at max_tokens) or wrapped in words: each complete object inside its
+   *  items array (else the first array), parsed one by one; a question cut mid-way is left out. */
+  function salvageItems(text) {
+    const t = String(text || '');
+    const k = t.search(/"(?:items|questions)"\s*:\s*\[/);
+    let i = k >= 0 ? t.indexOf('[', k) : t.indexOf('[');
+    if (i < 0) return [];
+    const out = [];
+    let depth = 0,
+      start = -1,
+      inStr = false,
+      esc = false;
+    for (i = i + 1; i < t.length; i++) {
+      const ch = t[i];
+      if (inStr) {
+        if (esc) esc = false;
+        else if (ch === '\\') esc = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === '{' || ch === '[') {
+        if (depth === 0 && ch === '{') start = i;
+        depth++;
+      } else if (ch === '}' || ch === ']') {
+        if (depth === 0) break; // the items array closed
+        depth--;
+        if (depth === 0 && ch === '}' && start >= 0) {
+          try {
+            out.push(JSON.parse(t.slice(start, i + 1)));
+          } catch (e) {}
+          start = -1;
+        }
+      }
+    }
+    return out;
+  }
+
   return {
     crossCourse,
+    practiceReply: { normalizeItem, replyItems, salvageItems }, // B-446
     displayOrder,
     gradeOpenLocal,
     gradePrompt,

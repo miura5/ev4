@@ -347,10 +347,7 @@ const EVCore = (() => {
     const p = chicagoParts(x == null ? new Date() : x);
     return p ? `${p.hour === '24' ? '00' : p.hour}:${p.minute}` : null;
   }
-  function ymd(iso) {
-    const [y, m, d] = String(iso).split('-').map(Number);
-    return [y, m, d];
-  }
+  const ymd = iso => String(iso).split('-').map(Number); // [y, m, d]
   function addDays(iso, n) {
     const [y, m, d] = ymd(iso);
     return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
@@ -385,6 +382,7 @@ const EVCore = (() => {
     unitOf,
     displayOrder,
     crossCourse,
+    practiceReply,
   } = makeItemKinds({
     get SPEC() {
       return SPEC;
@@ -2411,6 +2409,7 @@ const EVCore = (() => {
     // items
     itemType,
     validateItem,
+    practiceReply, // B-446
     validItems,
     scoreAnswer,
     displayOrder, // B-192
