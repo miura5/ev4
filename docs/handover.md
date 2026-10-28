@@ -12,6 +12,11 @@ Central). One manager at a time.
 - **The batch on staging** (since live): B-446, B-447, B-449, B-450, B-452, B-453, B-454, B-455, B-456, B-389, plus D-357 to D-364. It carries study plans and the merged plan screen, the conversation tweaks, the notes clock on saved notes, the weak-spot objective picker and tap-to-start plans (D-362).
 - **Rules now:** at most two review rounds and two fix waves per release (D-364 supersedes D-361). Open gaps go on the card. No hand-made documents in records (D-363).
 - **Blocking the card:**
+  0. **Builder's report (fix pushed as d359e77; not on staging, not reviewed yet).**
+     - Matt's job job-20261028-newplan-nur112-5 did reach the Worker. It has been `running` since 11:58:32 UTC and never finished, so the long silent request (B-459) likely died on his device too.
+     - The connector error came from the page wrongly reporting mcp_unavailable for every job started in the app; that is fixed.
+     - A stalled new-plan job now frees "Making…": after 2 minutes with no result, or 15 minutes still running.
+     - On resume: review d359e77, then B-459 (run the plan in the Worker's background so the page doesn't hold the request). B-459 is likely needed before plans work at all.
   1. **Make a plan fails in the staging PWA.** Matt tapped it and got an error about needing a remote connector, then "Making…" stuck.
      - A builder was diagnosing and fixing it in its own worktree, /tmp/claude-0/-home-claude/018a6162-6713-5595-b2c2-e8ae330cda7f/scratchpad/b456stuck, WIP branch b456-stuck-wip if not pushed.
      - Its brief: the PWA must always reach the Worker job route; "Making…" never sticks (a job with no result releases the guard after ~2 min); the claude.ai page says plans are made in the app.
