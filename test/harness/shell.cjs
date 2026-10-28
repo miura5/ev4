@@ -743,15 +743,30 @@ const statusShown = page =>
       if (!brief) {
         await page.$eval('#tab-' + t, b => b.click());
         await page.waitForTimeout(300);
-        const at = await page.evaluate(() => {
-          const e = [...document.querySelectorAll('[aria-expanded]')].find(
-            x => x.querySelector('.chev') && x.getClientRects().length && !x.closest('[hidden]')
-          );
-          if (!e) return null;
-          e.setAttribute('data-fold-probe', '1');
-          return true;
-        });
-        if (at) brief = await fold('[data-fold-probe]', '[data-fold-probe] .chev');
+        // B-450: the first visible fold with a chevron, found again at each step (a view may repaint its rows between)
+        const probe = () =>
+          page.evaluate(() => {
+            document.querySelectorAll('[data-fold-probe]').forEach(x => x.removeAttribute('data-fold-probe'));
+            const e = [...document.querySelectorAll('[aria-expanded]')].find(
+              x => x.querySelector('.chev') && x.getClientRects().length && !x.closest('[hidden]')
+            );
+            if (!e) return null;
+            e.setAttribute('data-fold-probe', '1');
+            return true;
+          });
+        if (await probe()) {
+          const read = async () => {
+            await page.locator('[data-fold-probe]').first().click();
+            await page.waitForTimeout(350);
+            await probe();
+            return [
+              await page.$eval('[data-fold-probe]', e => e.getAttribute('aria-expanded')),
+              await dur('[data-fold-probe] .chev'),
+            ];
+          };
+          const r = Object.fromEntries([await read(), await read()]);
+          brief = { open: r.true, closed: r.false };
+        }
       }
     // with no fold on screen at rest (the chevrons are on a reply's cards and surfaces), the stylesheet's rule itself
     if (!brief)

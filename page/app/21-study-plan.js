@@ -99,8 +99,16 @@
         render();
       });
     }
+    /** D-362: a new plan starts only from his tap: Remake, beside Ask for changes, is the same ask as Make a plan (a new
+     *  plan from today that keeps what is done). Held while a plan ask for the exam runs. */
+    function remakeBtn(ex, course) {
+      const b = btn('Remake', ev => makePlan(ev.currentTarget, course), { cls: 'btn ghost' });
+      b.title = 'A new plan from today; what you ticked stays done';
+      b.disabled = !!planJobState(ex, course, null).working;
+      return b;
+    }
     function askForChanges(ex) {
-      // through the chat (D-356): his words decide between a change and a new plan from today
+      // through the chat: his words go to the Haiku edit (D-356, D-362); a new plan is Remake's
       showTab('ev');
       const i = $('ev-input');
       i.value = `Change my ${exShortOf(ex)} plan: `;
@@ -193,17 +201,23 @@
         el('span', 'lb', label),
         count
       );
-      b.addEventListener('click', () => {
-        planUi.open[key] = !isOpen;
-        render();
-      });
-      wrap.append(b);
-      if (isOpen) {
+      const list = () => {
         const ul = el('ul', 'pl-tasks');
         if (lead) ul.append(...lead);
         for (const t of ts) ul.append(taskRow(p, t, isDone, draft));
-        wrap.append(ul);
-      }
+        return ul;
+      };
+      // the day opens and folds in place (the row keeps its element, so its chevron turns as the fold's)
+      b.addEventListener('click', () => {
+        const on = !wrap.classList.contains('open');
+        planUi.open[key] = on;
+        wrap.classList.toggle('open', on);
+        b.setAttribute('aria-expanded', String(on));
+        if (on) wrap.append(list());
+        else wrap.querySelectorAll(':scope > .pl-tasks').forEach(x => x.remove());
+      });
+      wrap.append(b);
+      if (isOpen) wrap.append(list());
       return wrap;
     }
     const countEl = (text, dot, mins) => {
@@ -436,7 +450,8 @@
       ap.disabled = !!ask;
       act.append(
         btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }),
-        ap
+        ap,
+        remakeBtn(ex, course)
       );
       d.append(act);
       if (ask) d.append(el('span', 'mini pm-wait', 'Answer or skip E.V.’s question to approve.'));
@@ -485,6 +500,7 @@
       }
       const act = el('div', 'pm-act');
       act.append(btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }));
+      if (p.section) act.append(remakeBtn(ex, course));
       d.append(act);
       return d;
     }
@@ -528,6 +544,7 @@
       card.append(planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone }));
       const foot = el('div', 'pl-foot');
       foot.append(btn('Ask for changes', () => askForChanges(ex), { cls: 'btn neutral' }));
+      if (p.section) foot.append(remakeBtn(ex, course));
       card.append(foot);
       return { card, panel: () => planSummary(p, ex, course, c) };
     }
