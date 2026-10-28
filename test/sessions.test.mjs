@@ -106,6 +106,99 @@ test('session timer: checks every 7 min; breaks keep the remaining time; +5 min;
   assert.equal(st.minutes, 40);
 });
 
+test('B-438: a writing session counts only the time he writes; a pause holds the clock and the checks, a keystroke starts both', () => {
+  const w = (events, extra = {}) => session(events, { clock: 'writing', note: 'notes/n1', noteId: 'n1', ...extra });
+  // writing from 0 to 10; the pause written at 12 is at his last keystroke (10); he writes again at 30, now 35
+  const ev = {
+    [plus(12)]: { type: 'pause', from: plus(10) },
+    [plus(30)]: { type: 'write' },
+  };
+  let st = EV.sessionState(w({ [plus(12)]: ev[plus(12)] }), plus(20));
+  assert.equal(st.writing, true);
+  assert.equal(st.paused, true);
+  assert.equal(st.pausedAt, plus(10));
+  assert.equal(st.minutes, 10);
+  assert.equal(st.nextCheckAt, null, 'no check while paused');
+  assert.equal(st.timeUp, false);
+  assert.equal(st.planned, null);
+  assert.equal(st.leftMs, null);
+  st = EV.sessionState(w(ev), plus(35));
+  assert.equal(st.paused, false);
+  assert.equal(st.minutes, 15);
+  assert.equal(st.activeSince, plus(30));
+  // the check due at 7 ran? no: none ran, so the stretch held at the pause (0 left) resumes after minResumeSeconds
+  assert.equal(st.nextCheckAt, plus(30, 30));
+  // a check at 7 then a pause at 10: the 4 minutes left to the next check wait for his next keystroke
+  st = EV.sessionState(w({ [plus(7)]: { type: 'check', quiet: true, len: 4, h: 'x' }, ...ev }), plus(31));
+  assert.equal(st.nextCheckAt, plus(34));
+  // a pause never reaches back before the clock last started: a resume at 20 after a break from 5
+  st = EV.sessionState(
+    w({ [plus(5)]: { type: 'break' }, [plus(20)]: { type: 'resume' }, [plus(23)]: { type: 'pause', from: plus(4) } }),
+    plus(40)
+  );
+  assert.equal(st.paused, true);
+  assert.equal(st.pausedAt, plus(20));
+  assert.equal(st.minutes, 5);
+  // ended while paused: the minutes filed are the writing minutes; a reopen stays paused until he writes
+  const ended = w({ ...ev, [plus(36)]: { type: 'pause', from: plus(34) }, [plus(50)]: { type: 'end', why: 'ended' } });
+  st = EV.sessionState(ended, plus(50));
+  assert.equal(st.minutes, 14);
+  const closed = EV.closeSession({ ...ended, status: 'ending' }, {}, { now: plus(50) });
+  assert.equal(closed.writes[0].data.minutes, 14);
+  st = EV.sessionState({ ...ended, events: { ...ended.events, [key(plus(55))]: { type: 'reopen' } } }, plus(60));
+  assert.equal(st.paused, true);
+  assert.equal(st.minutes, 14);
+  // a write with no pause, and a pause during a break, change nothing
+  st = EV.sessionState(
+    w({ [plus(3)]: { type: 'write' }, [plus(4)]: { type: 'break' }, [plus(6)]: { type: 'pause' } }),
+    plus(8)
+  );
+  assert.equal(st.paused, false);
+  assert.equal(st.onBreak, true);
+  assert.equal(st.minutes, 4);
+  // it ends on neither idle checks nor a clock, only once paused writingWrapMinutes (60)
+  st = EV.sessionState(
+    w({ [plus(7)]: { type: 'idle' }, [plus(14)]: { type: 'idle' }, [plus(21)]: { type: 'idle' } }),
+    plus(22)
+  );
+  assert.equal(st.shouldWrap, false);
+  assert.equal(EV.sessionState(w({ [plus(12)]: ev[plus(12)] }), plus(69)).shouldWrap, false);
+  assert.equal(EV.sessionState(w({ [plus(12)]: ev[plus(12)] }), plus(70)).shouldWrap, true);
+  // a session from before B-438 keeps its planned clock: pause and write events are not its
+  st = EV.sessionState(session({ [plus(12)]: { type: 'pause', from: plus(10) } }, { planned: 25 }), plus(20));
+  assert.equal(st.paused, false);
+  assert.equal(st.minutes, 20);
+  assert.equal(st.leftMs, 5 * 60e3);
+  // the start write: a note's writing session has no planned end; a Today task's keeps its minutes
+  const at = plus(0);
+  const a = EV.startTimedSession({
+    id: 'ss-x',
+    at,
+    key: key(at),
+    topic: 'New note',
+    noteId: 'n-1',
+    fresh: true,
+    clock: 'writing',
+  });
+  assert.equal(a.data.clock, 'writing');
+  assert.equal(a.data.planned, undefined);
+  assertValid(a);
+  const b = EV.startTimedSession({ id: 'ss-y', at, key: key(at), topic: 'Read Ch 40', planned: 30, clock: 'writing' });
+  assert.equal(b.data.planned, 30);
+  assert.equal(b.data.clock, undefined);
+  assertValid({
+    ...a,
+    data: {
+      ...a.data,
+      events: {
+        ...a.data.events,
+        [key(plus(3))]: { type: 'pause', from: plus(2) },
+        [key(plus(4))]: { type: 'write', at: plus(4) },
+      },
+    },
+  });
+});
+
 test('B-273 (D-267): her ring is the stretch to the next check: 0, a quarter, a half, full; it starts over after a check', () => {
   const at = p => new Date(Date.parse(T0) + p * 7 * 60e3).toISOString();
   const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, a + ' is not ' + b);

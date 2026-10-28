@@ -28,7 +28,11 @@
     // for the session), never the Conversation's.
     const NOTE_MINUTES = 25;
     const WIDE_STRIP = window.matchMedia ? window.matchMedia('(min-width:1024px)') : { matches: true };
-    const isTimed = s => !!(s && Number(s.planned) > 0);
+    const isTimed = s => !!(s && (Number(s.planned) > 0 || s.clock === 'writing'));
+    // B-438: a note's session counts the time he writes: paused after writingIdleMinutes with no typing, going again
+    // at his next keystroke, whether she reads along or not
+    const isWriting = s => !!(s && s.clock === 'writing');
+    const WRITE_IDLE_MS = (SWC.writingIdleMinutes || 2) * 60e3;
     const sThread = s =>
       'th-' +
       String(s.id)
@@ -43,6 +47,39 @@
         RA.nextRead = 0; // B-418: the open note's read-along reads at once too
       }
     });
+    /** B-438: the note he is writing changed (25-notes' noteChanged): a writing session paused on it goes on. */
+    function noteTyped(id) {
+      SS.typedAt = Date.now();
+      const s = activeSession();
+      if (!s || s.status !== 'active' || !isWriting(s) || noteOfSession(s) !== id || SS.resuming) return;
+      if (!E.sessionState(s, now()).paused) return;
+      SS.resuming = true;
+      sessEvent(s, 'write')
+        .catch(() => {})
+        .finally(() => {
+          SS.resuming = false;
+          render();
+        });
+    }
+    /** B-438: the driving view pauses a writing session once nothing was typed for WRITE_IDLE_MS, at the last typing. */
+    function writingTick(s, st) {
+      if (!isWriting(s) || st.paused || st.onBreak || SS.pausing) return false;
+      const doc = (S.notes || []).find(n => n.id === noteOfSession(s));
+      const last = Math.max(
+        SS.typedAt || 0,
+        Date.parse((doc && doc.editedAt) || '') || 0,
+        Date.parse(st.activeSince || '') || 0
+      );
+      if (!last || Date.now() - last < WRITE_IDLE_MS) return false;
+      SS.pausing = true;
+      sessEvent(s, 'pause', { from: new Date(last).toISOString() })
+        .catch(() => {})
+        .finally(() => {
+          SS.pausing = false;
+          render();
+        });
+      return true;
+    }
     // B-314 (D-298): a session not on a note in Notes (the phone's, or a Today task's) reads no note: it keeps time,
     // breaks and +5, and its checks and Quiz me now ask about his objectives and weak spots instead.
     const noteless = s => !!s && !s.noteId;
@@ -642,6 +679,8 @@
       SS.ended = { id: s.id, note: noteOfSession(s), name, mins: Math.max(0, Math.round(Number(mins) || 0)), until };
       setTimeout(() => SS.ended && SS.ended.until === until && render(), ENDED_MS + 50);
     }
+    // B-438: how long a writing session waits paused before it saves itself, in words
+    const wrapWords = m => (m === 60 ? 'an hour' : m % 60 === 0 ? m / 60 + ' hours' : plural(m, 'minute'));
     async function endSession(reason = 'ended') {
       const s = activeSession();
       if (!s) return ['No session is running. Say “start a study session” when you’re ready.', []];
@@ -671,7 +710,13 @@
         SS.seen = null;
         SS.note = null;
         const lead =
-          reason === 'idle' ? 'No new writing for a while, so I wrapped up. ' : reason === 'time' ? 'Time. ' : '';
+          reason === 'idle'
+            ? isWriting(s)
+              ? `You haven’t written for ${wrapWords(SWC.writingWrapMinutes || 60)}, so I saved the session. `
+              : 'No new writing for a while, so I wrapped up. '
+            : reason === 'time'
+              ? 'Time. '
+              : '';
         return [
           `${lead}Session saved: ${savedBits(up, st)}.${waitsLine(r)}${r.questions.length ? ' One thing to settle on the card.' : ''}${note}`,
           // B-377 (D-316): as the demo, her one line and Open in Record; the summary card only when a question waits on him
@@ -834,7 +879,9 @@
             ? 'Writing your quiz…'
             : st.onBreak
               ? breakLeft(s) // B-377: the demo's 5 min break
-              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`; // B-383: what it counts
+              : isWriting(s)
+                ? (st.paused ? 'Paused · ' : '') + `${st.minutes} min writing` // B-438
+                : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`; // B-383: what it counts
         return;
       }
       bar.querySelector('.s-clock').textContent = ending
@@ -912,9 +959,10 @@
         timedTick(s, st);
         return;
       }
+      if (writingTick(s, st)) return; // B-438
       if (st.shouldWrap) {
         endSession('idle')
-          .then(([t, c]) => evSay(t, c, { tier: 'local' }))
+          .then(([t, c]) => evSay(t, c, { tier: 'local', ...thOf(s) }))
           .catch(e => toast('Couldn’t wrap up: ' + ((e && (e.message || e.code)) || 'error')));
         return;
       }
@@ -999,7 +1047,15 @@
     /** Starts a timed session; a running one is ended first (the switch), with Undo offered in the strip. */
     // Where he was before a session started, for its Undo: the view and the note open in Notes
     const whereNow = () => ({ tab: ui.tab, note: ui.tab === 'notes' && NOTE.view === 'editor' ? NOTE.open : null });
-    async function startTimed({ noteId = '', topic, planned = NOTE_MINUTES, fresh = false, say, from = whereNow() }) {
+    async function startTimed({
+      noteId = '',
+      topic,
+      planned = NOTE_MINUTES,
+      fresh = false,
+      say,
+      from = whereNow(),
+      clock = '',
+    }) {
       unlockAudio();
       const cur = activeSession();
       const at = now();
@@ -1038,6 +1094,7 @@
             fresh,
             comments: lastComments(),
             view: SS.view,
+            clock,
           })
         );
       } catch (e) {
@@ -1056,6 +1113,7 @@
       SS.note = null;
       SS.nextRead = Date.now() + (SWC.readSeconds || 30) * 1e3;
       SS.changedAt = Date.now();
+      SS.typedAt = Date.now(); // B-438: the writing clock starts with the session
       SS.undo = prior ? { ...prior, next: id } : null;
       if (popReady()) {
         POP.th = sThread({ id }); // the pop-up's chat is the session's now; the one he had stays in history
@@ -1087,9 +1145,10 @@
         topic: name,
         fresh,
         from,
+        clock: 'writing',
         say: fresh
-          ? `Started ${NOTE_MINUTES} minutes on your new note. I’ll follow along as you write.`
-          : `Started ${NOTE_MINUTES} minutes on “${name}”. I’ll follow along as you read and write.`,
+          ? 'Started a session on your new note. The clock counts the time you spend writing.'
+          : `Started a session on “${name}”. The clock counts the time you spend writing.`,
       });
     }
     // B-403's preview: Study with E.V. opens the note, then asks for the session on it
@@ -1260,6 +1319,12 @@
       const t = Math.max(0, Math.ceil(ms / 1000));
       return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
     };
+    // B-438: a writing session's clock counts up: the time written, or Paused with it
+    const clockUp = ms => {
+      const t = Math.max(0, Math.floor(ms / 1000));
+      return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+    };
+    const writingClock = st => (st.paused ? 'Paused · ' + clockUp(st.activeMs) : clockUp(st.activeMs) + ' writing');
     /** A Notes session's chat, as the pop-up names it: {title, sub, chip}; null for any other chat. */
     function sessThreadInfo(th) {
       if (!th || !/^th-ss-/.test(th)) return null;
@@ -1269,7 +1334,14 @@
       let sub = 'Session ended · ' + name;
       if (s.status === 'active' || s.status === 'ending') {
         const st = E.sessionState(s, now());
-        sub = (st.onBreak ? 'On a break' : clockLeft(st.leftMs) + ' left') + ' · ' + name;
+        sub =
+          (st.onBreak
+            ? 'On a break'
+            : isWriting(s)
+              ? writingClock(st)
+              : clockLeft(st.leftMs) + ' left') +
+          ' · ' +
+          name;
       }
       return { title: 'Studying with E.V.', sub, chip: 'Studying: ' + name };
     }
@@ -1292,6 +1364,7 @@
       const st = s ? E.sessionState(s, now()) : null;
       const ending = !!s && s.status === 'ending';
       const k = [s && s.id, s && s.status, st && st.onBreak, SS.busy === true, u && u.next].join('|');
+      slot.classList.toggle('paused', !!(st && st.paused)); // B-438
       if (slot.dataset.k !== k) {
         slot.dataset.k = k;
         const kids = [];
@@ -1342,8 +1415,10 @@
         ? 'Wrapping up…'
         : st.onBreak
           ? 'Break · ' + clockLeft(BREAK_MIN * 60e3 - (Date.now() - since))
-          : isTimed(s)
-            ? clockLeft(st.leftMs) + ' left'
+          : isWriting(s)
+            ? writingClock(st)
+            : isTimed(s)
+              ? clockLeft(st.leftMs) + ' left'
             : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`;
       const go = slot.querySelector('.tn');
       const nm = sessName(s);

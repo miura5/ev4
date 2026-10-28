@@ -1194,6 +1194,7 @@
       if (NOTE.pick && NOTE.pick.kept) closePick(); // Undo swaps whole versions: offered only until he writes again
       NOTE.dirty = true;
       NOTE.edited = now();
+      noteTyped(NOTE.open); // B-438: a writing session's clock goes on at his first keystroke after a pause
       clearTimeout(NOTE.timer);
       NOTE.timer = setTimeout(saveNote, NOTE_SAVE_MS);
       if (NOTE.state !== 'failed') NOTE.state = 'saving';

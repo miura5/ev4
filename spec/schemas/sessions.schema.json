@@ -161,6 +161,12 @@
    "maximum": 600,
    "description": "B-406 (D-325): a timed session's planned minutes (25 for a note; a Today task's estimate); +5 adds to it"
   },
+  "clock": {
+   "enum": [
+    "writing"
+   ],
+   "description": "B-438: a note session whose clock counts only the time he spends writing (pause and write events); it has no planned end. A session without it keeps its planned clock."
+  },
   "folder": {
    "type": "string"
   },
@@ -184,8 +190,11 @@
        "answer",
        "end",
        "step",
-       "reopen"
-      ]
+       "reopen",
+       "pause",
+       "write"
+      ],
+      "description": "B-438: pause (its from is his last keystroke, after writingIdleMinutes with no typing) and write (his next keystroke) stop and start a writing clock"
      },
      "len": {
       "type": "integer",

@@ -3,8 +3,8 @@
 // survives a reload. At 390 there is no Notes entry, and #notes does not open it. B-403, the list: course filters with
 // counts, notes grouped by course, the picked note's preview (From, Edited, Length, Studied, On this page, Open note,
 // Study with E.V.), the empty states for no notes at all and for none in a course, and nothing overflowing, at 1280,
-// 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note. B-406: New note starts a 25-minute
-// session naming notes/<id> with its controls in the strip; a check reads the open note through sample in the session's
+// 1706 and 2560 on synthetic, synthetic with no notes, and synthetic with a long-title note. B-406: New note starts a session
+// naming notes/<id> with its controls in the strip; a check reads the open note through sample in the session's
 // own chat; a second session ends and logs the first, and Undo puts back the note, the chat, the answer and the timer;
 // Study with E.V. and a Today task start one; End in the strip saves it. B-407: a session's miss is proposed and shows
 // in Study's button, her Study line and the sidebar after the chat closes, and To review's Accept counts it. B-418: read-along
@@ -984,8 +984,9 @@ const openNoteId = page =>
           header: !document.getElementById('sbar').hidden,
         };
       });
+    // the strip's clock in seconds: a Today task's time left, or a note's writing time (B-438)
     const secsLeft = t => {
-      const m = /(\d+):(\d\d) left/.exec(t);
+      const m = /(\d+):(\d\d)/.exec(t);
       return m ? Number(m[1]) * 60 + Number(m[2]) : null;
     };
     const active = async () => (await sessions()).filter(x => x.status === 'active');
@@ -993,36 +994,39 @@ const openNoteId = page =>
     await until(page, () => !document.getElementById('p-notes').hidden);
     const before = (await sessions()).map(x => x.id);
 
-    // New note starts a 25-minute session naming notes/<id>; its controls are in the strip, not the header
+    // New note starts a session naming notes/<id> whose clock counts writing (B-438); its controls are in the strip
     await page.click('#notes-new');
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await settle(page);
     const noteA = await openNoteId(page);
-    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    await until(page, () => /writing/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
     const a = (await sessions()).filter(x => !before.includes(x.id));
     const sa = a[0] || {};
     const st1 = await slot();
     ok(
-      `${tag} New note starts one 25-minute session naming notes/<id>, its first line in its own chat`,
+      `${tag} New note starts one session naming notes/<id> whose clock counts writing (no planned end), its first line in its own chat`,
       a.length === 1 &&
         sa.status === 'active' &&
         sa.note === 'notes/' + noteA &&
-        sa.planned === 25 &&
+        sa.clock === 'writing' &&
+        sa.planned === undefined &&
         sa.kind === 'note' &&
         (await page.evaluate(
           th =>
             Object.values(window.__db.talk || {}).some(d =>
-              Object.values(d.messages || {}).some(m => m.thread === th && /Started 25 minutes/.test(m.text))
+              Object.values(d.messages || {}).some(
+                m => m.thread === th && /Started a session on your new note\. The clock counts/.test(m.text)
+              )
             ),
           'th-' + sa.id
         )),
-      JSON.stringify({ n: a.length, note: sa.note, noteA, planned: sa.planned, status: sa.status })
+      JSON.stringify({ n: a.length, note: sa.note, noteA, clock: sa.clock, planned: sa.planned, status: sa.status })
     );
     ok(
-      `${tag} the strip shows the time left, the note, Break and End; the header's session line stays hidden`,
+      `${tag} the strip shows the writing time counting up, the note, Break and End; the header's session line stays hidden`,
       st1.shown &&
-        secsLeft(st1.left) > 24 * 60 &&
-        secsLeft(st1.left) <= 25 * 60 &&
+        /^\d+:\d\d writing$/.test(st1.left) &&
+        secsLeft(st1.left) < 60 &&
         st1.name === 'your new note' &&
         st1.brk === 'Break' &&
         st1.end === 'End' &&
@@ -1327,9 +1331,9 @@ const openNoteId = page =>
       JSON.stringify({ filing: fa.filing, filedAt: fa.filedAt, dupes })
     );
     ok(
-      `${tag} Study with E.V. starts a 25-minute session on that note; the one it ended is filed when Undo runs out`,
+      `${tag} Study with E.V. starts a writing session on that note; the one it ended is filed when Undo runs out`,
       !!c &&
-        c.planned === 25 &&
+        c.clock === 'writing' &&
         filed &&
         fa.status === 'ended' &&
         fa.minutes >= 0 &&
@@ -1443,7 +1447,7 @@ const openNoteId = page =>
     await page.click('#notes-new');
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await settle(page);
-    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    await until(page, () => /writing/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
     await page.click('#note-body');
     await page.keyboard.type('# Cardiac output');
     await page.keyboard.press('Enter');
@@ -2269,6 +2273,261 @@ const openNoteId = page =>
       `${tag} a new note reads along by default, and with no new text it asks Claude nothing`,
       !!t5 && t5.pressed === 'true' && (await reads()) === 0,
       JSON.stringify({ t5, reads: await reads() })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-438: in a note the session's clock counts only the time he writes. Nothing typed for 2 minutes pauses it
+  // (from his last keystroke) and his next keystroke starts it again, read-along on or off; End files the writing
+  // minutes to the session and Record. Her chat opens from the note at any time, to ask or for questions again.
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 writing clock]';
+    const clock = () =>
+      page.evaluate(() => {
+        const s = document.getElementById('ev-sslot');
+        return {
+          text: (s.querySelector('.s-left') || {}).textContent || '',
+          paused: s.classList.contains('paused'),
+        };
+      });
+    const secs = t => {
+      const m = /(\d+):(\d\d)/.exec(t);
+      return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+    };
+    const sessNow = () =>
+      page.evaluate(() =>
+        Object.entries(window.__db.sessions || {})
+          .map(([id, d]) => ({ id, ...d }))
+          .find(x => x.status === 'active')
+      );
+    const evsOf = (s, type) => Object.values((s && s.events) || {}).filter(e => e.type === type);
+    const typeMore = async t => {
+      await page.click('#note-body');
+      await page.keyboard.press('Control+End');
+      await page.keyboard.type(t);
+      await settle(page);
+    };
+    // past the idle gap by the page's clock (Date.now runs 125 s ahead), until the pause lands, then back
+    const idle = async () => {
+      await page.evaluate(() => {
+        const real = Date.now.bind(Date);
+        window.__realNow = real;
+        Date.now = () => real() + 125e3;
+      });
+      const done = await until(page, () => /^Paused · /.test(document.querySelector('#ev-sslot .s-left').textContent));
+      await page.evaluate(() => {
+        Date.now = window.__realNow;
+      });
+      return done;
+    };
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    await page.click('#notes-new');
+    await until(page, () => /writing/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    await page.click('#notes-read'); // read-along off for this note
+    const ra = await page.evaluate(() => document.getElementById('notes-read').getAttribute('aria-pressed'));
+    await page.click('#note-body');
+    await page.keyboard.type('# Acid-base');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('A low pH with a high CO2 is respiratory acidosis.');
+    await settle(page);
+    const c1 = await clock();
+    await page.waitForTimeout(2100);
+    const c2 = await clock();
+    ok(
+      `${tag} with read-along off, the strip's clock counts up the writing time`,
+      ra === 'false' && /^\d+:\d\d writing$/.test(c1.text) && secs(c2.text) > secs(c1.text) && !c2.paused,
+      JSON.stringify({ ra, c1, c2 })
+    );
+    const s0 = await sessNow();
+    const typedBy = Date.now();
+    const paused = await idle();
+    const s1 = await sessNow();
+    const p1 = evsOf(s1, 'pause')[0] || {};
+    const c3 = await clock();
+    await page.waitForTimeout(2100);
+    const c4 = await clock();
+    ok(
+      `${tag} nothing typed for 2 minutes pauses it from his last keystroke, and the paused clock stands still`,
+      paused &&
+        !!p1.from &&
+        Date.parse(p1.from) >= Date.parse(s0.startedAt) &&
+        Date.parse(p1.from) <= typedBy &&
+        c3.paused &&
+        secs(c4.text) === secs(c3.text),
+      JSON.stringify({ paused, p1, c3, c4 })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-writing-paused-1280.png') });
+    await typeMore(' Kidneys compensate by keeping bicarbonate.');
+    const s2 = await sessNow();
+    await page.waitForTimeout(1100);
+    const c5 = await clock();
+    ok(
+      `${tag} his next keystroke starts it again (a write event), counting on from where it stood`,
+      evsOf(s2, 'write').length === 1 &&
+        /^\d+:\d\d writing$/.test(c5.text) &&
+        !c5.paused &&
+        secs(c5.text) >= secs(c4.text) &&
+        secs(c5.text) <= secs(c4.text) + 4,
+      JSON.stringify({ writes: evsOf(s2, 'write').length, c4, c5 })
+    );
+    // the same with read-along on
+    await page.click('#notes-read');
+    const ra2 = await page.evaluate(() => document.getElementById('notes-read').getAttribute('aria-pressed'));
+    const pausedOn = await idle();
+    await typeMore(' A high pH with low CO2 is respiratory alkalosis.');
+    const s3 = await sessNow();
+    ok(
+      `${tag} with read-along on, it pauses and starts again the same way`,
+      ra2 === 'true' && pausedOn && evsOf(s3, 'pause').length === 2 && evsOf(s3, 'write').length === 2,
+      JSON.stringify({ ra2, pausedOn, pauses: evsOf(s3, 'pause').length, writes: evsOf(s3, 'write').length })
+    );
+
+    // her chat opens from the note at any time: the strip's E.V. button, in a session, on a break, and with no session;
+    // Quiz me on this note stays offered after he has asked it
+    const chatOpens = async () => {
+      if (await page.evaluate(() => !document.getElementById('evchat').hidden)) {
+        await page.keyboard.press('Escape');
+        await until(page, () => document.getElementById('evchat').hidden);
+      }
+      await page.click('#ev-btn');
+      return until(page, () => !document.getElementById('evchat').hidden, null, 2000);
+    };
+    const chips = () =>
+      page.evaluate(() => [...document.querySelectorAll('#evchat .pchips .qchip')].map(b => b.textContent));
+    const inSession = await chatOpens();
+    await page.evaluate(() => {
+      window.__chatScript = [];
+      window.__chatReply = 'Here are three questions on acid-base.';
+    });
+    await page.click('#evchat .pchips .qchip');
+    await until(page, () => /three questions/.test(document.getElementById('evchat').textContent), null, 6000);
+    const again = await chips();
+    await page.keyboard.press('Escape');
+    await page.click('#ev-sslot .s-brk');
+    await until(page, () => /^Break/.test(document.querySelector('#ev-sslot .s-left').textContent), null, 3000);
+    const onBreak = await chatOpens();
+    await page.keyboard.press('Escape');
+    await page.click('#ev-sslot .s-brk'); // Resume
+    await page.waitForTimeout(400);
+    ok(
+      `${tag} her chat opens from the note in a session and on a break, and "Quiz me on this note" is offered again after he asked it`,
+      inSession && onBreak && again.includes('Quiz me on this note'),
+      JSON.stringify({ inSession, onBreak, again })
+    );
+    // End files the writing minutes, as the record's clock counts them, to the session and Record
+    const sEnd = await sessNow();
+    await page.click('#ev-sslot .s-end');
+    const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sEnd.id, 30000);
+    const fd = await page.evaluate(i => window.__db.sessions[i], sEnd.id);
+    ok(
+      `${tag} End files the session with its writing minutes and no planned end`,
+      filed && fd.status === 'ended' && Number.isInteger(fd.minutes) && fd.clock === 'writing' && !fd.planned,
+      JSON.stringify({ filed, status: fd && fd.status, minutes: fd && fd.minutes })
+    );
+    const noSession = await chatOpens();
+    const sug = await page.evaluate(() => document.getElementById('ev-sug').textContent);
+    ok(
+      `${tag} with no session running, her chat still opens from the note`,
+      noSession && !!sug,
+      JSON.stringify({ noSession, sug })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-438: the minutes filed are the writing minutes only. A planted session started 40 minutes ago, paused from
+  // 30 to 20 minutes ago and its note last saved 10 minutes ago, pauses on open from that save (no keystroke since),
+  // and End files 20 minutes, which Record shows; with read-along off
+  {
+    const iso = ago => new Date(Date.now() - ago * 60e3).toISOString();
+    const k = s => 'page-' + s.replace(/\D/g, '').slice(0, 8) + '-' + s.replace(/\D/g, '').slice(8, 17);
+    const NID = 'n-20261028-090000-writingclock';
+    const SID = 'ss-p-writing-clock';
+    const db = JSON.parse(JSON.stringify(seed));
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    db.notes = {
+      ...(db.notes || {}),
+      [NID]: {
+        schema: 1,
+        writer: 'page',
+        at: iso(40),
+        source: 'E.V. Home',
+        createdAt: iso(40),
+        editedAt: iso(10),
+        title: 'Respiratory compensation',
+        course: 'NUR 112',
+        blocks: [
+          { type: 'h1', runs: [{ text: 'Respiratory compensation' }] },
+          { type: 'p', runs: [{ text: 'The kidneys hold bicarbonate.' }] },
+        ],
+      },
+    };
+    db.sessions = {
+      ...db.sessions,
+      [SID]: {
+        schema: 2,
+        writer: 'page',
+        at: iso(40),
+        source: 'E.V. Home',
+        kind: 'note',
+        status: 'active',
+        comments: 'some',
+        date: today,
+        startedAt: iso(40),
+        clock: 'writing',
+        topic: 'Respiratory compensation',
+        noteId: NID,
+        note: 'notes/' + NID,
+        folder: '',
+        driver: { view: '', at: iso(40) },
+        events: {
+          [k(iso(40))]: { type: 'start' },
+          [k(iso(28))]: { type: 'pause', from: iso(30), at: iso(28) },
+          [k(iso(20))]: { type: 'write', at: iso(20) },
+        },
+      },
+    };
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = '[1280 writing minutes]';
+    await page.click('#tab-notes');
+    await openFromList(page, NID);
+    await page.click('#notes-read'); // read-along off
+    const ra = await page.evaluate(() => document.getElementById('notes-read').getAttribute('aria-pressed'));
+    const paused = await until(
+      page,
+      () => /^Paused · 20:0\d$/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
+      null,
+      6000
+    );
+    const pz = await page.evaluate(
+      i => Object.values(window.__db.sessions[i].events).filter(e => e.type === 'pause'),
+      SID
+    );
+    const left = await page.evaluate(() => document.querySelector('#ev-sslot .s-left').textContent);
+    ok(
+      `${tag} opened 10 minutes after his last writing, it shows Paused at 20 minutes written, paused from then`,
+      ra === 'false' &&
+        paused &&
+        pz.length === 2 &&
+        pz.some(e => Math.abs(Date.parse(e.from) - Date.parse(iso(10))) < 5e3),
+      JSON.stringify({ ra, paused, left, pz })
+    );
+    await page.click('#ev-sslot .s-end');
+    const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, SID, 30000);
+    const mins = await page.evaluate(i => window.__db.sessions[i].minutes, SID);
+    await page.click('#tab-record');
+    await page.waitForTimeout(300);
+    const row = await page.evaluate(
+      i => (document.querySelector(`.rec-li[data-id="${i}"] .r`) || {}).textContent || '',
+      SID
+    );
+    ok(
+      `${tag} End files 20 writing minutes of the 40 since it started, and Record shows them`,
+      filed && mins === 20 && /^20 min\b/.test(row),
+      JSON.stringify({ filed, mins, row })
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();

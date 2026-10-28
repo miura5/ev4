@@ -279,6 +279,8 @@ export function makeSessions(core) {
     commentMinChars: 20,
     commentGapSeconds: 75,
     readAlongIdleMinutes: 10,
+    writingIdleMinutes: 2,
+    writingWrapMinutes: 60,
     ...((core.C && core.C.studyWatch) || {}),
   });
   const SESSION_SOURCE = 'Study session';
@@ -288,7 +290,12 @@ export function makeSessions(core) {
    * starts at 0 when the session starts and after every checkpoint, +5 lengthens the stretch, and a break holds it.
    * B-88: in comment mode (studyWatch.mode) a check event is one of three: a quiz (items asked, counted in checks),
    * a comment (comment: true, her one line on what he wrote) or a quiet checkpoint (quiet: true: he wrote, she said
-   * nothing). All three move the note's mark and reset the idle count; only a quiz counts as a check. */
+   * nothing). All three move the note's mark and reset the idle count; only a quiz counts as a check.
+   * B-438: a note session with clock 'writing' counts only the time he spends writing. A pause event (written after
+   * writingIdleMinutes with no typing, its from the last typing) stops the clock and holds the check clock as a break
+   * does; a write event (his next keystroke) starts both again. It has no planned end; it wraps itself only after
+   * writingWrapMinutes paused. {writing, paused, pausedAt, activeMs, activeSince} say where it stands. A session
+   * without the field (every one before B-438) keeps its planned clock. */
   function sessionState(s, now) {
     const c = SW();
     const step = c.checkMinutes * 60e3;
@@ -314,6 +321,11 @@ export function makeSessions(core) {
       minutes: 0,
       overdueMs: 0,
       toCheck: 0,
+      writing: !!(s && s.clock === 'writing'),
+      paused: false,
+      pausedAt: null,
+      activeMs: 0,
+      activeSince: null,
     };
     let next = Number.isFinite(t0) ? t0 + step : null,
       span = step,
@@ -322,7 +334,11 @@ export function makeSessions(core) {
       breakMs = 0,
       endMs = null,
       endBreak = false,
-      plannedMs = Number(s && s.planned) > 0 ? Number(s.planned) * 60e3 : null;
+      pauseAt = null,
+      pauseMs = 0,
+      endPaused = false,
+      since = t0,
+      plannedMs = st.writing ? null : Number(s && s.planned) > 0 ? Number(s.planned) * 60e3 : null;
     const evs = Object.entries((s && s.events) || {})
       .filter(([, e]) => e && e.type)
       .map(([k, e]) => [entryTime(k, e), e])
@@ -369,8 +385,32 @@ export function makeSessions(core) {
         next = t + step;
         span = step;
       } // the check couldn't run: no note yet
-      else if (e.type === 'break') {
-        if (!st.onBreak) {
+      else if (e.type === 'pause') {
+        // B-438: from his last keystroke (e.from; else when it was written), never before the clock last started (a
+        // start, a write, a resume or a reopen) and never after the event itself
+        if (st.writing && !st.paused && !st.onBreak && endMs == null) {
+          const from = Number.isFinite(toMs(e.from)) ? Math.min(toMs(e.from), t) : t;
+          st.paused = true;
+          pauseAt = Math.max(from, Number.isFinite(since) ? since : from);
+          remaining = Math.max(0, (next == null ? pauseAt : next) - pauseAt);
+        }
+      } else if (e.type === 'write') {
+        if (st.paused && endMs == null) {
+          st.paused = false;
+          pauseMs += Math.max(0, t - pauseAt);
+          pauseAt = null;
+          next = t + Math.max(remaining, c.minResumeSeconds * 1e3);
+          since = t;
+        }
+      } else if (e.type === 'break') {
+        if (st.paused) {
+          // a break taken while paused: the pause ends where the break starts, and the break holds what it held
+          st.paused = false;
+          pauseMs += Math.max(0, t - pauseAt);
+          pauseAt = null;
+          st.onBreak = true;
+          breakAt = t;
+        } else if (!st.onBreak) {
           st.onBreak = true;
           breakAt = t;
           remaining = Math.max(0, (next == null ? t : next) - t);
@@ -381,6 +421,7 @@ export function makeSessions(core) {
           breakMs += t - breakAt;
           next = t + Math.max(remaining, c.minResumeSeconds * 1e3);
           breakAt = null;
+          since = t;
         }
       } else if (e.type === 'extend') {
         const add = (Number(e.minutes) || c.extendMinutes) * 60e3;
@@ -394,10 +435,16 @@ export function makeSessions(core) {
         if (endMs != null) continue; // already ended: a second end changes nothing
         endMs = t;
         endBreak = st.onBreak;
+        endPaused = st.paused;
         if (st.onBreak) {
           breakMs += t - breakAt;
           st.onBreak = false;
           breakAt = null;
+        }
+        if (st.paused) {
+          pauseMs += Math.max(0, t - pauseAt);
+          st.paused = false;
+          pauseAt = null;
         }
       } else if (e.type === 'reopen') {
         // B-406: Undo of an end (a second session started over it, then undone). The time it stood ended is not
@@ -410,26 +457,40 @@ export function makeSessions(core) {
           st.onBreak = true;
           breakAt = t;
         }
+        if (endPaused) {
+          st.paused = true; // reopened as it was ended: paused until he writes
+          pauseAt = t;
+        }
+        if (!endBreak && !endPaused) since = t;
         endMs = null;
         endBreak = false;
+        endPaused = false;
       }
     }
     const until = endMs != null ? endMs : Number.isFinite(toMs(s && s.endedAt)) ? toMs(s.endedAt) : nowMs;
     if (st.onBreak && breakAt != null) breakMs += Math.max(0, until - breakAt);
-    const activeMs = Number.isFinite(t0) ? Math.max(0, until - t0 - breakMs) : 0;
+    if (st.paused && pauseAt != null) pauseMs += Math.max(0, until - pauseAt);
+    const activeMs = Number.isFinite(t0) ? Math.max(0, until - t0 - breakMs - pauseMs) : 0;
+    st.activeMs = activeMs;
+    st.pausedAt = st.paused && pauseAt != null ? new Date(pauseAt).toISOString() : null;
+    st.activeSince = Number.isFinite(since) ? new Date(since).toISOString() : null;
     st.minutes = Math.round(activeMs / 60000);
     // B-406 (D-325): a session from Notes or a Today task runs for its planned minutes (25 for a note); +5 adds to it
     st.planned = plannedMs != null ? Math.round(plannedMs / 60e3) : null;
     st.leftMs = plannedMs != null ? Math.max(0, plannedMs - activeMs) : null;
     st.breakStartedAt = st.onBreak && breakAt != null ? new Date(breakAt).toISOString() : null;
     st.breakRemainingMs = st.onBreak ? remaining : 0;
-    st.nextCheckAt = st.status === 'active' && !st.onBreak && next != null ? new Date(next).toISOString() : null;
+    st.nextCheckAt =
+      st.status === 'active' && !st.onBreak && !st.paused && next != null ? new Date(next).toISOString() : null;
     st.due = !!st.nextCheckAt && nowMs >= next;
     st.overdueMs = st.due ? nowMs - next : 0;
-    const left = st.onBreak ? remaining : next == null ? span : next - nowMs;
+    const left = st.onBreak || st.paused ? remaining : next == null ? span : next - nowMs;
     st.toCheck = st.status === 'active' ? Math.max(0, Math.min(1, 1 - left / span)) : 0;
     // a timed session ends on its clock, not on idle checks (he may be reading his note, not writing)
-    st.shouldWrap = st.status === 'active' && plannedMs == null && st.idleChecks >= c.idleChecksToEnd;
+    // B-438: a writing session ends on neither its idle checks nor a clock: only once paused writingWrapMinutes
+    st.shouldWrap = st.writing
+      ? st.status === 'active' && st.paused && nowMs - pauseAt >= c.writingWrapMinutes * 60e3
+      : st.status === 'active' && plannedMs == null && st.idleChecks >= c.idleChecksToEnd;
     st.timeUp = st.status === 'active' && plannedMs != null && !st.onBreak && st.leftMs <= 0;
     return st;
   }
@@ -897,7 +958,21 @@ export function makeSessions(core) {
    * has; it names the note as notes/<id>) or from a Today task (no note). It runs `planned` minutes (25 for a note).
    * A new note starts at its empty mark, so the first check is on what he writes; a note he has is read whole.
    */
-  function startTimedSession({ id, at, key, date, topic, planned = 25, noteId = '', fresh = false, comments, view }) {
+  function startTimedSession({
+    id,
+    at,
+    key,
+    date,
+    topic,
+    planned = 25,
+    noteId = '',
+    fresh = false,
+    comments,
+    view,
+    clock = '',
+  }) {
+    // B-438: a note's session with clock 'writing' has no planned end; its clock counts the time he writes
+    const writing = clock === 'writing' && !!noteId;
     return {
       op: 'set',
       collection: 'sessions',
@@ -910,7 +985,9 @@ export function makeSessions(core) {
         comments: ['more', 'some', 'off'].includes(comments) ? comments : 'some',
         date: date || chicagoDate(at),
         startedAt: at,
-        planned: Math.max(1, Math.min(600, Math.round(Number(planned) || 25))),
+        ...(writing
+          ? { clock: 'writing' }
+          : { planned: Math.max(1, Math.min(600, Math.round(Number(planned) || 25))) }),
         topic: String(topic || 'Study session').slice(0, 120),
         noteId: String(noteId || ''),
         ...(noteId ? { note: 'notes/' + noteId } : {}),

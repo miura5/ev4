@@ -266,6 +266,7 @@
     };
     // B-409: with a note open in Notes, the pop-up and the strip speak of that note, as the demo's
     const NOTE_ASKS = ['Quiz me on this note', 'What else links to this note?'];
+    const NOTE_QUIZ = NOTE_ASKS[0]; // B-438: questions on the note can be asked for again at any time
     function openNoteId() {
       try {
         return ui.tab === 'notes' && NOTE.view === 'editor' && NOTE.open ? NOTE.open : null;
@@ -286,21 +287,28 @@
           if (!best || String(s.filedAt) > String(best.filedAt)) best = s;
       return best ? { id: best.id, mins: Math.max(0, Math.round(Number(best.minutes) || 0)) } : null;
     }
-    // the strip's suggestion with a note open: {text, run} or {text, plain}; null for the view's own ask
+    // the strip's suggestion with a note open: {text, run} or {text, plain}; null for the view's own ask. B-438: with a
+    // session on another note or task, it still opens a chat on this note
     function noteSug(id) {
       const s = activeSession();
       if (s && noteOfSession(s) === id) {
+        const ask = () => {
+          if (isTimed(s)) POP.th = sThread(s);
+          popShow({ hist: false });
+        };
+        // on a break the strip keeps the demo's line; the E.V. button beside it still opens the chat
         if (s.status === 'active' && E.sessionState(s, now()).onBreak)
           return { text: 'On a break. Resume when you’re back.', plain: true };
+        return { text: 'Ask E.V. about this note', run: ask };
+      }
+      if (s)
         return {
           text: 'Ask E.V. about this note',
           run: () => {
-            if (isTimed(s)) POP.th = sThread(s);
+            POP.th = noteThread(id); // this note's own chat, not the running session's
             popShow({ hist: false });
           },
         };
-      }
-      if (s) return null; // a session on another note or task: the view's own ask
       const done = lastStudied(id);
       if (done)
         return {
@@ -784,7 +792,7 @@
       } else kids.forEach((k, i) => F.msgs.children[i] !== k && F.msgs.children[i].replaceWith(k));
       const asked = new Set(msgs.filter(m => m.role === 'matt').map(m => m.text));
       const chips = (nid ? NOTE_ASKS : [...new Set([POP_ASK[ui.tab] || POP_ASK.ev, POP_ASK.ev])]).filter(
-        c => !asked.has(c)
+        c => !asked.has(c) || c === NOTE_QUIZ
       );
       if (F.chips.dataset.k !== chips.join('|')) {
         F.chips.dataset.k = chips.join('|');

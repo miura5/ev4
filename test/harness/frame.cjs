@@ -378,7 +378,9 @@ const SIZES = [
     await page.click('#tab-notes');
     await page.click(`#notes-rows [data-note="${NID}"] .nm`);
     await page.click('#notes-pv-study');
-    await until(page, () => /left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''));
+    await until(page, () =>
+      /left|writing|Paused/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || '')
+    );
     for (const v of ['notes', 'today', 'study', 'progress', 'record', 'ev']) {
       await page.click('#tab-' + v);
       await page.waitForTimeout(150);
@@ -404,8 +406,14 @@ const SIZES = [
       });
       const clear = r.end && r.evb && r.end.r <= r.evb.l && (!r.sug || r.end.r <= r.sug.l);
       ok(
-        `${tag} ${v}: the strip holds the session (time left, the note cut short, Break, End), clear of her line and the button`,
-        !!r.slot && /^\d+:\d\d left$/.test(r.left) && r.cut && r.tn.w <= 260 && clear && !r.header && r.sx <= 0,
+        `${tag} ${v}: the strip holds the session (its clock, the note cut short, Break, End), clear of her line and the button`,
+        !!r.slot &&
+          /^(\d+:\d\d (left|writing)|Paused · \d+:\d\d)$/.test(r.left) &&
+          r.cut &&
+          r.tn.w <= 260 &&
+          clear &&
+          !r.header &&
+          r.sx <= 0,
         JSON.stringify(r)
       );
     }
