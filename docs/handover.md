@@ -3,8 +3,22 @@
 The build manager rewrites this file before a chat is cleared or ends (CLAUDE.md, Roles, D-317). A new build manager
 reads it right after CLAUDE.md. It holds no personal data: the repository is public.
 
-**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 27, afternoon
+**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 28, early morning
 Central). One manager at a time.
+
+## Update (Oct 28, early morning Central)
+
+- Live is **v4.5.14 at 219358d** (B-429, B-430, B-431, B-434, B-435, B-437 to B-442), recorded GREEN. Staging carries
+  the same build. Matt has been told what to try.
+- D-351: the manager never builds. One builder agent at a time after a release; lanes only for feature sprints.
+- Running builders (background agents of this chat): **B-449** study plans (exception, top priority, D-354; Sonnet only
+  for exam plans D-355, Haiku patches for edits D-356) and **B-452** Conversation tweaks (scroll feel, no pills, no Go
+  deeper, Back to now centred and lower). A fresh second review of the **B-446** fix (1268102) is running; B-447 had no
+  gaps. Those four go to the next batched release.
+- After B-449 lands: launch the **B-450** builder (study plan UI) from mock-up v3 (scratchpad planmock/v3) plus the UI
+  reviewer's five fixes: done count matches ticks, phone popover below the toolbar, carry-over once inside Today, phone
+  toolbar rows laid out on purpose, wording and fixture slips.
+- Queue after that: B-448, B-451, B-436. Parked for the architecture review (B-415): B-443, B-444, B-445.
 
 ## Update (Oct 27, late evening)
 
