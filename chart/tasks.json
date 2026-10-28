@@ -8249,7 +8249,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: past dates read 'in -1 days'; fixing relDay and every 'in N days' builder",
+  "notes": "builder: fixed in 0aee114: E.relDay (core/insights.mjs) for every 'in N days' (Today's relDay, Study exam lines and Coming up, Readiness card and quick ask); test/rel-day.test.mjs; npm test 849/0, smoke and run harness green. Waiting on ship staging.",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "A past date's panel in the Today week view says 'in -1 days' instead of naming it as past (for example 'yesterday' or 'Mon, 1 day ago').",
