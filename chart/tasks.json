@@ -8556,5 +8556,23 @@
   "board": {
    "row": "v4 B-461: Ask for changes on a plan does not reliably reach the plan edit: the…"
   }
+ },
+ {
+  "id": "B-462",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): A finished job's finish time is stamped with its start time, which can hide its done note in the conversation",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging proof of B-459 (job -9)",
+  "words": "A finished job's finish time is stamped with its start time, which can hide its done note in the conversation",
+  "reworded": true,
+  "reportedAt": "2026-10-28T19:54:05.372Z",
+  "board": {
+   "row": "v4 B-462: A finished job's finish time is stamped with its start time, which…"
+  }
  }
 ]
