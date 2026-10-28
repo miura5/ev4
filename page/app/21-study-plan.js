@@ -9,6 +9,21 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6M6 14v6M12 4v2M12 10v10M18 4v10M18 18v2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="18" cy="16" r="2"/></svg>';
     const PL_SPARK =
       '<svg viewBox="0 0 24 24" aria-hidden="true" class="el-ico"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"/></svg>';
+    // B-456: a new plan that stalls (no result 2 minutes after it was asked, or a run stopped mid-way) frees Make a plan
+    // by the clock alone, with no record change, so the page looks again as the window passes
+    let plansStalled = '';
+    setInterval(() => {
+      try {
+        const k = (S.jobs || [])
+          .filter(j => E.studyPlanJobStalled(j))
+          .map(j => j.id)
+          .join(',');
+        if (k !== plansStalled) {
+          plansStalled = k;
+          render();
+        }
+      } catch {}
+    }, 15000);
     const PL_CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
     const svgEl = (html, tag = 'span', cls = 'pl-ico') => {
       const s = el(tag, cls);
@@ -112,7 +127,8 @@
       if (!j) return {};
       const after = String(j.createdAt || '') > String((newest && newest.at) || '');
       if (!after) return {};
-      if (['queued', 'running'].includes(j.status) && !(j.fired && j.fired.ok === false)) return { working: j };
+      if (['queued', 'running'].includes(j.status) && !(j.fired && j.fired.ok === false) && !E.studyPlanJobStalled(j))
+        return { working: j };
       if (j.status === 'done' && j.result && j.result.asked && j.result.text && store.get('plan-skip') !== j.id)
         return { ask: j };
       return {};
@@ -137,7 +153,8 @@
     async function makePlan(b, course, ex) {
       return guard(b, async () => {
         const r = await startJob(E.studyPlanJob({ course, exams: S.exams, date: today, examId: ex && ex.id }));
-        if (!r.fired.ok) toast('Couldn’t start it: ' + fireCopy(r.fired.error));
+        if (!r.fired.ok)
+          toast(r.fired.error === 'app_only' ? fireCopy('app_only') : 'Couldn’t start it: ' + fireCopy(r.fired.error));
         render();
       });
     }
@@ -184,7 +201,10 @@
           if (!j.revise) job.brief = String(job.brief || '') + tail;
           return guard(ev.currentTarget, async () => {
             const r = await startJob(job);
-            if (!r.fired.ok) toast('Couldn’t start it: ' + fireCopy(r.fired.error));
+            if (!r.fired.ok)
+              toast(
+                r.fired.error === 'app_only' ? fireCopy('app_only') : 'Couldn’t start it: ' + fireCopy(r.fired.error)
+              );
             render();
           });
         },

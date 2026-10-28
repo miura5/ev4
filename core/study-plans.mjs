@@ -439,10 +439,28 @@ export function makeStudyPlans(core) {
             sameCourse(j.course, course) &&
             ['queued', 'running'].includes(j.status || 'queued') &&
             !(j.fired && j.fired.ok === false) &&
+            !studyPlanJobStalled(j, nowMs) &&
             nowMs - Date.parse(j.createdAt || j.at || 0) < NEW_JOB_MS
         )
         .sort((a, b) => String(b.createdAt || b.at || '').localeCompare(String(a.createdAt || a.at || '')))[0] || null
     );
+  }
+  // B-456: a new plan runs in the app at once (the app writes jobresults/<id> running within seconds of the job), so a
+  // job with no result START_MS after its `at` never started, and one still running RUN_MS after it started stopped
+  // (the app was closed or lost its connection mid-run). Either no longer holds the course's guard, with no record change.
+  const NEW_JOB_START_MS = 2 * 60000;
+  const NEW_JOB_RUN_MS = 15 * 60000;
+  /** B-456: why a new-plan job (exam-plan, no revise) that is queued or running has stalled, in plain words, else null.
+   *  `j` is a job view (status from jobresults/<id>, 'queued' when there is none; startedAt from it). */
+  function studyPlanJobStalled(j, nowMs = Date.now()) {
+    if (!j || j.kind !== 'exam-plan' || j.revise || (j.fired && j.fired.ok === false)) return null;
+    const status = j.status || 'queued';
+    const since = iso => nowMs - Date.parse(iso || 0);
+    if (status === 'queued' && since(j.createdAt || j.at) > NEW_JOB_START_MS)
+      return 'It didn’t start: nothing came back within 2 minutes. Tap Make a plan to try again.';
+    if (status === 'running' && since(j.startedAt || j.createdAt || j.at) > NEW_JOB_RUN_MS)
+      return 'It stopped before it finished (the app was likely closed while it ran). Tap Make a plan to try again.';
+    return null;
   }
   /** D-362 (B-456): a new-plan job's id, the same in every tab for the course's next new plan of the day, so two tabs
    * that both start one write one document (the second create is refused or merges into the first, never a second
@@ -745,6 +763,7 @@ export function makeStudyPlans(core) {
     studyPlanChipJob,
     studyPlanChipStarted,
     studyPlanNewJobRunning,
+    studyPlanJobStalled,
     studyPlanNewJobId,
     studyPlanScoreOk,
     studyPlanDoc,

@@ -43,7 +43,12 @@
                 ev.target,
                 async () => {
                   newPlanTapped.add(key);
-                  await startJob(E.studyPlanChipJob(c, key));
+                  const r = await startJob(E.studyPlanChipJob(c, key));
+                  // B-456: on the claude.ai page nothing was written: the chip stays, and says where plans are made
+                  if (!r.id) {
+                    newPlanTapped.delete(key);
+                    toast(fireCopy(r.fired.error));
+                  }
                   render();
                 },
                 null,

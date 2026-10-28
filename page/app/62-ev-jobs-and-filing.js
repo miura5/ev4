@@ -18,6 +18,8 @@
         'Couldn’t reach the task service. It may still have started, so give it a minute before trying again.',
       upstream_error:
         'Couldn’t reach the task service. It may still have started, so give it a minute before trying again.',
+      // B-456: on the claude.ai page a new study plan can't run (D-306: the cloud worker refuses it); the app makes it
+      app_only: 'Study plans are made in the E.V. app. Open it on your phone or computer to make one.',
       not_granted: 'Background jobs aren’t available in this view.',
       capability_disabled: 'Background jobs aren’t available in this view.',
       capability_removed: 'Background jobs aren’t available in this view.',
@@ -35,6 +37,8 @@
       }
     }
     const jobText = id => (TASKS.jobText || 'Job {id}').replace('{id}', id);
+    // B-320 (D-306): the E.V. app (the PWA) names its host; the claude.ai page has none
+    const inApp = () => !!(window.claude && window.claude.host === 'ev-app');
     /** The jobs in the record as read now, as views (status from jobresults/<id>, 'queued' when there is none). */
     async function freshJobs() {
       const [js, rs] = await Promise.all(['jobs', 'jobresults'].map(c => db.collection(c).get().then(docs)));
@@ -43,6 +47,7 @@
         ...j,
         createdAt: j.createdAt || j.at,
         status: by.has(j.id) ? by.get(j.id).status : 'queued',
+        startedAt: by.has(j.id) ? by.get(j.id).startedAt || null : null, // B-456: a stalled run frees the plan guard
       }));
     }
     async function startJob({ kind, title, brief, course, revise, said, chip }) {
@@ -59,6 +64,9 @@
       // The record is read right before the write: a new-plan job queued or running there is the answer, and the id
       // is the course's next of the day in every tab, so two tabs that both start one make one document.
       let planId = null;
+      // B-456: a new plan is made in the app only; here nothing is written and the caller says where to make it
+      if (kind === 'exam-plan' && !revise && !inApp())
+        return { id: null, fired: { at: now(), ok: false, error: 'app_only' } };
       if (kind === 'exam-plan' && !revise && course) {
         const fresh = await freshJobs();
         const busy = E.studyPlanNewJobRunning(fresh, course);
@@ -87,6 +95,9 @@
       }); // B-177: jobs schema 2
       const fired = await fire(TASKS.worker, jobText(id));
       await write({ op: 'update', collection: 'jobs', id, data: { fired } });
+      // B-456: in the app there is no connector: its bridge takes the job recorded as mcp_unavailable, records the
+      // hand-off as made and runs it through the Worker (pwa/bridge.js jobHandOff), so for the caller it started
+      if (!fired.ok && fired.error === 'mcp_unavailable' && inApp()) return { id, fired: { at: fired.at, ok: true } };
       return { id, fired };
     }
     // B-180 (D-194): a message starting build:, bug: or idea: is a build ask, with no model call: the build-ask row
@@ -323,6 +334,9 @@
         };
       if (j.fired && j.fired.ok === false)
         return { label: 'not started', v: 'bad', detail: fireCopy(j.fired.error), retry: !forBuilder };
+      // B-456: a new plan that never started, or stopped mid-run, says so; Make a plan starts the next one
+      const stalled = E.studyPlanJobStalled(j);
+      if (stalled) return { label: 'failed', v: 'bad', detail: stalled, retry: false };
       if (j.status === 'running')
         return mins(j.startedAt) > (forBuilder ? stall : 40)
           ? {

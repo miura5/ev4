@@ -1651,6 +1651,8 @@ async function studyPlanChecks(page) {
   await page.click('#tab-study');
   await page.waitForTimeout(300);
   await pickCourse('BIO 201');
+  // B-456: in the E.V. app (its host is ev-app); the claude.ai page doesn't make plans (below)
+  await page.evaluate(() => (window.claude.host = 'ev-app'));
   await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
   await page.waitForTimeout(400);
   const made = await page.evaluate(() => ({
@@ -1663,6 +1665,46 @@ async function studyPlanChecks(page) {
     'Make a plan names its card’s exam in the job, and the card shows it making',
     made.briefs.some(b => /\(B9H\)/.test(b)) && made.button === 'Making…',
     JSON.stringify(made)
+  );
+  // B-456: Making… never sticks: the job got no result (no worker here), so 2 minutes after it was asked the button is
+  // back, with no record change, and the job says it didn't start
+  const jobsBefore = await page.evaluate(() => JSON.stringify(window.__db.jobs || {}));
+  await page.clock.setSystemTime((await page.evaluate(() => Date.now())) + 150000);
+  await pickCourse('NUR 112');
+  await pickCourse('BIO 201');
+  const freed = await page.evaluate(() => ({
+    now: new Date().toISOString(),
+    jobs: Object.entries(window.__db.jobs || {})
+      .filter(([, j]) => j.kind === 'exam-plan' && j.course === 'BIO 201')
+      .map(([id, j]) => [id, j.at, j.fired]),
+    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
+    disabled: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
+    mini: (document.querySelector('#ov-plans .pl-none .mini') || {}).textContent,
+  }));
+  ok(
+    'A new plan with no result 2 minutes after it was asked frees Make a plan, with no record change',
+    freed.button === 'Make a plan' &&
+      freed.disabled === false &&
+      !/making your plan/.test(freed.mini || '') &&
+      jobsBefore === (await page.evaluate(() => JSON.stringify(window.__db.jobs || {}))),
+    JSON.stringify(freed)
+  );
+  // B-456: the claude.ai page (no ev-app host) writes no job and says plainly where plans are made
+  await page.evaluate(() => delete window.claude.host);
+  const nJobs = () => page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
+  const n0 = await nJobs();
+  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
+  await page.waitForTimeout(400);
+  const said = await page.evaluate(() => ({
+    toast: document.getElementById('toast').textContent,
+    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
+  }));
+  ok(
+    'On the claude.ai page Make a plan writes no job and points to the E.V. app',
+    (await nJobs()) === n0 &&
+      said.toast === 'Study plans are made in the E.V. app. Open it on your phone or computer to make one.' &&
+      said.button === 'Make a plan',
+    JSON.stringify(said)
   );
   await page.evaluate(async () => {
     const db = await window.claude.use('db');

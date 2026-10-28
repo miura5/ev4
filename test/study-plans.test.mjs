@@ -640,7 +640,7 @@ test('D-362: tapping the chip starts exactly one exam-plan job with the words th
   assert.match(cards, /const started = newPlanTapped\.has\(key\);[\s\S]*if \(started\) return;/);
   assert.match(
     cards,
-    /guard\(\s*ev\.target,[\s\S]*?newPlanTapped\.add\(key\);\s+await startJob\(E\.studyPlanChipJob\(c, key\)\);/
+    /guard\(\s*ev\.target,[\s\S]*?newPlanTapped\.add\(key\);\s+const r = await startJob\(E\.studyPlanChipJob\(c, key\)\);/
   );
   assert.match(cards, /`Make a new \$\{c\.course\} plan`/);
   // the page passes the chip and his line through to the job
@@ -710,6 +710,74 @@ test('B-456: one new plan at a time per course: the chip, Make a plan, Remake an
   const study = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
   assert.match(study, /startJob\(E\.studyPlanJob\(/, 'Make a plan and Remake start through startJob');
   assert.equal(EV.studyPlanJob({ course: 'NUR 112', exams: record().exams, date: TODAY }).course, 'NUR 112');
+});
+
+test('B-456: Making… never sticks: a new plan with no result after 2 minutes, or a run stopped mid-way, frees the guard', () => {
+  const base = { id: 'job-20261028-newplan-nur112-5', kind: 'exam-plan', course: 'NUR 112', fired: { ok: true } };
+  const at = '2026-10-28T11:58:30.503Z';
+  const view = (status, extra = {}) => ({ ...base, at, createdAt: at, status, ...extra });
+  const t = s => Date.parse(at) + s * 1000;
+  // no result: held for 2 minutes, then it never started, in plain words, and the course is free
+  assert.equal(EV.studyPlanJobStalled(view('queued'), t(110)), null);
+  assert.equal(EV.studyPlanNewJobRunning([view('queued')], 'NUR 112', t(110)).id, base.id);
+  assert.match(EV.studyPlanJobStalled(view('queued'), t(125)), /didn’t start/);
+  assert.equal(EV.studyPlanNewJobRunning([view('queued')], 'NUR 112', t(125)), null);
+  // Matt's staging job: running since 11:58:32 and never finished; held while a plan can still be running, then freed
+  const running = view('running', { startedAt: '2026-10-28T11:58:32.079Z' });
+  assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(10 * 60)).id, base.id);
+  assert.match(EV.studyPlanJobStalled(running, t(16 * 60)), /stopped before it finished/);
+  assert.equal(EV.studyPlanNewJobRunning([running], 'NUR 112', t(16 * 60)), null);
+  // only a new plan's job: an edit, a failed firing or another kind is never called stalled
+  for (const j of [
+    view('queued', { revise: 'E4' }),
+    view('queued', { fired: { ok: false } }),
+    view('queued', { kind: 'general' }),
+  ])
+    assert.equal(EV.studyPlanJobStalled(j, t(3600)), null, JSON.stringify(j));
+  // the page: the card's working state, the job card and a re-render as the window passes all read it
+  const study = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
+  assert.match(
+    study,
+    /!\(j\.fired && j\.fired\.ok === false\) &&\s*!E\.studyPlanJobStalled\(j\)\s*\)\s*return \{ working: j \}/
+  );
+  assert.match(
+    study,
+    /setInterval\(\(\) => \{[\s\S]{0,200}E\.studyPlanJobStalled\(j\)[\s\S]{0,200}render\(\);[\s\S]{0,80}\}, 15000\)/
+  );
+  const jobsJs = fs.readFileSync(path.join(ROOT, 'page/app/62-ev-jobs-and-filing.js'), 'utf8');
+  assert.match(
+    jobsJs,
+    /const stalled = E\.studyPlanJobStalled\(j\);\s+if \(stalled\) return \{ label: 'failed', v: 'bad', detail: stalled/
+  );
+  assert.match(
+    jobsJs,
+    /startedAt: by\.has\(j\.id\) \? by\.get\(j\.id\)\.startedAt/,
+    'the fresh read carries startedAt'
+  );
+  // in the app (no connector), a job its bridge hands to the Worker started: no “needs a remote connector” toast
+  assert.match(
+    jobsJs,
+    /if \(!fired\.ok && fired\.error === 'mcp_unavailable' && inApp\(\)\) return \{ id, fired: \{ at: fired\.at, ok: true \} \};/
+  );
+});
+
+test('B-456: on the claude.ai page Make a plan, Remake and the chip write no job and point to the app', () => {
+  const jobsJs = fs.readFileSync(path.join(ROOT, 'page/app/62-ev-jobs-and-filing.js'), 'utf8');
+  assert.match(jobsJs, /const inApp = \(\) => !!\(window\.claude && window\.claude\.host === 'ev-app'\);/);
+  assert.match(
+    jobsJs,
+    /app_only: 'Study plans are made in the E\.V\. app\. Open it on your phone or computer to make one\.'/
+  );
+  // the refusal comes before the record is read or written, and only for a new plan (an edit is not refused here)
+  const refuse = jobsJs.indexOf("if (kind === 'exam-plan' && !revise && !inApp())");
+  assert.ok(refuse > 0 && refuse < jobsJs.indexOf('const fresh = await freshJobs()'), 'refused before the read');
+  assert.ok(refuse < jobsJs.indexOf("collection: 'jobs',"), 'refused before the write');
+  assert.match(jobsJs, /!inApp\(\)\)\s*return \{ id: null, fired: \{ at: now\(\), ok: false, error: 'app_only' \} \};/);
+  // Make a plan, Remake and E.V.'s answer say it plainly; the chip says it too and stays a chip
+  const study = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
+  assert.equal((study.match(/r\.fired\.error === 'app_only' \? fireCopy\('app_only'\)/g) || []).length, 2);
+  const cards = fs.readFileSync(path.join(ROOT, 'page/app/67-ev-cards.js'), 'utf8');
+  assert.match(cards, /if \(!r\.id\) \{\s+newPlanTapped\.delete\(key\);\s+toast\(fireCopy\(r\.fired\.error\)\);/);
 });
 
 test('D-362: the Haiku edit may answer “this needs a whole new plan” with the chip instead of a patch', async () => {
