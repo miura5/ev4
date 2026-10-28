@@ -8796,5 +8796,22 @@
   "board": {
    "row": "v4 B-472: Retire the claude.ai page as a view, step 1 (D-367): ship staging and…"
   }
+ },
+ {
+  "id": "B-473",
+  "kind": "request",
+  "title": "Request (reported Oct 28): Retire the claude.ai page, step 2 (D-367): the scheduled runs read their bootstrap (system/manifest, system/worker) from the Worker instead of the artifact database; the run prompts change, the cloud tasks are updated by deploy's printed calls and the Mac-bound tasks are re-created with Matt present (O-5); then ship writes no system documents to the artifact database and the ArtifactData code paths leave core, tools and the page. Needs a sitting with Matt at the Mac.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "D-367 (Matt, Oct 28 evening)",
+  "words": "Retire the claude.ai page, step 2 (D-367): the scheduled runs read their bootstrap (system/manifest, system/worker) from the Worker instead of the artifact database; the run prompts change, the cloud tasks are updated by deploy's printed calls and the Mac-bound tasks are re-created with Matt present (O-5); then ship writes no system documents to the artifact database and the ArtifactData code paths leave core, tools and the page. Needs a sitting with Matt at the Mac.",
+  "reportedAt": "2026-10-28T22:08:53.615Z",
+  "board": {
+   "row": "v4 B-473: Retire the claude.ai page, step 2 (D-367): the scheduled runs read…"
+  }
  }
 ]
