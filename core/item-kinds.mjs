@@ -423,6 +423,32 @@ export function makeItemKinds(core) {
     const { objective, ...rest } = q;
     return ids.length === 1 ? { ...rest, objective: ids[0] } : rest;
   }
+  /** B-455: the objectives a More practice item (or a proposed spot's pick) may carry: the exam's, else the course's;
+   *  with neither an exam nor a course named, every objective. ctx: {exam, course, objectives, exams, courseOf}. */
+  function candidateObjectives({ exam, course, objectives = [], exams = [], courseOf = e => e.course } = {}) {
+    const own = exam ? objectives.filter(o => o && o.exam === exam.id) : [];
+    if (own.length) return own;
+    if (!course) return exam ? [] : objectives.filter(Boolean);
+    return objectives.filter(o => {
+      const oe = o && exams.find(e => e && e.id === o.exam);
+      return !!oe && sameCourse(courseOf(oe), course);
+    });
+  }
+  /** B-455: a practice reply's items as the page keeps them before they are checked: mended, ids m1, m2..., a weak
+   *  spot id not in the record (or any, for a set of new checks) left off, the objective held (a spot's own when it
+   *  has one, else the candidates), kind review or check. opts: {ids, spots, checks: no spot-aimed items, type}. */
+  function tagItems(res, { ids = [], spots = [], checks = false, type } = {}) {
+    return replyItems(res)
+      .map(normalizeItem)
+      .map((q, i) => {
+        if (!q || typeof q !== 'object' || Array.isArray(q)) return q;
+        const item = { ...q, id: 'm' + (i + 1), ...(type ? { type } : {}) };
+        const spot = !checks && item.weakspotId ? spots.find(w => w && w.id === item.weakspotId) : null;
+        if (!spot) delete item.weakspotId;
+        const tagged = spot && spot.objective ? { ...item, objective: spot.objective } : withObjective(item, ids);
+        return { ...tagged, kind: spot ? 'review' : 'check' };
+      });
+  }
   /** B-446: the questions in a practice reply: {items}, a bare array, {questions} or {set: {items}}. */
   function replyItems(res) {
     if (Array.isArray(res)) return res;
@@ -470,7 +496,7 @@ export function makeItemKinds(core) {
 
   return {
     crossCourse,
-    practiceReply: { normalizeItem, replyItems, salvageItems, withObjective, ITEM_KEYS }, // B-446, B-455
+    practiceReply: { normalizeItem, replyItems, salvageItems, withObjective, candidateObjectives, tagItems, ITEM_KEYS }, // B-446, B-455
     displayOrder,
     gradeOpenLocal,
     gradePrompt,

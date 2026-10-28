@@ -283,16 +283,14 @@ test('B-455: an item is held to its candidate objectives; a planted dosage miss 
       },
     ],
   };
-  const [item] = EV.practiceReply
-    .replyItems(reply)
-    .map(EV.practiceReply.normalizeItem)
-    .map(q =>
-      W(
-        q,
-        objectives.map(o => o.id)
-      )
-    )
-    .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }));
+  // the page's own steps (moreDosage): its candidates, then its tagging
+  const cands = EV.practiceReply.candidateObjectives({ exam: exams[0], course: 'NUR 112', objectives, exams });
+  const [item] = EV.practiceReply.tagItems(
+    { items: reply.items.map(q => ({ ...q, weakspotId: 'ws-anything' })) },
+    { ids: cands.map(o => o.id), checks: true, type: 'numeric' }
+  );
+  assert.equal(item.kind, 'check');
+  assert.equal('weakspotId' in item, false, 'a dosage set holds new checks only');
   assert.ok(EV.validateItem(item).ok);
   const set = { id: 'more-2026-10-28-1', kind: 'more', exam: 'D1', items: [item] };
   const r = EV.planAnswer({ set, item, chosen: '12 mL', now: '2026-10-28T15:00:00Z', weakspots: [], exams });
@@ -303,5 +301,62 @@ test('B-455: an item is held to its candidate objectives; a planted dosage miss 
   assert.ok(
     objectives.some(o => o.id === made.data.objective),
     'a known objective: Accept is on'
+  );
+});
+
+test('B-455 (review): the candidates each prompt gets, and the general path tags a spot-aimed item from its spot or them', () => {
+  const C = EV.practiceReply.candidateObjectives;
+  const exams = [
+    { id: 'E4', course: 'NUR 112', kind: 'unit', date: '2026-11-02' },
+    { id: 'E5', course: 'NUR 112', kind: 'unit', date: '2026-11-20' },
+    { id: 'D1', course: 'NUR 112', kind: 'dosage', date: '2026-11-05' },
+    { id: 'BX3', course: 'BIO 201', kind: 'unit', date: '2026-10-30' },
+  ];
+  const objectives = [
+    { id: 'E4-1', exam: 'E4' },
+    { id: 'E4-2', exam: 'E4' },
+    { id: 'BX3-1', exam: 'BX3' },
+  ];
+  const ids = ctx => C({ objectives, exams, ...ctx }).map(o => o.id);
+  // the exam's own; an exam with none falls to its course's (D1 and E5 have none: NUR 112's); a course alone, its
+  // own; no exam and no course, every one; a course with none, none
+  assert.deepEqual(ids({ exam: exams[0], course: 'NUR 112' }), ['E4-1', 'E4-2']);
+  assert.deepEqual(ids({ exam: exams[2], course: 'NUR 112' }), ['E4-1', 'E4-2']);
+  assert.deepEqual(ids({ exam: exams[1], course: 'nur112' }), ['E4-1', 'E4-2']);
+  assert.deepEqual(ids({ course: 'BIO 201' }), ['BX3-1']);
+  assert.deepEqual(ids({}), ['E4-1', 'E4-2', 'BX3-1']);
+  assert.deepEqual(ids({ course: 'NUR 113' }), []);
+  // the general path's tagging (morePractice): the review's input, a spot with no objective and an item naming an
+  // objective the record lacks: never written as given
+  const T = (items, spots, cands) => EV.practiceReply.tagItems({ items }, { ids: cands, spots });
+  const q = { type: 'single', stem: 'Which finding needs action first?', options: ['a', 'b'], correct: [0] };
+  const spots = [
+    { id: 'ws-1', objective: '' },
+    { id: 'ws-2', objective: 'E4-2' },
+  ];
+  let [a, b, c, d] = T(
+    [
+      { ...q, weakspotId: 'ws-1', objective: 'E9-9' },
+      { ...q, weakspotId: 'ws-2', objective: 'E9-9' },
+      { ...q, weakspotId: 'ws-gone', objective: 'E4-1' },
+      { ...q, objective: 'E9-9' },
+    ],
+    spots,
+    ['E4-1', 'E4-2']
+  );
+  assert.equal('objective' in a, false, 'E9-9 is not written: two candidates, none named');
+  assert.deepEqual([a.weakspotId, a.kind], ['ws-1', 'review']);
+  assert.deepEqual([b.objective, b.kind], ['E4-2', 'review'], "a spot's own objective");
+  assert.deepEqual([c.objective, 'weakspotId' in c, c.kind], ['E4-1', false, 'check'], 'an unknown spot id left off');
+  assert.equal('objective' in d, false);
+  [a] = T([{ ...q, weakspotId: 'ws-1', objective: 'E9-9' }], spots, ['E4-1']);
+  assert.equal(a.objective, 'E4-1', 'the one candidate');
+  assert.deepEqual(
+    T([{ ...q, weakspotId: 'ws-1', objective: 'E4-2' }], spots, ['E4-1', 'E4-2']).map(x => x.objective),
+    ['E4-2']
+  );
+  assert.deepEqual(
+    T([q, q], [], []).map(x => x.id),
+    ['m1', 'm2']
   );
 });

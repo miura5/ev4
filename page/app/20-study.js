@@ -1158,7 +1158,10 @@
         .filter(e => e.kind === 'dosage' && e.date >= today)
         .sort((a, b) => (a.date < b.date ? -1 : 1))[0];
       // B-455: the objectives an item may carry (the dosage exam's, else its course's), so a miss can be accepted
-      const cands = candidateObjectives(ex, ex ? E.courseOf(ex) : opt.course || (mats[0] && mats[0].course));
+      const cands = candidateObjectives(
+        ex,
+        ex ? E.courseOf(ex) : opt.course || (mats[0] && mats[0].course) || E.defaultCourse()
+      );
       const ids = cands.map(o => o.id);
       const prompt = [
         'You write dosage calculation practice for Matt, a first-semester ADN nursing student. Return JSON only.',
@@ -1178,11 +1181,9 @@
         .filter(Boolean)
         .join('\n');
       const res = await askItems(prompt);
+      // B-455: new checks only (any weak spot id left off), each holding one of the candidates
       const fresh = E.practiceReply
-        .replyItems(res)
-        .map(E.practiceReply.normalizeItem)
-        .map(q => E.practiceReply.withObjective(q, ids)) // B-455
-        .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }))
+        .tagItems(res, { ids, checks: true, type: 'numeric' })
         .filter(q => E.validateItem(q).ok && refs.has(q.sourceRef));
       if (!fresh.length) {
         unusable(res, refs);
@@ -1219,15 +1220,15 @@
       render();
       return true;
     }
-    /** B-455: the objectives an item or a proposed spot may carry: its exam's, else its course's. */
-    function candidateObjectives(ex, course) {
-      const own = ex ? S.objectives.filter(o => o.exam === ex.id) : [];
-      if (own.length || !course) return own;
-      return S.objectives.filter(o => {
-        const oe = S.exams.find(e => e.id === o.exam);
-        return !!oe && E.courseOf(oe) === E.courseOf({ course });
+    /** B-455: the objectives an item or a proposed spot may carry: its exam's, else its course's (core's rule). */
+    const candidateObjectives = (exam, course) =>
+      E.practiceReply.candidateObjectives({
+        exam,
+        course: course ? E.courseOf({ course }) : null,
+        objectives: S.objectives,
+        exams: S.exams,
+        courseOf: E.courseOf,
       });
-    }
     /** B-455: the prompt's line naming them; every item must carry one. */
     const objectivesLine = cands =>
       cands.length
@@ -1277,8 +1278,8 @@
         const objs = S.objectives
           .filter(o => (exId ? o.exam === exId : !opt.course || inCourse(o)))
           .map(o => ({ id: o.id, text: o.text, chapters: o.chapters }));
-        // B-455: the objectives an item may carry: these, else the course's (so a miss can be accepted)
-        const cands = objs.length ? objs : candidateObjectives(null, opt.course || (ex ? E.courseOf(ex) : null));
+        // B-455: the objectives an item may carry: the exam's, else the course's (so a miss can be accepted)
+        const cands = candidateObjectives(ex, opt.course || (ex ? E.courseOf(ex) : null));
         const ids = cands.map(o => o.id);
         const plan = opt.course && !objs.length && ex ? examPlan(ex) : null;
         const planTasks = plan
@@ -1359,20 +1360,10 @@
         const res = await askItems(prompt);
         const n = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
         const id = `more-${today}-${n}`;
+        // B-446: mended; a weak spot id not in his record left off, never the question with it. B-455: a review item
+        // carries its spot's objective when it has one, else (and a check) one of the candidates, else none
         const fresh = E.practiceReply
-          .replyItems(res)
-          .map(E.practiceReply.normalizeItem) // B-446: mend the shape's drift before it is checked
-          .map((q, i) => {
-            const item = { ...q, id: 'm' + (i + 1) };
-            // B-446: a weak spot id not in his record is left off (as a job's set does), never the question with it
-            const spot = item.weakspotId && M.models.find(w => w.id === item.weakspotId);
-            if (item.weakspotId && !spot) delete item.weakspotId;
-            // B-455: a review item carries its spot's objective; a check one of the candidates, else none
-            const tagged = spot
-              ? { ...item, ...(spot.objective ? { objective: spot.objective } : {}) }
-              : E.practiceReply.withObjective(item, ids);
-            return { ...tagged, kind: tagged.weakspotId ? 'review' : 'check' };
-          })
+          .tagItems(res, { ids, spots: M.models })
           .filter(q => E.validateItem(q).ok)
           .map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })) // B-193 (D-205)
           .filter(c => !c.errors.length)

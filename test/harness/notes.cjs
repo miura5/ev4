@@ -2044,6 +2044,33 @@ const openNoteId = page =>
     db.weakspots['ws-harness-noobj2'] = spot('Harness spot tagged to an objective not in the record', {
       objective: 'Z9-9',
     });
+    // B-455 review: a More set whose one question carries no objective, to be missed (a made-up item)
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    const MSET = 'more-' + day + '-b455';
+    db.sets[MSET] = {
+      schema: 3,
+      writer: 'page',
+      at,
+      source: 'More practice',
+      kind: 'more',
+      date: day,
+      exam: 'E4',
+      title: 'Harness untagged miss',
+      createdAt: at,
+      items: [
+        {
+          id: 'm1',
+          kind: 'check',
+          topic: 'Harness untagged miss',
+          type: 'single',
+          cjStep: 'recognize-cues',
+          stem: 'Harness untagged question: which is right?',
+          options: ['Right one', 'Not it one', 'Other one', 'Last one'],
+          correct: [0],
+          rationales: ['Right.', 'No.', 'No.', 'No.'],
+        },
+      ],
+    };
     const { page, errors } = await open(browser, { width, height: width < 600 ? 844 : 860 }, db);
     const tag = `[${width} B-455 pick an objective]`;
     await page.click('#tab-study');
@@ -2117,6 +2144,23 @@ const openNoteId = page =>
       () => document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').hidden
     );
     ok(`${tag} Escape closes the menu`, closed, '');
+    // a tap outside (a pointer, no focus change needed) closes it too
+    await page.click(pickSel);
+    await page.waitForTimeout(100);
+    const reopened = await page.evaluate(
+      () => !document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').hidden
+    );
+    await page.click('#weak-list .dayh');
+    await page.waitForTimeout(100);
+    const tapped = await page.evaluate(() => {
+      const row = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]');
+      return [row.querySelector('.pick-menu').hidden, row.querySelector('.pick-btn').getAttribute('aria-expanded')];
+    });
+    ok(
+      `${tag} a tap outside closes the menu`,
+      reopened && tapped[0] === true && tapped[1] === 'false',
+      JSON.stringify({ reopened, tapped })
+    );
     const pickId = want[0];
     await page.click(pickSel);
     await page.click(`#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu [data-obj="${pickId}"]`);
@@ -2165,6 +2209,89 @@ const openNoteId = page =>
       return x && !x.hidden && x.textContent === 'Declined. Nothing is counted.';
     });
     ok(`${tag} Decline says "Declined. Nothing is counted."`, declined, '');
+    // B-455 (c): a More set's untagged question missed: the end card says it needs an objective picked, with no Accept
+    // all (nothing to accept there) and Review the primary; Review opens Weak spots on that row's Pick an objective
+    await openSet(page, MSET);
+    await page.waitForTimeout(300);
+    await page.locator('#pr-body label.opt', { hasText: 'Not it one' }).click();
+    await page.waitForTimeout(200);
+    const res = page.locator('#pr-body button', { hasText: 'See results' }).first();
+    if (await res.isVisible().catch(() => false)) await res.click();
+    await until(page, () => !!document.querySelector('#pr-body .endline'), null, 4000);
+    const made = await page.evaluate(() =>
+      Object.entries(window.__db.weakspots)
+        .filter(([, w]) => w.topic === 'Harness untagged miss')
+        .map(([id, w]) => ({ id, objective: w.objective, proposed: !!w.proposed }))
+    );
+    const end = await page.evaluate(() => {
+      const l = document.querySelector('#pr-body .endline');
+      return {
+        text: l.querySelector('.sp').textContent,
+        btns: [...l.querySelectorAll('button')].map(b => [b.textContent, b.classList.contains('primary')]),
+      };
+    });
+    ok(
+      `${tag} the end card says the miss needs an objective picked, hides Accept all and makes Review the primary`,
+      made.length === 1 &&
+        made[0].proposed &&
+        !made[0].objective &&
+        end.text === '1 miss is proposed as a weak spot. It needs an objective picked.' &&
+        JSON.stringify(end.btns) === '[["Review",true]]',
+      JSON.stringify({ made, end })
+    );
+    await page.screenshot({ path: path.join(shots, `b455-end-card-${width}.png`) });
+    await page.locator('#pr-body .endline button', { hasText: 'Review' }).click();
+    const focused = await until(
+      page,
+      id => {
+        const a = document.activeElement;
+        return !!a && a.classList.contains('pick-btn') && !!a.closest(`#weak-list .trow[data-id="${id}"]`);
+      },
+      made[0] && made[0].id,
+      4000
+    );
+    ok(`${tag} Review opens Weak spots with that row's Pick an objective focused`, focused, '');
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+  // B-455: with no objectives in the record for its course, Accept stays greyed and says why (390)
+  {
+    const db = JSON.parse(JSON.stringify(seed));
+    db.objectives = {};
+    db.weakspots['ws-harness-none'] = {
+      schema: 2,
+      writer: 'page',
+      at: new Date(Date.now() - 36e5).toISOString(),
+      source: 'More practice',
+      topic: 'Harness spot in a course with no objectives',
+      objective: '',
+      exam: '',
+      course: 'NUR 112',
+      kind: 'concept',
+      addedBy: 'page',
+      proposed: true,
+      initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 },
+      events: {},
+    };
+    const { page, errors } = await open(browser, { width: 390, height: 844 }, db);
+    const tag = '[390 B-455 no objectives]';
+    await page.click('#tab-study');
+    await until(page, () => !document.getElementById('p-study').hidden);
+    await page.click('#study-qweak');
+    await until(page, () => !!document.querySelector('#weak-list .trow[data-id="ws-harness-none"]'));
+    const r = await page.evaluate(() => {
+      const row = document.querySelector('#weak-list .trow[data-id="ws-harness-none"]');
+      const b = row.querySelector('.acts > button');
+      return { acc: [b.textContent, b.disabled, b.title], pick: !!row.querySelector('.pick-btn') };
+    });
+    ok(
+      `${tag} Accept is greyed with "No objectives in the record for its course yet", and no menu`,
+      r.acc[0] === 'Accept' &&
+        r.acc[1] === true &&
+        r.acc[2] === 'No objectives in the record for its course yet' &&
+        !r.pick,
+      JSON.stringify(r)
+    );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }
