@@ -68,10 +68,34 @@
     // until he writes in it again.
     const WRITE_START_MS = (SWC.writingStartSeconds || 4) * 1e3;
     const WRITE_GAP_MS = (SWC.writingStartGapSeconds || 10) * 1e3;
+    // B-454 review: no start while one is on its way (any start: a new note's, Study with E.V.'s, or this one, until the
+    // record shows it; a session write is not painted ahead of the record), while offline or read-only (the shim refuses
+    // a session write offline), or after a refused start until the connection comes back.
+    SS.net = true;
+    const netBack = () => {
+      SS.startRefused = false;
+    };
+    window.addEventListener('ev-sync', e => {
+      const on = !!(e && e.detail && e.detail.online);
+      if (on && !SS.net) netBack();
+      SS.net = on;
+    });
+    window.addEventListener('online', netBack);
+    const startWaits = () =>
+      SS.starting ||
+      SS.startPending > 0 ||
+      (SS.justStarted && !sessOf(SS.justStarted) && Date.now() < SS.justStartedUntil) ||
+      SS.startRefused ||
+      READ_ONLY ||
+      !SS.net ||
+      navigator.onLine === false;
     function writeBurst(id) {
       const t = Date.now(),
         b = SS.burst;
-      if (!id || SS.starting) return;
+      if (!id || startWaits()) {
+        SS.burst = null;
+        return;
+      }
       if (!b || b.id !== id || t - b.last > WRITE_GAP_MS || t < b.last) {
         SS.burst = { id, first: t, last: t, n: 1 };
         return;
@@ -81,9 +105,14 @@
       if (b.n < 3 || t - b.first < WRITE_START_MS) return;
       SS.burst = null;
       SS.starting = true;
-      guard(null, () => noteSession(id)).finally(() => {
-        SS.starting = false;
-      });
+      noteSession(id)
+        .catch(() => {
+          // refused (offline, or the record said no): quietly, and no retry until the connection comes back
+          SS.startRefused = true;
+        })
+        .finally(() => {
+          SS.starting = false;
+        });
     }
     /** B-438: the driving view pauses a writing session once nothing was typed for WRITE_IDLE_MS, at the last typing. */
     function writingTick(s, st) {
@@ -1105,6 +1134,7 @@
       let id = E.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${E.slug(topic || 'note', 24)}`);
       if (sessOf(id)) id = E.safeId(id + '-2');
       const k = pageKey(at);
+      SS.startPending = (SS.startPending || 0) + 1; // B-454 review: no auto-start while this one is on its way
       try {
         await write(
           E.startTimedSession({
@@ -1129,7 +1159,12 @@
           await run(E.undoSwitch(sessOf(prior.prev), null, { at: t, keys: [pageKey(t), pageKey(t)] })).catch(() => {});
         }
         throw e;
+      } finally {
+        SS.startPending--;
       }
+      // B-454 review: until the record shows it, the session just written counts as running for an auto-start
+      SS.justStarted = id;
+      SS.justStartedUntil = Date.now() + 30e3;
       SS.text = null;
       SS.added = '';
       SS.said.clear();
@@ -1150,7 +1185,16 @@
       return id;
     }
     /** New note (fresh) or Study with E.V. on a note he has: a 25-minute session on it, the note open in Notes. */
+    /** B-454 review: a start on its way (opening the note, then the session's write) holds any auto-start meanwhile. */
     async function noteSession(id, fresh = false, from = whereNow()) {
+      SS.startPending = (SS.startPending || 0) + 1;
+      try {
+        return await noteSessionNow(id, fresh, from);
+      } finally {
+        SS.startPending--;
+      }
+    }
+    async function noteSessionNow(id, fresh, from) {
       const cur = activeSession();
       if (cur && noteOfSession(cur) === id) {
         if (ui.tab !== 'notes') showTab('notes');

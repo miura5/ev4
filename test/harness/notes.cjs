@@ -2695,8 +2695,13 @@ const openNoteId = page =>
     const left1 = await page.evaluate(() => (document.querySelector('#ev-sslot .s-left') || {}).textContent || '');
     ok(
       `${tag} a few seconds of writing in it starts a writing session on that note, its clock in the strip`,
-      started && s1.clock === 'writing' && s1.noteId === NID && !s1.planned && /writing$/.test(left1),
-      JSON.stringify({ started, id: s1.id, clock: s1.clock, left1 })
+      started &&
+        (await active()).length === 1 &&
+        s1.clock === 'writing' &&
+        s1.noteId === NID &&
+        !s1.planned &&
+        /writing$/.test(left1),
+      JSON.stringify({ started, active: (await active()).map(x => x.id), clock: s1.clock, left1 })
     );
     await page.screenshot({ path: path.join(shots, 'notes-old-note-writing-1280.png') });
     // End it, leave for the list, and reopen the note: reading starts nothing, writing starts a new session
@@ -2720,11 +2725,129 @@ const openNoteId = page =>
       [NID, s1.id],
       6000
     );
-    const s2 = (await active())[0] || {};
+    await page.waitForTimeout(1500);
+    const act2 = await active();
+    const s2 = act2[0] || {};
+    const s1after = (await onNote()).find(x => x.id === s1.id) || {};
     ok(
-      `${tag} reopened after End, reading starts nothing and writing starts a new writing session`,
-      filed && reread.length === 0 && again && s2.id !== s1.id && s2.clock === 'writing',
-      JSON.stringify({ filed, reread: reread.length, again, s1: s1.id, s2: s2.id })
+      `${tag} reopened after End, reading starts nothing and writing starts exactly one new writing session; the ended one stays filed`,
+      filed &&
+        reread.length === 0 &&
+        again &&
+        act2.length === 1 &&
+        s2.id !== s1.id &&
+        s2.clock === 'writing' &&
+        s1after.status === 'ended' &&
+        !!s1after.filedAt,
+      JSON.stringify({ filed, reread: reread.length, again, act2: act2.map(x => x.id), s1: s1after.status })
+    );
+    const endIt = async sid => {
+      await page.click('#ev-sslot .s-end');
+      return until(page, i => !!(window.__db.sessions[i] || {}).filedAt, sid, 30000);
+    };
+    const allActive = () =>
+      page.evaluate(() =>
+        Object.entries(window.__db.sessions || {})
+          .filter(([, x]) => x.status === 'active')
+          .map(([id, x]) => ({ id, note: x.note }))
+      );
+    const e2 = !!s2.id && (await endIt(s2.id));
+    // B-454 review: on a slow link (each write held 6 s) writing on through the start makes one session, not two
+    await page.evaluate(() => {
+      window.__writeDelayMs = 6000;
+    });
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type(' Fluid backs up behind the failing side, so the lungs fill.', { delay: 150 });
+    await until(
+      page,
+      id => Object.values(window.__db.sessions || {}).some(x => x.status === 'active' && x.note === 'notes/' + id),
+      NID,
+      15000
+    );
+    await page.keyboard.type(' More words.', { delay: 150 });
+    await page.waitForTimeout(7000);
+    const slow = await allActive();
+    const e3 = slow.length === 1 && (await endIt(slow[0].id));
+    // a new note on the slow link: its own start is on its way while he writes on, so no second start
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    const before = await notesIn(page);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#note-body');
+    await page.keyboard.type('Slow link note. Writing on while it starts.', { delay: 150 });
+    await page.waitForTimeout(9000);
+    const fresh = await allActive();
+    const newId = (await notesIn(page)).find(i => !before.includes(i));
+    ok(
+      `${tag} on a slow link, writing on while a start is on its way makes exactly one session (an old note, and a new note)`,
+      e2 &&
+        slow.length === 1 &&
+        slow[0].note === 'notes/' + NID &&
+        e3 &&
+        fresh.length === 1 &&
+        fresh[0].note === 'notes/' + newId,
+      JSON.stringify({ e2, slow, e3, fresh, newId })
+    );
+    if (fresh.length) await endIt(fresh[0].id);
+    await page.evaluate(() => {
+      window.__writeDelayMs = 0;
+    });
+    // offline: writing in a saved note starts nothing and says nothing; a refused start says nothing either and is not
+    // tried again until the connection comes back
+    await page.evaluate(() => {
+      window.__toasts = [];
+      new MutationObserver(() => {
+        const t = document.getElementById('toast');
+        if (!t.hidden && t.textContent) window.__toasts.push(t.textContent);
+      }).observe(document.getElementById('toast'), {
+        childList: true,
+        characterData: true,
+        subtree: true,
+        attributes: true,
+      });
+      window.dispatchEvent(
+        new CustomEvent('ev-sync', { detail: { online: false, pending: 0, syncing: false, refused: [] } })
+      );
+    });
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    await openFromList(page, NID);
+    await write(' Offline words, kept on this device.');
+    await page.waitForTimeout(1500);
+    const off = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
+    await page.evaluate(() => {
+      window.dispatchEvent(
+        new CustomEvent('ev-sync', { detail: { online: true, pending: 0, syncing: false, refused: [] } })
+      );
+      window.__writeFail = 'offline';
+    });
+    await write(' A start the record refuses.');
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => {
+      window.__writeFail = '';
+    });
+    await write(' No second try before the connection is back.');
+    await page.waitForTimeout(1500);
+    const refused = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await write(' Back online, writing starts it.');
+    const back = await until(
+      page,
+      () => Object.values(window.__db.sessions || {}).some(x => x.status === 'active'),
+      null,
+      6000
+    );
+    ok(
+      `${tag} offline, writing starts nothing and no toast; a refused start is quiet and waits for the connection to come back`,
+      off.active === 0 &&
+        !off.toasts.length &&
+        refused.active === 0 &&
+        !refused.toasts.length &&
+        back &&
+        (await allActive()).length === 1,
+      JSON.stringify({ off, refused, back })
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
