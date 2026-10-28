@@ -3,8 +3,35 @@
 The build manager rewrites this file before a chat is cleared or ends (CLAUDE.md, Roles, D-317). A new build manager
 reads it right after CLAUDE.md. It holds no personal data: the repository is public.
 
-**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (still managing as of Oct 28, early morning
-Central). One manager at a time.
+**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (handing off Oct 28 evening; a new chat takes over). One manager at a time.
+
+## Update (Oct 28, evening Central): HAND-OFF to a new chat (Matt asked)
+
+**Read first:** "Delivery first" and "Guardrails" (D-366) in CLAUDE.md. They replace the review-loop workflow that cost a whole day on one release.
+
+**Where things stand**
+
+- **Live is half-deployed.**
+  - The record and the claude.ai page are on v4.5.15 (a81e819).
+  - The phone/PWA app (ev-live Worker) is still on 219358d.
+  - pwa-live run 40763121785 was refused at its gate because no green GitHub nightly existed at a81e819. R-06 is retired by D-366, but the gate code still enforces it; B-466 removes it.
+- **Main is at 5c4e68a**: a81e819 plus one harness-only fix (the phone toolbar check allows Start session on its own row). A GitHub nightly was started at 5c4e68a (run 40766119523) and nobody is watching it.
+- **To finish the release** (the next chat's first job; Matt already said "ship a81e819", and 5c4e68a only adds a test change):
+  - **If nightly 40766119523 is green:** run `ship live --matt-ok` at 5c4e68a. It tags v4.5.16 and asks for staging to carry it, so re-ship staging once. Then make the live calls, dispatch pwa-live, and Matt taps Approve. Live versions at the last ship: manifest 45, spec 56, environments 45, yourturn 19. Staging versions: manifest 324, spec 321, environments 321, yourturn 197.
+  - **If it's red:** don't chase it. One builder does B-466 (remove the R-06 gate from tools/pwa-live.mjs and chart/rules.json), then ship.
+- **Proved on staging:** a real NUR 112 plan (job-20261028-newplan-nur112-9). The path was 202 → Durable Object → streamed Sonnet; it finished in about 215 s with 90 tasks, a score of 87 and a cost of about $0.55. A Haiku edit also worked.
+
+**Next batch, in Matt's order**
+
+1. **B-465:** BIO 201 and other courses get exams. Detect exams for every course and let Matt add one by its date, so any course can get a plan. This is the obvious bug he hit.
+2. **B-448:** day arrows on Today, to go back to earlier days.
+3. **B-461:** Ask for changes reaches the plan edit reliably.
+4. **B-464:** the UI review fixes.
+5. **B-462, B-463.**
+
+B-457, B-458 and B-460 only when cheap. The architecture review (B-415) and the consolidation follow, per the roadmap.
+
+**Running now:** nothing. All agents are stopped. The nightly 40766119523 runs on GitHub by itself.
 
 ## Update (Oct 28, midday Central): PAUSED for Claude peak hours (Matt)
 

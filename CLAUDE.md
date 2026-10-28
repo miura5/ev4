@@ -70,11 +70,30 @@ It files Matt's asks as they come, answers him, orders the backlog, ships stagin
 - Code reviewer: before a release, a fresh agent (or 2 to 4 splitting it) reads the whole release diff for broken
   behaviour, lost data paths and dead UI.
 
-**Review bar.** Look-only work is checked by the UI reviewer's click-through once per wave, not task by task. The test
-agent's work is checked by an independent reviewer, confirming each removed or loosened check only enforced a retired
-look. Each change to data writes, pipelines, chart tooling or deploy gets its own fresh review (the review skill).
-Before a release: one code review of the whole diff and one final click-through. A reviewer's gaps are fixed once and
-reviewed once more; whatever is still open goes on the release card.
+**Delivery first (D-366, Matt, Oct 28; supersedes the per-task review loop and D-361/D-364's rounds).** A feature
+goes to staging as soon as it is built and its tests pass, then gets one real end-to-end run there (the actual job,
+the actual model, the actual page), and Matt is told to test it. Matt's testing is the acceptance. Reviews are for
+what would hurt him, not for polish: one code review of the whole release diff, looking only for lost or wrong data,
+unexpected cost, security holes, crashes and controls he can't reach. Edge cases outside that (clock skew, rare network
+drops, wording, routing phrasing, timing windows) are not chased: a reviewer may list them in one line each and they
+go to the backlog, never into a fix round. A blocker found by Matt or the end-to-end run is fixed and re-shipped
+once; nothing else loops. No per-task review subagents for ordinary changes.
+
+**Guardrails (D-366, after the Oct 28 release that took 12 hours, about 25 review rounds and 8 staging deploys):**
+
+- **Run it for real first.** Any feature that calls a model, a job or an outside service gets one real run on staging
+  before anything else is reviewed. Stubs and fakes in tests prove nothing about the real path.
+- **Budget per release:** one builder per task, one whole-release code review, one UI click-through, one end-to-end run.
+  Anything beyond that (a third deploy to staging, a second review of the same change, a new agent for an edge case)
+  needs a line to Matt first saying why and what it costs.
+- **No new checks for edge cases.** Tests and harness checks cover behaviour Matt uses. A reviewer's what-if (clock
+  skew, rare drops, phrasing variants, timing windows) is a one-line backlog entry, not a test and not a fix.
+- **The UI click-through is capped at 20 minutes:** the synthetic record only, at 390 and 1280, the screens the release
+  changed. Its score is information for the card.
+- **Estimate, then report slips.** Give Matt an ETA when a release starts. If it slips by more than an hour, tell him
+  why in two lines and ask whether to ship what works now.
+- **Look at it like Matt would.** Before the card, open each new screen on staging with real data for every course,
+  not just the one the feature was built against.
 
 **Release bar (the rubric).** The UI reviewer scores each factor 1 to 5 (5 matches or excellent, 4 small differences
 only a side-by-side shows, 3 noticeable but fine to use, 2 gets in the way, 1 broken); points are score / 5 x weight.
@@ -89,11 +108,10 @@ only a side-by-side shows, 3 noticeable but fine to use, 2 gets in the way, 1 br
 | Feel | 15 | Clicks respond at once, states are clear, the phone layout is comfortable one-handed |
 | Linear-level polish | 10 | Calm, dense, consistent, nothing looks unfinished |
 
-The bar is 80 of 100 with no factor below 3 and no blocker (a crash or error screen, wrong or lost data, a control
-hidden or unreachable on the phone, a screen that can't be used). A release gets at most two fix waves after its first
-build; then the card goes to Matt either way, with the score. A release is ready for his word when, at one commit on
-main: the rubric bar is met (or the card says by how much it missed), npm test and the full npm run check are GREEN
-(dist/check-full.json), and ship staging is GREEN.
+The UI reviewer's score goes on the card for information; it never holds a release or starts a fix wave (D-366).
+A release is ready for Matt's word when, at one commit on main: npm test and smoke are GREEN, ship staging is GREEN and
+the one end-to-end run worked. The full `npm run check` runs nightly only; a red nightly is filed as a bug and never
+blocks a release Matt has tested (D-366 retires R-06 as a release gate).
 
 **One development chat, one build manager.** E.V. is developed in one long chat. This file and `docs/handover.md` are
 what survive a /clear or a new chat: before clearing or ending, the build manager rewrites `docs/handover.md` (where
@@ -143,7 +161,7 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK; R-06 a full check green at the
    commit, B-219; R-01 and R-05 are ended, D-145 and D-262, and kept in `chart/rules.json` marked ended), so a build
    reaches live only through staging.
-7. Before step 6's `ship staging` (and so before a task is marked done), once the proofs of step 5 are green, a change to data
+7. (Superseded by D-366 for ordinary work: no per-task review; one whole-release code review for data, cost, security and crashes.) Before step 6's `ship staging` (and so before a task is marked done), once the proofs of step 5 are green, a change to data
    writes, pipelines, chart tooling or deploy gets the review skill (`.claude/skills/review`) in a fresh subagent that
    has not seen the work; its verdict ("No gaps" or the gaps), with its Checks and Size lines, goes in the task's done
    note and on the release card (D-317; it replaces D-261's card per task). Look-only page work is reviewed by the

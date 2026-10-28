@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-366",
+  "date": "Oct 28",
+  "title": "Delivery first: build, ship to staging, one real end-to-end run, Matt tests; one whole-release review for data, cost, security and crashes only; no per-task reviews, no fix waves for polish or edge cases; the UI score is information; the full check is nightly and never gates a release Matt has tested",
+  "why": "Matt, Oct 28: one release took about 25 review rounds and 8 staging deploys over 12 hours and a large share of his usage, chasing edge cases (clock skew, rare network drops, prompt routing, token timing) while the obvious real-use bug (BIO 201 has no exam) went unseen and the feature had never been run for real until morning. Supersedes D-361 and D-364's round rules and the per-task review skill of Every session step 7 for ordinary work; retires R-06 as a release gate (a builder task removes the gate from tools/pwa-live.mjs and chart/rules.json).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-365",
   "date": "Oct 28",
   "title": "A study plan's Sonnet ask may write up to 48k tokens, and the plan's wording is compact",
@@ -14,7 +24,7 @@
   "date": "Oct 28",
   "title": "Reverts D-361: never more than two review rounds (a review, one fix, a final review) and at most two fix waves per release; anything still open goes on the release card and the next batch",
   "why": "Matt, Oct 28 morning: enough fix waves. D-361's extra rounds for crucial gaps let one release run through many rounds overnight. The two-round limit in CLAUDE.md's Review bar stands with no exception; open gaps are named on the card and filed.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"
