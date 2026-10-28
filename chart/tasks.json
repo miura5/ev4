@@ -8354,7 +8354,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Builder took it: scroll cause first, then pills, Go deeper, Back to now placement",
+  "notes": "Pushed 04fedb8: her stage no longer folds while he reads back and a page pin waits until his scroll rests (momentum kept); quick-ask pills and Go deeper removed (typed instead); Back to now centred over the thread just above the composer. npm test 874/0, smoke 28/28, check --touched: npm test, build, shell, components, run 389, captions 202, prep, core 142, greet green; frame 172, notes 156, look green rerun alone (the touched run was cut at frame by a wait timeout). Not shipped; manager batches.",
   "commit": null,
   "source": "Matt, chat, Oct 27 (screen recording, screenshots)",
   "words": "Conversation view tweaks: scrolling the conversation feels rigid compared with Linear's smooth chat scrolling; remove the quick-ask pills under the composer; remove the 'Go deeper' button; 'Back to now' sits off centre and too high.",
