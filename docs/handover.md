@@ -3,7 +3,26 @@
 The build manager rewrites this file before a chat is cleared or ends (CLAUDE.md, Roles, D-317). A new build manager
 reads it right after CLAUDE.md. It holds no personal data: the repository is public.
 
-**Managing chat:** https://claude.ai/code/session_01CWeveciiiW2pUvFQtQJ3HK (handing off Oct 28 evening; a new chat takes over). One manager at a time.
+**Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
+session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
+
+## Update (Oct 28, late evening Central): v4.5.15 going live; the next batch running
+
+- **v4.5.15 is tagged at f0bd996** (a81e819 + the B-450 harness fix + B-466, which removed the R-06 gate; the hashed
+  build content equals a81e819's). Nightly 40766119523 at 5c4e68a was red (filed B-467; its log is unreadable from the
+  sandbox), so B-466 went first, as Matt said. Staging GREEN at f0bd996 (recorded). The live record and page carry
+  f0bd996; the pwa-live run 40774588837 passed its gate on R-02 alone and **waits on Matt's Approve in GitHub**. After
+  it finishes: `node tools/pwa-app.mjs readback live`, the three live system reads, `ship live --matt-ok` again until
+  GREEN (it records the deploy; tags.yml then pushes the v4.5.15 tag). Live versions written by this ship: manifest 46,
+  spec 57, environments 46, yourturn 20.
+- **Health:** the live Worker's health/current was 2 h old and clean at 21:20 UTC. `brief` reads the record's
+  ArtifactData copy, which froze at the Oct 27 move to D1, so it wrongly says 44 h stale (B-468). Read live health with
+  `node core/cli.mjs api pull --worker <saved system/worker.json> --reads <[{"collection":"health","out_dir":...}]>`.
+- **Inbox triaged:** B-460 to B-468 are tasks (B-460 only when cheap, Matt).
+- **Next batch, in progress (one release, ETA given to Matt: card about 10 pm CT Oct 28):** B-465 (builder running),
+  then B-448, B-461, B-464, B-462, B-463, one builder agent at a time; each shipped to staging as it lands; one real
+  end-to-end run (a BIO 201 plan on staging); one whole-release code review (data, cost, security, crashes); one
+  20-minute UI click-through; then the card.
 
 ## Update (Oct 28, evening Central): HAND-OFF to a new chat (Matt asked)
 
