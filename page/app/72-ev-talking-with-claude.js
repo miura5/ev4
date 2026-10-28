@@ -344,15 +344,20 @@
               return `refused: a ${i.kind} job starts only from his own tap or words on the page`;
             const job = { kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') };
             if (job.kind === 'exam-plan') {
-              // B-449 (D-356): a change to the plan he has is a patch; new words make a new plan from today; else ask
-              const words = (T.scoreText || '') + ' ' + job.brief;
-              const course = E.studyPlanCourse({ title: job.title, brief: words }, S.exams);
+              // B-449 (D-356, D-360, D-361): a change to the plan he has is a patch; an unmistakable whole-plan ask is
+              // a new plan from today; else one question, whose answer (his next line) routes the original request
+              const pending = T.planAsk && Date.now() - T.planAsk.at < 30 * 60000 ? T.planAsk : null;
+              const said = T.scoreText || '';
+              const first = (pending && pending.words) || `${said} ${job.brief}`;
+              const course = E.studyPlanCourse({ title: job.title, brief: `${first} ${job.brief}` }, S.exams);
               const sec = course && E.studyPlanSection({ exams: S.exams, course, date: today });
               const has = sec && E.latestPlanDraft(S.plansRaw, S.planedits, sec.exam.id);
               const inForce = sec && S.plans.find(p => (p.exam || p.id) === sec.exam.id);
               const cur = has || inForce || null;
-              const go = E.studyPlanRoute(words, { hasPlan: !!cur });
+              const go = E.studyPlanRouteTurn({ said, brief: job.brief, pending, hasPlan: !!cur });
+              T.planAsk = go.pending ? { ...go.pending, at: Date.now() } : null;
               if (go.route === 'ask') return 'start nothing yet: ask him "' + go.question + '"';
+              job.brief = go.brief;
               if (course) job.course = course;
               if (go.route === 'change') job.revise = cur.id;
             }

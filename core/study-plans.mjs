@@ -334,10 +334,15 @@ export function makeStudyPlans(core) {
     };
   }
 
-  // D-360 (B-449, B-456): a plan ask's route. new (a Sonnet plan from today, replacing nothing but costing 3x) only for
-  // an unmistakable whole-plan ask; change (a Haiku patch) for an edit; ask (one free question) whenever a remake word
-  // leaves a doubt. When unsure, ask, never new.
-  /** Whole-plan asks that need no reading of an object: replan, start over, from scratch, a plan from today, a cram plan. */
+  // D-360, D-361 (B-449, B-456): a plan ask's route. new (a Sonnet plan from today, 3x the cost and a draft that
+  // replaces his) only for an unmistakable whole-plan ask; change (a Haiku patch) for an edit; ask (one free question)
+  // whenever a remake or cram word leaves a doubt. When unsure, ask, never new.
+  const DAYS = 'mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday';
+  const MONTHS = 'jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec';
+  /** A day, date or week: "for" before one is when, not why ("redo the plan for friday"). */
+  const WHEN = `(the\\s+|this\\s+|next\\s+)?(week|weekend|days?|today|tonight|tomorrow|${DAYS}|${MONTHS}|\\d+)`;
+  /** Whole-plan asks that need no reading of an object: replan, start over, from scratch, a plan from today, and a
+   * cram plan, a cram mode or cramming for the exam. */
   const WHOLE_ASK = new RegExp(
     '\\b(' +
       [
@@ -349,19 +354,31 @@ export function makeStudyPlans(core) {
         'fresh (plan|start)',
         '(plan|start(ing)?|begin(ning)?|make (me )?(a|a new) plan) from (today|now|tonight)',
         'plan (starting|beginning) (today|now|tonight)',
-        'cram(ming)?(?! (session|block|slot|hour|day|run))', // a cram plan, not a cram session added to the plan
+        'cram(ming)? (plan|schedule|mode)',
+        'cram(ming)? for (the|my|this) ([\\w-]+ )?(exam|test|final|midterm|assessment)',
+        'cram(ming)? for [a-z]{1,4} ?\\d+',
       ].join('|') +
       ')\\b',
     'i'
   );
   const REMAKE = /\b(re-?make|re-?do|re-?write|re-?work|re-?build|scrap)\b/gi;
-  /** A remake word's object that is plainly the whole plan ("the plan", "my exam plan", "my E4 plan", "everything",
-   * "the whole thing"), with nothing after it but a reason ("around my revalidation") or "and start again". */
-  const WHOLE_OBJECT =
-    /^\s+(everything|the whole thing|(the|my|this|that|our)\s+([\w-]+\s+){0,3}?(plan|schedule))(?![\w'’])\s*(?:[.!?]\s*)?($|,?\s*(around|for|because|since|as|so|given|after|now that|to fit)\b|,?\s*and (start|begin) (over|again|fresh)\b)/i;
-  const TASK_WORDS =
-    /\b(drill|drills|quiz|quizzes|review|block|blocks|mock|mocks|reading|readings|preview|session|task|lecture|practice|sim|module|flashcards?|cards|terms|terminology|slot|lab|run|runs|checklist|module|exam practice|chapter|ch|catch-up|monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tonight|tomorrow|morning|afternoon|evening|\d+ ?(min|mins|minutes|hours?|hrs?))\b/i;
-  const NOT_ONE_TASK = /\b(plan|plans|schedule|it|this|that|these|those|everything|all|whole|thing|stuff)\b|plan['’]s/i;
+  const CRAM = /\bcram(ming)?\b/i;
+  /** A remake word's object that is plainly the whole plan ("the plan", "my exam plan", "study plan", "everything",
+   * "the whole thing"), with nothing after it but a reason ("around my revalidation", "for E4", ", it's not working")
+   * or "and start again". "for" a day, date or week is no reason. */
+  const WHOLE_OBJECT = new RegExp(
+    "^\\s+(everything|the whole thing|((the|my|this|that|our)\\s+)?([\\w-]+\\s+){0,3}?(plan|schedule))(?![\\w'])\\s*([.!?]+\\s*)?" +
+      `($|,?\\s*(around|for(?!\\s+${WHEN}\\b)|because|since|as|so|given|after|now that|to fit|it'?s|it is|this is|that'?s)\\b` +
+      '|,?\\s*and (start|begin) (over|again|fresh)\\b)',
+    'i'
+  );
+  const TASK_WORDS = new RegExp(
+    '\\b(drills?|quiz|quizzes|review|blocks?|mocks?|readings?|preview|session|task|lecture|practice|sim|module|' +
+      'flashcards?|cards|terms|terminology|slot|labs?|runs?|checklist|exam practice|chapter|ch|catch-up|time|' +
+      `${DAYS}|today|tonight|tomorrow|morning|afternoon|evening|\\d+ ?(min|mins|minutes|hours?|hrs?))\\b`,
+    'i'
+  );
+  const NOT_ONE_TASK = /\b(plan|plans|schedule|it|this|that|these|those|everything|all|whole|thing|stuff)\b|plan's/i;
   /** One remake word's reading: 'whole', 'task' or 'unclear', from what follows it in its clause. */
   function remakeObject(rest) {
     if (WHOLE_OBJECT.test(rest)) return 'whole';
@@ -371,17 +388,29 @@ export function makeStudyPlans(core) {
   }
   const CHANGE_WORDS =
     /\b(move|swap|add|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
+  /** His words folded: one case, curly quotes straight, quotes, "please" and chat shorthand gone, spaces single. */
+  const fold = t =>
+    ` ${String(t || '')} `
+      .toLowerCase()
+      .replace(/[‘’`´]/g, "'")
+      .replace(/["“”]/g, ' ')
+      .replace(/\b(please|pls|plz|thanks|thx|asap)\b/g, ' ')
+      .replace(/\bu\b/g, 'you')
+      .replace(/\s+/g, ' ')
+      .replace(/\s+([,;.!?])/g, '$1')
+      .trim();
   /** The questions asked when his words don't say which (D-356, D-360). */
   const ROUTE_QUESTION = 'Change the current plan, or make a new one from today?';
   const REMAKE_QUESTION = 'The whole plan, or just that task?';
   /**
    * D-356, D-360: what a plan ask becomes: 'new' (a Sonnet plan from today), 'change' (a Haiku patch of the plan he
    * has) or 'ask' (one short question first). With no plan for the exam yet, every ask is a new plan. Each remake word
-   * is read by its object: all of them plainly the whole plan is new, all of them one task is a change, else ask.
+   * is read by its object: all of them plainly the whole plan is new, all of them one task is a change, else ask. A
+   * cram word that is no cram plan is a change beside a task, a day or an edit word, else ask.
    */
   function studyPlanRoute(words, { hasPlan } = {}) {
     if (!hasPlan) return { route: 'new' };
-    const w = String(words || '');
+    const w = fold(words);
     if (WHOLE_ASK.test(w)) return { route: 'new' };
     const reads = [...w.matchAll(REMAKE)].map(m => remakeObject(w.slice(m.index + m[0].length)));
     if (reads.length) {
@@ -389,8 +418,43 @@ export function makeStudyPlans(core) {
       if (reads.every(r => r === 'task')) return { route: 'change' };
       return { route: 'ask', question: REMAKE_QUESTION };
     }
+    if (CRAM.test(w))
+      return TASK_WORDS.test(w) || CHANGE_WORDS.test(w)
+        ? { route: 'change' }
+        : { route: 'ask', question: REMAKE_QUESTION };
     if (CHANGE_WORDS.test(w)) return { route: 'change' };
     return { route: 'ask', question: ROUTE_QUESTION };
+  }
+  /**
+   * D-361: his answer to the question the route asked: 'new', 'change', or null when it doesn't answer it (then his
+   * words are routed as any ask).
+   */
+  function studyPlanRouteAnswer(reply, question) {
+    const w = fold(reply);
+    const whole =
+      /\b(the )?whole (plan|thing)\b|\beverything\b|\ball of it\b|\b(a |the )?new (plan|one)\b|^(the )?plan[.!]?$/;
+    const one =
+      /\b(just|only) (that|the|this|that one|the one)( task| one| thing)?\b|\b(that|the|this) (task|one)\b|\bjust that\b|\bonly that\b/;
+    const change = /^(change( it| the (current )?(plan|one))?|the current (plan|one)|keep (it|the plan)[\w ]*)[.!]?$/;
+    const a = whole.test(w) ? 'new' : null;
+    const b = (question === ROUTE_QUESTION ? change : one).test(w) ? 'change' : null;
+    return a && b ? null : a || b;
+  }
+  /**
+   * D-361: one start_job turn of a plan ask, with the question asked before it (pending: {question, brief, words}):
+   * when his line answers that question, his answer routes the original request and its brief is the job's;
+   * otherwise his words and the brief are routed afresh. {route, brief, question?, pending} (pending is what to keep
+   * for the next turn: the question just asked, else null).
+   */
+  function studyPlanRouteTurn({ said, brief, pending = null, hasPlan }) {
+    if (pending && hasPlan) {
+      const a = studyPlanRouteAnswer(said, pending.question);
+      if (a) return { route: a, brief: pending.brief, words: pending.words, pending: null };
+    }
+    const words = `${said || ''} ${brief || ''}`.trim();
+    const go = studyPlanRoute(words, { hasPlan });
+    if (go.route !== 'ask') return { route: go.route, brief, words, pending: null };
+    return { route: 'ask', question: go.question, brief, words, pending: { question: go.question, brief, words } };
   }
 
   /**
@@ -674,6 +738,8 @@ export function makeStudyPlans(core) {
     studyPlanLookup,
     studyPlanProgress,
     studyPlanRoute,
+    studyPlanRouteAnswer,
+    studyPlanRouteTurn,
     studyPlanScoreOk,
     studyPlanDoc,
     applyPlanPatch,

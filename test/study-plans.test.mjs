@@ -480,6 +480,16 @@ test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan
       'scrap my current E4 plan and start again',
       'rework everything',
       'redo the whole thing',
+      // D-361: case, punctuation, quotes and a missing article are folded
+      'redo plan',
+      'redo study plan',
+      'can u redo the plan pls',
+      'scrap the whole plan, it’s not working',
+      '"redo the plan"',
+      'REDO THE PLAN!',
+      'redo the plan for E4',
+      'redo the plan for my revalidation',
+      'cram plan for E4',
       'rebuild the whole plan',
       'remake the study plan',
     ],
@@ -506,6 +516,10 @@ test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan
       'add a redo of the dosage practice quiz',
       'rewrite the Friday drill and move it to Saturday',
       'redo the drill from today on Friday',
+      // D-361: a cram word beside a task, a day or an edit word is a change
+      'cram the labs into thursday',
+      'i want to cram the drug cards on friday',
+      'add cramming time on sunday',
     ],
     ask: [
       // a remake word that leaves a doubt: the whole plan, or just that task?
@@ -523,6 +537,15 @@ test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan
       'this plan is bad, rewrite it',
       'redo it from now',
       'remake it from tonight',
+      // D-361: "for" a day, date or week is when, not why
+      'redo the plan for friday',
+      'scrap the plan for tomorrow',
+      'scrap everything for friday',
+      'rebuild the plan for next week',
+      'redo the plan for 11/3',
+      // a cram word with no plan, exam, task, day or edit
+      'cram',
+      'I want to cram',
     ],
   };
   for (const [want, phrases] of Object.entries(ROUTES))
@@ -536,8 +559,60 @@ test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan
       question: 'Change the current plan, or make a new one from today?',
     });
   assert.equal(EV.studyPlanRoute('move the drill', { hasPlan: false }).route, 'new', 'no plan yet: a new one');
+  assert.doesNotMatch(
+    fs.readFileSync(path.join(ROOT, 'core/study-plans.mjs'), 'utf8').match(/const TASK_WORDS[\s\S]*?\);/)[0],
+    /module[\s\S]*\bmodule\b/,
+    'TASK_WORDS names module once'
+  );
+});
+
+test('D-361: his answer to the route’s question routes the original request, with its brief', () => {
+  const ask = { said: 'redo it on Friday', brief: 'Redo the Friday task for E4 (his words: redo it on Friday)' };
+  const q = EV.studyPlanRouteTurn({ ...ask, hasPlan: true });
+  assert.equal(q.route, 'ask');
+  assert.equal(q.question, 'The whole plan, or just that task?');
+  assert.deepEqual(q.pending, { question: q.question, brief: ask.brief, words: `${ask.said} ${ask.brief}` });
+  // the next turn: the model calls start_job again with his answer as the latest line and its own new brief
+  for (const [said, route] of [
+    ['the whole plan', 'new'],
+    ['The whole thing.', 'new'],
+    ['everything', 'new'],
+    ['just that task', 'change'],
+    ['just the task', 'change'],
+    ['only that', 'change'],
+    ['the task', 'change'],
+  ]) {
+    const a = EV.studyPlanRouteTurn({ said, brief: 'his answer: ' + said, pending: q.pending, hasPlan: true });
+    assert.deepEqual([a.route, a.brief, a.pending], [route, ask.brief, null], said);
+  }
+  // anything else is routed afresh, as any ask
+  const other = EV.studyPlanRouteTurn({
+    said: 'move the drill to Saturday',
+    brief: 'x',
+    pending: q.pending,
+    hasPlan: true,
+  });
+  assert.deepEqual([other.route, other.brief], ['change', 'x']);
+  const again = EV.studyPlanRouteTurn({ said: 'hmm', brief: 'x', pending: q.pending, hasPlan: true });
+  assert.equal(again.route, 'ask');
+  // the plan-level question takes change or new
+  const p = EV.studyPlanRouteTurn({ said: 'what about my plan for E4', brief: 'b', hasPlan: true });
+  assert.equal(p.question, 'Change the current plan, or make a new one from today?');
+  assert.equal(
+    EV.studyPlanRouteTurn({ said: 'a new one', brief: 'y', pending: p.pending, hasPlan: true }).route,
+    'new'
+  );
+  assert.deepEqual(
+    (({ route, brief }) => [route, brief])(
+      EV.studyPlanRouteTurn({ said: 'change it', brief: 'y', pending: p.pending, hasPlan: true })
+    ),
+    ['change', 'b']
+  );
+  // the page keeps the question between turns and routes through the turn
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
-  assert.match(chat, /E\.studyPlanRoute\(words, \{ hasPlan: !!cur \}\)/, 'the chat’s start_job routes through it');
+  assert.match(chat, /E\.studyPlanRouteTurn\(\{ said, brief: job\.brief, pending, hasPlan: !!cur \}\)/);
+  assert.match(chat, /T\.planAsk = go\.pending/);
+  assert.match(chat, /job\.brief = go\.brief/);
   assert.match(chat, /job\.revise = cur\.id/);
 });
 
