@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-367",
+  "date": "Oct 28",
+  "title": "The app (PWA) is E.V.'s one view: the claude.ai page is retired as a view, in two steps. Step 1 now: ship stops publishing the page and its files and stops verifying them; every proof, click-through, screenshot and end-to-end run happens in the PWA; the page stays frozen at v4.5.15 with a line pointing to the app. Step 2, at a sitting with Matt at the Mac: the scheduled runs' bootstrap (system/manifest, system/worker, the ship's system documents) moves to the Worker, the Mac-bound tasks are re-created, and the artifact database leaves the deploy and the code",
+  "why": "Matt, Oct 28 evening: the claude.ai pages are to be retired; build and test from the PWA. The build manager's reading: the page costs each ship its publish, its page reads and verify lines (minutes), and keeps two stores of the record (the artifact database the page subscribes to, frozen since the Oct 27 move; the Worker's D1 the app and the runs use), which has produced a run of confusion bugs (the connector notice B-471, the stale health read B-468, the mcp_unavailable report fixed in B-456). Step 1 is small and removes the per-ship overhead and one view to check; step 2 touches Matt's scheduled tasks (Mac-bound ones are re-created, never edited, O-5) so it waits for a sitting. Timing: after tonight's plan-fix release (B-465, B-469, B-470), before the rest of the batch, so the fixes Matt is blocked on go first.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-366",
   "date": "Oct 28",
   "title": "Delivery first: build, ship to staging, one real end-to-end run, Matt tests; one whole-release review for data, cost, security and crashes only; no per-task reviews, no fix waves for polish or edge cases; the UI score is information; the full check is nightly and never gates a release Matt has tested",
