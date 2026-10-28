@@ -8324,5 +8324,26 @@
    "outcome": "task",
    "at": "2026-10-28T03:01:58.136Z"
   }
+ },
+ {
+  "id": "B-451",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): With a session running on one note, the Ask E.V. chip in another note quotes the words into the first note's chat; and a pasted heading 1 that is not first in a note has no space above it.",
+  "dod": "The chip opens the chat of the note the words came from (as the suggestion does, POP.th set to that note's thread), with a harness check of two notes; a heading 1 after other blocks has top margin; npm test and smoke green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review 219358d",
+  "words": "With a session running on one note, the Ask E.V. chip in another note quotes the words into the first note's chat; and a pasted heading 1 that is not first in a note has no space above it.",
+  "reportedAt": "2026-10-28T03:09:38.380Z",
+  "board": {
+   "row": "v4 B-451: With a session running on one note, the Ask E.V. chip in another note…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T03:09:38.651Z"
+  }
  }
 ]
