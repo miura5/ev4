@@ -359,7 +359,7 @@
               if (go.offer) addCard(go.offer);
               if (!go.edit)
                 return go.offer
-                  ? `started nothing: he has no ${go.offer.course} plan yet, so you offered the Make a new ${go.offer.course} plan chip; tell him one tap starts it`
+                  ? `started nothing: you offered the Make a new ${go.offer.course} plan chip; tell him one tap makes a whole new plan from today, and the plan he has (if any) stays until he uses the new one`
                   : 'started nothing: there is no plan to change and no exam ahead for that course; say so';
               Object.assign(job, go.edit, { title: 'Plan changes' });
             }

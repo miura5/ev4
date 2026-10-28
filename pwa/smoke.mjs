@@ -113,7 +113,7 @@ const imagesOf = content => (Array.isArray(content) ? content.filter(b => b && b
 const SMOKE_JOBS = {
   'study-guide': { kind: 'study-guide', brief: 'A one-page guide on fluid volume deficit.' },
   'practice-set': { kind: 'practice-set', brief: '5 questions on fluid volume deficit.' },
-  'exam-plan': { kind: 'exam-plan', brief: 'A new study plan for E4.' }, // B-449: E4 has a plan: new words make one
+  'exam-plan': { kind: 'exam-plan', brief: 'A new study plan for E4.' }, // D-362: offered as the chip, started by its tap
   'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
   'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
@@ -951,25 +951,36 @@ async function main() {
           fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
             .then(r => r.json())
             .then(b => b.docs);
-        const answerCalls = title =>
+        // D-362: chat never starts a new study plan; it offers the Make a new <course> plan chip, whose tap starts the
+        // job with his line as its brief. So a plan job is his whole-plan line, then the tap, found by that line.
+        const isPlan = name => SMOKE_JOBS[name].kind === 'exam-plan';
+        const lineOf = name => `Smoke job ${name} (${scheme})`;
+        const mine = (name, j) =>
+          isPlan(name) ? String(j.brief || '').includes(lineOf(name)) : j.title === titleOf(name, scheme);
+        const answerCalls = name =>
           calls.filter(([, b]) => {
             const br = briefOf(b);
-            return br && br.job.title === title;
+            return br && mine(name, br.job);
           }).length;
         const ran = {};
         for (const name of Object.keys(SMOKE_JOBS)) {
           await idle();
-          await say(`Smoke job ${name} (${scheme})`);
-          const title = titleOf(name, scheme);
+          if (!isPlan(name)) await say(lineOf(name));
+          else {
+            await say(`Start over${name === 'plant-plan' ? ' ' + PLANTS.plan : ''}.\n${lineOf(name)}`);
+            const chip = page.locator('#ev-surf button', { hasText: /^Make a new .+ plan$/ }).first();
+            await chip.waitFor({ timeout: 10000 }).catch(() => {});
+            await chip.click().catch(() => {});
+          }
           let job = null,
             res = null;
           for (let i = 0; i < 40 && !(res && res.data.status !== 'running'); i++) {
             await page.waitForTimeout(250);
             const docs = await got();
-            job = docs.find(d => d.c === 'jobs' && d.data.title === title) || null;
+            job = docs.find(d => d.c === 'jobs' && mine(name, d.data)) || null;
             res = job ? docs.find(d => d.c === 'jobresults' && d.id === job.id) || null : null;
           }
-          ran[name] = { job, res, asked: answerCalls(title) };
+          ran[name] = { job, res, asked: answerCalls(name) };
         }
         const docs = await got();
         const talkOf = id =>

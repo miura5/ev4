@@ -557,14 +557,17 @@ test('D-362: no study plan line in chat starts a new plan: each is a Haiku edit 
       planedits: db.planedits || [],
       date: TODAY,
     });
-  for (const w of [...OFFERED, ...NOT_OFFERED])
+  // nothing from chat is a new plan: a line is a Haiku edit, or (B-456) the chip alone, with no edit beside it
+  for (const w of NOT_OFFERED)
     assert.deepEqual(
       chat(w).edit,
       { course: 'NUR 112', revise: 'E4', said: w.trim() },
       `${w}: an edit, never a new plan`
     );
-  for (const w of OFFERED)
+  for (const w of OFFERED) {
     assert.deepEqual(chat(w).offer, { type: 'newplan', course: 'NUR 112', brief: w.trim() }, `${w}: the chip`);
+    assert.equal(chat(w).edit, null, `${w}: the chip is the answer, no edit`);
+  }
   for (const w of NOT_OFFERED) assert.equal(chat(w).offer, null, `${w}: no chip`);
   // with no plan to change, nothing starts: the chip is all E.V. offers
   const none = chat('move the drill to Thursday', []);
@@ -582,7 +585,12 @@ test('D-362: no study plan line in chat starts a new plan: each is a Haiku edit 
     });
   const mixed = ask('start over', 'start over; 6 h/day, skip the hard rules');
   assert.deepEqual(mixed.offer, { type: 'newplan', course: 'NUR 112', brief: 'start over' });
-  assert.deepEqual(mixed.edit, { course: 'NUR 112', revise: 'E4', said: 'start over' });
+  assert.equal(mixed.edit, null, '"start over" with a plan: one chip, no Haiku edit (so no second chip)');
+  assert.deepEqual(ask('move the drill to Friday', 'x').edit, {
+    course: 'NUR 112',
+    revise: 'E4',
+    said: 'move the drill to Friday',
+  });
   // with no line of his (a retry, a read-along), the model's brief offers nothing, plan or no plan
   for (const plans of [db.plans, []]) {
     const r = ask('', 'start over from scratch, a whole new plan', plans);
@@ -623,7 +631,10 @@ test('D-362: tapping the chip starts exactly one exam-plan job with the words th
   assert.equal(EV.studyPlanChipStarted(c, [{ ...started, revise: 'E4' }], 'm-20261028-1-0'), null, 'nor an edit');
   assert.ok(validate('jobs', { schema: 2, writer: 'page', at: NOW.toISOString(), source: 'E.V. Home', ...j }).ok);
   const cards = fs.readFileSync(path.join(ROOT, 'page/app/67-ev-cards.js'), 'utf8');
-  assert.match(cards, /const job = E\.studyPlanChipStarted\(c, S\.jobs, key\);\s+if \(job\) return CARDS\.job/);
+  assert.match(
+    cards,
+    /const job = E\.studyPlanChipStarted\(c, S\.jobs, key\) \|\| E\.studyPlanNewJobRunning\(S\.jobs, c\.course\);\s+if \(job\) return CARDS\.job/
+  );
   // a second tap on the same chip can't start two: the tap marks the chip (and guard disables it) before the job is
   // written; once written, the chip is that job's card, matched by its key
   assert.match(cards, /const started = newPlanTapped\.has\(key\);[\s\S]*if \(started\) return;/);
@@ -650,6 +661,55 @@ test('D-362: tapping the chip starts exactly one exam-plan job with the words th
   assert.deepEqual([asks.length, asks[0].purpose, asks[0].job], [1, 'exam-plan', 'job-chip']);
   assert.match(words(asks[0]), /redo the plan around my revalidation/);
   assert.equal(writes.filter(w => w.collection === 'plans').length, 1);
+});
+
+test('B-456: one new plan at a time per course: the chip, Make a plan, Remake and other tabs share one guard', () => {
+  const now = Date.parse('2026-10-28T15:00:00Z');
+  const at = '2026-10-28T14:59:00Z';
+  const chipJob = { id: 'job-20261028-newplan-nur112-1', kind: 'exam-plan', course: 'NUR 112', at, chip: 'm1-0' };
+  const view = (j, status) => ({ ...j, createdAt: j.at, status });
+  // the chip's job queued (no result yet) or running holds the course; done, failed, a failed firing or a day old don't
+  assert.equal(EV.studyPlanNewJobRunning([view(chipJob, 'queued')], 'NUR 112', now).id, chipJob.id);
+  assert.equal(EV.studyPlanNewJobRunning([view(chipJob, 'running')], 'nur-112', now).id, chipJob.id);
+  for (const j of [
+    view(chipJob, 'done'),
+    view(chipJob, 'failed'),
+    view({ ...chipJob, fired: { ok: false } }, 'queued'),
+    view({ ...chipJob, at: '2026-10-27T14:00:00Z' }, 'running'),
+    view({ ...chipJob, revise: 'E4' }, 'running'),
+    view({ ...chipJob, course: 'BIO 201' }, 'running'),
+  ])
+    assert.equal(EV.studyPlanNewJobRunning([j], 'NUR 112', now), null, JSON.stringify(j));
+  // a second chip (one from a later line, or the Haiku edit's) shows the running job, not a button
+  const second = { type: 'newplan', course: 'NUR 112', brief: 'start over' };
+  const jobs = [view(chipJob, 'running')];
+  assert.equal(
+    EV.studyPlanChipStarted(second, jobs, 'm2-1') || EV.studyPlanNewJobRunning(jobs, second.course, now),
+    jobs[0]
+  );
+  // the id is the course's next of the day in every tab: a tab that hasn't seen the first job writes the same id
+  assert.equal(EV.studyPlanNewJobId([], 'NUR 112', '2026-10-28'), 'job-20261028-newplan-nur112-1');
+  assert.equal(EV.studyPlanNewJobId([chipJob], 'NUR 112', '2026-10-28'), 'job-20261028-newplan-nur112-2');
+  // the page: startJob reads the record right before writing a new plan's job; one there is the answer, nothing is
+  // written; the chip shows it; Study's Make a plan and Remake go through the same startJob (and show Making…)
+  const jobsJs = fs.readFileSync(path.join(ROOT, 'page/app/62-ev-jobs-and-filing.js'), 'utf8');
+  assert.match(
+    jobsJs,
+    /if \(kind === 'exam-plan' && !revise && course\) \{\s+const fresh = await freshJobs\(\);\s+const busy = E\.studyPlanNewJobRunning\(fresh, course\);\s+if \(busy\) return \{ id: busy\.id, fired: \{ ok: true \}, existing: true \};\s+planId = E\.studyPlanNewJobId\(fresh, course, today\);/
+  );
+  assert.ok(
+    jobsJs.indexOf('const fresh = await freshJobs()') < jobsJs.indexOf("collection: 'jobs',"),
+    'read before write'
+  );
+  assert.match(jobsJs, /db\.collection\(c\)\.get\(\)/);
+  const cards = fs.readFileSync(path.join(ROOT, 'page/app/67-ev-cards.js'), 'utf8');
+  assert.match(
+    cards,
+    /E\.studyPlanChipStarted\(c, S\.jobs, key\) \|\| E\.studyPlanNewJobRunning\(S\.jobs, c\.course\)/
+  );
+  const study = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
+  assert.match(study, /startJob\(E\.studyPlanJob\(/, 'Make a plan and Remake start through startJob');
+  assert.equal(EV.studyPlanJob({ course: 'NUR 112', exams: record().exams, date: TODAY }).course, 'NUR 112');
 });
 
 test('D-362: the Haiku edit may answer “this needs a whole new plan” with the chip instead of a patch', async () => {

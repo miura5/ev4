@@ -389,7 +389,9 @@ export function makeStudyPlans(core) {
       sec && his && (!cur || studyPlanLooksNew(his)) ? { type: 'newplan', course: sec.course, brief: his } : null;
     return {
       course: sec ? sec.course : course,
-      edit: cur ? { course: sec.course, revise: cur.id, ...(his ? { said: his } : {}) } : null,
+      // D-362 (B-456): when the chip is offered it is the answer: no Haiku edit for that line, so one line never
+      // leads to two chips (the edit's own) and two new plans
+      edit: cur && !offer ? { course: sec.course, revise: cur.id, ...(his ? { said: his } : {}) } : null,
       offer,
     };
   }
@@ -406,6 +408,37 @@ export function makeStudyPlans(core) {
     course: c.course,
     chip: String(key || '').slice(0, 200),
   });
+  const NEW_JOB_MS = 24 * 3600 * 1000; // as the Worker's: a new-plan job older than a day is no longer running
+  /**
+   * D-362 (B-456): the one guard on new plans, shared by the chip, Make a plan and Remake: the course's new-plan job
+   * (exam-plan, no revise) that is queued or running in the record, else null. `jobs` are job views (status from
+   * jobresults/<id>; 'queued' when there is none); a job whose firing failed, or over a day old, does not hold it.
+   */
+  function studyPlanNewJobRunning(jobs, course, nowMs = Date.now()) {
+    return (
+      (jobs || [])
+        .filter(
+          j =>
+            j.kind === 'exam-plan' &&
+            !j.revise &&
+            sameCourse(j.course, course) &&
+            ['queued', 'running'].includes(j.status || 'queued') &&
+            !(j.fired && j.fired.ok === false) &&
+            nowMs - Date.parse(j.createdAt || j.at || 0) < NEW_JOB_MS
+        )
+        .sort((a, b) => String(b.createdAt || b.at || '').localeCompare(String(a.createdAt || a.at || '')))[0] || null
+    );
+  }
+  /** D-362 (B-456): a new-plan job's id, the same in every tab for the course's next new plan of the day, so two tabs
+   * that both start one write one document (the second create is refused or merges into the first, never a second
+   * job). */
+  function studyPlanNewJobId(jobs, course, date) {
+    const base = `job-${String(date).replace(/-/g, '')}-newplan-${courseKey(course) || 'course'}`;
+    const ids = new Set((jobs || []).map(j => j.id));
+    let n = 1;
+    while (ids.has(`${base}-${n}`)) n++;
+    return `${base}-${n}`;
+  }
   /** D-362: the job this chip (by its key) started, else null: an older job with the same words is another chip's. */
   const studyPlanChipStarted = (c, jobs, key) =>
     (key && (jobs || []).find(j => j.kind === 'exam-plan' && !j.revise && j.chip === String(key).slice(0, 200))) ||
@@ -695,6 +728,8 @@ export function makeStudyPlans(core) {
     studyPlanChatAsk,
     studyPlanChipJob,
     studyPlanChipStarted,
+    studyPlanNewJobRunning,
+    studyPlanNewJobId,
     studyPlanScoreOk,
     studyPlanDoc,
     applyPlanPatch,

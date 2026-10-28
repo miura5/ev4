@@ -19,7 +19,8 @@
     const newPlanTapped = new Set();
     const CARDS = {
       newplan(box, c, key) {
-        const job = E.studyPlanChipStarted(c, S.jobs, key);
+        // the job this chip started, else any new plan for the course still queued or running (one at a time)
+        const job = E.studyPlanChipStarted(c, S.jobs, key) || E.studyPlanNewJobRunning(S.jobs, c.course);
         if (job) return CARDS.job(box, { type: 'job', id: job.id }); // the job it started, as its own card shows it
         box.append(head2('A new study plan', c.course));
         const started = newPlanTapped.has(key);

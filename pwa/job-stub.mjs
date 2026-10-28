@@ -43,7 +43,8 @@ export const STUB_TEXT = {
 /** B-449: a study plan, in the plan shape, over the section in the brief: a preview on its first day and, when the
  * section's first day has a dated item of the course, a task that is that item. */
 function studyPlanAnswer(brief, later) {
-  const title = brief.job.title || '';
+  // D-362: a new plan from the chip carries his line as its brief, so a plant may ride there too
+  const title = `${brief.job.title || ''} ${brief.job.brief || ''}`;
   const ctx = brief.context;
   if (title.includes(PLANTS.ask)) return { text: 'One question first.', ask: 'Is the care plan draft graded?' };
   const s = ctx.section;

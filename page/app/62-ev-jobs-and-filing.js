@@ -35,6 +35,16 @@
       }
     }
     const jobText = id => (TASKS.jobText || 'Job {id}').replace('{id}', id);
+    /** The jobs in the record as read now, as views (status from jobresults/<id>, 'queued' when there is none). */
+    async function freshJobs() {
+      const [js, rs] = await Promise.all(['jobs', 'jobresults'].map(c => db.collection(c).get().then(docs)));
+      const by = new Map(rs.map(r => [r.id, r]));
+      return js.map(j => ({
+        ...j,
+        createdAt: j.createdAt || j.at,
+        status: by.has(j.id) ? by.get(j.id).status : 'queued',
+      }));
+    }
     async function startJob({ kind, title, brief, course, revise, said, chip }) {
       kind = KINDS[kind] ? kind : 'general';
       title =
@@ -45,8 +55,18 @@
       brief = String(brief || '')
         .trim()
         .slice(0, 1500);
+      // D-362 (B-456): one new plan at a time per course, whoever asks (the chip, Make a plan, Remake, another tab).
+      // The record is read right before the write: a new-plan job queued or running there is the answer, and the id
+      // is the course's next of the day in every tab, so two tabs that both start one make one document.
+      let planId = null;
+      if (kind === 'exam-plan' && !revise && course) {
+        const fresh = await freshJobs();
+        const busy = E.studyPlanNewJobRunning(fresh, course);
+        if (busy) return { id: busy.id, fired: { ok: true }, existing: true };
+        planId = E.studyPlanNewJobId(fresh, course, today);
+      }
       const st = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
-      const id = E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
+      const id = planId || E.safeId(`job-${st.slice(0, 8)}-${st.slice(8)}-${E.slug(title, 24)}`);
       await write({
         op: 'set',
         collection: 'jobs',
