@@ -8520,5 +8520,23 @@
    "outcome": "task",
    "at": "2026-10-28T17:14:56.896Z"
   }
+ },
+ {
+  "id": "B-460",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): After a release with the plan-job Durable Object is live, rolling back to the previous build restores a Worker without that class or its migration, so Cloudflare refuses the Worker deploy; the rollback must keep the class and migration, or its dry run must say how.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "final review of B-459",
+  "words": "After a release with the plan-job Durable Object is live, rolling back to the previous build restores a Worker without that class or its migration, so Cloudflare refuses the Worker deploy; the rollback must keep the class and migration, or its dry run must say how.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T18:09:48.156Z",
+  "board": {
+   "row": "v4 B-460: After a release with the plan-job Durable Object is live, rolling…"
+  }
  }
 ]
