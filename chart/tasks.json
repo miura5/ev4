@@ -8291,7 +8291,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Final review (fresh, after one fix round): routing, cloud path, plans.schema enum, Sonnet binding (D1 job check, atomic 2-ask cap, schema.sql applied by both deploy workflows) and the edit prefix all closed. One gap remains, filed as B-456: remake words on a single task still route to a new Sonnet plan. Checks retired: B-45's cloud exam-plan draft test (page read-only), B-161's 50 KB budget (D-359). npm test 875/0, smoke 28/28. Size +319 -88. Next: staging with the real plan job.",
+  "notes": "builder: 5873224 fix wave after the RED staging proof: no forced tool_choice on plan asks (staging probe: Sonnet 400s on tool/any, answers by tool_use on auto), Claude's error words in the job result, a failed Sonnet ask gives its claim back, future-dated jobs refused, the cap's 429 as a ceiling line, card ask skips the edit when the chip is offered. npm test 886 pass, smoke 28/28, smoke:pwa 31/31",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",
