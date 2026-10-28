@@ -125,7 +125,7 @@ const LOOKUP_TOOL = {
 
 /**
  * B-449 (D-354, D-356): a study plan's request. Three blocks in the one user turn: what stays the same (E.V., the
- * instructions or, for an edit, only their hard rules, the guide and the limits), the record's material (the section,
+ * instructions or, for an edit, their hard rules, ladder and load lines and re-planning triggers, the guide and the limits), the record's material (the section,
  * or the draft), then the ask itself; the Worker is asked to mark the first two as cache breakpoints, so a fix ask or
  * a lookup round reads them from the cache. The purpose names the ask to the Worker, which picks the model (Sonnet to
  * make a plan, Haiku to edit one); a plan asks for a longer answer.
@@ -140,7 +140,7 @@ export function planRequest(spec, prepared) {
       ? 'He wants changes to a study plan draft he has. Answer with a patch of task operations, never a whole plan, in E.V.’s voice: warm, plain and brief (text says what changed, at most 1,500 characters).'
       : doJob(spec).step.judgment,
     edit
-      ? 'The hard rules of his study plan instructions (his to edit):\n' + EV.studyPlanHardRules(ins.text, spec)
+      ? 'From his study plan instructions (his to edit):\n\n' + EV.studyPlanEditRules(ins.text, spec)
       : 'His study plan instructions (his to edit; follow them):\n\n' + ins.text,
     'The kind’s guide: ' + plainGuide(prepared.brief.guide),
     ...(ins.missing === 'note' // B-450's option: he would rather the plan go on
@@ -189,7 +189,7 @@ export function planRequest(spec, prepared) {
       { m: 0, b: 1 },
     ],
     purpose: edit ? (spec.jobs.kinds[PLAN].edit || {}).purpose || 'plan-edit' : R.purpose,
-    ...(edit ? {} : { max_tokens: R.maxTokens }),
+    ...(edit ? {} : { max_tokens: R.maxTokens, job: prepared.ctx.input.job }), // D-355: the Worker checks the job
   };
 }
 

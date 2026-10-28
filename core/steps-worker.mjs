@@ -35,6 +35,35 @@ export const CODE_STEPS = {
     }
     const kinds = (spec.jobs && spec.jobs.kinds) || {};
     const kind = kinds[job.kind] ? job.kind : 'general';
+    if (kind === 'exam-plan' && ctx.runId) {
+      // B-449: a study plan (a new section plan or an edit) is the app's job only (pwa/jobs.mjs, with its own answer
+      // shapes); the claude.ai page this cloud run serves is read-only since the Oct 26 switch (D-337, D-347). Said
+      // plainly, as a failed result, with no ask.
+      const why = 'study plans are made in the E.V. app now. Ask for this one there.';
+      ctx.job = null;
+      ctx.jobSkip = `job ${job.id} (exam-plan): ${why}`;
+      return {
+        say: [ctx.jobSkip],
+        writes: [
+          {
+            op: 'set',
+            collection: 'jobresults',
+            id: job.id,
+            data: {
+              ...EV.envelope('worker', ctx.source, ctx.now),
+              schema: 2,
+              release: ctx.release,
+              status: 'failed',
+              startedAt: ctx.now,
+              finishedAt: ctx.now,
+              result: { text: 'I couldn’t make this one: ' + why, links: [] },
+              message: null,
+              error: why,
+            },
+          },
+        ],
+      };
+    }
     const ms = models(db);
     const idx = library(db);
     const q = `${job.title} ${job.brief}`;

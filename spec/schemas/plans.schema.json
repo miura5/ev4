@@ -169,5 +169,45 @@
     ]
    }
   ]
- }
+ },
+ "anyOf": [
+  {
+   "$comment": "An exam plan page's plan (no section): its legend's tags, free.",
+   "not": {
+    "required": [
+     "section"
+    ]
+   }
+  },
+  {
+   "$comment": "D-357: a study plan (it has a section): each task's tag is one of the six, written as its id.",
+   "required": [
+    "section"
+   ],
+   "properties": {
+    "days": {
+     "items": {
+      "properties": {
+       "tasks": {
+        "items": {
+         "properties": {
+          "tag": {
+           "enum": [
+            "graded",
+            "learn",
+            "practice",
+            "review",
+            "clinical-prep",
+            "skills-prep"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ ]
 }

@@ -101,6 +101,7 @@ export const PURPOSES = {
     model: env => env.CLAUDE_PLAN_MODEL || 'claude-sonnet-5-5',
     maxTokens: 24000,
     scale: 3, // Sonnet's input and output cost about 3 times Haiku's, so its tokens count 3 each against the ceilings
+    job: true, // bound to its job (planJobProblem, claimPlanAsk)
   },
   // D-356: a change to a plan draft is a patch, on Haiku with the usual length
   'plan-edit': { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: ASK_TOKENS, scale: 1 },
@@ -120,7 +121,44 @@ export function purposeOf(body, env = {}) {
       return 'max_tokens: a whole number from 1 to ' + p.maxTokens;
     maxTokens = asked;
   }
-  return { model: p.model(env), maxTokens, scale: p.scale, purpose };
+  return { model: p.model(env), maxTokens, scale: p.scale, purpose, job: p.job ? (body && body.job) || null : null };
+}
+
+// B-449 (D-355): Sonnet goes only to a study plan's own job. Its ask names the job (job: <id>); the Worker confirms in
+// D1, the record it serves, that jobs/<id> is an exam-plan job for a new plan (no revise) under a day old and that
+// jobresults/<id> says it is running (the app's job runner writes that before its first ask), and lets one job have
+// PLAN_ASKS Sonnet asks: the make ask and its one fix ask. Anything it can't confirm is refused, never sent.
+export const PLAN_ASKS = 2;
+const PLAN_JOB_MS = 24 * 3600 * 1000;
+const JOB_ID = /^[A-Za-z0-9_.:-]{1,120}$/;
+/** null when `job` is a running new-plan exam-plan job in D1, else why not. */
+export async function planJobProblem(env, job, ms = Date.now()) {
+  if (typeof job !== 'string' || !JOB_ID.test(job)) return 'job: a study plan ask names its exam-plan job';
+  const doc = async c => {
+    const row = await env.DB.prepare('SELECT data FROM docs WHERE c = ? AND id = ?').bind(c, job).first();
+    try {
+      return row ? JSON.parse(row.data) : null;
+    } catch {
+      return null;
+    }
+  };
+  const j = await doc('jobs');
+  if (!j || j.kind !== 'exam-plan' || j.revise) return `job: ${job} is no study plan job in the record`;
+  const at = Date.parse(j.at);
+  if (!(ms - at < PLAN_JOB_MS)) return `job: ${job} is over a day old`;
+  const r = await doc('jobresults');
+  if (!r || r.status !== 'running') return `job: ${job} is not running`;
+  return null;
+}
+/** One of a job's PLAN_ASKS Sonnet asks, claimed in one statement; null when claimed, else why not. */
+export async function claimPlanAsk(env, job, ms = Date.now()) {
+  const row = await env.DB.prepare(
+    'INSERT INTO claude_plan_asks (job, n, at) VALUES (?, 1, ?) ON CONFLICT (job) DO UPDATE SET n = n + 1, ' +
+      'at = excluded.at WHERE claude_plan_asks.n < ? RETURNING n'
+  )
+    .bind(job, ms, PLAN_ASKS)
+    .first();
+  return row ? null : `job: ${job} has had its ${PLAN_ASKS} study plan asks`;
 }
 
 /** This hour's and today's tokens. */
@@ -239,7 +277,7 @@ export async function claimRead(env, read, ms = Date.now()) {
   };
 }
 
-/** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?, purpose?, max_tokens?}, and GET
+/** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?, purpose?, max_tokens?, job?}, and GET
  * /api/claude/usage. */
 export async function handleClaude(request, env, url) {
   if (url.pathname === '/api/claude/usage' && request.method === 'GET')
@@ -283,8 +321,16 @@ export async function handleClaude(request, env, url) {
   const use = purposeOf(body, env);
   if (typeof use === 'string') return json({ error: use }, 400);
   if (use.purpose && read) return json({ error: 'purpose: a read-along ask has none' }, 400);
+  if (use.purpose && PURPOSES[use.purpose].job) {
+    const no = await planJobProblem(env, use.job);
+    if (no) return json({ error: no }, 403);
+  }
   const over = ceilingProblem(await usageNow(env), await limitsOf(env));
   if (over) return json(over, 429);
+  if (use.purpose && PURPOSES[use.purpose].job) {
+    const spent = await claimPlanAsk(env, use.job);
+    if (spent) return json({ error: spent }, 429);
+  }
   // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
   const before = read
     ? await env.DB.prepare('SELECT h, at FROM claude_reads WHERE note = ?').bind(read.note).first()

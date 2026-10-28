@@ -1106,62 +1106,39 @@ test('B-54 (D-110): a share-set job builds the page in code and prints its one p
   assert.equal(w2.question.material.groups, undefined);
 });
 
-test('B-45 (D-102): an exam-plan job for an exam that has a plan saves a draft as plans/<exam>-<n>, never replacing it, and the message carries its card', () => {
+test('B-449: an exam-plan job (a section plan or an edit) on the cloud worker is refused plainly: the app makes study plans', () => {
   const at = '2026-10-17T19:34:00Z';
-  const db = recordDb();
-  const jobId = 'job-20261017-193000-plan-e9';
-  db.jobs.push({
-    id: jobId,
-    schema: 1,
-    writer: 'page',
-    at: '2026-10-17T19:30:00Z',
-    source: 'E.V. Home',
-    kind: 'exam-plan',
-    title: 'Exam plan: Sample Exam 9',
-    brief: 'E9: draft a new plan',
-    fired: { at: '2026-10-17T19:30:01Z', ok: true },
-  });
-  assert.ok(
-    db.plans.some(p => p.id === 'E9'),
-    'the fixture has a plan in force for E9'
-  );
-  const { dir } = session('worker', at, db);
-  assert.equal(RUN.compute({ spec, dir, validate, at }).status, 'waiting');
-  const plan = {
-    exam: 'E9',
-    title: 'Exam 9 plan, take 2',
-    days: [
-      {
-        date: '2026-11-02',
-        label: 'Mobility',
-        tasks: [{ id: 'e9b-read-1', text: 'Read Ch 60: mobility', kind: 'reading', chapters: [60] }],
-      },
-    ],
-  };
-  answer(dir, 'do-job', { text: 'Here is a new plan for Exam 9.', plan });
-  const r = RUN.compute({ spec, dir, validate, at });
-  assert.equal(r.status, 'planned', JSON.stringify(r.problems));
-  const { out } = applied(db, dir);
-  assert.ok(
-    out.plans.find(p => p.id === 'E9') && out.plans.find(p => p.id === 'E9').title !== plan.title,
-    'plans/E9 is untouched'
-  );
-  const draft = out.plans.find(p => p.id === 'E9-2');
-  assert.equal(draft && draft.title, plan.title);
-  assert.ok(validate('plans', EV.docData(draft), { id: 'E9-2' }).ok);
-  assert.equal(
-    EV.planViews(out.plans, out.planedits).find(p => p.exam === 'E9').id,
-    'E9',
-    'the draft is not in force until he uses it'
-  );
-  const res = out.jobresults.find(x => x.id === jobId);
-  const msg = out.talk.find(x => x.id === '2026-10-17').messages[res.message];
-  assert.deepEqual(msg.cards, [
-    { type: 'job', id: jobId },
-    { type: 'plan', id: 'E9-2' },
-  ]);
-  assert.match(msg.text, /stays in force/);
-  assert.ok(validate('jobresults', EV.docData(res), { id: jobId }).ok);
+  for (const [jobId, extra] of [
+    ['job-20261017-193000-plan-e9', { title: 'Study plan: NUR 112', brief: 'E9: a new plan', course: 'NUR 112' }],
+    ['job-20261017-193100-plan-edit', { title: 'Plan changes', brief: 'move the drill to Friday', revise: 'E9' }],
+  ]) {
+    const db = recordDb();
+    const plansBefore = db.plans.map(p => p.id);
+    db.jobs.push({
+      id: jobId,
+      schema: 2,
+      writer: 'page',
+      at: '2026-10-17T19:30:00Z',
+      source: 'E.V. Home',
+      kind: 'exam-plan',
+      ...extra,
+      fired: { at: '2026-10-17T19:30:01Z', ok: true },
+    });
+    const { dir } = session('worker', at, db);
+    const r = RUN.compute({ spec, dir, validate, at });
+    assert.equal(r.status, 'planned', 'no agent ask: ' + JSON.stringify(r.problems || r.question));
+    const { out } = applied(db, dir);
+    const res = out.jobresults.find(x => x.id === jobId);
+    assert.equal(res.status, 'failed');
+    assert.match(res.error, /study plans are made in the E\.V\. app now/);
+    assert.match(res.result.text, /^I couldn’t make this one: /);
+    assert.ok(validate('jobresults', EV.docData(res), { id: jobId }).ok);
+    assert.deepEqual(
+      out.plans.map(p => p.id),
+      plansBefore,
+      'no plan written'
+    );
+  }
 });
 
 test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill on dosage material; only numeric items on its passages are kept', () => {

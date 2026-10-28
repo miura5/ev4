@@ -21,7 +21,7 @@ export function makeStudyPlans(core) {
     taskDone,
     editBase,
   } = core;
-  /** D-357: a study plan task's one tag, from this set (the answer shapes hold the same enum); planDay shows each on
+  /** D-357: a study plan task's one tag, from this set (the answer shapes and plans.schema hold it); planDay shows each on
    * Today upper-cased with its dash a space (GRADED ... CLINICAL PREP, SKILLS PREP). */
   const TAGS = ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
 
@@ -82,14 +82,42 @@ export function makeStudyPlans(core) {
     }
     return { id: 'study-plan', data };
   }
-  /** The rubric's hard rules in a set of instructions (its "Hard rules" section), else the default's; an edit ask
-   * gets only these (D-356). */
+  /** The rubric's hard rules in a set of instructions (its "Hard rules" section), else the default's (D-356). */
   function studyPlanHardRules(text, spec) {
     const cut = t => {
       const m = /^##[^\n]*hard rules[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/im.exec(String(t || ''));
       return m ? m[1].trim() : '';
     };
     return cut(text) || cut(kindOf(spec).instructions) || '';
+  }
+  /** A "## <name>" section of a set of instructions, its body trimmed; '' when there's none. */
+  const sectionOf = (t, name) => {
+    const m = new RegExp(`^##[^\\n]*${name}[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'im').exec(String(t || ''));
+    return m ? m[1].trim() : '';
+  };
+  /**
+   * B-449 (D-356): what an edit ask gets of his instructions, in its cached prefix: the hard rules; how a skills ladder
+   * and the day's load are laid (the lines of the approach and of how a section is built that name a ladder or the
+   * load); and the re-planning triggers. Each part from his instructions, else the default's. An added revalidation
+   * ladder then runs first look, guided, solo and checked mocks, backward from its date, inside the load.
+   */
+  function studyPlanEditRules(text, spec) {
+    const def = kindOf(spec).instructions;
+    const lines = t =>
+      ['approach', 'builds a section']
+        .flatMap(n => sectionOf(t, n).split('\n'))
+        .filter(l => /\b(skills? ladder|ladder|load|catch-up)\b/i.test(l))
+        .map(l => l.trim())
+        .join('\n');
+    const parts = [
+      ['The hard rules', studyPlanHardRules(text, spec)],
+      ['How a skills ladder and the load are laid', lines(text) || lines(def)],
+      ['When to re-plan', sectionOf(text, 're-planning') || sectionOf(def, 're-planning')],
+    ];
+    return parts
+      .filter(([, body]) => body)
+      .map(([h, body]) => `${h}:\n${body}`)
+      .join('\n\n');
   }
 
   // ---------------------------------------------------------------- the section
@@ -311,7 +339,7 @@ export function makeStudyPlans(core) {
   const NEW_WORDS = new RegExp(
     '\\b(' +
       [
-        'new (study )?(plan|one|schedule)',
+        'new (study )?(plan|schedule)',
         'cram(ming)?(?! (session|block|slot|hour|day))', // a cram plan, not a cram session added to the plan
         're-?make',
         're-?do',
@@ -325,8 +353,9 @@ export function makeStudyPlans(core) {
         'another plan',
         'scrap',
         'throw (it|this|that) (out|away)',
-        '(plan|start|starting|begin|beginning) (from )?(today|now|tonight)',
-        'from (today|now|tonight)',
+        // "from today" alone is a change ("remove the reading from today"); after plan, start or a remake it is new
+        '(plan|start(ing)?|begin(ning)?|re-?do( it)?|re-?make( it)?|make (it|one|a plan|the plan)) from (today|now|tonight)',
+        'plan (starting|beginning) (today|now|tonight)',
         'plan (is|was|looks|seems) (bad|terrible|awful|useless|weak|not good|no good)',
         '(it|this|that) (is|was) (bad|terrible|awful|useless)',
         '(bad|terrible|awful|useless|weak) plan',
@@ -335,7 +364,7 @@ export function makeStudyPlans(core) {
     'i'
   );
   const CHANGE_WORDS =
-    /\b(move|swap|add|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
+    /\b(move|swap|add|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
   /** The question asked when his words don't say which (D-356). */
   const ROUTE_QUESTION = 'Change the current plan, or make a new one from today?';
   /**
@@ -608,6 +637,7 @@ export function makeStudyPlans(core) {
     studyPlanInstructions,
     studyPlanSettingsWrite,
     studyPlanHardRules,
+    studyPlanEditRules,
     studyPlanCourse,
     studyPlanSection,
     studyPlanContext,

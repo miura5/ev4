@@ -329,6 +329,24 @@ test('D-356: an edit is a Haiku patch on the draft: no materials, hard rules onl
   assert.doesNotMatch(all, /"passages"|"materials"|"objectives"|"notes"/, 'no materials block');
   assert.doesNotMatch(all, /Study Plan Maker|## 4\. Rubric/, 'not the whole brief');
   assert.match(all, /Nothing is left off the calendar/, 'its hard rules');
+  // an added revalidation ladder keeps to his ladder and load rules, read from the cached prefix
+  const prefix = a.messages[0].content[0].text;
+  for (const rule of [
+    /first look before the lab[^\n]*guided practice[^\n]*solo runs[^\n]*at least 2 mocks scored/,
+    /Lay each skills ladder\*\* backward from its checkoff date/,
+    /Check the load:\*\* total minutes per day/,
+    /Failed a checkoff:\*\* the revalidation ladder becomes the top priority/,
+  ])
+    assert.match(prefix, rule);
+  assert.doesNotMatch(prefix, /Course profiles|## 2\. How a plan/, 'not the whole brief');
+  // his own instructions' parts are used, the default's where his have none
+  const own = EV.studyPlanEditRules(
+    '## Hard rules\n\n1. No all-nighters.\n\n## Re-planning triggers\n\n- Behind: rest.',
+    spec
+  );
+  assert.match(own, /^The hard rules:\n1\. No all-nighters\./);
+  assert.match(own, /When to re-plan:\n- Behind: rest\.$/);
+  assert.match(own, /backward from its checkoff date/, 'the default’s ladder lines where his have none');
   assert.match(a.messages[0].content[1].text, /"draft"/);
   assert.doesNotMatch(
     a.messages[0].content[1].text,
@@ -457,7 +475,28 @@ test('D-356: the chat’s choice: a change is a patch, new words a new plan from
     'redo the whole thing',
   ])
     assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
-  for (const w of ['add a cram session on Sunday', 'make Thursday lighter', 'swap the drill and the preview'])
+  for (const w of [
+    'start over from today',
+    'make a plan from today',
+    'redo it from now',
+    'remake it from tonight',
+    'redo the plan around my revalidation',
+    'replan for my failed checkoff',
+  ])
+    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
+  // plain edits that name a day stay a patch (the review's four): "from today" alone is no new plan, nor "a new one-hour"
+  for (const w of [
+    'remove the reading from today',
+    'drop the drill from tonight',
+    'move the quiz review from today to Friday',
+    'add a new one-hour block Sunday',
+    'add revalidation practice for the injection checkoff before Monday',
+    'add skills practice for my revalidation',
+    'schedule two mock runs before my retry',
+    'add a cram session on Sunday',
+    'make Thursday lighter',
+    'swap the drill and the preview',
+  ])
     assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'change', w);
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
   assert.match(chat, /E\.studyPlanRoute\(words, \{ hasPlan: !!cur \}\)/, 'the chat’s start_job routes through it');
@@ -474,13 +513,23 @@ function fakeD1() {
     all: async () => ({ results: sql.prepare(q).all(...args) }),
     run: async () => ({ meta: { changes: Number(sql.prepare(q).run(...args).changes) } }),
   });
-  return { prepare: q => stmt(q) };
+  return { prepare: q => stmt(q), sql };
 }
-async function viaWorker(bodies, vars = {}) {
+/** D-355: a study plan job as the app leaves it in D1 before its first ask: jobs/<id> and jobresults/<id> running. */
+function seedJob(db, id, { job = {}, result = { status: 'running' }, at = new Date().toISOString() } = {}) {
+  const put = (c, data) =>
+    db.sql.prepare('INSERT INTO docs (c, id, data, at, v) VALUES (?, ?, ?, ?, 1)').run(c, id, JSON.stringify(data), 0);
+  put('jobs', { schema: 2, writer: 'page', at, source: 'E.V. Home', kind: 'exam-plan', title: 'Study plan', ...job });
+  if (result)
+    put('jobresults', { schema: 2, writer: 'worker', at, source: 'x', release: 'v4', startedAt: at, ...result });
+}
+async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')) {
+  const DB = fakeD1();
+  if (seed) seed(DB);
   const env = {
     EV_TOKEN: 't',
     ANTHROPIC_API_KEY: 'k',
-    DB: fakeD1(),
+    DB,
     ASSETS: { fetch: () => new Response('') },
     ...vars,
   };
@@ -520,7 +569,7 @@ async function viaWorker(bodies, vars = {}) {
 
 test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 24k, an edit and every other ask on Haiku', async () => {
   const { out, sent } = await viaWorker([
-    { purpose: 'exam-plan', max_tokens: 24000 },
+    { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' },
     { purpose: 'plan-edit' },
     { model: 'claude-sonnet-5-5', max_tokens: 24000 }, // a chat ask naming a model gets Haiku and the usual length
     {},
@@ -539,17 +588,17 @@ test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 24k, a
     sent.every(b => b.purpose === undefined),
     'the purpose is the Worker’s, never sent on'
   );
-  const env = await viaWorker([{ purpose: 'exam-plan' }], { CLAUDE_PLAN_MODEL: 'claude-sonnet-x' });
+  const env = await viaWorker([{ purpose: 'exam-plan', job: 'job-plan' }], { CLAUDE_PLAN_MODEL: 'claude-sonnet-x' });
   assert.equal(env.sent[0].model, 'claude-sonnet-x');
 });
 
 test('D-355: an unknown purpose, a plan over 24k, an edit over the usual length or a purposed read-along is refused, unsent', async () => {
   const { out, sent } = await viaWorker([
     { purpose: 'chat' },
-    { purpose: 'exam-plan', max_tokens: 24001 },
-    { purpose: 'exam-plan', max_tokens: 1.5 },
+    { purpose: 'exam-plan', max_tokens: 24001, job: 'job-plan' },
+    { purpose: 'exam-plan', max_tokens: 1.5, job: 'job-plan' },
     { purpose: 'plan-edit', max_tokens: 9000 },
-    { purpose: 'exam-plan', read: { note: 'n1', h: 'abc' } },
+    { purpose: 'exam-plan', read: { note: 'n1', h: 'abc' }, job: 'job-plan' },
   ]);
   assert.deepEqual(out, [400, 400, 400, 400, 400]);
   assert.equal(sent.length, 0);
@@ -567,10 +616,46 @@ test('D-355: a plan’s Sonnet tokens count 3 each against the ceilings, cache w
   };
   assert.equal(tokensOf(u), 3350);
   assert.equal(tokensOf(u, 3), 10050);
-  const plan = await viaWorker([{ purpose: 'exam-plan' }]);
+  const plan = await viaWorker([{ purpose: 'exam-plan', job: 'job-plan' }]);
   assert.equal(plan.used, 3000);
   const edit = await viaWorker([{ purpose: 'plan-edit' }]);
   assert.equal(edit.used, 1000);
+});
+
+test('D-355: Sonnet only for a running study plan job the Worker finds in D1, twice a job at most; else refused, unsent', async () => {
+  const plan = (job, extra = {}) => ({ purpose: 'exam-plan', max_tokens: 24000, ...(job ? { job } : {}), ...extra });
+  // no job named, or one D1 doesn't hold: refused, never sent to Sonnet (nor to Haiku)
+  const none = await viaWorker([plan(null), plan('job-nope'), plan('../x')]);
+  assert.deepEqual(none.out, [403, 403, 403]);
+  assert.equal(none.sent.length, 0);
+  // the job's make ask and its one fix ask go to Sonnet; a third is refused
+  const ok = await viaWorker([plan('job-plan'), plan('job-plan'), plan('job-plan')]);
+  assert.deepEqual(ok.out, [200, 200, 429]);
+  assert.deepEqual(
+    ok.sent.map(b => b.model),
+    ['claude-sonnet-5-5', 'claude-sonnet-5-5']
+  );
+  // each job has its own two
+  const two = await viaWorker([plan('job-a'), plan('job-b'), plan('job-a'), plan('job-a')], {}, db => {
+    seedJob(db, 'job-a');
+    seedJob(db, 'job-b');
+  });
+  assert.deepEqual(two.out, [200, 200, 200, 429]);
+  // what the Worker can't confirm as a running new-plan job is refused
+  for (const [why, seed] of [
+    ['an edit job', db => seedJob(db, 'j', { job: { revise: 'E4-2' } })],
+    ['another kind', db => seedJob(db, 'j', { job: { kind: 'study-guide' } })],
+    ['no result yet', db => seedJob(db, 'j', { result: null })],
+    ['a finished job', db => seedJob(db, 'j', { result: { status: 'done' } })],
+    ['over a day old', db => seedJob(db, 'j', { at: new Date(Date.now() - 25 * 3600 * 1000).toISOString() })],
+  ]) {
+    const r = await viaWorker([plan('j')], {}, seed);
+    assert.deepEqual([r.out[0], r.sent.length], [403, 0], why);
+  }
+  // the app's make ask names its job; an edit ask (Haiku) needs none
+  const db = record();
+  const { asks } = await run(db, { id: 'job-named', title: 'plan', brief: 'a plan', course: 'NUR 112' });
+  assert.equal(asks[0].job, 'job-named');
 });
 
 // ---------------------------------------------------------------- Today (planDay)
@@ -685,7 +770,7 @@ const planAnswer = tasks => ({
   score: { criteria: [5, 5, 5, 5, 5, 5, 5, 5], total: 100 },
 });
 
-test('D-357: a task’s tag is one of graded, learn, practice, review, clinical-prep, skills-prep: the answer shapes and the instructions hold the set', () => {
+test('D-357: a task’s tag is one of graded, learn, practice, review, clinical-prep, skills-prep: the answer shapes, plans.schema and the instructions hold the set', () => {
   assert.deepEqual(EV.STUDY_PLAN_TAGS, TAG_IDS);
   const ops = examPlan.edit.output.properties.ops.items.properties;
   for (const s of [
@@ -701,8 +786,23 @@ test('D-357: a task’s tag is one of graded, learn, practice, review, clinical-
   const patch = tag => ({ text: 'ok', ops: [{ op: 'edit', id: 'x', set: { tag } }] });
   assert.ok(validateAgainst(examPlan.edit.output, patch('skills-prep')).ok);
   assert.ok(!validateAgainst(examPlan.edit.output, patch('SKILLS PREP')).ok);
-  // the stored plan holds only what the shape allowed (plans.schema leaves tag free: an exam plan page's legend
-  // keeps its own tags, and the page's spec budget has no room for a second copy of the set)
+  // a stored study plan (it has a section) holds the set; an exam plan page's plan keeps its legend's tags
+  const doc = tag => ({
+    schema: 1,
+    writer: 'worker',
+    at: NOW.toISOString(),
+    source: 'x',
+    exam: 'E4',
+    section: { course: 'NUR 112', from: TODAY, to: '2026-10-27' },
+    days: [{ date: TODAY, tasks: [{ id: 'a', text: 'A', tag }] }],
+  });
+  for (const t of TAG_IDS) assert.ok(validate('plans', doc(t), { id: 'E4-2' }).ok, t);
+  for (const bad of ['COMMITMENT PREP', 'PRACTICE', 'drill'])
+    assert.ok(!validate('plans', doc(bad), { id: 'E4-2' }).ok, `${bad} is refused on a study plan`);
+  const { section, ...legacy } = doc('drill');
+  assert.ok(validate('plans', legacy, { id: 'E4' }).ok, 'an exam plan page’s drill tag stands');
+  const sch = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/schemas/plans.schema.json'), 'utf8'));
+  assert.deepEqual(sch.anyOf[1].properties.days.items.properties.tasks.items.properties.tag.enum, TAG_IDS);
   // the built-in instructions and the guide tell the model the set, with Learn for previews, lectures and full reads
   const brief = fs.readFileSync(path.join(ROOT, 'docs/study-plan-brief.md'), 'utf8');
   for (const t of TAG_IDS) assert.match(brief, new RegExp(`^- ${t} \\(`, 'm'), t);

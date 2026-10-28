@@ -28,3 +28,10 @@ CREATE TABLE IF NOT EXISTS claude_settings (
   value INTEGER NOT NULL,
   at INTEGER NOT NULL
 );
+
+-- B-449 (D-355): the Sonnet asks each study plan job has had (the make ask and its one fix ask at most).
+CREATE TABLE IF NOT EXISTS claude_plan_asks (
+  job TEXT PRIMARY KEY,
+  n INTEGER NOT NULL,
+  at INTEGER NOT NULL
+);
