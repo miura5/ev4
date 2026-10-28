@@ -8498,5 +8498,23 @@
    "outcome": "task",
    "at": "2026-10-28T11:47:01.886Z"
   }
+ },
+ {
+  "id": "B-459",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): Making a study plan holds one request open, silent, for the minutes Sonnet takes to write; anything that drops a quiet connection (the phone backgrounding the app, a proxy) loses the plan, so the job should run without the page holding the request (stream it, or have the Worker run it in the background and the page read the result).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging proof of B-449 (Oct 28)",
+  "words": "Making a study plan holds one request open, silent, for the minutes Sonnet takes to write; anything that drops a quiet connection (the phone backgrounding the app, a proxy) loses the plan, so the job should run without the page holding the request (stream it, or have the Worker run it in the background and the page read the result).",
+  "reworded": true,
+  "reportedAt": "2026-10-28T11:57:39.727Z",
+  "board": {
+   "row": "v4 B-459: Making a study plan holds one request open, silent, for the minutes…"
+  }
  }
 ]

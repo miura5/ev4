@@ -531,3 +531,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-459 | bug | 2026-10-28T11:57:39.727Z | Making a study plan holds one request open, silent, for the minutes Sonnet takes to write; anything that drops a quiet connection (the phone backgrounding the app, a proxy) loses the plan, so the job should run without the page holding the request (stream it, or have the Worker run it in the background and the page read the result). | staging proof of B-449 (Oct 28) | inbox |  |
