@@ -8441,7 +8441,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: 955deec per D-361: cram read by its object, for+day asks, his answer to the question routes the original request (studyPlanRouteTurn, T.planAsk), words folded; npm test green",
+  "notes": "builder: 716265b per D-362: chat never starts a new plan (every plan ask is a Haiku edit); a conservative check offers a one-tap Make a new <course> plan chip; the Haiku edit may offer it via newPlan; router, its question and pending state removed. B-389 flake fixed in 6c28846. npm test 880 pass, smoke 28/28",
   "commit": null,
   "source": "final review of B-449",
   "words": "A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
