@@ -8397,7 +8397,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Review gaps fixed in d9c94c9: no auto-start while any start is on its way (until the record shows it), offline or read-only; a refused start is quiet and waits for the connection. notes 172/172 (one active session, slow link, offline, refused), smoke:pwa 31/31, npm test 877/0.",
+  "notes": "D-361 round pushed as 9ae74e9: online refusals back off 60 s doubling to 5 min (never for good), offline holds until the connection is back, any landed start clears it, one quiet strip line after 2 min uncounted, no toasts. notes 182/182, smoke:pwa 31/31, npm test 879/0.",
   "commit": null,
   "source": "chat, Oct 27",
   "words": "The notes writing timer starts only for a new note. It should also start when he opens an existing note and types in it for a few seconds, including going back into a note after ending a session, so editing an earlier note counts as study time.",
