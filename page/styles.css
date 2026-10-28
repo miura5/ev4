@@ -2101,6 +2101,8 @@ body.has-line #today-week .wk-her{display:none}
   body:has(#notes-editor:not([hidden])) .mh::before{content:"";position:absolute;left:-1px;right:-1px;top:-8px;height:8px;background:var(--sunken);pointer-events:none}
 }
 .estrip .sug.plain,.estrip .sug:disabled{cursor:default;background:none;color:var(--quiet)}
+/* D-361: the quiet line beside the strip's control, on its row */
+.estrip #ev-uncounted:not([hidden]){display:inline-flex;align-items:center;flex:0 1 auto;color:var(--faint)}
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}

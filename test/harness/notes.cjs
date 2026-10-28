@@ -2661,7 +2661,9 @@ const openNoteId = page =>
   // 30 to 20 minutes ago and its note last saved 10 minutes ago, pauses on open from that save (no keystroke since),
   // and End files 20 minutes, which Record shows; with read-along off
   {
-    const iso = ago => new Date(Date.now() - ago * 60e3).toISOString();
+    // one base time for the whole fixture, so its times never straddle a millisecond (a 19:59 read)
+    const base = Date.now();
+    const iso = ago => new Date(base - ago * 60e3).toISOString();
     const k = s => 'page-' + s.replace(/\D/g, '').slice(0, 8) + '-' + s.replace(/\D/g, '').slice(8, 17);
     const NID = 'n-20261028-090000-writingclock';
     const SID = 'ss-p-writing-clock';
@@ -2758,6 +2760,7 @@ const openNoteId = page =>
   {
     const iso = ago => new Date(Date.now() - ago * 60e3).toISOString();
     const NID = 'n-20261027-080000-oldnote';
+    const NID2 = 'n-20261027-070000-othernote';
     const db = JSON.parse(JSON.stringify(seed));
     db.notes = {
       ...(db.notes || {}),
@@ -2776,6 +2779,20 @@ const openNoteId = page =>
             type: 'p',
             runs: [{ text: `Line ${i + 1} on preload and afterload.` }],
           })),
+        ],
+      },
+      [NID2]: {
+        schema: 1,
+        writer: 'page',
+        at: iso(24 * 60),
+        source: 'E.V. Home',
+        createdAt: iso(24 * 60),
+        editedAt: iso(24 * 60),
+        title: 'Shock',
+        course: 'NUR 112',
+        blocks: [
+          { type: 'h1', runs: [{ text: 'Shock' }] },
+          { type: 'p', runs: [{ text: 'Low perfusion to the tissues.' }] },
         ],
       },
     };
@@ -2953,6 +2970,36 @@ const openNoteId = page =>
       off.active === 0 && !off.toasts.length,
       JSON.stringify(off)
     );
+    // D-361: a start refused offline (the shim's offline flag) holds auto-starts until the connection comes back
+    await page.evaluate(() => {
+      window.__writeFail = 'unavailable';
+      window.__writeFailOffline = true;
+    });
+    await write(' A start refused while the link drops.');
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => {
+      window.__writeFail = '';
+      window.__writeFailOffline = false;
+    });
+    await write(' Held until the connection is back.');
+    await page.waitForTimeout(1500);
+    const offHeld = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await write(' Back online, writing starts it again.');
+    const offBack = await until(
+      page,
+      () => Object.values(window.__db.sessions || {}).some(x => x.status === 'active'),
+      null,
+      6000
+    );
+    await page.waitForTimeout(1500);
+    const offRec = await allActive();
+    ok(
+      `${tag} a start refused offline is quiet and holds until the online event, then writing starts exactly one session`,
+      offHeld.active === 0 && !offHeld.toasts.length && offBack && offRec.length === 1,
+      JSON.stringify({ offHeld, offBack, offRec })
+    );
+    if (offRec.length) await endIt(offRec[0].id);
     // D-361: refused online (no offline flag, no online event): quiet, held for its backoff, then one more try works
     const shift = ms =>
       page.evaluate(ms => {
@@ -2997,14 +3044,36 @@ const openNoteId = page =>
       window.__writeFail = '';
     });
     await shift(61e3 + 125e3);
+    await page.keyboard.type(' ok'); // still writing in it (a burst too short to start anything)
     const quiet = await until(
       page,
-      () => /isn’t being counted right now/.test(document.getElementById('ev-sug').textContent),
+      () => {
+        const u = document.getElementById('ev-uncounted'),
+          g = document.getElementById('ev-sug');
+        return (
+          !!u && !u.hidden && /isn’t being counted right now/.test(u.textContent) && !g.disabled && !!g.textContent
+        );
+      },
       null,
       4000
     );
     const qToasts = await page.evaluate(() => window.__toasts.slice());
     await page.screenshot({ path: path.join(shots, 'notes-uncounted-1280.png') });
+    // the line is that note's only: another note keeps its Study control and shows no line
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    await openFromList(page, NID2);
+    await page.waitForTimeout(1200);
+    const other = await page.evaluate(() => ({
+      line: !document.getElementById('ev-uncounted').hidden,
+      sug: document.getElementById('ev-sug').textContent,
+      off: document.getElementById('ev-sug').disabled,
+    }));
+    ok(
+      `${tag} the quiet line stays on the refused note: another note shows none and keeps Study this note with E.V.`,
+      !other.line && other.sug === 'Study this note with E.V.' && !other.off,
+      JSON.stringify(other)
+    );
     await page.evaluate(() => {
       Date.now = window.__realNow;
       window.__realNow = null;
@@ -3024,7 +3093,9 @@ const openNoteId = page =>
     await page.click('.n-back');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await openFromList(page, NID);
-    const sugAfter = await page.evaluate(() => document.getElementById('ev-sug').textContent);
+    const sugAfter = await page.evaluate(() =>
+      document.getElementById('ev-uncounted').hidden ? '' : document.getElementById('ev-uncounted').textContent
+    );
     await write(' Counted again at once, with no wait at all.');
     const cleared = await until(
       page,

@@ -5,7 +5,8 @@
 // mcp.callTool(): records the call in window.__mcpCalls; window.__mcpFail = '<code>' makes it reject with that code.
 // update() merges nested objects like the real store; set() replaces; where() filters in memory.
 // window.__writeDelayMs holds every write that long before the record answers (D-208: a tap paints before it does);
-// window.__writeFail = '<code>' then refuses it with that code (B-200: a refused write puts the old state back).
+// window.__writeFail = '<code>' then refuses it with that code (B-200: a refused write puts the old state back);
+// window.__writeFailOffline marks that refusal offline, as the app's shim does (D-361).
 (function () {
   const db = window.__db || {};
   window.__writes = [];
@@ -14,6 +15,7 @@
     if (window.__writeFail) {
       const e = new Error('refused: ' + window.__writeFail);
       e.code = window.__writeFail;
+      if (window.__writeFailOffline) e.offline = true; // as the app's shim refuses a write offline
       throw e;
     }
   };

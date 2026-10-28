@@ -308,8 +308,6 @@
             popShow({ hist: false });
           },
         };
-      // D-361: writing in it has gone uncounted for over 2 minutes because starts were refused
-      if (uncounted()) return { text: 'Writing time isn’t being counted right now', plain: true };
       const done = lastStudied(id);
       if (done)
         return {
@@ -449,7 +447,12 @@
         POP.open && POP.hist ? popShow({ hist: false }) : popShow({ hist: true })
       );
       F.histB.id = 'ev-histbtn';
-      strip.append(F.slot, el('span', 'sp'), F.chip, F.sug, F.evb, F.histB);
+      // D-361: the quiet line while his writing in this note goes uncounted, beside the strip's own control
+      F.unc = el('span', 'sug plain', 'Writing time isn’t being counted right now');
+      F.unc.id = 'ev-uncounted';
+      F.unc.setAttribute('role', 'status');
+      F.unc.hidden = true;
+      strip.append(F.slot, el('span', 'sp'), F.chip, F.unc, F.sug, F.evb, F.histB);
 
       const pop = (F.pop = el('section', 'chatp'));
       pop.id = 'evchat';
@@ -727,6 +730,7 @@
       F.chip.setAttribute('aria-label', 'Open the chat: ' + (ss ? ss.chip : title));
       const nid = openNoteId();
       const ns = nid ? noteSug(nid) : null;
+      F.unc.hidden = !(nid && !activeSession() && uncountedOn(nid));
       const q = ns ? ns.text : POP_ASK[ui.tab] || POP_ASK.ev;
       if (F.sug.textContent !== q) F.sug.textContent = q;
       F.sugRun = ns && ns.run ? ns.run : null;

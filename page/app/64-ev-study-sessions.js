@@ -81,10 +81,19 @@
       SS.refusals = 0;
       SS.backoffUntil = 0;
       SS.uncountedSince = 0;
-      SS.uncountedShown = false;
+      SS.uncountedNote = null;
     }
-    /** D-361: the strip's quiet line while writing has gone uncounted past UNCOUNTED_MS because starts were refused. */
-    const uncounted = () => !!SS.uncountedSince && Date.now() - SS.uncountedSince > UNCOUNTED_MS;
+    /**
+     * D-361: the strip's quiet line, beside its own control (never in its place): on the note whose start was refused,
+     * while he is still writing in it (typed within the idle window) and that writing has gone uncounted past
+     * UNCOUNTED_MS.
+     */
+    const uncountedOn = id =>
+      !!id &&
+      !!SS.uncountedSince &&
+      SS.uncountedNote === id &&
+      Date.now() - SS.uncountedSince > UNCOUNTED_MS &&
+      Date.now() - (SS.typedAt || 0) < WRITE_IDLE_MS;
     const netBack = () => {
       SS.startRefused = false;
     };
@@ -130,7 +139,10 @@
             SS.refusals = (SS.refusals || 0) + 1;
             SS.backoffUntil = Date.now() + Math.min(START_BACKOFF_MAX_MS, START_BACKOFF_MS * 2 ** (SS.refusals - 1));
           }
-          if (!SS.uncountedSince) SS.uncountedSince = from;
+          if (!SS.uncountedSince || SS.uncountedNote !== id) {
+            SS.uncountedSince = from;
+            SS.uncountedNote = id;
+          }
         })
         .finally(() => {
           SS.starting = false;
@@ -1003,8 +1015,9 @@
           });
       }
       const s = activeSession();
-      if (!s && !SS.uncountedShown && uncounted()) {
-        SS.uncountedShown = true; // D-361: the strip's quiet line comes up once the 2 minutes pass
+      const unc = !s && uncountedOn(openNoteId());
+      if (unc !== !!SS.uncountedShown) {
+        SS.uncountedShown = unc; // D-361: the strip's quiet line comes and goes with his writing in that note
         render();
       }
       renderSession();
