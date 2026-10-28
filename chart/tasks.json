@@ -8060,7 +8060,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "core: clock 'writing' on note sessions (pause/write events, no planned end, wraps after 60 min paused); page pauses after 2 min idle and resumes on typing; strip counts up; unit test green. Harness next.",
+  "notes": "harnesses: notes 149/149 (new [1280 writing clock] and [1280 writing minutes] sections), frame 173/173, smoke 28/28, npm test green (state/current fixture regenerated for the schema change); run.cjs running",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Notes study time: keep the session timer going in a note, but record and add up time only while the note is actively being written; study time should not depend on E.V. reading the note; and the E.V. conversation should be reachable at any time from a note to ask questions or generate questions.",
