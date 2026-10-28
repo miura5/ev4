@@ -1059,7 +1059,9 @@
    "commentGapSeconds": 75,
    "readAlongIdleMinutes": 10,
    "writingIdleMinutes": 2,
-   "writingWrapMinutes": 60
+   "writingWrapMinutes": 60,
+   "writingStartSeconds": 4,
+   "writingStartGapSeconds": 10
   },
   "library": {
    "chunkChars": 900,
@@ -5500,7 +5502,7 @@
    "sessions": {
     "where": "B-408 (D-325): from 1024 px a session is in Notes, on a note (New note, Study with E.V., a study task from Today, or Start a study session asked in words) or a Today task timed by its estimate; its controls are in the strip and its lines are its own chat. Under 1024 px (no Notes) it runs in the E.V. conversation, its line under the pane header. Nothing in the Study tab.",
     "start": "On the phone, Start a study session (chip, typed, or the study_session tool) starts a session that reads no note: it keeps time, breaks and +5 min, and its checks ask about his objectives and weak spots (B-314). On a computer the same ask starts a new note with its session, whose clock counts the time he writes (B-438). Study Watch and its reader are retired from the page (B-408).",
-    "checks": "Every checkMinutes (breaks and +5 min shift it). A Notes session reads its note as he is writing it, computes the new writing with EVCore.noteDelta, and sends it through sample (D-328); a session with no note asks about his objectives and weak spots. sample.json with EVCore.checkPrompt gives 1 to 3 items, posted as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. A Today task’s timed session ends when its planned time runs out (D-333). B-438: a note’s session (clock writing) has no planned end: its clock counts only the time he spends writing, pausing after writingIdleMinutes with no typing and starting again at his next keystroke, read-along on or off; it wraps itself only after writingWrapMinutes paused, and the session and Record get the writing minutes.",
+    "checks": "Every checkMinutes (breaks and +5 min shift it). A Notes session reads its note as he is writing it, computes the new writing with EVCore.noteDelta, and sends it through sample (D-328); a session with no note asks about his objectives and weak spots. sample.json with EVCore.checkPrompt gives 1 to 3 items, posted as a check card; Matt answers in the card or in the composer, and E.V. replies as a study partner. A Today task’s timed session ends when its planned time runs out (D-333). B-438: a note’s session (clock writing) has no planned end: its clock counts only the time he spends writing, pausing after writingIdleMinutes with no typing and starting again at his next keystroke, read-along on or off; it wraps itself only after writingWrapMinutes paused, and the session and Record get the writing minutes. B-454: a saved note he writes in with no session running starts its writing session once his edits span writingStartSeconds (a gap of writingStartGapSeconds starts the count again), including a reopen after End; opening, reading or scrolling it starts nothing.",
     "end": "End (bar, chip, typed or tool) asks sample.json with EVCore.wrapPrompt, then EVCore.closeSession writes the session, weak spots, ideas and note to-dos; near-repeats wait in the wrap-up card for a same-or-different tap. Cards copy as Quizlet text."
    },
    "listEdits": "E.V. edits the daily list with edit_list (D-078): add a study task he or E.V. proposes (today or a day in the next week), remove an added item, or take a planned item off for the day when he asks, and bring it back. Graded work, exams, clinicals and validations stay. Rules in EVCore.listEdit and EVCore.dayView; The calendar is edited the same way with edit_dates (dateEdits).",

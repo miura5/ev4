@@ -755,14 +755,33 @@ async function main() {
           steps.join(' | ')
         );
 
-      // 6b. B-406 (D-325): at 1280 a new note starts a 25-minute session naming notes/<id> in D1, its controls in the
-      // strip; End there saves it. B-408: Start a study session asked in the Conversation is that new note.
+      // 6b. B-406 (D-325): at 1280 a new note starts a session naming notes/<id> in D1, its controls in the strip; End
+      // there saves it. B-408: Start a study session asked in the Conversation is that new note. B-438 (D-353): a note's
+      // session is a writing clock (no planned end) that counts up and pauses after writingIdleMinutes with nothing
+      // typed. B-454: a saved note opened again and written in for a few seconds starts a writing session of its own.
       if (scheme === '1280') {
         await idle();
         const docs = () =>
           fetch(origin + '/api/db?since=0', { headers: { authorization: 'Bearer ' + TOKEN } })
             .then(r => r.json())
             .then(b => b.docs);
+        const clock = () => page.evaluate(() => (document.querySelector('#ev-sslot .s-left') || {}).textContent || '');
+        const secs = t => {
+          const m = /(\d+):(\d\d) writing$/.exec(t);
+          return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+        };
+        const sessOn = (all, id) =>
+          all.filter(d => d.c === 'sessions' && d.data.note === 'notes/' + id).map(d => ({ id: d.id, ...d.data }));
+        const endSaved = async sid => {
+          await page.click('#ev-sslot .s-end');
+          for (let i = 0; i < 20; i++) {
+            await page.waitForTimeout(400);
+            const all = await docs();
+            if (all.some(d => d.c === 'sessions' && d.id === sid && d.data.status === 'ended' && d.data.filedAt))
+              return true;
+          }
+          return false;
+        };
         const nsteps = [];
         const notesBefore = new Set((await docs()).filter(d => d.c === 'notes').map(d => d.id));
         await say('Start a study session');
@@ -770,33 +789,69 @@ async function main() {
           nsteps.push('Start a study session did not open Notes');
         const strip = await until(
           page,
-          () => /\d+:\d\d left/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
+          () => /\d+:\d\d writing$/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
           null,
           8000
         );
-        if (!strip) nsteps.push('no session in the strip');
+        if (!strip) nsteps.push('no writing clock in the strip: ' + (await clock()));
         await page.click('#note-body');
         await page.keyboard.type('# Smoke note');
-        await page.waitForTimeout(1500);
+        const c1 = secs(await clock());
+        await page.waitForTimeout(2100);
+        const c2 = secs(await clock());
+        if (!(c1 != null && c2 != null && c2 > c1))
+          nsteps.push(`the writing clock did not count up (${c1} then ${c2})`);
         let all = await docs();
         const note = all.find(d => d.c === 'notes' && !notesBefore.has(d.id));
-        const ses = note && all.find(d => d.c === 'sessions' && d.data.note === 'notes/' + note.id);
+        const ses = note && sessOn(all, note.id).find(x => x.status === 'active');
         if (!note) nsteps.push('the new note is not in D1');
-        else if (!ses || ses.data.status !== 'active' || ses.data.planned !== 25)
-          nsteps.push('no active 25-minute session naming notes/' + note.id + ' in D1');
+        else if (!ses || ses.clock !== 'writing' || ses.planned)
+          nsteps.push('no active writing session (no planned end) naming notes/' + note.id + ' in D1');
         if (ses) {
-          await page.click('#ev-sslot .s-end');
-          let ended = null;
-          for (let i = 0; i < 20 && !ended; i++) {
-            await page.waitForTimeout(400);
-            all = await docs();
-            ended = all.find(d => d.c === 'sessions' && d.id === ses.id && d.data.status === 'ended' && d.data.filedAt);
+          // past writingIdleMinutes with nothing typed (the page's clock runs 125 s ahead): Paused, from his last typing
+          await page.evaluate(() => {
+            const real = Date.now.bind(Date);
+            window.__realNow = real;
+            Date.now = () => real() + 125e3;
+          });
+          const paused = await until(
+            page,
+            () => /^Paused · /.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
+            null,
+            8000
+          );
+          await page.evaluate(() => {
+            Date.now = window.__realNow;
+          });
+          let pauseEv = null;
+          for (let i = 0; i < 10 && !pauseEv; i++) {
+            await page.waitForTimeout(300);
+            const s = sessOn(await docs(), note.id).find(x => x.id === ses.id);
+            pauseEv = Object.values((s && s.events) || {}).find(e => e.type === 'pause' && e.from);
           }
-          if (!ended) nsteps.push('End in the strip did not save the session to D1');
+          if (!paused || !pauseEv) nsteps.push(`2 idle minutes did not pause it (strip ${paused}, D1 ${!!pauseEv})`);
+          if (!(await endSaved(ses.id))) nsteps.push('End in the strip did not save the session to D1');
+          // B-454: back to the list, the note opened again: reading starts nothing, a few seconds of writing starts one
+          await page.click('.n-back');
+          await page.click(`#notes-rows [data-note="${note.id}"] .nm`);
+          await page.click('#notes-pv-open');
+          await page.waitForTimeout(5000);
+          if (sessOn(await docs(), note.id).some(x => x.status === 'active'))
+            nsteps.push('opening the saved note started a session with nothing typed');
+          await page.click('#note-body');
+          await page.keyboard.press('Control+End');
+          await page.keyboard.type(' Edited later.', { delay: 400 });
+          let again = null;
+          for (let i = 0; i < 20 && !again; i++) {
+            await page.waitForTimeout(400);
+            again = sessOn(await docs(), note.id).find(x => x.status === 'active' && x.id !== ses.id);
+          }
+          if (!again || again.clock !== 'writing') nsteps.push('writing in the saved note started no writing session');
+          else if (!(await endSaved(again.id))) nsteps.push('End did not save the edited note session');
         }
         await page.screenshot({ path: path.join(shots, `notes-session-${scheme}.png`) });
         ok(
-          `${tag} a new note starts a 25-minute session naming notes/<id> in D1; End in the strip saves it`,
+          `${tag} a note's session in D1 is a writing clock: it counts up, pauses after 2 idle minutes and End saves it; writing in the saved note again starts another`,
           nsteps.length === 0,
           nsteps.join(' | ')
         );

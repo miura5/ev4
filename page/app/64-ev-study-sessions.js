@@ -51,7 +51,8 @@
     function noteTyped(id) {
       SS.typedAt = Date.now();
       const s = activeSession();
-      if (!s || s.status !== 'active' || !isWriting(s) || noteOfSession(s) !== id || SS.resuming) return;
+      if (!s) return writeBurst(id);
+      if (s.status !== 'active' || !isWriting(s) || noteOfSession(s) !== id || SS.resuming) return;
       if (!E.sessionState(s, now()).paused) return;
       SS.resuming = true;
       sessEvent(s, 'write')
@@ -60,6 +61,29 @@
           SS.resuming = false;
           render();
         });
+    }
+    // B-454: a saved note he opens and writes in, with no session running, starts its writing session as a new note
+    // does, once his edits span writingStartSeconds (a burst: a gap of writingStartGapSeconds between edits starts the
+    // count again). Opening, reading or scrolling a note makes no edit, so it starts nothing; nor does a reopen after End
+    // until he writes in it again.
+    const WRITE_START_MS = (SWC.writingStartSeconds || 4) * 1e3;
+    const WRITE_GAP_MS = (SWC.writingStartGapSeconds || 10) * 1e3;
+    function writeBurst(id) {
+      const t = Date.now(),
+        b = SS.burst;
+      if (!id || SS.starting) return;
+      if (!b || b.id !== id || t - b.last > WRITE_GAP_MS || t < b.last) {
+        SS.burst = { id, first: t, last: t, n: 1 };
+        return;
+      }
+      b.last = t;
+      b.n++;
+      if (b.n < 3 || t - b.first < WRITE_START_MS) return;
+      SS.burst = null;
+      SS.starting = true;
+      guard(null, () => noteSession(id)).finally(() => {
+        SS.starting = false;
+      });
     }
     /** B-438: the driving view pauses a writing session once nothing was typed for WRITE_IDLE_MS, at the last typing. */
     function writingTick(s, st) {

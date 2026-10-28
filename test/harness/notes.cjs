@@ -2533,6 +2533,111 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-454: a saved note he opens and writes in starts its writing session too, once a few seconds of real edits
+  // are in (writingStartSeconds), as a new note's does; opening, reading or scrolling it starts nothing. Reopening the
+  // note after End and writing in it again starts another.
+  {
+    const iso = ago => new Date(Date.now() - ago * 60e3).toISOString();
+    const NID = 'n-20261027-080000-oldnote';
+    const db = JSON.parse(JSON.stringify(seed));
+    db.notes = {
+      ...(db.notes || {}),
+      [NID]: {
+        schema: 1,
+        writer: 'page',
+        at: iso(24 * 60),
+        source: 'E.V. Home',
+        createdAt: iso(24 * 60),
+        editedAt: iso(24 * 60),
+        title: 'Heart failure',
+        course: 'NUR 112',
+        blocks: [
+          { type: 'h1', runs: [{ text: 'Heart failure' }] },
+          ...Array.from({ length: 40 }, (_, i) => ({
+            type: 'p',
+            runs: [{ text: `Line ${i + 1} on preload and afterload.` }],
+          })),
+        ],
+      },
+    };
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = '[1280 old note writing]';
+    const onNote = () =>
+      page.evaluate(
+        id =>
+          Object.entries(window.__db.sessions || {})
+            .map(([sid, d]) => ({ id: sid, ...d }))
+            .filter(x => x.note === 'notes/' + id),
+        NID
+      );
+    const active = async () => (await onNote()).filter(x => x.status === 'active');
+    // a few seconds of real edits: one key every 150 ms for about 5 s
+    const write = async t => {
+      await page.click('#note-body');
+      await page.keyboard.press('Control+End');
+      await page.keyboard.type(t, { delay: 150 });
+    };
+    await page.click('#tab-notes');
+    await openFromList(page, NID);
+    // opened, read and scrolled, with nothing typed: no session
+    await page.evaluate(() => {
+      const s = document.querySelector('#p-notes .n-scroll');
+      s.scrollTop = 400;
+    });
+    await page.mouse.wheel(0, 300);
+    await page.waitForTimeout(6000);
+    const read = await onNote();
+    ok(
+      `${tag} opening, reading and scrolling an old note starts no session`,
+      read.length === 0 && !(await page.isVisible('#ev-sslot .s-end')),
+      JSON.stringify(read.map(x => x.id))
+    );
+    await write(' The left side backs up into the lungs.');
+    const started = await until(
+      page,
+      id => Object.values(window.__db.sessions || {}).some(x => x.status === 'active' && x.note === 'notes/' + id),
+      NID,
+      6000
+    );
+    const s1 = (await active())[0] || {};
+    const left1 = await page.evaluate(() => (document.querySelector('#ev-sslot .s-left') || {}).textContent || '');
+    ok(
+      `${tag} a few seconds of writing in it starts a writing session on that note, its clock in the strip`,
+      started && s1.clock === 'writing' && s1.noteId === NID && !s1.planned && /writing$/.test(left1),
+      JSON.stringify({ started, id: s1.id, clock: s1.clock, left1 })
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-old-note-writing-1280.png') });
+    // End it, leave for the list, and reopen the note: reading starts nothing, writing starts a new session
+    if (s1.id) await page.click('#ev-sslot .s-end');
+    const filed = !!s1.id && (await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, s1.id, 30000));
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    await page.click('#tab-today');
+    await page.waitForTimeout(300);
+    await page.click('#tab-notes');
+    await openFromList(page, NID);
+    await page.waitForTimeout(6000);
+    const reread = await active();
+    await write(' The right side backs up into the body.');
+    const again = await until(
+      page,
+      ([id, was]) =>
+        Object.entries(window.__db.sessions || {}).some(
+          ([sid, x]) => sid !== was && x.status === 'active' && x.note === 'notes/' + id
+        ),
+      [NID, s1.id],
+      6000
+    );
+    const s2 = (await active())[0] || {};
+    ok(
+      `${tag} reopened after End, reading starts nothing and writing starts a new writing session`,
+      filed && reread.length === 0 && again && s2.id !== s1.id && s2.clock === 'writing',
+      JSON.stringify({ filed, reread: reread.length, again, s1: s1.id, s2: s2.id })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- B-437: Enter with the caret before a heading's trailing space makes a line he can see (a block holding only
   // spaces was drawn with no height: the caret seemed to jump to the next heading and no line appeared)
   {
