@@ -2921,8 +2921,7 @@ const openNoteId = page =>
     await page.evaluate(() => {
       window.__writeDelayMs = 0;
     });
-    // offline: writing in a saved note starts nothing and says nothing; a refused start says nothing either and is not
-    // tried again until the connection comes back
+    // offline: writing in a saved note starts nothing and says nothing
     await page.evaluate(() => {
       window.__toasts = [];
       new MutationObserver(() => {
@@ -2944,37 +2943,105 @@ const openNoteId = page =>
     await write(' Offline words, kept on this device.');
     await page.waitForTimeout(1500);
     const off = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
-    await page.evaluate(() => {
+    await page.evaluate(() =>
       window.dispatchEvent(
         new CustomEvent('ev-sync', { detail: { online: true, pending: 0, syncing: false, refused: [] } })
-      );
-      window.__writeFail = 'offline';
+      )
+    );
+    ok(
+      `${tag} offline, writing starts nothing and no toast`,
+      off.active === 0 && !off.toasts.length,
+      JSON.stringify(off)
+    );
+    // D-361: refused online (no offline flag, no online event): quiet, held for its backoff, then one more try works
+    const shift = ms =>
+      page.evaluate(ms => {
+        if (!window.__realNow) window.__realNow = Date.now.bind(Date);
+        const real = window.__realNow;
+        Date.now = () => real() + ms;
+      }, ms);
+    await page.evaluate(() => {
+      window.__writeFail = 'unavailable';
     });
     await write(' A start the record refuses.');
     await page.waitForTimeout(1500);
     await page.evaluate(() => {
       window.__writeFail = '';
     });
-    await write(' No second try before the connection is back.');
+    await write(' Held while it backs off, still writing.');
     await page.waitForTimeout(1500);
-    const refused = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
-    await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await write(' Back online, writing starts it.');
-    const back = await until(
+    const held = { active: (await allActive()).length, toasts: await page.evaluate(() => window.__toasts.slice()) };
+    await shift(61e3);
+    await write(' After the backoff, writing starts it.');
+    const recovered = await until(
       page,
       () => Object.values(window.__db.sessions || {}).some(x => x.status === 'active'),
       null,
       6000
     );
+    await page.waitForTimeout(1500);
+    const rec = await allActive();
     ok(
-      `${tag} offline, writing starts nothing and no toast; a refused start is quiet and waits for the connection to come back`,
-      off.active === 0 &&
-        !off.toasts.length &&
-        refused.active === 0 &&
-        !refused.toasts.length &&
-        back &&
+      `${tag} refused online, it is quiet and held for its backoff, then writing starts exactly one session with no online event`,
+      held.active === 0 && !held.toasts.length && recovered && rec.length === 1 && rec[0].note === 'notes/' + NID,
+      JSON.stringify({ held, recovered, rec })
+    );
+    if (rec.length) await endIt(rec[0].id);
+    // refused again and left uncounted past 2 minutes: one quiet line in the strip, no toast
+    await page.evaluate(() => {
+      window.__writeFail = 'unavailable';
+    });
+    await write(' Refused again, and he keeps on writing.');
+    await page.waitForTimeout(1500);
+    await page.evaluate(() => {
+      window.__writeFail = '';
+    });
+    await shift(61e3 + 125e3);
+    const quiet = await until(
+      page,
+      () => /isn’t being counted right now/.test(document.getElementById('ev-sug').textContent),
+      null,
+      4000
+    );
+    const qToasts = await page.evaluate(() => window.__toasts.slice());
+    await page.screenshot({ path: path.join(shots, 'notes-uncounted-1280.png') });
+    await page.evaluate(() => {
+      Date.now = window.__realNow;
+      window.__realNow = null;
+    });
+    // a start through New note lands: the quiet line goes, and the backoff with it
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    await page.click('#notes-new');
+    const viaNew = await until(
+      page,
+      () => /writing$/.test((document.querySelector('#ev-sslot .s-left') || {}).textContent || ''),
+      null,
+      8000
+    );
+    const nw = await allActive();
+    if (nw.length) await endIt(nw[0].id);
+    await page.click('.n-back');
+    await until(page, () => document.getElementById('notes-editor').hidden);
+    await openFromList(page, NID);
+    const sugAfter = await page.evaluate(() => document.getElementById('ev-sug').textContent);
+    await write(' Counted again at once, with no wait at all.');
+    const cleared = await until(
+      page,
+      id => Object.values(window.__db.sessions || {}).some(x => x.status === 'active' && x.note === 'notes/' + id),
+      NID,
+      6000
+    );
+    await page.waitForTimeout(1500);
+    ok(
+      `${tag} uncounted past 2 minutes shows one quiet line and no toast; a New note start clears it and the backoff`,
+      quiet &&
+        !qToasts.length &&
+        viaNew &&
+        !/isn’t being counted/.test(sugAfter) &&
+        cleared &&
         (await allActive()).length === 1,
-      JSON.stringify({ off, refused, back })
+      JSON.stringify({ quiet, qToasts, viaNew, sugAfter, cleared })
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();

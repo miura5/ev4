@@ -72,6 +72,19 @@
     // record shows it; a session write is not painted ahead of the record), while offline or read-only (the shim refuses
     // a session write offline), or after a refused start until the connection comes back.
     SS.net = true;
+    const START_BACKOFF_MS = 60e3,
+      START_BACKOFF_MAX_MS = 5 * 60e3,
+      UNCOUNTED_MS = 2 * 60e3;
+    /** D-361: any start that lands (by any path) clears a refused auto-start's hold, its backoff and the quiet line. */
+    function startLanded() {
+      SS.startRefused = false;
+      SS.refusals = 0;
+      SS.backoffUntil = 0;
+      SS.uncountedSince = 0;
+      SS.uncountedShown = false;
+    }
+    /** D-361: the strip's quiet line while writing has gone uncounted past UNCOUNTED_MS because starts were refused. */
+    const uncounted = () => !!SS.uncountedSince && Date.now() - SS.uncountedSince > UNCOUNTED_MS;
     const netBack = () => {
       SS.startRefused = false;
     };
@@ -86,6 +99,7 @@
       SS.startPending > 0 ||
       (SS.justStarted && !sessOf(SS.justStarted) && Date.now() < SS.justStartedUntil) ||
       SS.startRefused ||
+      Date.now() < (SS.backoffUntil || 0) ||
       READ_ONLY ||
       !SS.net ||
       navigator.onLine === false;
@@ -105,10 +119,18 @@
       if (b.n < 3 || t - b.first < WRITE_START_MS) return;
       SS.burst = null;
       SS.starting = true;
+      const from = b.first;
       noteSession(id)
-        .catch(() => {
-          // refused (offline, or the record said no): quietly, and no retry until the connection comes back
-          SS.startRefused = true;
+        .catch(e => {
+          // D-361: refused, quietly. Offline, no retry until the connection comes back; refused online (a busy or failing
+          // record, a token, a conflict), one more try after a backoff of 60 s, doubling to at most 5 minutes, never for
+          // good. Writing left uncounted past UNCOUNTED_MS shows one quiet line until a start succeeds.
+          if (e && e.offline) SS.startRefused = true;
+          else {
+            SS.refusals = (SS.refusals || 0) + 1;
+            SS.backoffUntil = Date.now() + Math.min(START_BACKOFF_MAX_MS, START_BACKOFF_MS * 2 ** (SS.refusals - 1));
+          }
+          if (!SS.uncountedSince) SS.uncountedSince = from;
         })
         .finally(() => {
           SS.starting = false;
@@ -981,6 +1003,10 @@
           });
       }
       const s = activeSession();
+      if (!s && !SS.uncountedShown && uncounted()) {
+        SS.uncountedShown = true; // D-361: the strip's quiet line comes up once the 2 minutes pass
+        render();
+      }
       renderSession();
       freeReadTick(s); // B-418 (D-339): read-along in the open note, session or not
       if (M && loaded.has('sessions')) switchTick(); // B-406: a switch's Undo runs out, then its session is filed
@@ -1162,6 +1188,7 @@
       } finally {
         SS.startPending--;
       }
+      startLanded();
       // B-454 review: until the record shows it, the session just written counts as running for an auto-start
       SS.justStarted = id;
       SS.justStartedUntil = Date.now() + 30e3;

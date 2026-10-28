@@ -308,6 +308,8 @@
             popShow({ hist: false });
           },
         };
+      // D-361: writing in it has gone uncounted for over 2 minutes because starts were refused
+      if (uncounted()) return { text: 'Writing time isn’t being counted right now', plain: true };
       const done = lastStudied(id);
       if (done)
         return {
