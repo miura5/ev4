@@ -8807,11 +8807,11 @@
   "title": "Request (reported Oct 28): Retire the claude.ai page, step 2 (D-367): the scheduled runs read their bootstrap (system/manifest, system/worker) from the Worker instead of the artifact database; the run prompts change, the cloud tasks are updated by deploy's printed calls and the Mac-bound tasks are re-created with Matt present (O-5); then ship writes no system documents to the artifact database and the ArtifactData code paths leave core, tools and the page. Needs a sitting with Matt at the Mac.",
   "dod": "Each scheduled run reads system/manifest and system/worker from the Worker (a bootstrap route with the token, or the task prompt carries what it needs); the cloud tasks are updated through deploy's printed update_trigger calls and the Mac-bound tasks are re-created with Matt at the Mac (O-5), the old ones disabled and listed retired; then ship writes nothing to the artifact database and ArtifactData leaves core, tools and the page; a staging firing of each run proves the new bootstrap. Blocked on a sitting with Matt.",
   "milestone": "workflow (ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-472"
   ],
-  "notes": "",
+  "notes": "Needs a sitting with Matt at the Mac (Mac-bound tasks are re-created, never edited, O-5).",
   "commit": null,
   "source": "D-367 (Matt, Oct 28 evening)",
   "words": "Retire the claude.ai page, step 2 (D-367): the scheduled runs read their bootstrap (system/manifest, system/worker) from the Worker instead of the artifact database; the run prompts change, the cloud tasks are updated by deploy's printed calls and the Mac-bound tasks are re-created with Matt present (O-5); then ship writes no system documents to the artifact database and the ArtifactData code paths leave core, tools and the page. Needs a sitting with Matt at the Mac.",
@@ -8822,6 +8822,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-28T22:09:12.255Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]
