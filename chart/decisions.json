@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-352",
+  "date": "Oct 27",
+  "title": "Claude ceilings count tokens as billed: cache reads at a tenth, cache writes at 1.25",
+  "why": "The ceilings (D-349) exist to bound cost; with B-442's prompt caching a raw count would stop studying long before the money limit is near. The counter weighs input, output, cache writes and cache reads by their price relative to plain input, so the 500k/1.5M ceilings track spend.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-351",
   "date": "Oct 27",
   "title": "The build manager never builds: every task goes to a builder agent or lane, probes and designs to research or planning agents",
