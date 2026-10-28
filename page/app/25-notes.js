@@ -566,7 +566,18 @@
       closeCourseMenu();
       syncHead();
       renderFrame(); // B-409: the strip's suggestion and the pop-up's words follow the open note
-      if (!on) renderNotes();
+      if (!on) {
+        renderNotes();
+        // B-441: the list shows from its top: no scroller in Notes is left at the long note's place (in Safari the
+        // pane read as blank, the list above the view)
+        const top = () => {
+          window.scrollTo(0, 0);
+          for (const e of [document.scrollingElement, nList, nScroll, ...nList.querySelectorAll('*')])
+            if (e && e.scrollTop) e.scrollTop = 0;
+        };
+        top();
+        requestAnimationFrame(top);
+      }
     }
     function loadNote(id, doc) {
       NOTE.open = id;
@@ -607,6 +618,10 @@
       const at = now();
       const id = E.newNoteId(at, noteRandom());
       loadNote(id, null);
+      // B-440: a new note opens on its title line, a heading 1 that reads a grey "Untitled" until he names it
+      NOTE.blocks = [{ type: 'h1', runs: [] }];
+      notePaint({ a: { b: 0, o: 0 } }, false);
+      updateBar();
       NOTE.doc = { createdAt: at }; // written once (noteProblem): every save of this note carries the same createdAt
       NOTE.dirty = true; // a new note is written at once, so it is in the record before a word is typed
       body.focus();
@@ -645,12 +660,17 @@
         if (NOTE.blocks[i].type === 'todo') n.prepend(nCheck(NOTE.blocks[i].checked));
       });
       body.replaceChildren(...nodes);
-      body.classList.toggle(
-        'empty',
-        NOTE.blocks.length === 1 && !E.noteText(NOTE.blocks[0]) && NOTE.blocks[0].type === 'p'
-      );
+      syncEmpty();
       if (sel && focus) setNoteSel(sel);
       syncHead();
+    }
+    // B-440: the placeholders follow every change, typed or painted (the hint used to stay over his first words until
+    // the next repaint): a grey "Untitled" in an empty first heading 1, and the hint under it while the note is empty
+    function syncEmpty() {
+      const first = NOTE.blocks && NOTE.blocks[0];
+      const blank = !!first && !E.noteText(first);
+      body.classList.toggle('untitled', blank && first.type === 'h1');
+      body.classList.toggle('empty', blank && NOTE.blocks.length === 1 && (first.type === 'p' || first.type === 'h1'));
     }
     const canonical = () =>
       body.childNodes.length === NOTE.blocks.length &&
@@ -992,6 +1012,7 @@
       }
       if (!canonical()) notePaint(sel);
       else NOTE.sel = sel;
+      syncEmpty();
       noteChanged();
     }
     body.addEventListener('beforeinput', e => {

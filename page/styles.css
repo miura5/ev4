@@ -2151,7 +2151,11 @@ body.has-line #today-week .wk-her{display:none}
 #note-body{outline:none;min-height:50vh;white-space:pre-wrap;overflow-wrap:anywhere;font-size:calc(15.5px * var(--ts));line-height:1.65;counter-reset:nol}
 /* B-437: spaces kept as typed (pre-wrap): a line holding only spaces, as Enter before a heading's trailing space
    leaves, has its height, and the caret's place is the one he sees */
-#note-body.empty::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
+#note-body.empty:not(.untitled)::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
+/* B-440: an empty first heading 1 reads a grey "Untitled"; under it, while the note is empty, the hint */
+#note-body.untitled>.nb:first-child{position:relative}
+#note-body.untitled>.nb:first-child::before{content:"Untitled";position:absolute;left:0;top:0;pointer-events:none;color:var(--faint)}
+#note-body.empty.untitled::after{content:attr(data-placeholder);display:block;margin-top:2px;pointer-events:none;color:var(--faint);font-size:calc(14px * var(--ts));max-width:620px}
 #note-body .nb{margin:6px 0}
 #note-body h1.nb{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #note-body h2.nb{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}

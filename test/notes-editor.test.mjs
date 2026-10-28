@@ -91,10 +91,13 @@ test('B-402: the typing shortcuts', () => {
     if (type === 'todo') assert.equal(s.block.checked, false);
   }
   assert.equal(E.noteShortcut(p('[x] done'), 4).block.checked, true);
-  // only right after the marker's space, only in a paragraph, only at the line's start
+  // only right after the marker's space, only at the line's start, in a paragraph or (B-440: a new note opens on its
+  // Untitled heading 1) a heading, never inside a list
   assert.equal(E.noteShortcut(p('# Title'), 5), null);
   assert.equal(E.noteShortcut(p('a # b'), 4), null);
-  assert.equal(E.noteShortcut({ type: 'h2', runs: [r('# x')] }, 2), null);
+  assert.equal(E.noteShortcut({ type: 'h1', runs: [r('- x')] }, 2).block.type, 'ul');
+  assert.equal(E.noteShortcut({ type: 'h2', runs: [r('### x')] }, 4).block.type, 'h3');
+  assert.equal(E.noteShortcut({ type: 'ul', runs: [r('# x')] }, 2), null);
   assert.equal(E.noteShortcut(p('#Title'), 1), null);
   // the text after the marker keeps its marks
   const marked = E.noteShortcut({ type: 'p', runs: [r('- '), r('bold', { b: true })] }, 2);

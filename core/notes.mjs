@@ -305,7 +305,8 @@ export function makeNotes() {
    * after the space that ends the marker; the marker goes. {block, o} or null.
    */
   function noteShortcut(block, o) {
-    if (!block || block.type !== 'p') return null;
+    // B-440: on a heading line too (a new note opens on its Untitled heading 1, where '- ' or '## ' should still work)
+    if (!block || !['p', 'h1', 'h2', 'h3'].includes(block.type)) return null;
     const head = blockText(block).slice(0, o);
     for (const [re, type, checked] of SHORTCUTS) {
       if (!re.test(head)) continue;

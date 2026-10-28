@@ -2314,6 +2314,76 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-441: back from a long note scrolled down, the list shows from its top (it was left at the note's scroll
+  // place, below the short list, and read as a blank page); B-440: a new note opens on a grey "Untitled" heading 1, and
+  // its hint leaves as soon as he types
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 list back]';
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    const first = await page.evaluate(() => document.querySelector('#notes-rows .n-row').dataset.note);
+    await openFromList(page, first);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    for (let i = 0; i < 70; i++) {
+      await page.keyboard.press('Enter');
+      await page.keyboard.insertText('Line ' + i + ' of a long note about pediatric dosing by weight.');
+    }
+    await settle(page);
+    await page.evaluate(() => {
+      window.scrollTo(0, 1e6);
+      for (const e of document.querySelectorAll('#p-notes *'))
+        if (e.scrollHeight > e.clientHeight + 4) e.scrollTop = 1e6;
+    });
+    for (let round = 0; round < 2; round++) {
+      await page.click('.mh .n-back');
+      await until(page, () => !document.getElementById('notes-list').hidden);
+      await page.waitForTimeout(300);
+      const seen = await page.evaluate(() => {
+        const r = document.querySelector('#notes-rows .n-row');
+        const b = r && r.getBoundingClientRect();
+        return { y: b ? Math.round(b.top) : null, h: innerHeight, sy: Math.round(scrollY) };
+      });
+      ok(
+        `${tag} back from a long note scrolled to its end, the list's first row is on screen (round ${round + 1})`,
+        seen.y != null && seen.y >= 0 && seen.y < seen.h,
+        JSON.stringify(seen)
+      );
+      await openFromList(page, first);
+      await until(page, () => !document.getElementById('notes-editor').hidden);
+      await page.evaluate(() => window.scrollTo(0, 1e6));
+    }
+    await page.click('.mh .n-back');
+    await until(page, () => !document.getElementById('notes-list').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await settle(page);
+    const fresh = await page.evaluate(() => {
+      const b = document.getElementById('note-body');
+      const f = b.firstElementChild;
+      return {
+        t: f && f.getAttribute('data-t'),
+        untitled: getComputedStyle(f, '::before').content,
+        empty: b.classList.contains('empty'),
+      };
+    });
+    await page.keyboard.type('W');
+    const typed = await page.evaluate(() => {
+      const b = document.getElementById('note-body');
+      return { empty: b.classList.contains('empty'), untitled: b.classList.contains('untitled') };
+    });
+    ok(
+      `${tag} a new note opens on a grey "Untitled" heading 1 with the hint, and both leave at the first letter`,
+      fresh.t === 'h1' && /Untitled/.test(fresh.untitled) && fresh.empty && !typed.empty && !typed.untitled,
+      JSON.stringify({ fresh, typed })
+    );
+    await page.screenshot({ path: path.join(shots, 'b440-untitled-1280.png') });
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });
