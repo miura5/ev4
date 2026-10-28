@@ -100,8 +100,8 @@ async function studyView(page, v) {
   }
   await page.click('#tab-study');
   // B-357 (D-327): Study is the demo's overview with no view tabs. Each way back (All topics, the plan's and Weak
-  // spots' own) returns to it; Weak spots · N opens Weak spots; a plan day's Open the plan opens the plan.
-  for (const back of ['#study-back', '#plan-back', '#weak-back'])
+  // spots' own) returns to it; Weak spots · N opens Weak spots. B-450: the plan is in the overview (no Plan view).
+  for (const back of ['#study-back', '#weak-back'])
     if (await page.isVisible(back)) {
       await page.click(back);
       await page.waitForTimeout(80);
@@ -112,18 +112,13 @@ async function studyView(page, v) {
     await page.waitForTimeout(100);
     return shown();
   }
-  if (v === 'plan') {
-    const open = page.locator('#p-study .od-q', { hasText: 'Open the plan' });
-    if (!(await open.count())) {
-      const day = page.locator('#p-study .ov-nm').first();
-      if (await day.count()) await day.click();
-      await page.waitForTimeout(100);
-    }
-    if (await open.count()) await open.first().click();
-    await page.waitForTimeout(100);
-    return shown();
-  }
   await page.waitForTimeout(100);
+  // B-450: with a plan under the exam card its objectives fold to one line; open it to reach their rows
+  const fold = page.locator('#ov-card .fold-line.pm-more[aria-expanded="false"]');
+  if (await fold.count()) {
+    await fold.first().click();
+    await page.waitForTimeout(80);
+  }
   const rows = page.locator('#ov-card .ov');
   for (let i = 0; i < (await rows.count()) && !(await shown()); i++) {
     const q = rows.nth(i).locator('.oq');

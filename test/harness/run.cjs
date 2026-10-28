@@ -1258,6 +1258,293 @@ const skeleton = b =>
   '</body></html>';
 // The page's clock starts at 2pm Central today and runs from there, so the greeting and its chips are the afternoon's
 // whatever time the harness runs (v3's ran in the daytime by habit).
+// B-450 (D-354, D-357): the study plan in Study's overview at 1280 and 390, on two planted drafts in B-449's shape: E4's
+// (the next exam: its objectives fold to one line, its tasks carry badges, one has none) and E5's (a later exam, with
+// E.V.'s one question). Then the plan settings, Approve, a tick and the done count. Ends with E4's plan as it was.
+async function studyPlanChecks(page) {
+  const d = n => new Date(Date.parse(today + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+  const at = new Date(DAYTIME.getTime() - 3600e3).toISOString();
+  const T = (id, text, tag, kind, minutes) => ({
+    id,
+    text,
+    ...(tag ? { tag } : {}),
+    kind,
+    minutes,
+    doneWhen: 'Done when ' + id,
+  });
+  const e4 = {
+    schema: 1,
+    writer: 'worker',
+    at,
+    source: 'Exam plan job',
+    exam: 'E4',
+    title: 'Exam 4 plan',
+    section: { course: 'NUR 112', from: today, to: d(2) },
+    score: { criteria: [5, 5, 5, 4, 5, 3, 4, 4], total: 88 },
+    openQuestions: ['Is Ch 39 on the exam?'],
+    days: [
+      {
+        date: today,
+        label: 'Harness day',
+        tasks: [
+          T('h1', 'Harness graded module', 'graded', 'graded', 60),
+          T('h2', 'Harness preview', 'learn', 'reading', 25),
+          T('h3', 'Harness drill', 'practice', 'drill', 20),
+          T('h4', 'Harness skills run', 'skills-prep', 'other', 30),
+          T('h5', 'Harness untagged task', null, 'other', 10),
+        ],
+      },
+      {
+        date: d(1),
+        label: 'Harness taper',
+        tasks: [
+          T('h6', 'Harness second pass', 'review', 'review', 30),
+          T('h7', 'Harness terminology', 'practice', 'terminology', 10),
+        ],
+      },
+    ],
+  };
+  const e5 = {
+    schema: 1,
+    writer: 'worker',
+    at,
+    source: 'Exam plan job',
+    exam: 'E5',
+    title: 'Exam 5 plan',
+    section: { course: 'NUR 112', from: d(3), to: d(10) },
+    score: { criteria: [5, 5, 5, 4, 5, 3, 4, 4], total: 86 },
+    days: [
+      {
+        date: d(3),
+        label: 'Harness E5 day',
+        tasks: [T('k1', 'Harness E5 clinical prep', 'clinical-prep', 'other', 20)],
+      },
+    ],
+  };
+  await page.evaluate(
+    async ({ e4, e5, at }) => {
+      const db = await window.claude.use('db');
+      await db.collection('plans').doc('E4-H2').set(e4);
+      await db.collection('plans').doc('E5').set(e5);
+      const asked = new Date(Date.parse(at) + 60e3).toISOString(); // E.V.'s question came after the draft
+      await db.collection('jobs').doc('job-harness-plan-ask').set({
+        schema: 2,
+        writer: 'page',
+        at: asked,
+        source: 'E.V. Home',
+        kind: 'exam-plan',
+        title: 'Plan changes',
+        brief: 'Lighter weekends',
+        revise: 'E5',
+      });
+      await db
+        .collection('jobresults')
+        .doc('job-harness-plan-ask')
+        .set({
+          schema: 1,
+          writer: 'worker',
+          at: asked,
+          source: 'worker harness',
+          status: 'done',
+          startedAt: asked,
+          finishedAt: asked,
+          result: { text: 'Which hours do you work this weekend?', asked: true },
+        });
+    },
+    { e4, e5, at }
+  );
+  await page.click('#tab-study');
+  await page.waitForTimeout(400);
+  for (const w of [1280, 390]) {
+    await page.setViewportSize(w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 });
+    await page.waitForTimeout(250);
+    const m = await page.evaluate(() => {
+      const vis = e => !!e && e.getClientRects().length > 0 && !e.closest('[hidden]');
+      const card = document.querySelector('#ov-plans .pl-card.dr[data-plan="E4-H2"]');
+      const sum = [
+        ...document.querySelectorAll('#study-side .plan-sum, #ov-plans .pl-card.dr[data-plan="E4-H2"] > .plan-sum'),
+      ].find(vis);
+      const open = card && card.querySelector('.pl-day.open');
+      return {
+        settings: vis(document.getElementById('study-planset')),
+        fold: (document.querySelector('#ov-card .fold-line.pm-more') || {}).textContent || '',
+        objRows: [...document.querySelectorAll('#ov-card .ov')].filter(vis).length,
+        draft: !!card && /Draft/.test((card.querySelector('.pl-head .badge.proposed') || {}).textContent || ''),
+        sumIn: sum ? (sum.closest('#study-side') ? 'panel' : 'card') : null,
+        score: sum ? (sum.querySelector('.big') || {}).textContent : '',
+        approve: sum ? vis([...sum.querySelectorAll('button')].find(b => /Approve/.test(b.textContent))) : false,
+        badges: open
+          ? [...open.querySelectorAll('.pl-t')].map(li => [...li.querySelectorAll('.badge')].map(b => b.textContent))
+          : [],
+        ticksOff: open ? [...open.querySelectorAll('.pl-t input.tick')].every(t => t.disabled) : false,
+        counts: card ? [...card.querySelectorAll('.pl-filter button')].map(b => b.textContent) : [],
+        ask: [...document.querySelectorAll('#ov-plans .pm-ask .q')].map(q => q.textContent),
+        later: [...document.querySelectorAll('#ov-plans .ov-card .ov-ex')].map(e => e.textContent),
+        e5: !!document.querySelector('#ov-plans .pl-card.dr[data-plan="E5"]'),
+        sideways: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    ok(`[${w}] the Study toolbar has the plan settings`, m.settings);
+    ok(
+      `[${w}] under a study plan the exam's objectives fold to one line`,
+      /^6 objectives · /.test(m.fold) && m.objRows === 0,
+      m.fold + ' / ' + m.objRows
+    );
+    ok(
+      `[${w}] a draft is marked Draft, its score and Approve ${w === 1280 ? 'in the right panel' : 'heading its card'}`,
+      m.draft && m.sumIn === (w === 1280 ? 'panel' : 'card') && /^88/.test(m.score) && m.approve,
+      JSON.stringify(m).slice(0, 300)
+    );
+    ok(
+      `[${w}] each task shows one badge from the set, an untagged one none, and a draft's ticks wait for Approve (D-357)`,
+      m.badges.length === 5 &&
+        JSON.stringify(m.badges) === JSON.stringify([['Graded'], ['Learn'], ['Practice'], ['Skills prep'], []]) &&
+        m.ticksOff,
+      JSON.stringify(m.badges)
+    );
+    ok(
+      `[${w}] the per-badge counts`,
+      JSON.stringify(m.counts) ===
+        JSON.stringify(['All7', 'Graded1', 'Learn1', 'Practice2', 'Review1', 'Skills prep1']),
+      JSON.stringify(m.counts)
+    );
+    ok(
+      `[${w}] a later exam with a plan shows its card, its draft and E.V.'s one question`,
+      m.later.includes('NUR 112 Exam 5') && m.e5 && m.ask.includes('Which hours do you work this weekend?'),
+      JSON.stringify([m.later, m.ask])
+    );
+    ok(`[${w}] the overview has no sideways scroll`, !m.sideways);
+    // a badge's count filters the rows; All brings them back
+    await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-filter button[data-f="practice"]').click();
+    await page.waitForTimeout(120);
+    const shown = await page.evaluate(() =>
+      [...document.querySelectorAll('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day.open .pl-t .title')].map(
+        t => t.textContent
+      )
+    );
+    ok(
+      `[${w}] Practice shows only its tasks`,
+      JSON.stringify(shown) === JSON.stringify(['Harness drill']),
+      JSON.stringify(shown)
+    );
+    await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-filter button[data-f="all"]').click();
+    await page.waitForTimeout(120);
+    // a day folds on a second tap and opens on a third
+    const row = page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-dr').first();
+    await row.click();
+    await page.waitForTimeout(120);
+    const folded = await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day').first().locator('.pl-t').count();
+    await row.click();
+    await page.waitForTimeout(120);
+    const reopened = await page
+      .locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day')
+      .first()
+      .locator('.pl-t')
+      .count();
+    ok(`[${w}] a day folds back on a tap and opens again`, folded === 0 && reopened === 5, folded + ' / ' + reopened);
+    // the plan settings: below the toolbar on the phone, inside the view; Approved tasks and When something is missing
+    // write settings/study-plan; Edit opens the instructions, the brief when he has none
+    await page.click('#study-planset');
+    await page.waitForTimeout(150);
+    const pop = await page.evaluate(() => {
+      const r = document.getElementById('plan-pop').getBoundingClientRect(),
+        bar = document.getElementById('sbar-study').getBoundingClientRect();
+      return {
+        shown: r.height > 0,
+        top: r.top,
+        barBottom: bar.bottom,
+        left: r.left,
+        right: r.right,
+        text: document.getElementById('plan-pop').textContent,
+      };
+    });
+    ok(
+      `[${w}] the sliders open the plan settings${w === 390 ? ', below the toolbar and inside the screen' : ''}`,
+      pop.shown &&
+        /When something is missing/.test(pop.text) &&
+        /Approved tasks/.test(pop.text) &&
+        !/model/i.test(pop.text) &&
+        (w !== 390 || (pop.top >= pop.barBottom - 1 && pop.left >= 0 && pop.right <= 390)),
+      JSON.stringify(pop).slice(0, 300)
+    );
+    await page.locator('#plan-pop button', { hasText: 'Keep in the plan' }).click();
+    await page.waitForTimeout(150);
+    await page.locator('#plan-pop button', { hasText: 'Note it and go on' }).click();
+    await page.waitForTimeout(150);
+    const st = await page.evaluate(() => (window.__db.settings || {})['study-plan'] || {});
+    ok(
+      `[${w}] the plan settings save to settings/study-plan`,
+      st.approved === 'plan' && st.missing === 'note',
+      JSON.stringify(st).slice(0, 200)
+    );
+    await page.locator('#plan-pop button', { hasText: 'Add to Today' }).click();
+    await page.waitForTimeout(150);
+    await page.locator('#plan-pop button', { hasText: 'Ask me' }).click();
+    await page.waitForTimeout(150);
+    await page.locator('#plan-pop .pm-row button', { hasText: 'Edit' }).click();
+    await page.waitForTimeout(200);
+    const sheet = await page.evaluate(() => ({
+      open: !!document.querySelector('#plan-dlg[open]'),
+      text: (document.getElementById('plan-text') || {}).value || '',
+    }));
+    ok(
+      `[${w}] Edit opens the instructions, the built-in brief while he has none`,
+      sheet.open && /^# Study Plan Maker/.test(sheet.text),
+      sheet.text.slice(0, 80)
+    );
+    await page.screenshot({ path: `${shots}/plan-sheet-${w}.png` });
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: `${shots}/plan-draft-${w}.png`, fullPage: true });
+  }
+  // Approve (from the panel at 1280): the draft is the plan in force, Today opens, a tick moves the done count by one
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.waitForTimeout(250);
+  await page.locator('#study-side .plan-sum button', { hasText: 'Approve' }).click();
+  await page.waitForTimeout(300);
+  const pe = await page.evaluate(() => (window.__db.planedits || {}).E4 || {});
+  const done = () =>
+    page.evaluate(() => {
+      const c = document.querySelector('#ov-plans .pl-card.ok[data-plan="E4-H2"]');
+      const n = c && /^(\d+) of (\d+) done/.exec((c.querySelector('.pl-done') || {}).textContent || '');
+      return {
+        n: n ? +n[1] : -1,
+        all: n ? +n[2] : -1,
+        today: c ? /Today/.test((c.querySelector('.pl-day.today.open') || {}).textContent || '') : false,
+        ticks: c ? c.querySelectorAll('.pl-day.today .pl-t input.tick:checked').length : -1,
+      };
+    });
+  const d0 = await done();
+  ok(
+    'Approve makes the draft the plan in force, his ticks kept, and Today opens in it',
+    pe.plan === 'E4-H2' && d0.today && d0.all === 7,
+    JSON.stringify([pe.plan, d0])
+  );
+  const tick = page
+    .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
+    .first();
+  await (await tick.elementHandle()).click();
+  await page.waitForTimeout(250);
+  const d1 = await done();
+  ok(
+    'a tick moves the done count by one, as the ticks show (B-450)',
+    d1.n === d0.n + 1 && d1.ticks === d0.ticks + 1,
+    JSON.stringify([d0, d1])
+  );
+  await page.screenshot({ path: `${shots}/plan-approved-1280.png`, fullPage: true });
+  // E4's earlier plan back in force for the checks after this one (nothing is deleted: the draft stays a Fact)
+  await page.evaluate(async () => {
+    const db = await window.claude.use('db');
+    const e = window.__db.planedits.E4;
+    await db
+      .collection('planedits')
+      .doc('E4')
+      .set({ ...e, plan: 'E4' });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(250);
+}
+
 async function openPage(page, target = 'staging', pre = '') {
   // live tasks are created at cutover (B-24), so the main pass drives the staging build
   await page.clock.install({ time: DAYTIME });
@@ -1866,7 +2153,7 @@ async function tap(page, locator, name) {
       await surf.first().screenshot({ path: `${shots}/builder-job-${id.split('-')[2]}.png` });
     }
     await buildAskChecks(page, scheme); // B-180
-    // B-194: a plan card's Open the plan shows that plan in Study, Plan, which names the other plans in force to switch to.
+    // B-194: a plan card's Open the plan shows that plan; B-450: in Study's overview, where every plan in force shows.
     {
       // The worker's reply to a plan job, as it lands: one message carrying the plan's card.
       await page.evaluate(async () => {
@@ -1887,21 +2174,24 @@ async function tap(page, locator, name) {
       const surf = await page.locator('#ev-surf').textContent();
       await page.locator('#ev-surf button', { hasText: 'Open the plan' }).click();
       await page.waitForTimeout(300);
-      const t = await page.locator('#plan-card').textContent();
+      // B-450: the Plan screen is retired; the plan opens in Study's overview, with the exam's own plan beside it
+      const t = await page.evaluate(() => ({
+        tab: document.body.dataset.view,
+        cards: [...document.querySelectorAll('#ov-plans .pl-card')].map(c => [
+          c.dataset.plan,
+          c.textContent.slice(0, 80),
+        ]),
+        oldScreen: !!document.getElementById('plan-card'),
+      }));
       ok(
-        "a plan card's Open the plan shows that plan, with the other plans in force named",
-        /Dosage plan \(harness\)/.test(t) && /Other plans: Exam 4 plan/.test(t),
-        t.slice(0, 200) + ' | surface: ' + surf.slice(0, 200)
+        "a plan card's Open the plan shows that plan in Study's overview, the exam's plan there too (B-194, B-450)",
+        t.tab === 'study' &&
+          !t.oldScreen &&
+          t.cards.some(([id, x]) => id === 'ATI-DOSE' && /Dosage plan \(harness\)/.test(x)) &&
+          t.cards.some(([id, x]) => id === 'E4' && /Exam 4 plan/.test(x)),
+        JSON.stringify(t).slice(0, 300) + ' | surface: ' + surf.slice(0, 200)
       );
       await page.screenshot({ path: `${shots}/plan-from-card.png` });
-      await page.locator('#plan-card .plan-others button', { hasText: 'Exam 4 plan' }).click();
-      await page.waitForTimeout(200);
-      const t2 = await page.locator('#plan-card').textContent();
-      ok(
-        'switching to another plan shows it',
-        /Exam 4 plan/.test(t2) && /Other plans: Dosage plan/.test(t2),
-        t2.slice(0, 200)
-      );
       await page.click('#tab-ev');
       await page.waitForTimeout(200);
     }
@@ -3091,36 +3381,36 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(2200);
     }
     await practiceNav(page, scheme); // B-191
-    // Plan: tick a task. B-351 (D-313): no Plan tab; an exam with no objectives shows its plan's days in the exam card,
-    // each opening the plan (Open the plan). This exam has objectives, so the plan is opened the way the page's own
-    // switch does (its tabs are hidden, not gone) to check the tick's write.
+    // Plan: B-450 (D-354, D-357): no Plan tab or screen; each exam's plan is a card of day rows under its exam card.
     if (await page.isVisible('#study-back')) await page.click('#study-back'); // B-297: out of the quiz card
     ok(
-      `[${scheme}] no Plan tab on Study's overview, and no plan until it is opened (D-313)`,
-      !(await page.isVisible('#seg-study')) && !(await page.isVisible('#plan-card'))
+      `[${scheme}] no Plan view in Study: the plan is in the overview (B-450)`,
+      !(await page.$('#seg-study [data-v="plan"]')) && !(await page.$('#plan-card'))
     );
-    if (!(await studyView(page, 'plan'))) await page.$eval('#seg-study [data-v="plan"]', b => b.click());
-    await page.waitForTimeout(100);
-    const planRows = page.locator('#plan-card .plan-day').first().locator('input.tick');
-    ok('plan shows tasks', (await planRows.count()) > 0);
-    const before = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
-    const firstUnchecked = page.locator('#plan-card .plan-day').first().locator('input.tick:not(:checked)').first();
-    // One element, resolved once: check() on the :not(:checked) locator re-resolves after the re-render and can tick the next task too.
-    await (await firstUnchecked.elementHandle()).click();
-    await page.waitForTimeout(150);
-    const after = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
-    if (after !== before + 1)
-      console.log(
-        'DEBUG plan ticks',
-        JSON.stringify(await page.evaluate(() => (window.__db.planedits || {}).E4)),
-        JSON.stringify(await page.evaluate(() => window.__writes.filter(w => w[1] === 'planedits')))
+    {
+      // the old exam plan's day (no tags: no badge) opens on a tap; its tick saves to planedits/E4, the plan untouched
+      const day = page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-day:not(.open) .pl-dr').first();
+      await day.click();
+      await page.waitForTimeout(150);
+      const open = page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-day.open').first();
+      ok('a plan day opens to its tasks on a tap', (await open.locator('.pl-t input.tick').count()) > 0);
+      ok('an older plan’s task with no D-357 tag shows no badge', (await open.locator('.pl-t .badge').count()) === 0);
+      const before = await page.evaluate(
+        () => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length
       );
-    ok(
-      'plan tick saved to planedits/E4, the plan untouched',
-      after === before + 1 && !(await page.evaluate(() => window.__db.plans.E4.done)),
-      before + ' -> ' + after
-    );
-    await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
+      const firstUnchecked = open.locator('input.tick:not(:checked)').first();
+      // One element, resolved once: check() on the :not(:checked) locator re-resolves after the re-render
+      await (await firstUnchecked.elementHandle()).click();
+      await page.waitForTimeout(150);
+      const after = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
+      ok(
+        'plan tick saved to planedits/E4, the plan untouched',
+        after === before + 1 && !(await page.evaluate(() => window.__db.plans.E4.done)),
+        before + ' -> ' + after
+      );
+      await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
+    }
+    await studyPlanChecks(page); // B-450
     // Progress
     await page.click('#tab-progress');
     await page.waitForTimeout(100);

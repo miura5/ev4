@@ -396,7 +396,7 @@
       const box = el('div', 'ov-rows');
       // B-450: one row per objective; with a plan under the card they fold to one line, which opens them in place.
       // With no objectives the card carries the plan's progress, and the plan's own card its days.
-      const planned = hasStudyPlan(ex);
+      const planned = foldsObjectives(ex);
       const items = objs.length ? objRows(objs, acc, fullName, planned && !ui.objFold) : planBar(ex);
       head.append(nm0, el('span', 'meta ov-count', items.count));
       g.style.width = items.solid;

@@ -38,7 +38,7 @@
       m = Math.round(m || 0);
       return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
     };
-    const exShortOf = ex => String((ex && (ex.title || ex.id)) || '').replace(/:.*$/, '');
+    const exShortOf = ex => (ex && ex.own ? ex.title : String((ex && (ex.title || ex.id)) || '').replace(/:.*$/, ''));
     const planUi = (ui.pl = ui.pl || { open: {}, more: {}, earlier: {}, carry: {}, fold: {}, filter: {} });
 
     // ---------------------------------------------------------------- the record's plans for an exam
@@ -373,7 +373,11 @@
           'span',
           'mini',
           plural(ts.length, 'task') +
-            (planMinutes(ts) ? ' · ' + plural(Math.round(planMinutes(ts) / 60), 'hour') + ' in all' : '')
+            (planMinutes(ts) >= 60
+              ? ' · ' + plural(Math.round(planMinutes(ts) / 60), 'hour') + ' in all'
+              : planMinutes(ts)
+                ? ' · ' + mShort(planMinutes(ts)) + ' in all'
+                : '')
         )
       );
       d.append(meta);
@@ -488,7 +492,7 @@
     // ---------------------------------------------------------------- the cards
     function planHead(p, ex, extra) {
       const h = el('div', 'pl-head');
-      h.append(el('b', 'ov-ex', exShortOf(ex) + ' plan'), ...extra);
+      h.append(el('b', 'ov-ex', ex.own ? ex.title : exShortOf(ex) + ' plan'), ...extra);
       return h;
     }
     function approvedCard(p, ex, course) {
@@ -680,6 +684,15 @@
         }
       };
       one(cur.exam, true);
+      // a plan in force for no exam in the record (a dosage plan, B-194) shows on every course tab while it has days
+      for (const p of S.plans.filter(
+        p => !p.section && !S.exams.some(e => e.id === (p.exam || p.id)) && planDays(p).some(d => d.date >= today)
+      )) {
+        const last = planDays(p).slice(-1)[0].date;
+        kids.push(
+          approvedCard(p, { id: p.exam || p.id, title: p.title || 'Plan', date: last, own: true }, cur.course).card
+        );
+      }
       for (const ex of S.exams
         .filter(
           e =>
@@ -696,13 +709,15 @@
       return PANEL.matches && want ? want() : null;
     }
     /** B-450: a plan opened from elsewhere (an E.V. card): Study's overview on its exam's course tab. */
-    function openPlanInStudy(examId) {
+    function openPlanInStudy(examId, planId) {
       const ex = examId && S.exams.find(e => e.id === examId);
       if (ex) ui.studyCourse = E.courseOf(ex);
       showTab('study');
       setStudy('objectives');
       render();
-      const card = examId && document.querySelector('#ov-plans .pl-card');
+      const card =
+        (planId && document.querySelector(`#ov-plans .pl-card[data-plan="${CSS.escape(planId)}"]`)) ||
+        document.querySelector('#ov-plans .pl-card');
       if (card) card.scrollIntoView({ block: 'nearest' });
     }
     /** B-450: Study's line for a course's plans: a draft to approve (with E.V.'s question), else what is left today of
@@ -753,10 +768,16 @@
         ],
       };
     }
-    /** Whether an exam has a plan or a draft to show (its card folds its objectives to one line then). */
+    /** Whether an exam has a plan or a draft to show. */
     const hasStudyPlan = ex => {
       const { plan, draft } = examPlans(ex);
       return !!(plan || draft);
+    };
+    /** Whether an exam's card folds its objectives to one line: a study plan (B-449) or its draft sits under it. An
+     *  older exam plan (a plan page's, no section) leaves the objective rows open, as before. */
+    const foldsObjectives = ex => {
+      const { plan, draft } = examPlans(ex);
+      return !!(draft || (plan && plan.section));
     };
 
     // ---------------------------------------------------------------- the plan settings (the toolbar's sliders)

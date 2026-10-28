@@ -118,7 +118,7 @@ const info = {};
     if (0)
       await step('study-plan', async () => {
         await page.click('#tab-study');
-        await page.locator('[data-v="plan"]:visible').first().click();
+        await page.click('#study-planset'); // B-450: the plan is in the overview; its settings open here
       });
     if (0)
       await step('study-row', async () => {

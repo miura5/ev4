@@ -419,7 +419,7 @@
         if (inForce) {
           box.append(el('p', 'meta', 'This is the plan in force.'));
           a.append(
-            btn('Open the plan', () => openPlanInStudy(examId)) // B-450: the plan lives in Study's overview
+            btn('Open the plan', () => openPlanInStudy(examId, p.id)) // B-450: the plan lives in Study's overview
           );
         } else
           a.append(
@@ -495,7 +495,9 @@
         }
         if (j.status === 'done' && j.kind === 'exam-plan') {
           a.append(
-            btn('See the plan', () => openPlanInStudy((S.plansRaw.find(p => p.id === r.planId) || {}).exam || null))
+            btn('See the plan', () =>
+              openPlanInStudy((S.plansRaw.find(p => p.id === r.planId) || {}).exam || null, r.planId)
+            )
           );
           any = true;
         }
