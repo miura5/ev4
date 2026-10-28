@@ -8507,7 +8507,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: Worker-side run of study-plan jobs in a Durable Object alarm (waitUntil is cut 30 s after the page leaves; free-plan CPU 10 ms per request; a DO alarm has 15 min wall and 30 s CPU on Free)",
+  "notes": "builder: f7443d1 pushed. Durable Object alarm per job (PLAN_JOBS, SQLite class, migration v1-plan-jobs), 14 min deadline with abort, fix ask only with 7 min left, 90 s start window, page stall 20 min, boot-time stale fail; d359e77 review findings 1-4 folded in. npm test 905 pass, smoke 28/28, smoke:pwa 31/31, harness run.cjs 433. Needs the review skill (data writes, deploy) and ship staging; staging driver: scratchpad b459-staging-plan.mjs",
   "commit": null,
   "source": "staging proof of B-449 (Oct 28)",
   "words": "Making a study plan holds one request open, silent, for the minutes Sonnet takes to write; anything that drops a quiet connection (the phone backgrounding the app, a proxy) loses the plan, so the job should run without the page holding the request (stream it, or have the Worker run it in the background and the page read the result).",
