@@ -56,6 +56,7 @@
       materialedits: [],
       concepts: [],
       memory: null,
+      planSettings: null, // B-450: settings/study-plan, his plan instructions and options
       yourturn: null, // B-182: system/yourturn, what waits on him by place
     };
     const NAME = { weakspots: 'weak', 'talk/memory': 'memory' };
@@ -163,6 +164,12 @@
         try {
           regreet();
         } catch {}
+        render();
+        return;
+      }
+      if (key === 'settings/study-plan') {
+        S.planSettings = value; // B-450 (D-354)
+        loaded.add('planSettings');
         render();
         return;
       }

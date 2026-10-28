@@ -33,8 +33,7 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
     [
       'ev',
       'today',
-      'study-objectives',
-      'study-plan',
+      'study-objectives', // B-450: the plan is in the overview; the Plan view is retired
       'study-weak',
       'study-review',
       'progress-readiness',
@@ -43,7 +42,7 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
     ]
   );
   const all = V.viewsOf(html).flatMap(v => V.SIZES.map(s => V.shotName(v, s)));
-  assert.equal(all.length, 108); // B-297, B-359: 9 views (Study: Objectives, Plan, Weak spots and the review's quiz card; Progress: Readiness; Record: its log)
+  assert.equal(all.length, 96); // B-297, B-359, B-450: 8 views (Study: Objectives, Weak spots and the review's quiz card; Progress: Readiness; Record: its log)
   assert.deepEqual(V.missingShots(all, html), []);
   assert.match(
     flatSource('test/harness/look.cjs'),
@@ -56,8 +55,8 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
 test('B-113: a view added to the page without a screenshot fails', () => {
   const shots = V.viewsOf(html).flatMap(v => V.SIZES.map(s => V.shotName(v, s)));
   const planted = html.replace(
-    '<button type="button" data-v="plan" aria-pressed="false">Plan</button>',
-    '<button type="button" data-v="plan" aria-pressed="false">Plan</button><button type="button" data-v="cards" aria-pressed="false">Cards</button>'
+    '<button type="button" data-v="weak" aria-pressed="false">Weak spots</button>',
+    '<button type="button" data-v="weak" aria-pressed="false">Weak spots</button><button type="button" data-v="cards" aria-pressed="false">Cards</button>'
   );
   assert.notEqual(planted, html);
   const missing = V.missingShots(shots, planted);

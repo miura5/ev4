@@ -151,6 +151,7 @@
       $('seg-study').hidden = quizOpen('study') || (innerWidth >= 600 && ui.tab !== 'study');
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
       $('study-start').hidden = v !== 'objectives' || $('study-start').dataset.off === '1';
+      $('study-planwrap').hidden = v !== 'objectives'; // B-450: the plan settings, on the overview
     }
     /** B-351 (D-313): the courses with an upcoming exam, objectives or not (Matt's record has none), each with its
      *  soonest; the overview's course switch and exam card read this. */
@@ -219,6 +220,9 @@
       }
       const ex = (cur.exam.title || cur.exam.id).replace(/:.*$/, '');
       const objs = S.objectives.filter(o => o.exam === cur.exam.id);
+      // B-450: a plan's line leads: a draft waits on him, else what is left today of the plan in force
+      const pl = planLine(cur);
+      if (pl) return pl;
       if (objs.length) {
         const acc = E.answerStats(M.attempts.all).byObjective;
         const weak = objs.filter(o => objState(o, acc[o.id]).state === 'notyet');
@@ -234,8 +238,8 @@
       const when = (days < 0 ? 'was ' : 'is ') + E.relDay(cur.exam.date, today); // B-447
       if (!plan)
         return {
-          text: `${cur.course} ${ex} ${when}. Its objectives aren’t in the record yet.`,
-          act: ['Quiz me', b => courseQuiz(b)], // B-375
+          // B-450: as the mock, the line names the missing plan; Make a plan is on its card, Quiz me in the toolbar
+          text: `${ex} ${when}, and ${cur.course} has no plan for it yet.`,
         };
       const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
       const ts = (plan.days || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
@@ -306,8 +310,6 @@
         );
       });
     }
-    // B-351 (D-313): the plan day picked in the exam card when the exam has no objectives (as on Matt's record)
-    let daySel = null;
     function renderObjectives() {
       const card = $('ov-card'),
         list = studyExams();
@@ -361,6 +363,7 @@
             el('p', 'empty ov-none', 'Its next exam, its objectives and its plan show here once they’re in the record.')
           );
         } else card.replaceChildren(d);
+        renderStudyPlans(null);
         renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(cur || null);
         return;
@@ -391,18 +394,45 @@
         y = el('i', 'x-yellow');
       bar.append(g, y);
       const box = el('div', 'ov-rows');
-      // one row per objective; with none, one per day of the exam's plan
-      const items = objs.length ? objRows(objs, acc, fullName) : planRows(ex, fullName);
+      // B-450: one row per objective; with a plan under the card they fold to one line, which opens them in place.
+      // With no objectives the card carries the plan's progress, and the plan's own card its days.
+      const planned = hasStudyPlan(ex);
+      const items = objs.length ? objRows(objs, acc, fullName, planned && !ui.objFold) : planBar(ex);
       head.append(nm0, el('span', 'meta ov-count', items.count));
       g.style.width = items.solid;
       y.style.width = items.almost;
       bar.setAttribute('aria-label', items.aria);
+      if (objs.length && planned) {
+        const nOf = k => items.states.filter(x => x === k).length;
+        const words = [
+          nOf('solid') && nOf('solid') + ' solid',
+          nOf('almost') && nOf('almost') + ' almost',
+          nOf('notyet') && nOf('notyet') + ' not yet',
+        ].filter(Boolean);
+        box.append(
+          foldLine(
+            plural(objs.length, 'objective') + ' · ' + words.join(', '),
+            !!ui.objFold,
+            () => {
+              ui.objFold = !ui.objFold;
+              render();
+            },
+            'pm-more'
+          )
+        );
+      }
       box.append(...items.rows);
+      card.classList.toggle('pm-ex', planned);
       card.replaceChildren(
-        ...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)])
+        ...(box.children.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)])
       );
+      // B-450: the plans under the card; from 1200 px a draft (to approve) or the plan fills the panel, unless he
+      // opened an objective
+      const pp = renderStudyPlans(cur, fullName, objs.length > 0);
+      if (PANEL.matches && pp && !(objs.length && (!planned || ui.objFold))) ui.objPanel = pp;
       // B-375: an exam with neither objectives nor a plan still fills the panel: the exam, its date and Quiz me
       if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName);
+      paintPlanPop();
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
     }
@@ -472,15 +502,16 @@
     }
     /** The exam card's objective rows: state badge, words, weak spots and Quiz me on hover; the picked one's detail
      *  fills the panel from 1200 px, or opens under its row. */
-    function objRows(objs, acc, fullName) {
+    function objRows(objs, acc, fullName, folded) {
       const rows = objs.map(o => ({ o, ...objState(o, acc[o.id]) }));
+      const states = rows.map(r => r.state);
       const n = k => rows.filter(r => r.state === k).length;
       const pctOf = k => (rows.length ? (100 * n(k)) / rows.length : 0) + '%';
       if (!rows.some(r => r.o.id === objSel)) objSel = null;
       if (PANEL.matches && !objSel)
         objSel = ((rows.find(r => r.state !== 'solid') || rows[0] || {}).o || {}).id || null;
       const out = [];
-      for (const r of rows) {
+      for (const r of folded ? [] : rows) {
         const [word, cls] = OBJ_STATE[r.state];
         const on = objSel === r.o.id;
         const wrap = el('div', 'ov' + (on ? ' open' : ''));
@@ -518,107 +549,24 @@
         almost: pctOf('almost'),
         aria: `${n('solid')} solid, ${n('almost')} almost, ${n('notyet')} not yet`,
         none: '',
+        states,
       };
     }
-    /** B-351 (D-313): an exam with no objectives shows its plan in the card: its progress on the bar and one row per
-     *  plan day (Done, Started or To do; its label; its date and count). The picked day fills the panel from 1200 px,
-     *  or opens under its row, with its tasks and Open the plan. */
-    function planRows(ex, fullName) {
-      const plan = examPlan(ex);
-      const empty = {
-        rows: [],
-        count: '',
-        solid: '0%',
-        almost: '0%',
-        aria: 'No objectives or plan yet',
-        none: 'Its objectives or its plan show here once they’re in the record.',
-      };
-      if (!plan || !(plan.days || []).length) return empty;
-      const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
-      const dayRows = plan.days
-        .slice()
-        .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-        .map(d => {
-          const ts = (d.tasks || []).map(t => ({ ...t, date: d.date }));
-          const nDone = ts.filter(isDone).length;
-          const state = ts.length && nDone === ts.length ? 'done' : nDone ? 'started' : 'todo';
-          return { d, ts, nDone, state };
-        });
-      const all = dayRows.reduce((a, r) => a + r.ts.length, 0),
-        done = dayRows.reduce((a, r) => a + r.nDone, 0),
-        startedN = dayRows.filter(r => r.state === 'started').reduce((a, r) => a + r.ts.length - r.nDone, 0);
-      const key = r => plan.id + '|' + r.d.date;
-      if (!dayRows.some(r => key(r) === daySel)) daySel = null;
-      if (PANEL.matches && !daySel) {
-        const pick = dayRows.find(r => r.d.date >= today && r.state !== 'done') || dayRows[dayRows.length - 1];
-        daySel = key(pick);
-      }
-      const DAY_STATE = { done: ['Done', 'x-green'], started: ['Started', 'x-yellow'], todo: ['To do', ''] };
-      const openPlan = () => {
-        ui.planShown = plan.id;
-        setStudy('plan');
-        render();
-      };
-      const out = [];
-      for (const r of dayRows) {
-        const [word, cls] = DAY_STATE[r.state];
-        const on = daySel === key(r);
-        const wrap = el('div', 'ov' + (on ? ' open' : ''));
-        const li = el('div', 'obj' + (on ? ' on' : ''));
-        const name = r.d.label || (r.ts[0] && r.ts[0].text) || dayMonth(r.d.date);
-        const nm = el('button', 'nm ov-nm', name);
-        nm.type = 'button';
-        nm.title = name;
-        nm.setAttribute('aria-expanded', String(on));
-        nm.addEventListener('click', () => {
-          daySel = on && !PANEL.matches ? null : key(r);
-          render();
-        });
-        li.append(
-          el('span', 'badge ov-st' + (cls ? ' ' + cls : ''), word),
-          nm,
-          el('span', 'ow', (r.d.date === today ? 'today' : dayMonth(r.d.date)) + ' · ' + r.nDone + ' of ' + r.ts.length)
-        );
-        wrap.append(li);
-        if (on) {
-          const dt = el('div', 'ov-detail');
-          if (PANEL.matches) dt.append(el('span', 'lab', 'Plan day'), el('div', 'od-name', name));
-          const st = el('div', 'od-row');
-          st.append(
-            el('span', 'badge' + (cls ? ' ' + cls : ''), word),
-            el('span', 'mini', dayMonth(r.d.date) + ' · ' + fullName)
-          );
-          dt.append(st, el('span', 'lab', 'On this day'));
-          for (const t of r.ts) {
-            const si = el('div', 'od-ws od-task');
-            si.append(
-              el('i', 'dot' + (isDone(t) ? ' x-green' : '')),
-              el('span', 'sn', t.text || t.id),
-              el('span', 'st', isDone(t) ? 'done' : 'open')
-            );
-            si.title = t.text || '';
-            dt.append(si);
-          }
-          dt.append(
-            btn('Open the plan', openPlan, { cls: 'btn neutral od-q' }),
-            el(
-              'span',
-              'mini od-note',
-              'Tick what you’ve done in the plan. This exam has no objectives in the record yet.'
-            )
-          );
-          if (PANEL.matches) ui.objPanel = dt;
-          else wrap.append(dt);
-        }
-        out.push(wrap);
-      }
+    /** B-450: an exam with no objectives carries its plan's progress on the card's bar (the plan's card under it has
+     *  the days); with no plan either, the card says what shows here. */
+    function planBar(ex) {
+      const plan = examPlans(ex).plan;
+      const c = plan ? planCounts(plan) : null;
+      const n = c ? c.ts.length : 0;
       return {
-        rows: out,
-        count: done + ' of ' + plural(all, 'plan task') + ' done',
-        solid: (all ? (100 * done) / all : 0) + '%',
-        almost: (all ? (100 * startedN) / all : 0) + '%',
-        aria: `${done} of ${all} plan tasks done`,
-        none: '',
+        rows: [],
+        count: c ? c.done + ' of ' + plural(n, 'plan task') + ' done' : '',
+        solid: (n ? (100 * c.done) / n : 0) + '%',
+        almost: '0%',
+        aria: c ? `${c.done} of ${n} plan tasks done` : 'No objectives or plan yet',
+        none: hasStudyPlan(ex)
+          ? 'Its objectives show here once they’re in the record.'
+          : 'Its objectives or its plan show here once they’re in the record.',
       };
     }
     /** B-351 (D-313): the course's quiz, the demo's Quiz me and mini quiz: a practice set on this exam with questions
@@ -1181,155 +1129,6 @@
         })
       );
     }
-    function renderPlan() {
-      const card = $('plan-card');
-      // B-194: the plan a card opened (or he switched to) first; else the target exam's; else the newest.
-      const plan =
-        (ui.planShown && S.plans.find(p => p.id === ui.planShown)) ||
-        (M.target && S.plans.find(p => (p.exam || p.id) === M.target.id)) ||
-        S.plans
-          .slice()
-          .sort((a, b) => String((b.days || [])[0]?.date).localeCompare(String((a.days || [])[0]?.date)))[0];
-      ui.planPanel = null;
-      if (!plan) {
-        $('plan-lab').textContent = 'Plan';
-        card.replaceChildren(el('p', 'empty', 'The exam plan appears here once it’s in the record.'));
-        return;
-      }
-      const tasks = E.planTasks(plan);
-      const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
-      const doneN = tasks.filter(isDone).length;
-      const ex = S.exams.find(e => e.id === (plan.exam || plan.id)),
-        exDay = ex && ex.date ? (ex.title || ex.id).replace(/:.*$/, '') + ' · ' + short(ex.date) : '';
-      // B-126 (D-165): led by its count and exam day; open items as ticks by day; Done and Earlier days fold; no paragraph
-      // on how ticks work and no pills.
-      const tickRow = (d, t0) => {
-        const t = { ...t0, date: d.date },
-          on = isDone(t);
-        const li = row({
-          title: t.text,
-          cls: 'plan-item' + (on ? ' done' : ''),
-          check: {
-            checked: on,
-            label: 'Done: ' + t.text,
-            onChange: (v, c) => guard(c, () => tickPlan(plan, t, v), v ? 'Checked off' : 'Unchecked'),
-          },
-        });
-        const tt = li.querySelector('.title');
-        tt.title = t.text;
-        tt.addEventListener('click', () => li.classList.toggle('open'));
-        return li;
-      }; // one line; a tap on the words opens it in place
-      const dayBlock = (d, list) => {
-        const wrap = el('div', 'plan-day' + (d.date === today ? ' today' : ''));
-        wrap.append(
-          el(
-            'div',
-            'dayh plan-dh',
-            [d.label, short(d.date) + (d.date === today ? ' · today' : ''), d.dayLabel].filter(Boolean).join(' · ')
-          )
-        );
-        const ul = el('ul', 'list'),
-          k = 'plan:' + d.date,
-          all = !!sumOpen[k];
-        (all ? list : list.slice(0, 5)).forEach(t => ul.append(tickRow(d, t)));
-        wrap.append(ul);
-        if (list.length > 5)
-          wrap.append(
-            foldLine(all ? 'Fewer' : list.length - 5 + ' more', all, () => {
-              sumOpen[k] = !all;
-              render();
-            })
-          );
-        return wrap;
-      };
-      // B-348 (D-312): the strip names the plan; its summary (title, count, exam day, other plans, the original page) is
-      // the panel's card from 1200 px and leads the rows below that; the days are quiet heads over full-width rows.
-      $('plan-lab').textContent = 'Plan' + (ex ? ' · ' + (ex.title || ex.id).replace(/:.*$/, '') : '');
-      const summaryCard = () => {
-        const sm = el('div', 'ov-detail plan-sum');
-        sm.append(
-          el('span', 'lab', plan.title || 'Exam plan'),
-          el('div', 'big plan-lead', `${doneN} of ${tasks.length} done`)
-        );
-        if (exDay) sm.append(el('span', 'mini', exDay));
-        // B-194: every other plan in force, one line each, to switch to (a dosage plan beside the exam's).
-        const others = S.plans.filter(p => p.id !== plan.id);
-        if (others.length) {
-          const sw = el('p', 'mini plan-others');
-          sw.append('Other plans: ');
-          others.forEach((p, i) => {
-            if (i) sw.append(' · ');
-            sw.append(
-              btn(
-                p.title || 'Exam plan ' + (p.exam || p.id),
-                () => {
-                  ui.planShown = p.id;
-                  render();
-                },
-                { cls: 'tlink' }
-              )
-            );
-          });
-          sm.append(sw);
-        }
-        if (plan.sourceUrl) {
-          const a = el('a', 'mini', 'Original plan page');
-          a.href = plan.sourceUrl;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          sm.append(a);
-        }
-        return sm;
-      };
-      const kids = [summaryCard()];
-      ui.planPanel = summaryCard();
-      const upcoming = plan.days.filter(d => d.date >= today),
-        past = plan.days.filter(d => d.date < today);
-      for (const d of upcoming) {
-        const open = d.tasks.filter(t => !isDone({ ...t, date: d.date }));
-        if (open.length) kids.push(dayBlock(d, open));
-      }
-      const doneItems = upcoming.flatMap(d => d.tasks.filter(t => isDone({ ...t, date: d.date })).map(t => [d, t]));
-      if (doneItems.length) {
-        const open = !!ui.planDoneOpen,
-          ul = el('ul', 'list');
-        ul.hidden = !open;
-        doneItems.forEach(([d, t]) => ul.append(tickRow(d, t)));
-        kids.push(
-          foldLine('Done · ' + doneItems.length, open, () => {
-            ui.planDoneOpen = !open;
-            render();
-          }),
-          ul
-        );
-      }
-      if (past.length) {
-        const open = !!ui.planPastOpen,
-          box = el('div', 'plan-past');
-        box.hidden = !open;
-        past
-          .slice()
-          .reverse()
-          .forEach(d => {
-            const w = el('div', 'plan-was');
-            w.append(el('div', 'dayh plan-dh', [d.label, short(d.date)].filter(Boolean).join(' · ')));
-            const ul = el('ul', 'list');
-            d.tasks.forEach(t => ul.append(tickRow(d, t)));
-            w.append(ul);
-            box.append(w);
-          });
-        kids.push(
-          foldLine('Earlier days · ' + past.length, open, () => {
-            ui.planPastOpen = !open;
-            render();
-          }),
-          box
-        );
-      }
-      card.replaceChildren(...kids); // D-249: Plan is its own tab at every width
-    }
-
     // More practice: asks Claude from the page, validated by E.V. core before it's saved.
     let morePending = false;
     // B-43 (D-100): make_practice on dosage. Five numeric items, each on a passage of his dosage material (never the
@@ -1656,10 +1455,6 @@
       render();
     });
     $('study-qquiz').addEventListener('click', ev => courseQuiz(ev.currentTarget)); // B-370: a new mini quiz
-    $('plan-back').addEventListener('click', () => {
-      setStudy('objectives');
-      render();
-    });
     $('weak-back').addEventListener('click', () => {
       setStudy('objectives');
       render();

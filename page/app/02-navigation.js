@@ -6,8 +6,7 @@
       progress: 'readiness',
       record: 'sessions',
       openSet: null,
-      planShown: null,
-    }; // B-194
+    };
     // B-223 (D-245): from 1200 px every view has the right panel while it has something to show.
     const PANEL = window.matchMedia ? matchMedia('(min-width:1200px)') : { matches: false, addEventListener() {} };
     // From 1200 px Study's open question has the set's questions as a list in the right panel. Each Study runner leaves

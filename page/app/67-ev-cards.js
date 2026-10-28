@@ -419,12 +419,7 @@
         if (inForce) {
           box.append(el('p', 'meta', 'This is the plan in force.'));
           a.append(
-            btn('Open the plan', () => {
-              ui.planShown = p.id; // B-194: this card's plan, not the target exam's
-              showTab('study');
-              setStudy('plan');
-              render();
-            })
+            btn('Open the plan', () => openPlanInStudy(examId)) // B-450: the plan lives in Study's overview
           );
         } else
           a.append(
@@ -500,10 +495,7 @@
         }
         if (j.status === 'done' && j.kind === 'exam-plan') {
           a.append(
-            btn('See plans', () => {
-              showTab('study');
-              setStudy('plan');
-            })
+            btn('See the plan', () => openPlanInStudy((S.plansRaw.find(p => p.id === r.planId) || {}).exam || null))
           );
           any = true;
         }

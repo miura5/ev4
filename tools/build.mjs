@@ -300,8 +300,14 @@ export function pageSpecFor(spec, schemas, { target, release }) {
     items: () => spec.items || null,
     workouts: () => spec.workouts || null,
     // A job kind by its label: each kind's guide is the worker's, read in its run (core/steps.mjs), not the page's.
+    // B-450: the study plan's built-in instructions too, which his plan settings show, edit and reset to (D-354).
     jobs: () => ({
-      kinds: Object.fromEntries(Object.entries(spec.jobs.kinds || {}).map(([k, x]) => [k, { label: x.label }])),
+      kinds: Object.fromEntries(
+        Object.entries(spec.jobs.kinds || {}).map(([k, x]) => [
+          k,
+          k === 'exam-plan' ? { label: x.label, instructions: x.instructions || '' } : { label: x.label },
+        ])
+      ),
       builderKinds: spec.jobs.builderKinds || [],
       builderLabels: spec.jobs.builderLabels || {},
       builderOnLive: !!spec.jobs.builderOnLive,

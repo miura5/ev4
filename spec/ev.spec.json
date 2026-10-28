@@ -5991,6 +5991,10 @@
      "windowDays": 7
     },
     {
+     "collection": "settings",
+     "doc": "study-plan"
+    },
+    {
      "collection": "system",
      "doc": "manifest"
     },

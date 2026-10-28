@@ -936,3 +936,41 @@ test('D-357: the tag reaches Today through planDay with the task’s other field
   ])
     assert.match(today, new RegExp(`^\\s+${k}: \\['${name}',`, 'm'), name);
 });
+
+test('B-450: the page’s plan writes are core composers: his settings and Approve on a study plan draft', () => {
+  const s = EV.studyPlanSettingsSet(null, { approved: 'plan' }, { now: NOW });
+  assert.equal(s.op, 'set');
+  assert.equal(s.collection, 'settings');
+  assert.equal(s.id, 'study-plan');
+  assert.equal(s.data.instructions, null, 'the default until he writes some');
+  assert.equal(s.data.approved, 'plan');
+  assert.ok(validate('settings', s.data, { id: 'study-plan' }).ok);
+  const s2 = EV.studyPlanSettingsSet({ id: 'study-plan', ...s.data }, { missing: 'note' }, { now: NOW });
+  assert.deepEqual([s2.data.approved, s2.data.missing], ['plan', 'note'], 'what a change leaves out stays');
+  const draft = {
+    id: 'E5-2',
+    schema: 1,
+    writer: 'worker',
+    at: NOW.toISOString(),
+    source: 'x',
+    exam: 'E5',
+    section: { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' },
+    days: [],
+  };
+  const ticks = { t1: { at: NOW.toISOString(), by: 'Matt' } };
+  const pe = {
+    id: 'E5',
+    schema: 2,
+    writer: 'page',
+    at: NOW.toISOString(),
+    source: 'E.V. Home',
+    updatedAt: NOW.toISOString(),
+    ticks,
+  };
+  const a = EV.studyPlanApproveSet([pe], draft, { now: NOW });
+  assert.deepEqual([a.op, a.collection, a.id, a.data.plan], ['set', 'planedits', 'E5', 'E5-2']);
+  assert.deepEqual(a.data.ticks, ticks, 'his ticks are kept');
+  assert.ok(validate('planedits', a.data, { id: 'E5' }).ok);
+  assert.equal(EV.planViews([draft], [{ id: 'E5', ...a.data }])[0].id, 'E5-2', 'the draft is the plan in force');
+  assert.throws(() => EV.studyPlanApproveSet([], { ...draft, section: undefined }, { now: NOW }), /study plan draft/);
+});

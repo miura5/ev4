@@ -6,7 +6,6 @@
       renderObjectives(); // B-297
       renderReview();
       renderPractice();
-      renderPlan();
       renderReadiness();
       renderWeak();
       renderRecord();

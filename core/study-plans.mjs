@@ -625,6 +625,22 @@ export function makeStudyPlans(core) {
       course,
     };
   }
+  /** B-450: the page's write of his plan settings (studyPlanSettingsWrite), as a record write. */
+  function studyPlanSettingsSet(existing, change, opts) {
+    const r = studyPlanSettingsWrite(existing, change, opts);
+    return { op: 'set', collection: 'settings', id: r.id, data: r.data };
+  }
+  /**
+   * B-450: Approve on a draft's card, as a record write: planedits/<its exam> names the draft as the plan in force, its
+   * ticks kept (as planAccept writes it). Refuses a plan that is not a draft of a study plan.
+   */
+  function studyPlanApproveSet(planedits, draft, { now } = {}) {
+    if (!draft || !draft.id || !draft.section) throw new Error('only a study plan draft is approved here');
+    const examId = draft.exam || draft.id;
+    const pe = (planedits || []).find(e => e && e.id === examId) || null;
+    const data = { ...editBase(pe, now), schema: 2, ticks: { ...((pe && pe.ticks) || {}) }, plan: draft.id };
+    return { op: 'set', collection: 'planedits', id: examId, data };
+  }
   /** The draft a plan card shows for an exam: its newest draft, else the plan in force (planViews). */
   function latestPlanDraft(plans, planedits, examId) {
     return (planDrafts(plans, planedits, examId) || [])[0] || null;
@@ -649,5 +665,7 @@ export function makeStudyPlans(core) {
     applyPlanPatch,
     studyPlanJob,
     latestPlanDraft,
+    studyPlanSettingsSet,
+    studyPlanApproveSet,
   };
 }

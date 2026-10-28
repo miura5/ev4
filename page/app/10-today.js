@@ -28,7 +28,8 @@
       // "plans/E4#<taskId>"
       const m = /^plans\/([^#]+)#(.+)$/.exec(ref || '');
       if (!m) return null;
-      const p = S.plans.find(x => x.id === m[1]);
+      // the ref names the exam (planDay's b.plan); a plan in force with its own id (a study plan, B-450) is that exam's
+      const p = S.plans.find(x => x.id === m[1]) || S.plans.find(x => (x.exam || x.id) === m[1]);
       if (!p) return null;
       const t = E.planTasks(p).find(t => t.id === m[2]);
       return t ? { plan: p, task: t } : null;
@@ -43,7 +44,13 @@
         if (pt) return E.taskDone(pt.plan, { ...pt.task }, today, S.sets, S.answers);
         return !!checks[it.id];
       };
-      return { day, items: v.items, isDone, budget: v.budget, skipped: v.skipped };
+      // B-450: with Approved tasks set to Keep in the plan, a study plan's tasks stay in Study's plan, off Today
+      const kept = it => {
+        if (!S.planSettings || S.planSettings.approved !== 'plan') return false;
+        const pt = planTaskById(it.ref);
+        return !!(pt && pt.plan.section);
+      };
+      return { day, items: v.items.filter(it => !kept(it)), isDone, budget: v.budget, skipped: v.skipped };
     }
     const dayDoc = date => S.days.find(d => d.id === date) || null;
     const dayEditDoc = date => S.dayedits.find(d => d.id === date) || null;
@@ -121,7 +128,7 @@
       'CLINICAL PREP': ['Clinical prep', ''],
       VALIDATION: ['Validation', ''],
       'VALIDATION PREP': ['Validation prep', ''],
-      'SKILLS PREP': ['Skills prep', ''],
+      'SKILLS PREP': ['Skills prep', 'x-yellow'], // B-450: as the plan's rows
       GRADED: ['Graded', 'x-quiet'],
     };
     // When graded work on the list is due: its calendar entry (date-, soon-), else the graded date it names.

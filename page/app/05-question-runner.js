@@ -57,9 +57,7 @@
               ? null
               : ui.study === 'objectives'
                 ? ui.objPanel
-                : ui.study === 'plan' // B-348: the plan's summary
-                  ? ui.planPanel
-                  : null
+                : null
           : null;
       side.hidden = !shown && !obj;
       side.setAttribute(
@@ -67,7 +65,7 @@
         obj
           ? ui.study === 'weak'
             ? 'How triage works'
-            : ui.study === 'plan'
+            : obj.classList.contains('plan-sum') || obj.dataset.plan
               ? 'The plan'
               : 'The picked objective'
           : 'This quiz'

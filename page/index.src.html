@@ -84,7 +84,6 @@
     <div class="toolbar sbar-study" id="sbar-study">
       <div class="seg" id="seg-study" role="group" aria-label="Study views">
         <button type="button" data-v="objectives" aria-pressed="true">Objectives</button>
-        <button type="button" data-v="plan" aria-pressed="false">Plan</button>
         <button type="button" data-v="weak" aria-pressed="false">Weak spots</button>
       </div>
       <button type="button" class="btn ghost sm" id="study-back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button>
@@ -94,6 +93,8 @@
       <button type="button" class="btn neutral" id="study-qquiz" hidden>Quiz me</button>
       <button type="button" class="btn neutral" id="study-qweak" hidden>Weak spots</button>
       <button type="button" class="btn primary" id="study-start" aria-label="Start session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg><span class="lbl">Start session</span></button>
+      <!-- B-450: the plan settings: his instructions, when something is missing, where approved tasks go -->
+      <div class="pm-set" id="study-planwrap"><button type="button" class="btn icon" id="study-planset" aria-label="Plan settings" title="Plan settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6M6 14v6M12 4v2M12 10v10M18 4v10M18 18v2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="18" cy="16" r="2"/></svg></button></div>
     </div>
     <div id="study-objectives" class="panel">
       <div class="ui-card ov-card" id="ov-card"></div>
@@ -118,12 +119,6 @@
         <div id="pr-prog" hidden><div class="qz-head"><button type="button" class="fold-line set-count" id="pr-qcount" aria-expanded="false" aria-controls="pr-body" hidden></button><span class="mini qz-score" id="pr-score"></span></div><div class="progress qz-bar" aria-hidden="true"><i id="pr-bar" style="width:0"></i></div></div>
         <div id="pr-body"></div>
       </div>
-    </div>
-    <!-- B-348 (D-312): the Plan tab in the Weak spots tab's frame: the strip, then the plan's rows; its summary in the
-         right panel from 1200 px -->
-    <div id="study-plan" class="panel" hidden>
-      <div class="wk-bar"><button type="button" class="btn ghost sm" id="plan-back"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button><span class="mini" id="plan-lab">Plan</span><span class="sp"></span></div>
-      <div id="plan-card"><h2>Exam plan</h2><p class="empty">The exam plan appears here once it's in the record.</p></div>
     </div>
     <!-- B-123 (D-162): weak spots; in Study since B-297 (D-281). B-347 (D-312): as the demo's StudyWeak board, a strip
          (back to Objectives, Weak spots and its course, Quiz me), then sections of full-width rows -->
