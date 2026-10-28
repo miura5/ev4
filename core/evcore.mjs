@@ -2273,14 +2273,14 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- Canvas (code side of the read-only sync) · core/canvas-rules.mjs (B-160)
   const CANVAS = makeCanvasRules({
-    get C() {
-      return C;
-    },
     MATERIAL_KINDS,
     chicagoClock,
     chicagoDate,
+    constants,
+    courseOf,
     envelope,
     isoOf,
+    kindsOf,
     liveDates,
     materialKind,
     shortDate,

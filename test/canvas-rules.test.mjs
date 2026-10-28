@@ -98,3 +98,193 @@ test('D-324: the Canvas door passes every text on; nothing is held as a patient 
   assert.deepEqual(r.refused, []);
   assert.match(r.announcements.find(a => a.id === 'canvas-21').data.text, /MRN: 4482913/, 'kept as written');
 });
+
+// ------------------------------------------------------------------------------------------------ B-465: exams from the calendar
+import fs from 'node:fs';
+import path from 'node:path';
+import { ROOT } from './helpers.mjs';
+import { unknownCourses } from '../core/lint.mjs';
+
+const NOW = '2026-10-28T16:00:00Z',
+  TODAY = '2026-10-28';
+const date = (id, date, title, extra = {}) => ({
+  id,
+  schema: 1,
+  writer: 'page',
+  at: '2026-10-28T15:00:00Z',
+  source: 'Told E.V.',
+  date,
+  title,
+  kind: 'exam',
+  graded: false,
+  course: 'BIO 201',
+  ...extra,
+});
+
+test('B-465: a calendar entry whose title names an exam becomes its course’s exam, kind by the title and the course’s examKinds', () => {
+  const dates = [
+    date('d-lab', '2026-10-28', 'Chapter 9 lab exam (starts today)'),
+    date('d-unit', '2026-11-01', 'Chapter 9 exam (due Sunday night)'),
+    date('d-final', '2026-12-10', 'Final exam', { course: 'bio201' }), // an alias is the course's own name
+    date('d-nur', '2026-11-20', 'Dosage Calculation Exam', { course: 'NUR 112', kind: 'due' }), // the title says exam
+    date('d-ati', '2026-12-01', 'ATI Fundamentals Proctored Exam', { course: 'NUR 112' }),
+  ];
+  const w = EV.examsFromDates({ dates, exams: [], now: NOW, today: TODAY });
+  assert.deepEqual(
+    w.map(x => [x.op, x.collection, x.id, x.data.course, x.data.kind, x.data.date, x.data.status, x.data.dateId]),
+    [
+      ['set', 'exams', 'BIO201.20261028', 'BIO 201', 'lab', '2026-10-28', 'upcoming', 'd-lab'],
+      ['set', 'exams', 'BIO201.20261101', 'BIO 201', 'unit', '2026-11-01', 'upcoming', 'd-unit'],
+      ['set', 'exams', 'NUR112.20261120', 'NUR 112', 'dosage', '2026-11-20', 'upcoming', 'd-nur'],
+      ['set', 'exams', 'NUR112.20261201', 'NUR 112', 'ati', '2026-12-01', 'upcoming', 'd-ati'],
+      ['set', 'exams', 'BIO201.20261210', 'BIO 201', 'final', '2026-12-10', 'upcoming', 'd-final'],
+    ]
+  );
+  for (const x of w) {
+    assertValid(x);
+    assert.deepEqual(
+      [x.data.schema, x.data.writer, x.data.source, x.data.at],
+      [2, 'page', 'From the calendar', new Date(NOW).toISOString()]
+    );
+  }
+  assert.equal(w[0].data.title, 'Chapter 9 lab exam (starts today)', 'his words, as written');
+  assert.deepEqual(unknownCourses({ exams: w.map(x => ({ id: x.id, ...x.data })) }), [], 'exams.course names a course');
+  // a past exam day is done; the page's lint of the record holds
+  const past = EV.examsFromDates({
+    dates: [date('d-old', '2026-10-18', 'Lecture Exam 3')],
+    exams: [],
+    now: NOW,
+    today: TODAY,
+  });
+  assert.equal(past[0].data.status, 'done');
+  // the kind by the title and the course: NUR 112 has no lab kind, BIO 201 no dosage; midterm and test are unit exams
+  assert.deepEqual(
+    [
+      EV.examKindFor('Lab exam', 'NUR 112'),
+      EV.examKindFor('Lab practical', 'BIO 201'),
+      EV.examKindFor('Dosage calc test', 'BIO 201'),
+      EV.examKindFor('Midterm', 'BIO 201'),
+      EV.examKindFor('Final', 'NUR 112'),
+      EV.examKindFor('x', 'CHEM 101'),
+    ],
+    ['unit', 'lab', 'unit', 'unit', 'final', null]
+  );
+  assert.deepEqual(
+    [EV.examKinds('BIO 201'), EV.examKinds('nur 112'), EV.examKinds('CHEM 101')],
+    [['unit', 'lab', 'final'], ['unit', 'dosage', 'final', 'ati'], []]
+  );
+});
+
+test('B-465: a day the course already has an exam for, a non-exam entry, a review of an exam, an entry taken off and an unknown course each give nothing', () => {
+  const dates = [
+    date('d-lab', '2026-10-28', 'Chapter 9 lab exam'),
+    date('d-unit', '2026-11-01', 'Chapter 9 exam'),
+    date('d-due', '2026-11-03', 'Chapter 9 written assignment', { kind: 'due' }),
+    date('d-e5', '2026-11-05', 'Exam 5', { course: 'NUR 112' }),
+    date('d-rem', '2026-11-06', 'Exam 5 Remediation', { course: 'NUR 112' }),
+    date('d-rev', '2026-11-04', 'Exam 5 review session', { course: 'NUR 112', kind: 'other' }),
+    date('d-sim', '2026-11-07', 'Sim exam day', { course: 'NUR 112' }),
+    date('d-off', '2026-11-12', 'Chapter 10 exam'),
+    date('d-chem', '2026-11-13', 'Exam 2', { course: 'CHEM 101' }),
+  ];
+  const exams = [
+    {
+      id: 'BIO201.20261028',
+      course: 'BIO 201',
+      kind: 'lab',
+      date: '2026-10-28',
+      title: 'Chapter 9 lab exam',
+      dateId: 'd-lab',
+    },
+    { id: 'E5', course: 'NUR 112', kind: 'unit', date: '2026-11-05', title: 'Exam 5' },
+  ];
+  const dateedits = [{ id: 'd-off', removed: { at: NOW, by: 'Matt' } }];
+  const w = EV.examsFromDates({ dates, dateedits, exams, now: NOW, today: TODAY });
+  assert.deepEqual(
+    w.map(x => x.id),
+    ['BIO201.20261101'],
+    'only the Chapter 9 exam: the lab exam has its document, Exam 5 is E5 (same course and day)'
+  );
+  // an exam that names the entry covers it even when its day was changed since
+  const moved = [
+    { id: 'BIO201.20261101', course: 'BIO 201', kind: 'unit', date: '2026-11-02', title: 'x', dateId: 'd-unit' },
+  ];
+  assert.deepEqual(EV.examsFromDates({ dates, dateedits, exams: [...exams, ...moved], now: NOW, today: TODAY }), []);
+  // two entries on one day for one course give one exam; skip leaves out the ids already written this load
+  const twice = [date('a', '2026-11-01', 'Chapter 9 exam'), date('b', '2026-11-01', 'Ch 9 lecture exam')];
+  assert.equal(EV.examsFromDates({ dates: twice, exams: [], now: NOW, today: TODAY }).length, 1);
+  assert.deepEqual(
+    EV.examsFromDates({ dates: twice, exams: [], now: NOW, today: TODAY, skip: ['BIO201.20261101'] }),
+    []
+  );
+  // nothing is ever an update or a delete: every write is a set of an exam the record lacks
+  assert.ok(w.every(x => x.op === 'set' && !exams.some(e => e.id === x.id)));
+});
+
+test('B-465: his Add exam composes a valid exams document through core (D-200), never over an exam that day', () => {
+  const exams = [{ id: 'E5', course: 'NUR 112', kind: 'unit', date: '2026-11-05', title: 'Exam 5' }];
+  const w = EV.examAdd(
+    exams,
+    { course: 'BIO 201', title: ' Chapter 10  lab exam ', date: '2026-11-12' },
+    { now: NOW, today: TODAY }
+  );
+  assertValid(w);
+  assert.deepEqual(
+    [
+      w.op,
+      w.collection,
+      w.id,
+      w.data.course,
+      w.data.kind,
+      w.data.date,
+      w.data.title,
+      w.data.status,
+      w.data.source,
+      w.data.writer,
+      w.data.schema,
+    ],
+    [
+      'set',
+      'exams',
+      'BIO201.20261112',
+      'BIO 201',
+      'lab',
+      '2026-11-12',
+      'Chapter 10 lab exam',
+      'upcoming',
+      'Added by Matt',
+      'page',
+      2,
+    ]
+  );
+  assert.deepEqual(unknownCourses({ exams: [{ id: w.id, ...w.data }] }), []);
+  // the kind he picks wins when the course has it; one it lacks falls back to the title's
+  assert.equal(
+    EV.examAdd(exams, { course: 'BIO 201', title: 'Chapter 10', date: '2026-11-12', kind: 'final' }, { now: NOW }).data
+      .kind,
+    'final'
+  );
+  assert.equal(
+    EV.examAdd(exams, { course: 'BIO 201', title: 'Chapter 10', date: '2026-11-12', kind: 'dosage' }, { now: NOW }).data
+      .kind,
+    'unit'
+  );
+  assert.throws(
+    () => EV.examAdd(exams, { course: 'NUR 112', title: 'Exam 5 again', date: '2026-11-05' }, { now: NOW }),
+    /already has an exam on/
+  );
+  assert.throws(
+    () => EV.examAdd(exams, { course: 'CHEM 101', title: 'x', date: '2026-11-05' }, { now: NOW }),
+    /which course/
+  );
+  assert.throws(() => EV.examAdd(exams, { course: 'BIO 201', title: 'x', date: 'Nov 5' }, { now: NOW }), /YYYY-MM-DD/);
+  assert.throws(
+    () => EV.examAdd(exams, { course: 'BIO 201', title: '  ', date: '2026-11-05' }, { now: NOW }),
+    /title is required/
+  );
+  // the page's two exam writes are core composers; test/actions.test.mjs's D-200 lint holds every page write site to that
+  const study = fs.readFileSync(path.join(ROOT, 'page', 'app', '20-study.js'), 'utf8');
+  const nw = fs.readFileSync(path.join(ROOT, 'page', 'app', '80-new.js'), 'utf8');
+  assert.match(study, /run\(E\.examsFromDates\(args\)\)/);
+  assert.match(nw, /write\(\s*E\.examAdd\(/);
+});

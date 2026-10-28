@@ -156,6 +156,35 @@
       $('study-start').hidden = v !== 'objectives' || $('study-start').dataset.off === '1';
       $('study-planwrap').hidden = v !== 'objectives'; // B-450: the plan settings, on the overview
     }
+    // B-465: an exam on the calendar (a date whose title names one) for any course becomes that course's exam in the
+    // record, so Study shows it and a plan can be made for it. The page writes the exams documents the record is missing
+    // when the record arrives and whenever a date or an exam changes (core examsFromDates: one per course and day, never
+    // over an exam already there); each id is written once per load. The claude.ai page is read-only and writes none.
+    const examsDerived = new Set();
+    function deriveExams() {
+      if (READ_ONLY || !loaded.has('dates') || !loaded.has('exams')) return;
+      const args = {
+        dates: S.datesRaw,
+        dateedits: S.dateedits,
+        exams: S.examsRaw,
+        now: now(),
+        today,
+        skip: examsDerived,
+      };
+      const ids = E.examsFromDates(args).map(w => w.id);
+      if (!ids.length) return;
+      const p = run(E.examsFromDates(args));
+      for (const id of ids) examsDerived.add(id);
+      p.catch(e => toast('Couldn’t add an exam from the calendar: ' + ((e && e.message) || 'error')));
+    }
+    /** B-465: the Add exam button of a course with no exam in the record: opens New with the course picked. */
+    function addExamBtn(course) {
+      const b = btn('Add exam', () => newOpen('exam', drafts.exam, { course: course || E.defaultCourse() }), {
+        cls: 'btn neutral sm od-add',
+      });
+      b.setAttribute('aria-label', 'Add an exam' + (course ? ' for ' + course : ''));
+      return b;
+    }
     /** B-351 (D-313): the courses with an upcoming exam, objectives or not (Matt's record has none), each with its
      *  soonest; the overview's course switch and exam card read this. */
     function studyExams() {
@@ -360,11 +389,17 @@
           const bar = el('div', 'pbar ov-bar');
           bar.setAttribute('role', 'img');
           bar.setAttribute('aria-label', 'No exam yet');
-          card.replaceChildren(
-            head,
-            bar,
-            el('p', 'empty ov-none', 'Its next exam, its objectives and its plan show here once they’re in the record.')
+          // B-465: he can add the exam himself (course, title, date); the calendar's exams arrive by themselves
+          const none = el('div', 'ov-none-row');
+          none.append(
+            el(
+              'p',
+              'empty ov-none',
+              'Its next exam, its objectives and its plan show here once they’re in the record.'
+            ),
+            addExamBtn(cur ? cur.course : null)
           );
+          card.replaceChildren(head, bar, none);
         } else card.replaceChildren(d);
         renderStudyPlans(cur || null); // B-450: plans for no exam still show
         renderStudyUp(cur ? cur.course : null);
@@ -476,6 +511,7 @@
         el('span', 'mini', 'Its next exam shows here once it’s in the record.')
       );
       d.append(st);
+      if (!inPanel) d.append(addExamBtn(course)); // B-465: from 1200 px the exam card beside this pane carries it
       const open = course ? openInCourse(course) : [];
       if (open.length) {
         d.append(el('span', 'lab', 'Weak spots in it'));

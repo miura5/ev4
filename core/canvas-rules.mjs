@@ -10,8 +10,10 @@ export function makeCanvasRules(core) {
     MATERIAL_KINDS,
     chicagoClock,
     chicagoDate,
+    courseOf,
     envelope,
     isoOf,
+    kindsOf,
     liveDates,
     materialKind,
     shortDate,
@@ -144,7 +146,7 @@ export function makeCanvasRules(core) {
         url: raw.host && f.courseId ? `${raw.host}/courses/${f.courseId}/files/${f.fileId}` : null,
         pages: f.pages || null,
         chars: (f.text || '').length,
-        text: String(f.text || '').slice(0, core.C.library.maxChars),
+        text: String(f.text || '').slice(0, core.constants().library.maxChars),
         needsOcr,
         fetchedAt: at,
       };
@@ -163,5 +165,97 @@ export function makeCanvasRules(core) {
     return out;
   }
 
-  return { normalizeCanvas };
+  // ---------------------------------------------------------------- exams from the calendar (B-465)
+  // A calendar entry whose title names an exam (exam, test, final, midterm; not a review, remediation, prep or practice
+  // for one) is an exam of its course, whichever course spec.courses names (D-099): exams/<COURSE>.<yyyymmdd>, its kind
+  // from the title and the course's examKinds, its title and date the entry's. An exam the record already holds for that
+  // course and day covers it (matched by course and date, or by the entry it names), so nothing is written twice and no
+  // exam is ever overwritten. Matt's own Add exam in Study takes the same shape.
+  const EXAM_WORD = /\b(exam|test|final|midterm)s?\b/i;
+  const NOT_EXAM = /\b(review|remediation|prep|practice|study guide|sim|simulation)\b/i;
+  const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const KIND_WORDS = [
+    ['lab', /\b(lab|practical)\b/i],
+    ['final', /\bfinal\b/i],
+    ['dosage', /\b(dosage|dose|calculation|math)\b/i],
+    ['ati', /\bati\b/i],
+  ];
+  /** Whether a calendar entry names an exam: its kind is exam or its title says so, and it is not a review of one. */
+  const isExamDate = d =>
+    !!d &&
+    DAY.test(String(d.date || '')) &&
+    (d.kind === 'exam' || EXAM_WORD.test(d.title || '')) &&
+    !NOT_EXAM.test(d.title || '');
+  /** The exam kinds a course may have (spec.courses.<course>.examKinds, the course by its aliases too); none for a
+   *  name that is not a course. */
+  const examKinds = course => kindsOf(courseOf({ course }), 'examKinds');
+  /** An exam's kind from its title and its course's examKinds: lab, final, dosage or ati when the title says so and the
+   *  course has that kind, else unit (else the course's first kind). */
+  function examKindFor(title, course) {
+    const kinds = examKinds(course);
+    const hit = KIND_WORDS.find(([k, re]) => kinds.includes(k) && re.test(String(title || '')));
+    return hit ? hit[0] : kinds.includes('unit') ? 'unit' : kinds[0] || null;
+  }
+  const examId = (course, date) => String(course).replace(/\s+/g, '') + '.' + String(date).replace(/-/g, '');
+  /** One exams/<id> write (schema 2): done once its day has passed, upcoming otherwise. */
+  function examWrite({ course, kind, title, date, dateId }, { now, today, writer = 'page', source }) {
+    const data = {
+      ...envelope(writer, source, now),
+      schema: 2,
+      course,
+      kind,
+      date,
+      title,
+      status: today && date < today ? 'done' : 'upcoming',
+    };
+    if (dateId) data.dateId = dateId;
+    return { op: 'set', collection: 'exams', id: examId(course, date), data };
+  }
+  const coveredBy = (exams, course, d) =>
+    (exams || []).some(e => e && ((d.id && e.dateId === d.id) || (e.date === d.date && courseOf(e) === course)));
+  /**
+   * The exams the calendar names that the record has no exam for yet, as writes (set exams/<id>), one per course and
+   * day. dates and dateedits as read (an entry taken off names nothing); exams as read; today the Central date; skip
+   * the ids already written this load. The page runs these when the record arrives and when a date or an exam changes.
+   */
+  function examsFromDates({ dates, dateedits, exams, now, today, writer = 'page', skip } = {}) {
+    const out = [];
+    const skipped = new Set(skip || []);
+    for (const d of liveDates(dates, dateedits)
+      .filter(isExamDate)
+      .sort((a, b) => a.date.localeCompare(b.date))) {
+      const course = courseOf(d);
+      if (!examKinds(course).length || coveredBy(exams, course, d) || skipped.has(examId(course, d.date))) continue;
+      if (out.some(w => w.data.date === d.date && w.data.course === course)) continue;
+      out.push(
+        examWrite(
+          { course, kind: examKindFor(d.title, course), title: d.title, date: d.date, dateId: d.id },
+          { now, today, writer, source: 'From the calendar' }
+        )
+      );
+    }
+    return out;
+  }
+  /** His Add exam in Study: {course, title, date, kind?} as one exams/<id> write, or a reason he can read. Never over
+   *  an exam the record has for that course and day. */
+  function examAdd(exams, add, { now, today } = {}) {
+    const text = (v, n) =>
+      String(v == null ? '' : v)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, n);
+    const course = courseOf(add || {});
+    const kinds = examKinds(course);
+    if (!kinds.length) throw new Error('which course?');
+    const date = text(add.date, 10);
+    if (!DAY.test(date)) throw new Error('date must be YYYY-MM-DD');
+    const title = text(add.title, 120);
+    if (!title) throw new Error('title is required');
+    const same = (exams || []).find(e => e && e.date === date && courseOf(e) === course);
+    if (same) throw new Error(`${course} already has an exam on ${shortDate(date)}: ${same.title || same.id}`);
+    const kind = kinds.includes(add.kind) ? add.kind : examKindFor(title, course);
+    return examWrite({ course, kind, title, date }, { now, today, writer: 'page', source: 'Added by Matt' });
+  }
+
+  return { normalizeCanvas, isExamDate, examKinds, examKindFor, examsFromDates, examAdd };
 }

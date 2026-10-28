@@ -214,6 +214,7 @@
         S.exams = E.examViews(S.examsRaw || [], S.examedits || [], S.predictions || []);
         if (S.examsRaw) loaded.add('exams');
       }
+      if (key === 'dates' || key === 'dateedits' || key === 'exams') deriveExams(); // B-465: the calendar's exams
       loaded.add(k);
       render();
     }

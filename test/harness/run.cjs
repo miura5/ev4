@@ -1637,10 +1637,11 @@ async function studyPlanChecks(page) {
     window.__chatReply = null;
     delete window.claude.host;
   });
-  // Make a plan plans toward its card's exam, and the card shows it making (B-450)
+  // Make a plan plans toward its card's exam, and the card shows it making (B-450). B-465: the BIO lab practical E.V.
+  // put on the calendar (in 4 days) is an exam of BIO 201 now, so the planted one comes first, in 2 days.
   await page.evaluate(async () => {
     const db = await window.claude.use('db');
-    const day = new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10);
+    const day = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
     await db.collection('exams').doc('B9H').set({
       schema: 2,
       writer: 'page',
