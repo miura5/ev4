@@ -8397,7 +8397,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "D-361 round pushed as 9ae74e9: online refusals back off 60 s doubling to 5 min (never for good), offline holds until the connection is back, any landed start clears it, one quiet strip line after 2 min uncounted, no toasts. notes 182/182, smoke:pwa 31/31, npm test 879/0.",
+  "notes": "Last review round pushed as f002d14: the quiet line shows only on the refused note while he writes in it, beside Study (never in its place); offline-flag refusal tested; B-438 fixture on one base time. notes 184/184 twice, npm test green; smoke:pwa 29/31 with the same 2 exam-plan job failures at origin/main without this change.",
   "commit": null,
   "source": "chat, Oct 27",
   "words": "The notes writing timer starts only for a new note. It should also start when he opens an existing note and types in it for a few seconds, including going back into a note after ending a session, so editing an earlier note counts as study time.",
