@@ -541,3 +541,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-469 | bug | 2026-10-28T22:05:18.145Z | On live (v4.5.15), an exam plan cannot be put away: with a NUR 112 plan in place there is no way to discard it, so Make a plan cannot run again for that exam; Matt needs a control on the plan that removes it from Study (the plan is retired by marking, never deleted, B-11) and brings Make a plan back. | chat, Oct 28 evening (Matt, live test) | inbox |  |

@@ -8716,5 +8716,22 @@
    "outcome": "task",
    "at": "2026-10-28T21:21:39.920Z"
   }
+ },
+ {
+  "id": "B-469",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live (v4.5.15), an exam plan cannot be put away: with a NUR 112 plan in place there is no way to discard it, so Make a plan cannot run again for that exam; Matt needs a control on the plan that removes it from Study (the plan is retired by marking, never deleted, B-11) and brings Make a plan back.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live test)",
+  "words": "On live (v4.5.15), an exam plan cannot be put away: with a NUR 112 plan in place there is no way to discard it, so Make a plan cannot run again for that exam; Matt needs a control on the plan that removes it from Study (the plan is retired by marking, never deleted, B-11) and brings Make a plan back.",
+  "reportedAt": "2026-10-28T22:05:18.145Z",
+  "board": {
+   "row": "v4 B-469: On live (v4.5.15), an exam plan cannot be put away: with a NUR 112…"
+  }
  }
 ]
