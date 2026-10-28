@@ -49,7 +49,8 @@ follow and question.
 **The team** (detail in the build workflow map, https://claude.ai/artifact/QL68BeUSw8HB3QFhDTZ4XJ). The build manager
 keeps its own context for managing and for Matt, and runs 2 to 4 agents at a time; lane builders don't count. It never
 builds (D-351): every task, however small, goes to a builder (a lane, or a builder agent in its own worktree that
-proves, pushes and reports), every probe or design to a research or planning agent, every review to a fresh reviewer.
+proves, pushes and reports), every probe or design to a research or planning agent, every review to a fresh reviewer. Post-release fixes and
+tweaks go to one builder agent at a time (Matt, D-351); lanes are for larger feature sprints.
 It files Matt's asks as they come, answers him, orders the backlog, ships staging and sends release cards.
 
 - Lane builders: the scheduled task trig_01BfNybzvAe5FQE359rZBRsc, fired with "Lane <name>". Each takes its lane's next
