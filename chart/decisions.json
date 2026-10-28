@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-355",
+  "date": "Oct 27",
+  "title": "Study plans use Sonnet; every other Claude ask stays on Haiku",
+  "why": "Matt's call (Oct 27): plans need judgment and faithfulness to his brief, are made rarely, and cost well under budget. Safeguards: the Worker picks the model itself from the job kind (only an exam-plan job ask gets Sonnet; the page cannot name a model), Sonnet tokens are weighted by price against the ceilings as D-352 weights caching, and every other limit holds.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-354",
   "date": "Oct 27",
   "title": "B-449 (study plans) is an exception to the phase plan: built now, at top priority",
