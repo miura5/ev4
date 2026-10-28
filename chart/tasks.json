@@ -8198,5 +8198,22 @@
    "outcome": "task",
    "at": "2026-10-28T01:24:44.517Z"
   }
+ },
+ {
+  "id": "B-445",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Connect weak spots and need-to-know points with typed links (for example causes, sign of, treats, contraindicates, comes before) proposed by E.V. and accepted by him, and use them to generate NCLEX-style clinical judgment and prioritization practice sets with plausible distractors, and to surface links between old and current material.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Connect weak spots and need-to-know points with typed links (for example causes, sign of, treats, contraindicates, comes before) proposed by E.V. and accepted by him, and use them to generate NCLEX-style clinical judgment and prioritization practice sets with plausible distractors, and to surface links between old and current material.",
+  "reportedAt": "2026-10-28T01:40:46.691Z",
+  "board": {
+   "row": "v4 B-445: Connect weak spots and need-to-know points with typed links (for…"
+  }
  }
 ]
