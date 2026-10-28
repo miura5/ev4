@@ -8345,5 +8345,26 @@
    "outcome": "task",
    "at": "2026-10-28T03:09:38.651Z"
   }
+ },
+ {
+  "id": "B-452",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Conversation view tweaks: scrolling the conversation feels rigid compared with Linear's smooth chat scrolling; remove the quick-ask pills under the composer; remove the 'Go deeper' button; 'Back to now' sits off centre and too high.",
+  "dod": "The conversation thread scrolls natively and smoothly (no scroll-jacking, snapping or forced re-pins while he scrolls; wheel and trackpad momentum kept) at 1280 and 390; the quick-ask pills and the Go deeper button are gone from the Conversation view (their functions stay reachable by typing); Back to now is centred over the thread column and sits just above the composer; harness checks updated (removed controls retired as Matt's call); npm test and smoke green.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27 (screen recording, screenshots)",
+  "words": "Conversation view tweaks: scrolling the conversation feels rigid compared with Linear's smooth chat scrolling; remove the quick-ask pills under the composer; remove the 'Go deeper' button; 'Back to now' sits off centre and too high.",
+  "reportedAt": "2026-10-28T03:41:57.056Z",
+  "board": {
+   "row": "v4 B-452: Conversation view tweaks: scrolling the conversation feels rigid…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T03:41:57.542Z"
+  }
  }
 ]
