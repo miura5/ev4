@@ -8721,9 +8721,9 @@
   "id": "B-469",
   "kind": "bug",
   "title": "Bug (reported Oct 28): On live (v4.5.15), an exam plan cannot be put away: with a NUR 112 plan in place there is no way to discard it, so Make a plan cannot run again for that exam; Matt needs a control on the plan that removes it from Study (the plan is retired by marking, never deleted, B-11) and brings Make a plan back.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The exam plan screen in the app (PWA) has a Put away (discard) control on an existing plan: on confirm the plan is marked retired in the record (status, retiredAt; nothing deleted, B-11), it leaves Study and the plan views, Make a plan returns for that exam, and a new plan can be made; a retired plan is never read as the current plan by the page, the morning run or weak spots; npm test covers the marking and the page's choice of current plan; proved on staging in the PWA by retiring the NUR 112 plan and making a new one. Top priority (Matt, Oct 28).",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8732,6 +8732,10 @@
   "reportedAt": "2026-10-28T22:05:18.145Z",
   "board": {
    "row": "v4 B-469: On live (v4.5.15), an exam plan cannot be put away: with a NUR 112…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T22:05:51.678Z"
   }
  },
  {
