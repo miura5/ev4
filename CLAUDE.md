@@ -50,7 +50,11 @@ follow and question.
 keeps its own context for managing and for Matt, and runs 2 to 4 agents at a time; lane builders don't count. It never
 builds (D-351): every task, however small, goes to a builder (a lane, or a builder agent in its own worktree that
 proves, pushes and reports), every probe or design to a research or planning agent, every review to a fresh reviewer. Post-release fixes and
-tweaks go to one builder agent at a time (Matt, D-351); lanes are for larger feature sprints.
+tweaks go to one builder agent at a time (Matt, D-351); lanes are for larger feature sprints. The build manager
+keeps every agent it starts alive (D-358): a liveness watch runs while any agent works (a transcript quiet for 10
+minutes is checked: finished, or stopped and restarted from its saved work); after Matt interrupts a turn, which stops
+the background agents, it checks them first and restarts what stopped; and a status to Matt starts from whether each
+agent is running, never from its files alone.
 It files Matt's asks as they come, answers him, orders the backlog, ships staging and sends release cards.
 
 - Lane builders: the scheduled task trig_01BfNybzvAe5FQE359rZBRsc, fired with "Lane <name>". Each takes its lane's next

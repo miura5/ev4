@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-358",
+  "date": "Oct 27",
+  "title": "The build manager keeps its agents alive: a liveness watch while any agent works, a check after every interrupt, and status from liveness first",
+  "why": "Oct 27: Matt's interrupt stopped the B-449 and B-452 builders and the B-453 reviewer; the manager then reported them as progressing from their saved files and did not notice they had stopped until a message to one failed. Matt asked that the manager continuously check agents while tasks are in progress.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-357",
   "date": "Oct 27",
   "title": "Study plan tasks carry one badge from a fixed set: Graded, Learn, Practice, Review, Clinical prep, Skills prep",
