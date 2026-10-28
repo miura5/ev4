@@ -422,3 +422,43 @@ test('B-404 (D-326): a stale save is never retried over the other version: both 
       keep.lastIndexOf('showVersion(theirs)')
   );
 });
+
+test('B-439: a copy carries its formatting as HTML, and a paste of that HTML alone gives back the same blocks', () => {
+  const blocks = [
+    { type: 'h2', runs: [{ text: 'IM and ' }, { text: 'Subcutaneous', b: true }] },
+    {
+      type: 'p',
+      runs: [
+        { text: 'Use the ' },
+        { text: 'vastus lateralis', i: true, u: true },
+        { text: ' in infants & <toddlers>.' },
+      ],
+    },
+    { type: 'ul', runs: [{ text: 'Max 1 mL' }] },
+    { type: 'ul', runs: [{ text: 'Aspirate? No' }] },
+    { type: 'ol', runs: [{ text: 'Clean the site' }] },
+    { type: 'h3', runs: [{ text: 'Next', s: true }] },
+  ];
+  const c = E.noteCopy(blocks, { a: { b: 0, o: 0 }, f: { b: 5, o: 4 } });
+  const html = E.noteHtml(c.blocks);
+  assert.match(html, /<ul><li>Max 1 mL<\/li><li>Aspirate\? No<\/li><\/ul><ol><li>Clean the site<\/li><\/ol>/);
+  assert.match(html, /infants &amp; &lt;toddlers&gt;/);
+  // what Safari hands a paste: no custom type, only the HTML and the plain text
+  const back = E.notePaste({ json: '', html, text: c.text });
+  assert.deepEqual(back, E.noteBlocks(blocks));
+});
+
+test('B-439: one pasted heading into an empty paragraph stays a heading; into text it joins the line', () => {
+  const heading = [{ type: 'h3', runs: [{ text: 'Fluid Balance' }] }];
+  const empty = [
+    { type: 'h2', runs: [{ text: 'Top' }] },
+    { type: 'p', runs: [] },
+  ];
+  const r = E.noteInsertBlocks(empty, { a: { b: 1, o: 0 }, f: { b: 1, o: 0 } }, heading);
+  assert.equal(r.blocks[1].type, 'h3');
+  assert.equal(E.noteText(r.blocks[1]), 'Fluid Balance');
+  const line = [{ type: 'p', runs: [{ text: 'See ' }] }];
+  const r2 = E.noteInsertBlocks(line, { a: { b: 0, o: 4 }, f: { b: 0, o: 4 } }, heading);
+  assert.equal(r2.blocks[0].type, 'p');
+  assert.equal(E.noteText(r2.blocks[0]), 'See Fluid Balance');
+});

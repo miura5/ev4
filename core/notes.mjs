@@ -699,7 +699,9 @@ export function makeNotes() {
     const add = noteBlocks(pasted);
     if (add.length === 1) {
       const r = noteInsertText(out, { a: p, f: p }, '', null);
-      const bb = r.blocks[p.b];
+      // B-439: one pasted line into an empty paragraph keeps its own style (a heading pasted stays a heading)
+      const into = r.blocks[p.b];
+      const bb = !blockText(into) && into.type === 'p' && add[0].type !== 'p' ? { ...into, type: add[0].type } : into;
       const ins = add[0].runs;
       r.blocks[p.b] = noteBlock({ ...bb, runs: [...sliceRuns(bb.runs, 0, p.o), ...ins, ...sliceRuns(bb.runs, p.o)] });
       return { blocks: r.blocks, pos: { b: p.b, o: p.o + blockText(add[0]).length } };
@@ -729,6 +731,40 @@ export function makeNotes() {
         noteBlock({ ...blocks[i], runs: sliceRuns(blocks[i].runs, i === s.b ? s.o : 0, i === e.b ? e.o : Infinity) })
       );
     return { blocks: part, text: part.map(blockText).join('\n') };
+  }
+
+  /**
+   * B-439: blocks as plain HTML for the clipboard, which a paste here (notePaste) or another app reads back: headings
+   * and paragraphs as themselves, list items in real ul / ol lists (a checklist as a ul), runs as strong, em, u, s and
+   * checked links. Text is escaped; nothing else goes in.
+   */
+  function noteHtml(blocks) {
+    const esc = x =>
+      String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const run = r => {
+      let x = esc(r.text);
+      if (r.s) x = '<s>' + x + '</s>';
+      if (r.u) x = '<u>' + x + '</u>';
+      if (r.i) x = '<em>' + x + '</em>';
+      if (r.b) x = '<strong>' + x + '</strong>';
+      if (r.href && linkOk(r.href)) x = '<a href="' + esc(r.href) + '">' + x + '</a>';
+      return x;
+    };
+    let out = '',
+      open = null;
+    for (const b of noteBlocks(blocks)) {
+      const list = b.type === 'ol' ? 'ol' : LISTS.includes(b.type) ? 'ul' : null;
+      if (open && open !== list) {
+        out += '</' + open + '>';
+        open = null;
+      }
+      const inner = b.runs.map(run).join('') || '<br>';
+      if (list) {
+        if (!open) out += '<' + (open = list) + '>';
+        out += '<li>' + inner + '</li>';
+      } else out += '<' + b.type + '>' + inner + '</' + b.type + '>';
+    }
+    return open ? out + '</' + open + '>' : out;
   }
 
   // ---------------------------------------------------------------- rendering (through the caller's element maker)
@@ -811,6 +847,7 @@ export function makeNotes() {
     noteInsertBlocks,
     noteCopy,
     noteRender,
+    noteHtml,
     noteDoc,
   };
 }

@@ -1054,6 +1054,9 @@
       e.preventDefault();
       const c = E.noteCopy(NOTE.blocks, sel);
       e.clipboardData.setData('text/plain', c.text);
+      // B-439: the formatting as HTML too (the editor's own tree, which a paste reads back): Safari doesn't carry a custom
+      // type like NOTE_MIME across a copy, so without it a paste here got the plain text only
+      e.clipboardData.setData('text/html', E.noteHtml(c.blocks));
       e.clipboardData.setData(NOTE_MIME, JSON.stringify(c.blocks));
       if (cut) apply('delete', E.noteDelete(NOTE.blocks, sel), sel);
     }
