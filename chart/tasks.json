@@ -8824,5 +8824,22 @@
    "at": "2026-10-28T22:09:12.255Z"
   },
   "waitingOn": "Matt"
+ },
+ {
+  "id": "B-474",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): In the notes editor, selecting text across a bulleted, numbered or checklist list draws the selection highlight under the list markers (bullet, number, checkbox) as a stray band, instead of highlighting only the item text.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, screenshot)",
+  "words": "In the notes editor, selecting text across a bulleted, numbered or checklist list draws the selection highlight under the list markers (bullet, number, checkbox) as a stray band, instead of highlighting only the item text.",
+  "reportedAt": "2026-10-28T23:52:26.952Z",
+  "board": {
+   "row": "v4 B-474: In the notes editor, selecting text across a bulleted, numbered or…"
+  }
  }
 ]
