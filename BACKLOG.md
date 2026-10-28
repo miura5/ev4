@@ -527,3 +527,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-455 | bug | 2026-10-28T04:07:15.879Z | After a More practice quiz, the proposed weak spot from a miss cannot be accepted: Accept all on the quiz's end card and Accept on the Weak spots list are both greyed out ('Pick an objective first'), with no way to pick one. | chat, Oct 27 | inbox |  |

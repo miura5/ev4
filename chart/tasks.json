@@ -8410,5 +8410,23 @@
    "outcome": "task",
    "at": "2026-10-28T03:53:55.147Z"
   }
+ },
+ {
+  "id": "B-455",
+  "kind": "bug",
+  "title": "Bug (reported Oct 27): After a More practice quiz, the proposed weak spot from a miss cannot be accepted: Accept all on the quiz's end card and Accept on the Weak spots list are both greyed out ('Pick an objective first'), with no way to pick one.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 27",
+  "words": "After a More practice quiz, the proposed weak spot from a miss cannot be accepted: Accept all on the quiz's end card and Accept on the Weak spots list are both greyed out ('Pick an objective first'), with no way to pick one.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T04:07:15.879Z",
+  "board": {
+   "row": "v4 B-455: After a More practice quiz, the proposed weak spot from a miss cannot…"
+  }
  }
 ]
