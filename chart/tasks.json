@@ -8432,5 +8432,23 @@
    "outcome": "task",
    "at": "2026-10-28T04:10:03.853Z"
   }
+ },
+ {
+  "id": "B-456",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "final review of B-449",
+  "words": "A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T05:55:53.081Z",
+  "board": {
+   "row": "v4 B-456: A request to change one plan task with a remake word, such as 'scrap…"
+  }
  }
 ]

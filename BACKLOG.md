@@ -528,3 +528,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-456 | bug | 2026-10-28T05:55:53.081Z | A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit. | final review of B-449 | inbox |  |
