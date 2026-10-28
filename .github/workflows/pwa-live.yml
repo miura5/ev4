@@ -161,7 +161,7 @@ jobs:
           id=$(id_of ev-live-scratch)
           if [ -z "$id" ]; then npx wrangler d1 create ev-live-scratch >/dev/null; id=$(id_of ev-live-scratch); fi
           [ -n "$id" ] || { echo "ev-live-scratch D1 not found after create"; exit 1; }
-          printf 'name = "ev-live-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-live-scratch"\ndatabase_id = "%s"\n' "$id" > scratch.toml
+          printf 'name = "ev-live-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "ev-live-scratch"\ndatabase_id = "%s"\n\n[alias]\n"node:fs" = "./node-fs.mjs"\n"node:path" = "./node-path.mjs"\n"node:url" = "./node-url.mjs"\n' "$id" > scratch.toml
           npx wrangler d1 execute ev-live-scratch --config scratch.toml --remote --file schema.sql >/dev/null
           npx wrangler deploy --config scratch.toml > scratch.log 2>&1 || { cat scratch.log; exit 1; }
           printf '%s' "$EV_LIVE_TOKEN" | npx wrangler secret put EV_TOKEN --config scratch.toml >/dev/null

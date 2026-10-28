@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import { execFileSync } from 'node:child_process';
 import worker from '../pwa/worker.js';
 import { PlanJob, runPlanJob, PLAN_DEADLINE_MS } from '../pwa/planjob.js';
 import { apiUrl } from '../pwa/claude.js';
@@ -83,7 +84,8 @@ function setup({
   reply = body => jobReply(body),
   brief = 'A new study plan for E4.',
   title = 'NUR 112 study plan',
-  at = null,
+  at = null, // the job's `at`, as the phone's clock sets it
+  storedAt = null, // when D1 stored the job, on the Worker's clock
 } = {}) {
   const now = new Date();
   const jobAt = at || now;
@@ -115,7 +117,7 @@ function setup({
   };
   env.DB.sql
     .prepare('INSERT INTO docs (c, id, data, at, v) VALUES (?, ?, ?, ?, 1)')
-    .run('jobs', id, JSON.stringify(job), now.getTime());
+    .run('jobs', id, JSON.stringify(job), (storedAt || now).getTime());
   const sent = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
@@ -340,8 +342,8 @@ test('B-459: a fix ask goes only with enough time left before the deadline; else
   }
 });
 
-test('B-459: a job written longer ago than the start window is failed unrun, so it never races a second tap', async () => {
-  const s = setup({ at: new Date(Date.now() - 3 * 60000) });
+test('B-459: a job D1 stored longer ago than the start window is failed unrun, so it never races a second tap', async () => {
+  const s = setup({ storedAt: new Date(Date.now() - 3 * 60000) });
   try {
     await s.start();
     await s.object().alarm();
@@ -352,6 +354,38 @@ test('B-459: a job written longer ago than the start window is failed unrun, so 
   } finally {
     s.restore();
   }
+});
+
+test('B-459: the start window reads the Worker’s clock, not the phone’s: a phone 10 minutes behind still gets its plan', async () => {
+  const s = setup({ at: new Date(Date.now() - 10 * 60000) });
+  try {
+    await s.start();
+    await s.object().alarm();
+    assert.equal(s.doc('jobresults').status, 'done', JSON.stringify(s.doc('jobresults').error));
+  } finally {
+    s.restore();
+  }
+});
+
+test('B-459: every Worker config the workflows generate (the scratch and copy targets) gives node:fs, node:path and node:url their stand-ins', () => {
+  const ALIASES = ['"node:fs" = "./node-fs.mjs"', '"node:path" = "./node-path.mjs"', '"node:url" = "./node-url.mjs"'];
+  const main = fs.readFileSync(path.join(ROOT, 'pwa/wrangler.toml'), 'utf8');
+  for (const a of ALIASES) assert.ok(main.includes(a), 'wrangler.toml: ' + a);
+  let n = 0;
+  for (const wf of ['pwa-staging.yml', 'pwa-live.yml']) {
+    const text = fs.readFileSync(path.join(ROOT, '.github/workflows', wf), 'utf8');
+    for (const line of text.split('\n').filter(l => /printf '[^']*main = "worker\.js"/.test(l))) {
+      const cmd = line.trim().replace(/>\s*\S+\.toml\s*$/, '');
+      const toml = execFileSync('bash', ['-c', cmd], {
+        env: { ...process.env, id: '00000000-0000-0000-0000-000000000000', COPY_D1: 'ev-staging-scratch' },
+      }).toString();
+      assert.match(toml, /^main = "worker\.js"$/m, wf);
+      assert.match(toml, /^\[alias\]$/m, wf + ': an [alias] table');
+      for (const a of ALIASES) assert.ok(toml.includes(a), `${wf}: ${a}`);
+      n++;
+    }
+  }
+  assert.equal(n, 2, 'the staging copy target and the live scratch Worker');
 });
 
 test('B-459: at boot the app marks failed its jobs still running past the stale window, and only those', () => {

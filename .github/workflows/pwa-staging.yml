@@ -277,7 +277,7 @@ jobs:
           id=$(id_of)
           if [ -z "$id" ]; then npx wrangler d1 create "$COPY_D1" >/dev/null; id=$(id_of); fi
           [ -n "$id" ] || { echo "$COPY_D1 D1 not found after create"; exit 1; }
-          printf 'name = "ev-staging-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "%s"\ndatabase_id = "%s"\n' "$COPY_D1" "$id" > copy.toml
+          printf 'name = "ev-staging-scratch"\nmain = "worker.js"\ncompatibility_date = "2026-10-01"\nworkers_dev = true\n\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "%s"\ndatabase_id = "%s"\n\n[alias]\n"node:fs" = "./node-fs.mjs"\n"node:path" = "./node-path.mjs"\n"node:url" = "./node-url.mjs"\n' "$COPY_D1" "$id" > copy.toml
           npx wrangler d1 execute "$COPY_D1" --config copy.toml --remote --file schema.sql >/dev/null
           n=$(npx wrangler d1 execute "$COPY_D1" --config copy.toml --remote --json --command "SELECT COUNT(*) AS n FROM pragma_table_info('docs') WHERE name = 'v'" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
           [ "$n" = "1" ] || { echo "the scratch docs table has no version column"; exit 1; }

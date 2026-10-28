@@ -9,7 +9,7 @@
 //   - The jobresult goes none (queued) -> running -> done or failed: the runner writes running before its first ask;
 //     PLAN_DEADLINE_MS after the alarm starts, a run not yet ended has its ask aborted and is marked failed with a
 //     plain reason; an alarm that finds its run started but never ended (the object was reset mid-run) marks it
-//     failed; a job written more than PLAN_START_MS before its alarm runs is failed unrun (the page has freed it).
+//     failed; a job D1 stored more than PLAN_START_MS before its alarm runs is failed unrun (the page has freed it).
 //   - The Worker's Sonnet binding holds unchanged: each ask goes through handleClaude (claude.js), so the job check,
 //     the 2-ask cap, the claim given back only on a refusal and the ceilings apply as they did to the page's asks; an ask
 //     aborted at the deadline keeps its claim and counts an estimate, as a cut answer does (claude.js).
@@ -134,8 +134,10 @@ export async function runPlanJob({
 }) {
   const { spec, schemas } = jobsSpec || {};
   const began = Date.now();
-  const j = await docOf(env, 'jobs', jobId);
-  const at = j ? Date.parse(j.data.at) : NaN;
+  // measured on the Worker's own clock: when D1 last stored the job (the page's save of its hand-off, moments after it
+  // wrote it), never the job's `at`, which the phone's clock sets
+  const row = await env.DB.prepare('SELECT at FROM docs WHERE c = ? AND id = ?').bind('jobs', jobId).first();
+  const at = row ? Number(row.at) : NaN;
   if (!(began - at <= startMs)) {
     const why = 'it didn’t start in time. Try again.';
     await failIfRunning(env, jobId, release, why);
