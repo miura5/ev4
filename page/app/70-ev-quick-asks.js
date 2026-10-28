@@ -12,22 +12,16 @@
         yourTurnCount()
           ? ['Here’s what waits on you, by where it happens.', [{ type: 'yourturn' }]]
           : ['Nothing waits on you right now.', []],
-      // B-45 (D-102): the briefing's plan offer, the one way a draft starts without his asking in words.
+      // B-45 (D-102), D-362: the briefing's plan offer. A new plan starts only from his tap on the chip: this offers it.
       'draft its plan': async () => {
         const item = ((T.greet && T.greet.brief) || []).find(b => b.kind === 'plan' && b.exam);
         const ex = item && S.exams.find(e => e.id === item.exam);
-        if (!ex) return ['There’s no exam waiting on a plan right now.', []];
-        const r = await startJob({
-          kind: 'exam-plan',
-          title: 'Exam plan: ' + (ex.title || ex.id).replace(/:.*$/, ''),
-          brief: ex.id + ': draft its plan from the new exam content',
-        });
-        return r.fired && r.fired.ok
-          ? [
-              `Drafting the ${(ex.title || ex.id).replace(/:.*$/, '')} plan in the background. It arrives as a card you can use or leave.`,
-              [{ type: 'job', id: r.id }],
-            ]
-          : ['Couldn’t start it: ' + fireCopy(r.fired && r.fired.error), []];
+        if (!ex || !ex.course) return ['There’s no exam waiting on a plan right now.', []];
+        const title = (ex.title || ex.id).replace(/:.*$/, '');
+        return [
+          `The ${title} plan is one tap away: it’s made in the background and arrives as a draft you can use or leave.`,
+          [{ type: 'newplan', course: ex.course, brief: ex.id + ': draft its plan from the new exam content' }],
+        ];
       },
       // B-46 (D-103): the briefing's clinical offer; the brief is written only on this tap.
       'brief me for clinical': async () => {

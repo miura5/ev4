@@ -35,7 +35,7 @@
       }
     }
     const jobText = id => (TASKS.jobText || 'Job {id}').replace('{id}', id);
-    async function startJob({ kind, title, brief, course, revise }) {
+    async function startJob({ kind, title, brief, course, revise, said, chip }) {
       kind = KINDS[kind] ? kind : 'general';
       title =
         String(title || '')
@@ -60,6 +60,9 @@
           // B-449: a study plan names its course, and a change names the plan it changes (D-356)
           ...(kind === 'exam-plan' && course ? { course: String(course).slice(0, 40) } : {}),
           ...(kind === 'exam-plan' && revise ? { revise: String(revise).slice(0, 80) } : {}),
+          // D-362: an edit carries his own line (its chip's brief); a chip's new plan names the chip it came from
+          ...(kind === 'exam-plan' && said ? { said: String(said).slice(0, 1500) } : {}),
+          ...(kind === 'exam-plan' && chip ? { chip: String(chip).slice(0, 200) } : {}),
         },
       }); // B-177: jobs schema 2
       const fired = await fire(TASKS.worker, jobText(id));

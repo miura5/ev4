@@ -67,6 +67,16 @@
    "type": "string",
    "description": "B-449: an exam-plan job: the plans/<id> to revise, the brief saying what to change"
   },
+  "said": {
+   "type": "string",
+   "maxLength": 1500,
+   "description": "D-362: an exam-plan edit from chat: his own line, the brief of a Make a new plan chip the edit may offer"
+  },
+  "chip": {
+   "type": "string",
+   "maxLength": 200,
+   "description": "D-362: a new plan started from a chip: the chip's message card key, so only that chip shows this job"
+  },
   "fired": {
    "anyOf": [
     {

@@ -308,8 +308,9 @@ export const AGENT_FOLDS = {
       // D-362: the edit found his ask needs a whole new plan: no patch; E.V. offers the Make a new plan chip with his
       // words as its brief (one tap starts the exam-plan job; nothing starts here)
       result.offerNewPlan = true;
+      // the chip's brief is his own line, carried on the job (jobs/<id>.said), never the chat model's brief
       const course = (planCtx.draft.section && planCtx.draft.section.course) || job.course || null;
-      if (course) draftCard = { type: 'newplan', course, brief: String(job.brief || '').slice(0, 1500) };
+      if (course && job.said) draftCard = { type: 'newplan', course, brief: String(job.said).slice(0, 1500) };
     } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
       // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
       const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);

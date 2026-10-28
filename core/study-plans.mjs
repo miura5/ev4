@@ -370,12 +370,15 @@ export function makeStudyPlans(core) {
     return WHOLE_PLAN.test(w) && !ONE_TASK.test(w);
   }
   /**
-   * D-362: what a study plan ask in chat does. edit: the Haiku change of the plan he has ({course, revise}), or null
-   * when he has none (chat never starts a new plan). offer: the Make a new <course> plan chip (a newplan card with his
-   * words as its brief) when he has no plan yet or his words plainly ask for a whole new one, else null.
+   * D-362: what a study plan ask in chat does. `said` is his own line; `brief` is the chat model's. edit: the Haiku
+   * change of the plan he has ({course, revise, said}: his line rides on the job, so the edit's own chip offer carries
+   * his words), or null when he has none (chat never starts a new plan). offer: the Make a new <course> plan chip (a
+   * newplan card whose brief is his line, never the model's) when he typed a line and has no plan yet or his line
+   * plainly asks for a whole new one; null when there is no line of his (a retry, a read-along), whatever the brief.
    */
   function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date }) {
-    const course = studyPlanCourse({ title, brief: `${said} ${brief}` }, exams);
+    const his = chipBrief(said);
+    const course = studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);
     const sec = course && studyPlanSection({ exams, course, date });
     const cur =
       (sec &&
@@ -383,27 +386,30 @@ export function makeStudyPlans(core) {
           planViews(plansRaw || [], planedits || []).find(p => (p.exam || p.id) === sec.exam.id))) ||
       null;
     const offer =
-      sec && (!cur || studyPlanLooksNew(said || brief))
-        ? { type: 'newplan', course: sec.course, brief: chipBrief(brief) }
-        : null;
-    return { course: sec ? sec.course : course, edit: cur ? { course: sec.course, revise: cur.id } : null, offer };
+      sec && his && (!cur || studyPlanLooksNew(his)) ? { type: 'newplan', course: sec.course, brief: his } : null;
+    return {
+      course: sec ? sec.course : course,
+      edit: cur ? { course: sec.course, revise: cur.id, ...(his ? { said: his } : {}) } : null,
+      offer,
+    };
   }
   const chipBrief = b =>
     String(b || '')
       .trim()
       .slice(0, 1500);
-  /** D-362: the job his tap on the chip starts: one new plan (exam-plan, no revise) with the chip's brief. */
-  const studyPlanChipJob = c => ({
+  /** D-362: the job his tap on a chip starts: one new plan (exam-plan, no revise) with the chip's brief, naming the
+   * chip (its message card key) so the chip, and only that chip, then shows this job. */
+  const studyPlanChipJob = (c, key) => ({
     kind: 'exam-plan',
     title: `Study plan: ${c.course}`,
     brief: chipBrief(c.brief),
     course: c.course,
+    chip: String(key || '').slice(0, 200),
   });
-  /** D-362: the job a chip already started (so it shows that job, never a second tap), else null. */
-  const studyPlanChipStarted = (c, jobs) =>
-    (jobs || []).find(
-      j => j.kind === 'exam-plan' && !j.revise && j.course === c.course && j.brief === chipBrief(c.brief)
-    ) || null;
+  /** D-362: the job this chip (by its key) started, else null: an older job with the same words is another chip's. */
+  const studyPlanChipStarted = (c, jobs, key) =>
+    (key && (jobs || []).find(j => j.kind === 'exam-plan' && !j.revise && j.chip === String(key).slice(0, 200))) ||
+    null;
 
   /**
    * The lookup an edit ask may make (D-356): one date, material, objective or note of his record by id, small; or
