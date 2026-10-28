@@ -8454,5 +8454,23 @@
    "outcome": "task",
    "at": "2026-10-28T05:56:01.803Z"
   }
+ },
+ {
+  "id": "B-457",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): When a study plan's Sonnet request drops before its reply arrives, or comes back without usage, the Worker can give the ask back or count nothing, so a billed answer may not count toward the 2-ask cap or the token ceilings.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "final review of B-449's release fix wave",
+  "words": "When a study plan's Sonnet request drops before its reply arrives, or comes back without usage, the Worker can give the ask back or count nothing, so a billed answer may not count toward the 2-ask cap or the token ceilings.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T10:33:33.529Z",
+  "board": {
+   "row": "v4 B-457: When a study plan's Sonnet request drops before its reply arrives, or…"
+  }
  }
 ]
