@@ -1335,13 +1335,7 @@
       if (s.status === 'active' || s.status === 'ending') {
         const st = E.sessionState(s, now());
         sub =
-          (st.onBreak
-            ? 'On a break'
-            : isWriting(s)
-              ? writingClock(st)
-              : clockLeft(st.leftMs) + ' left') +
-          ' · ' +
-          name;
+          (st.onBreak ? 'On a break' : isWriting(s) ? writingClock(st) : clockLeft(st.leftMs) + ' left') + ' · ' + name;
       }
       return { title: 'Studying with E.V.', sub, chip: 'Studying: ' + name };
     }
@@ -1419,7 +1413,7 @@
             ? writingClock(st)
             : isTimed(s)
               ? clockLeft(st.leftMs) + ' left'
-            : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`;
+              : `${minsLeft(st) ?? st.minutes} min${minsLeft(st) == null ? '' : ' to next check'}`;
       const go = slot.querySelector('.tn');
       const nm = sessName(s);
       const name = noteOfSession(s) && nm === 'New note' ? 'your new note' : nm; // the demo's words for an empty one
