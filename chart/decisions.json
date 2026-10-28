@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-359",
+  "date": "Oct 28",
+  "title": "The page spec's fixed 50 KB budget (B-161) is retired; a growth guard at 96 KB replaces it, and the exact key-list check stays",
+  "why": "B-449's review: the 50 KB number was a self-set first-load budget from Oct 21 (B-161, audit A-3), not a claude.ai rule (published artifact files may be 16 MB) and not needed by the PWA; the real build already sits at 50,000 bytes, so every feature would fight it. The exact key-list check in test/page.test.mjs still guards against publishing spec the page does not read. The test is measured on the real release string, not 'v4.5'.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-358",
   "date": "Oct 27",
   "title": "The build manager keeps its agents alive: a liveness watch while any agent works, a check after every interrupt, and status from liveness first",
