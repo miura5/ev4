@@ -8270,7 +8270,7 @@
   "milestone": "After Notes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Queued in the next batch after B-465 (Matt's order, Oct 28 evening).",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "From Today's list, go back to earlier days (as the week view's arrows do) to see and check off a past day's tasks, for catching up or working past midnight.",
