@@ -8312,7 +8312,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Pushed 621fe55: Remake per D-362 beside Ask for changes; day rows fold in place; shell fold probe repaint-proof. check --touched GREEN (shell, components, run, captions, core, greet, frame, notes, look) before the last small commit; npm test, smoke and run.cjs green at it. Ready for the wave's click-through and the review skill (core composers, page writes, build page spec).",
+  "notes": "Review gaps fixed in 8c274d3 (card's exam into Make a plan/Remake, card's plan into Ask for changes, no-exam plans on every tab); npm test, smoke and check --touched GREEN at 8c274d3.",
   "commit": null,
   "source": "Matt, chat, Oct 27 (B-449 split)",
   "words": "Study > Plan interface for study plans: a sliders button opening his editable plan instructions (save, reset to the brief), the draft view with score, open questions, scope and days grouped by week with tag, minutes and done-state, Approve, and Ask for changes and Make a plan through the chat.",
