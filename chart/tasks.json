@@ -8051,5 +8051,26 @@
    "outcome": "task",
    "at": "2026-10-28T00:45:22.573Z"
   }
+ },
+ {
+  "id": "B-438",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Notes study time: keep the session timer going in a note, but record and add up time only while the note is actively being written; study time should not depend on E.V. reading the note; and the E.V. conversation should be reachable at any time from a note to ask questions or generate questions.",
+  "dod": "In a note, the session timer runs and adds up only time spent actively writing (it pauses after a short idle gap and resumes on typing), recorded to the session and Record whether read-along is on or off; the E.V. conversation opens from the note at any time to ask or to generate questions; harness checks for each; npm test and smoke green; staging.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Notes study time: keep the session timer going in a note, but record and add up time only while the note is actively being written; study time should not depend on E.V. reading the note; and the E.V. conversation should be reachable at any time from a note to ask questions or generate questions.",
+  "reportedAt": "2026-10-28T00:50:45.382Z",
+  "board": {
+   "row": "v4 B-438: Notes study time: keep the session timer going in a note, but record…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T00:50:45.649Z"
+  }
  }
 ]

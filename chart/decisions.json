@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-350",
+  "date": "Oct 27",
+  "title": "A live deploy no longer waits for a running study session (R-03 ended)",
+  "why": "Matt's call (Oct 27): the gate blocked releases while he studied, and sessions now live in D1 and survive a page reload, so a deploy mid-session costs at most a reload. Ends R-03 (D-139, B-87); kept in chart/rules.json marked ended.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-349",
   "date": "Oct 27",
   "title": "Claude ceilings: 500k an hour, 1.5M a day, kept as a D1 setting changed without a release",

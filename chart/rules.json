@@ -22,7 +22,8 @@
   "decision": "D-139",
   "task": "B-87",
   "command": "ship live (deploy live)",
-  "check": "sessionGate"
+  "check": "sessionGate",
+  "ended": "D-350: Matt ended the study-session gate on live deploys (Oct 27)"
  },
  {
   "id": "R-04",
