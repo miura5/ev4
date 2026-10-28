@@ -5692,5 +5692,33 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "f0bd996",
+  "time": "2026-10-28T21:50:14.355Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "219358d",
+  "from": "219358d",
+  "tasks": [
+   "B-447",
+   "B-446",
+   "B-453",
+   "B-452",
+   "B-455",
+   "B-454",
+   "B-449",
+   "B-389",
+   "B-456",
+   "B-459",
+   "B-450",
+   "B-466"
+  ],
+  "summary": "A past date's panel in the Today week view says 'in -1 days' instead…; Quiz me took a long time and then said the set did not come back in a…; A Quiz me matrix question whose columns differ only by a symbol, such…; Conversation view tweaks: scrolling the conversation feels rigid…; After a More practice quiz, the proposed weak spot from a miss cannot…; The notes writing timer starts only for a new note. It should also…; Exam study plans are weak: asked for a plan for a course, E.V. should…; The staging Worker's page saves are last-write-wins with no version…; A request to change one plan task with a remake word, such as 'scrap…; Making a study plan holds one request open, silent, for the minutes…; Study > Plan interface for study plans: a sliders button opening his…; Per D-366 the full check runs nightly only and must not gate a live…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.15"
  }
 ]
