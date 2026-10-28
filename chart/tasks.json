@@ -8459,9 +8459,9 @@
   "id": "B-457",
   "kind": "bug",
   "title": "Bug (reported Oct 28): When a study plan's Sonnet request drops before its reply arrives, or comes back without usage, the Worker can give the ask back or count nothing, so a billed answer may not count toward the 2-ask cap or the token ceilings.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Every Sonnet ask that is not a refusal Claude returned (4xx/5xx) keeps its claim and counts a conservative estimate (input at ~3.5 chars/token plus max_tokens, at the model's weight) toward the ceilings: a throw before headers after the request was sent, a 200 with a non-JSON body or no usage, and a Worker cancelled mid-ask; a max_tokens-cut answer gets no fix and writes nothing, with a test; npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8471,6 +8471,10 @@
   "reportedAt": "2026-10-28T10:33:33.529Z",
   "board": {
    "row": "v4 B-457: When a study plan's Sonnet request drops before its reply arrives, or…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T10:33:46.102Z"
   }
  }
 ]
