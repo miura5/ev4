@@ -1315,7 +1315,14 @@ async function studyPlanChecks(page) {
       },
       {
         date: d(1),
-        label: 'Harness taper',
+        // B-450: an older plan's habit, its date as the label (the row shows the date once, then the theme)
+        label:
+          ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(d(1) + 'T12:00:00Z').getUTCDay()] +
+          ' ' +
+          Number(d(1).slice(5, 7)) +
+          '/' +
+          Number(d(1).slice(8)),
+        dayLabel: 'Harness taper',
         tasks: [
           T('h6', 'Harness second pass', 'review', 'review', 30),
           T('h7', 'Harness terminology', 'practice', 'terminology', 10),
@@ -1401,8 +1408,59 @@ async function studyPlanChecks(page) {
         later: [...document.querySelectorAll('#ov-plans .ov-card .ov-ex')].map(e => e.textContent),
         e5: !!document.querySelector('#ov-plans .pl-card.dr[data-plan="E5"]'),
         sideways: document.documentElement.scrollWidth > innerWidth,
+        labels: card ? [...card.querySelectorAll('.pl-dr')].map(b => b.querySelector('.lb').textContent) : [],
+        weight: card ? getComputedStyle(card.querySelector('.pl-t .title')).fontWeight : '',
+        e4cards: [...document.querySelectorAll('#ov-plans .pl-card')]
+          .filter(c => /^E4/.test(c.dataset.plan))
+          .map(c => c.dataset.plan),
+        swap: card ? (card.querySelector('.pl-swap') || {}).textContent : '',
+        e5sum: vis(document.querySelector('#ov-plans .pl-card.dr[data-plan="E5"] > .plan-sum .pm-act')),
+        dosefoot: vis(
+          [...document.querySelectorAll('#ov-plans .pl-card[data-plan="ATI-DOSE"] .pl-foot button')].find(b =>
+            /Ask for changes/.test(b.textContent)
+          )
+        ),
+        bar: ['study-qquiz', 'study-qweak', 'study-start'].map(id => {
+          const b = document.getElementById(id),
+            r = b.getBoundingClientRect();
+          return {
+            id,
+            l: Math.round(r.left),
+            r: Math.round(r.right),
+            clip: b.scrollWidth > b.clientWidth + 1,
+            t: b.textContent.trim(),
+            shown: vis(b),
+          };
+        }),
       };
     });
+    ok(
+      `[${w}] a day labelled with its date shows the date once, then its theme (B-450)`,
+      m.labels[1] === 'Harness taper',
+      JSON.stringify(m.labels)
+    );
+    ok(`[${w}] plan task titles are regular weight, as the mock (B-450)`, m.weight === '400', m.weight);
+    ok(
+      `[${w}] one card per exam: the draft, with a switch to the approved version (B-450)`,
+      JSON.stringify(m.e4cards) === '["E4-H2"]' && m.swap === 'Approved version',
+      JSON.stringify([m.e4cards, m.swap])
+    );
+    ok(
+      `[${w}] a card whose summary is not in the panel keeps its actions: E5's draft and the dosage plan (B-450)`,
+      m.e5sum && m.dosefoot,
+      JSON.stringify([m.e5sum, m.dosefoot])
+    );
+    if (w === 390) {
+      const bar = m.bar.filter(x => x.shown);
+      ok(
+        '[390] the toolbar row of Quiz me, Weak spots and Start session: nothing clipped, a gap between each (B-450)',
+        bar.length === 3 &&
+          bar.every(x => !x.clip) &&
+          bar.every((x, i) => !i || x.l >= bar[i - 1].r + 4) &&
+          / new$|^Weak spots( · \d+)?$/.test(bar[1].t),
+        JSON.stringify(bar)
+      );
+    }
     ok(`[${w}] the Study toolbar has the plan settings`, m.settings);
     ok(
       `[${w}] under a study plan the exam's objectives fold to one line`,
@@ -1433,6 +1491,38 @@ async function studyPlanChecks(page) {
       JSON.stringify([m.later, m.ask])
     );
     ok(`[${w}] the overview has no sideways scroll`, !m.sideways);
+    if (w === 1280) {
+      // the switch shows the version in force in the same place, and back (B-450)
+      await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-swap').click();
+      await page.waitForTimeout(150);
+      const sw = await page.evaluate(() =>
+        [...document.querySelectorAll('#ov-plans .pl-card')]
+          .filter(c => /^E4/.test(c.dataset.plan))
+          .map(c => [c.dataset.plan, (c.querySelector('.pl-swap') || {}).textContent])
+      );
+      await page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-swap').click();
+      await page.waitForTimeout(150);
+      ok(
+        'the approved version shows in the draft’s place and switches back',
+        JSON.stringify(sw) === '[["E4","Back to the draft"]]',
+        JSON.stringify(sw)
+      );
+      // with his objectives open the panel is the objective's: the draft's card carries its summary and actions (B-450)
+      await page.locator('#ov-card .fold-line.pm-more').click();
+      await page.waitForTimeout(200);
+      const acts = await page.evaluate(() =>
+        [...document.querySelectorAll('#ov-plans .pl-card[data-plan="E4-H2"] > .plan-sum .pm-act button')]
+          .filter(b => b.getClientRects().length)
+          .map(b => b.textContent.trim())
+      );
+      ok(
+        'with the objectives open, the draft’s card carries Ask for changes, Approve and Remake',
+        ['Ask for changes', 'Approve', 'Remake'].every(x => acts.includes(x)),
+        JSON.stringify(acts)
+      );
+      await page.locator('#ov-card .fold-line.pm-more').click();
+      await page.waitForTimeout(200);
+    }
     // a badge's count filters the rows; All brings them back
     await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-filter button[data-f="practice"]').click();
     await page.waitForTimeout(120);
@@ -1614,6 +1704,112 @@ async function studyPlanChecks(page) {
     JSON.stringify([d0, d1])
   );
   await page.screenshot({ path: `${shots}/plan-approved-1280.png`, fullPage: true });
+  // a refused tick puts the box and the row back together (B-450)
+  {
+    await page.evaluate(() => {
+      window.__writeDelayMs = 300;
+      window.__writeFail = 'permission_denied';
+    });
+    const box = await page
+      .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
+      .first()
+      .elementHandle();
+    await box.click();
+    await page.waitForTimeout(120);
+    const mid = await box.evaluate(b => b.closest('.pl-t').classList.contains('done'));
+    await page.waitForTimeout(700);
+    const after = await box.evaluate(b => ({ on: b.checked, done: b.closest('.pl-t').classList.contains('done') }));
+    await page.evaluate(() => {
+      window.__writeDelayMs = 0;
+      window.__writeFail = null;
+    });
+    ok(
+      'a refused plan tick unchecks the box and takes the row’s done state back',
+      mid && !after.on && !after.done,
+      JSON.stringify([mid, after])
+    );
+  }
+  // Keep in the plan: a study plan's tasks leave Today's list and the week's days, and Study's line offers no Open
+  // Today (B-450). The saved days carry one of its tasks each, as the morning writes them.
+  {
+    const tomorrow = d(1);
+    await page.evaluate(
+      async ({ today, tomorrow }) => {
+        const db = await window.claude.use('db');
+        const day = window.__db.days[today];
+        const item = { id: 'plan-h3', text: 'Harness drill', tag: 'PRACTICE', minutes: 20, ref: 'plans/E4#h3' };
+        await db
+          .collection('days')
+          .doc(today)
+          .set({ ...day, list: { ...day.list, items: [...day.list.items, item] } });
+        await db
+          .collection('days')
+          .doc(tomorrow)
+          .set({
+            ...day,
+            date: tomorrow,
+            list: {
+              ...day.list,
+              items: [{ id: 'plan-h6', text: 'Harness second pass', tag: 'REVIEW', minutes: 30, ref: 'plans/E4#h6' }],
+            },
+          });
+      },
+      { today, tomorrow }
+    );
+    const view = async keep => {
+      await page.evaluate(async keep => {
+        const db = await window.claude.use('db');
+        const st = (window.__db.settings || {})['study-plan'] || {};
+        await db
+          .collection('settings')
+          .doc('study-plan')
+          .set({
+            schema: 1,
+            writer: 'page',
+            at: new Date().toISOString(),
+            source: 'E.V. Home',
+            updatedAt: new Date().toISOString(),
+            instructions: null,
+            ...st,
+            approved: keep ? 'plan' : 'today',
+          });
+      }, keep);
+      await page.click('#tab-study');
+      await page.waitForTimeout(250);
+      const line = await page.evaluate(() => [...document.querySelectorAll('#evline button')].map(b => b.textContent));
+      await page.click('#tab-today');
+      await page.waitForTimeout(250);
+      await page.$eval('#seg-today [data-v="list"]', b => b.click());
+      await page.waitForTimeout(200);
+      const list = await page.evaluate(() =>
+        /Harness drill/.test((document.getElementById('today-list') || {}).textContent || '')
+      );
+      await page.$eval('#seg-today [data-v="week"]', b => b.click());
+      await page.waitForTimeout(300);
+      await page.$eval(`#today-week .wk-day[data-date="${tomorrow}"] .wk-h`, b => b.click()); // the day's panel
+      await page.waitForTimeout(250);
+      const week = await page.evaluate(() =>
+        /Harness second pass/.test(
+          ((document.getElementById('today-week') || {}).textContent || '') +
+            ((document.getElementById('today-date') || {}).textContent || '')
+        )
+      );
+      await page.$eval('#seg-today [data-v="list"]', b => b.click());
+      await page.waitForTimeout(150);
+      return { line, list, week };
+    };
+    const on = await view(false),
+      off = await view(true);
+    // (Study's line here leads with the weak spots to review, so its Open Today is not read on this record)
+    ok(
+      'Keep in the plan takes a study plan’s tasks off Today’s list and the week’s day panel',
+      on.list && on.week && !off.list && !off.week,
+      JSON.stringify({ on, off })
+    );
+    await view(false);
+    await page.click('#tab-study');
+    await page.waitForTimeout(200);
+  }
   // E4's earlier plan back in force for the checks after this one (nothing is deleted: the draft stays a Fact)
   await page.evaluate(async () => {
     const db = await window.claude.use('db');
@@ -3476,7 +3672,13 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(150);
       const open = page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-day.open').first();
       ok('a plan day opens to its tasks on a tap', (await open.locator('.pl-t input.tick').count()) > 0);
-      ok('an older plan’s task with no D-357 tag shows no badge', (await open.locator('.pl-t .badge').count()) === 0);
+      // B-450: an older plan's tags show as the nearest of the six (DRILL is Practice), for display only
+      const legacy = await open.locator('.pl-t .badge').allTextContents();
+      ok(
+        'an older plan’s tag shows as its nearest badge (DRILL: Practice)',
+        JSON.stringify(legacy) === '["Practice"]',
+        JSON.stringify(legacy)
+      );
       const before = await page.evaluate(
         () => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length
       );

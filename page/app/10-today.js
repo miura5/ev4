@@ -34,6 +34,14 @@
       const t = E.planTasks(p).find(t => t.id === m[2]);
       return t ? { plan: p, task: t } : null;
     }
+    /** B-450: with Approved tasks set to Keep in the plan, a study plan's task stays in Study's plan, off Today's list
+     *  and off the week's days. */
+    const keepsInPlan = () => !!(S.planSettings && S.planSettings.approved === 'plan');
+    function keptInPlan(it) {
+      if (!keepsInPlan()) return false;
+      const pt = planTaskById(it.ref);
+      return !!(pt && pt.plan.section);
+    }
     function dayState() {
       // the planned list (saved at 4:25am, else built live) plus what he or E.V. added or took off (D-078)
       const day = M.day && M.day.list ? M.day : liveDay();
@@ -44,13 +52,7 @@
         if (pt) return E.taskDone(pt.plan, { ...pt.task }, today, S.sets, S.answers);
         return !!checks[it.id];
       };
-      // B-450: with Approved tasks set to Keep in the plan, a study plan's tasks stay in Study's plan, off Today
-      const kept = it => {
-        if (!S.planSettings || S.planSettings.approved !== 'plan') return false;
-        const pt = planTaskById(it.ref);
-        return !!(pt && pt.plan.section);
-      };
-      return { day, items: v.items.filter(it => !kept(it)), isDone, budget: v.budget, skipped: v.skipped };
+      return { day, items: v.items.filter(it => !keptInPlan(it)), isDone, budget: v.budget, skipped: v.skipped };
     }
     const dayDoc = date => S.days.find(d => d.id === date) || null;
     const dayEditDoc = date => S.dayedits.find(d => d.id === date) || null;
@@ -1248,7 +1250,9 @@
         const s = dayState();
         return s.items.filter(it => !it.deferred).map(it => ({ ...it, done: s.isDone(it) }));
       }
-      return E.dayView(dayDoc(date), dayEditDoc(date)).items.map(it => ({ ...it, done: !!it.checked }));
+      return E.dayView(dayDoc(date), dayEditDoc(date))
+        .items.filter(it => !keptInPlan(it))
+        .map(it => ({ ...it, done: !!it.checked }));
     }
     const taskSub = it =>
       [(BADGE[it.tag] || [it.tag ? 'Class' : 'To do'])[0], it.minutes ? durFmt(it.minutes) : '']

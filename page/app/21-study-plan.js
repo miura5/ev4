@@ -17,7 +17,36 @@
     };
     // D-357: a study plan task's one badge, from the fixed set; the same label and colour as its row in Today (BADGE).
     const PLAN_TAG_SET = E.STUDY_PLAN_TAGS || ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
-    const tagKey = t => (PLAN_TAG_SET.includes(t) ? String(t).replace('-', ' ').toUpperCase() : null);
+    // B-450: an older plan's tags (a plan page's legend, any case) show as the nearest of the six, for display only;
+    // the record keeps its own. Anything else shows no badge.
+    const LEGACY_TAG = {
+      drill: 'practice',
+      quiz: 'practice',
+      practice: 'practice',
+      reading: 'learn',
+      read: 'learn',
+      preview: 'learn',
+      lecture: 'learn',
+      learn: 'learn',
+      clinical: 'clinical-prep',
+      'clinical prep': 'clinical-prep',
+      val: 'skills-prep',
+      validation: 'skills-prep',
+      skills: 'skills-prep',
+      checkoff: 'skills-prep',
+      'skills prep': 'skills-prep',
+      review: 'review',
+      exam: 'graded',
+      graded: 'graded',
+      assignment: 'graded',
+    };
+    const tagOf = t => {
+      const k = String(t || '')
+        .trim()
+        .toLowerCase();
+      return PLAN_TAG_SET.includes(k) ? k : LEGACY_TAG[k] || null;
+    };
+    const tagKey = t => (tagOf(t) ? tagOf(t).replace('-', ' ').toUpperCase() : null);
     function tagBadge(t) {
       const k = tagKey(t);
       const b = k && BADGE[k];
@@ -34,6 +63,14 @@
       'Feedback',
       'Clarity',
     ];
+    // B-450: an older plan's day label is often its date ("Thu 10/29"): the row shows the date once, then the theme
+    const DATEISH =
+      /^\s*(?:(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tues?|wed|thur?s?|fri|sat|sun)\b\.?,?\s*)?(?:\d{1,2}[/.-]\d{1,2}(?:[/.-]\d{2,4})?|\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?)?\s*(?:[·:–—-]\s*|$)/i;
+    const themeOf = s => {
+      const t = String(s || '').trim();
+      const m = DATEISH.exec(t);
+      return m && m[0].trim() ? t.slice(m[0].length).trim() : t;
+    };
     const mShort = m => {
       m = Math.round(m || 0);
       return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
@@ -109,7 +146,7 @@
     function remakeBtn(ex, course) {
       const b = btn('Remake', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn ghost' });
       b.title = 'A new plan from today; what you ticked stays done';
-      b.disabled = !!planJobState(ex, course, null).working;
+      b.disabled = !!(planJobState(ex, course, null).working || E.studyPlanNewJobRunning(S.jobs, course));
       return b;
     }
     function askForChanges(ex, p) {
@@ -173,17 +210,22 @@
     // ---------------------------------------------------------------- the rows
     function taskRow(p, t, isDone, draft) {
       const on = !draft && isDone(t);
-      const li = el('li', 'pl-t' + (on ? ' done' : '') + (t.tag === 'graded' ? ' graded' : ''));
+      const li = el('li', 'pl-t' + (on ? ' done' : ''));
       const c = el('input', 'tick');
       c.type = 'checkbox';
       c.checked = c.defaultChecked = on;
       c.disabled = !!draft;
       c.setAttribute('aria-label', 'Done: ' + (t.text || t.id));
       c.addEventListener('change', () =>
-        guard(c, async () => {
-          li.classList.toggle('done', c.checked);
-          await tickPlan(p, t, c.checked);
-        })
+        guard(
+          c,
+          async () => {
+            li.classList.toggle('done', c.checked);
+            await tickPlan(p, t, c.checked);
+          },
+          null,
+          () => li.classList.toggle('done', c.checked) // a refused tick puts the box and the row back together
+        )
       );
       const g = el('div', 'grow');
       g.append(el('div', 'title', t.text || t.id));
@@ -236,7 +278,7 @@
     /** The per-badge counts over a plan's tasks, each filtering its rows (D-357); none when no task has a badge. */
     function badgeFilter(p, ts) {
       const n = {};
-      for (const t of ts) if (tagKey(t.tag)) n[t.tag] = (n[t.tag] || 0) + 1;
+      for (const t of ts) if (tagOf(t.tag)) n[tagOf(t.tag)] = (n[tagOf(t.tag)] || 0) + 1; // the badges shown
       const tags = PLAN_TAG_SET.filter(t => n[t]);
       if (!tags.length) return null;
       const f = planUi.filter[p.id] && n[planUi.filter[p.id]] ? planUi.filter[p.id] : 'all';
@@ -260,12 +302,12 @@
     /** A plan's day rows: today first and open (what is left from earlier days folded once inside it), the next days,
      *  the rest to the exam folded, then the earlier days folded. A draft opens its first day. */
     function planRowsFor(p, ex, { draft, f, isDone }) {
-      const keep = t => f === 'all' || t.tag === f;
+      const keep = t => f === 'all' || tagOf(t.tag) === f;
       const days = planDays(p)
         .map(d => ({ d, ts: (d.tasks || []).map(t => ({ ...t, date: d.date })).filter(keep) }))
         .filter(x => x.ts.length || (f === 'all' && x.d.date === today));
       const rows = el('div', 'pl-rows');
-      const label = x => x.d.label || (x.ts[0] && x.ts[0].text) || '';
+      const label = x => themeOf(x.d.label) || themeOf(x.d.dayLabel) || (x.ts[0] && x.ts[0].text) || '';
       const tdy = days.find(x => x.d.date === today);
       const carry = draft ? [] : days.filter(x => x.d.date < today).flatMap(x => x.ts.filter(t => !isDone(t)));
       if (tdy || carry.length) {
@@ -517,16 +559,30 @@
       h.append(el('b', 'ov-ex', ex.own ? ex.title : exShortOf(ex) + ' plan'), ...extra);
       return h;
     }
-    function approvedCard(p, ex, course) {
+    /** The head's switch between an exam's draft and the version in force: one card per exam (B-450). */
+    function swapBtn(ex, toApproved) {
+      const b = btn(
+        toApproved ? 'Approved version' : 'Back to the draft',
+        () => {
+          planUi.showApproved = { ...(planUi.showApproved || {}), [ex.id]: toApproved };
+          render();
+        },
+        { cls: 'btn ghost sm pl-swap' }
+      );
+      return b;
+    }
+    function approvedCard(p, ex, course, { panelled = true, swap = null } = {}) {
       const c = planCounts(p);
-      const card = el('div', 'ui-card pl-card ok');
+      // a card whose summary is not in the right panel keeps its actions at its foot at every width
+      const card = el('div', 'ui-card pl-card ok' + (panelled ? '' : ' own-foot'));
       card.dataset.plan = p.id;
       const sec = p.section || {};
       const first = sec.from || (planDays(p)[0] || {}).date;
       card.append(
         planHead(p, ex, [
-          ...(first ? [el('span', 'meta pl-span', `· ${short(first)} – ${short(sec.to || ex.date)}`)] : []),
+          ...(first ? [el('span', 'meta pl-span', `·\u00a0${short(first)} – ${short(sec.to || ex.date)}`)] : []),
           el('span', 'sp'),
+          ...(swap ? [swap] : []),
           el('span', 'meta pl-done', `${c.done} of ${c.ts.length} done`),
         ])
       );
@@ -554,7 +610,7 @@
       card.append(foot);
       return { card, panel: () => planSummary(p, ex, course, c) };
     }
-    function draftCard(p, ex, course, js, panelled) {
+    function draftCard(p, ex, course, js, { panelled = true, swap = null } = {}) {
       const ts = taskList(p);
       const card = el('div', 'ui-card pl-card dr');
       card.dataset.plan = p.id;
@@ -563,12 +619,13 @@
         planHead(p, ex, [
           bdg,
           el('span', 'sp'),
+          ...(swap ? [swap] : []),
           el('span', 'meta', `${plural(planDays(p).length, 'day')} · ${plural(ts.length, 'task')}`),
         ])
       );
       if (js.ask) card.append(askBlock(js.ask, course, ex));
       if (js.working) card.append(el('p', 'mini pl-working', 'E.V. is changing this plan. The new draft shows here.'));
-      // the panel holds one draft's summary; any other draft (a later exam's) carries its own
+      // the panel holds one summary; a draft whose summary is not there carries its own, with its actions
       if (!PANEL.matches || !panelled) card.append(draftSummary(p, ex, course, { ask: js.ask, inCard: true }));
       const bf = badgeFilter(p, ts);
       if (bf) card.append(bf.seg);
@@ -601,6 +658,7 @@
       return { card, panel: () => draftSummary(p, ex, course, { ask: js.ask, inCard: false }) };
     }
     function noPlanCard(ex, course, js) {
+      const making = js.working || E.studyPlanNewJobRunning(S.jobs, course); // D-362: one new plan per course
       const card = el('div', 'ui-card pl-card pl-none');
       card.append(svgEl(PL_SPARK));
       const g = el('div', 'grow');
@@ -609,16 +667,16 @@
         el(
           'span',
           'mini',
-          js.working
+          making
             ? 'E.V. is making your plan. It shows here in a few minutes.'
             : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
         )
       );
       card.append(g);
-      const mk = btn(js.working ? 'Making…' : 'Make a plan', ev => makePlan(ev.currentTarget, course, ex), {
+      const mk = btn(making ? 'Making…' : 'Make a plan', ev => makePlan(ev.currentTarget, course, ex), {
         cls: 'btn neutral',
       });
-      mk.disabled = !!js.working;
+      mk.disabled = !!making;
       card.append(mk);
       const out = [card];
       if (js.ask) out.unshift(askBlock(js.ask, course, ex));
@@ -649,7 +707,10 @@
       const full = nm.includes(course) ? nm : course + ' ' + nm;
       const head = el('div', 'ov-head'),
         n0 = el('span', 'ov-name');
-      n0.append(el('b', 'ov-ex', full), el('span', 'meta', ' · ' + short(ex.date) + ' · ' + E.relDay(ex.date, today)));
+      n0.append(
+        el('b', 'ov-ex', full),
+        el('span', 'meta', ' ·\u00a0' + nbsp(short(ex.date)) + ' · ' + nbsp(E.relDay(ex.date, today)))
+      );
       const objs = S.objectives.filter(o => o.exam === ex.id);
       const acc = E.answerStats(M.attempts.all).byObjective;
       const solid = objs.filter(o => objState(o, acc[o.id]).state === 'solid').length;
@@ -675,16 +736,7 @@
       S.plans.filter(
         p => !p.section && !S.exams.some(e => e.id === (p.exam || p.id)) && planDays(p).some(d => d.date >= today)
       );
-    const ownPlanCards = course =>
-      ownPlans().map(
-        p =>
-          approvedCard(
-            p,
-            { id: p.exam || p.id, title: p.title || 'Plan', date: planDays(p).slice(-1)[0].date, own: true },
-            course
-          ).card
-      );
-    function renderStudyPlans(cur, fullName, hasObjectives) {
+    function renderStudyPlans(cur, fullName, hasObjectives, panelFree = true) {
       let box = $('ov-plans');
       if (!box) {
         box = el('div', 'ov-plans');
@@ -692,36 +744,47 @@
         $('ov-card').after(box);
       }
       // a plan in force for no exam in the record (a dosage plan, B-194) shows on every course tab while it has days,
-      // an exam ahead or not
-      const own = ownPlanCards(cur ? cur.course : '');
+      // an exam ahead or not; its summary stays on its card
+      const own = ownPlans().map(p =>
+        approvedCard(
+          p,
+          { id: p.exam || p.id, title: p.title || 'Plan', date: planDays(p).slice(-1)[0].date, own: true },
+          cur ? cur.course : '',
+          { panelled: false }
+        )
+      );
       if (!cur || !cur.exam) {
-        box.replaceChildren(...own);
+        box.replaceChildren(...own.map(x => x.card));
         box.hidden = !own.length;
         return null;
       }
       box.hidden = false;
-      const kids = [];
-      let panel = null,
-        draftPanel = null;
+      // each exam shows one plan card: its draft (with a switch to the version in force), or the plan in force; the
+      // right panel holds one summary, a draft's first; every other card carries its actions itself
+      const parts = [];
       const one = (ex, first) => {
         const { plan, draft } = examPlans(ex);
         const js = planJobState(ex, cur.course, draft || plan);
         if (!plan && !draft) {
           if (!first) return;
-          kids.push(...noPlanCard(ex, cur.course, js));
-          if (!hasObjectives) panel = () => noPlanPanel(ex, fullName);
+          parts.push({
+            nodes: () => noPlanCard(ex, cur.course, js),
+            panel: hasObjectives ? null : () => noPlanPanel(ex, fullName),
+          });
           return;
         }
-        if (!first) kids.push(laterExamCard(ex, cur.course));
-        if (plan) {
-          const a = approvedCard(plan, ex, cur.course);
-          kids.push(a.card);
-          if (!panel) panel = a.panel;
-        }
-        if (draft) {
-          const dr = draftCard(draft, ex, cur.course, js, !draftPanel);
-          kids.push(dr.card);
-          if (!draftPanel) draftPanel = dr.panel;
+        if (!first) parts.push({ nodes: () => [laterExamCard(ex, cur.course)] });
+        const showPlan = plan && (!draft || (planUi.showApproved || {})[ex.id]);
+        if (showPlan) {
+          let a;
+          const make = panelled =>
+            (a = approvedCard(plan, ex, cur.course, { panelled, swap: draft ? swapBtn(ex, false) : null }));
+          parts.push({ card: true, nodes: panelled => [make(panelled).card], panel: () => a.panel() });
+        } else {
+          let dr;
+          const make = panelled =>
+            (dr = draftCard(draft, ex, cur.course, js, { panelled, swap: plan ? swapBtn(ex, true) : null }));
+          parts.push({ card: true, draft: true, nodes: panelled => [make(panelled).card], panel: () => dr.panel() });
         }
       };
       one(cur.exam, true);
@@ -736,9 +799,11 @@
         )
         .sort((a, b) => a.date.localeCompare(b.date)))
         one(ex, false);
-      box.replaceChildren(...kids, ...own);
-      const want = draftPanel || panel;
-      return PANEL.matches && want ? want() : null;
+      const usePanel = PANEL.matches && panelFree;
+      const owner = usePanel ? parts.find(x => x.card && x.draft) || parts.find(x => x.panel) || null : null;
+      const kids = parts.flatMap(x => x.nodes(x === owner));
+      box.replaceChildren(...kids, ...own.map(x => x.card));
+      return owner && owner.panel ? owner.panel() : null;
     }
     /** B-450: a plan opened from elsewhere (an E.V. card): Study's overview on its exam's course tab. */
     function openPlanInStudy(examId, planId) {
@@ -772,6 +837,7 @@
       }
       const plan = examPlans(cur.exam).plan;
       if (!plan) return null;
+      const kept = plan.section && keepsInPlan(); // B-450: its tasks are not on Today, so the line offers no Open Today
       const c = planCounts(plan);
       if (!c.todayLeft.length && !c.missed.length) return null;
       const n = c.todayLeft.length,
@@ -788,6 +854,7 @@
         ? `${numWord(n)} ${exShortOf(cur.exam)} ${n === 1 ? 'task is' : 'tasks are'} left today` +
           (tail ? ', and ' + tail : '.')
         : tail.charAt(0).toUpperCase() + tail.slice(1);
+      if (kept) return { text: text.replace(' left today', ' planned today') };
       return {
         text,
         act: [

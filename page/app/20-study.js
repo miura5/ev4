@@ -145,8 +145,11 @@
         nW = nR = 0; // the bar can sync before the model is first built
       }
       $('study-qweak').hidden = !quiz && !ov;
+      // B-450: on the phone the row is shared with Quiz me and Start session: the spots to review, as "2 new"
       $('study-qweak').textContent =
-        'Weak spots' + (nW || nR ? ' · ' + nW : '') + (nR ? ' · ' + nR + ' to review' : '');
+        innerWidth < 600 && nR
+          ? 'Weak spots · ' + nR + ' new'
+          : 'Weak spots' + (nW || nR ? ' · ' + nW : '') + (nR ? ' · ' + nR + ' to review' : '');
       // in the quiz card the way back replaces the view tabs, so no switch shows with nothing picked (C-15)
       $('seg-study').hidden = quizOpen('study') || (innerWidth >= 600 && ui.tab !== 'study');
       $('study-course').hidden = v !== 'objectives' || $('study-course').children.length < 2;
@@ -248,7 +251,7 @@
         text: left
           ? `${cur.course} ${ex} ${when}, with ${plural(left, 'plan task')} left.`
           : `${cur.course} ${ex} ${when}, and its plan is done.`,
-        act: ['Quiz me', b => courseQuiz(b)],
+        act: ['Quiz me on them', b => courseQuiz(b)], // B-450: as the demo's; the toolbar has its own Quiz me
       };
     }
     /** An objective's state from its weak spots and answers: Not yet while one is not yet right (or none answered),
@@ -428,8 +431,11 @@
       );
       // B-450: the plans under the card; from 1200 px a draft (to approve) or the plan fills the panel, unless he
       // opened an objective
-      const pp = renderStudyPlans(cur, fullName, objs.length > 0);
-      if (PANEL.matches && pp && !(objs.length && (!planned || ui.objFold))) ui.objPanel = pp;
+      // the panel is the plans' unless an objective's detail holds it (his open objectives); then every plan card
+      // carries its own summary and actions (B-450)
+      const panelFree = !(objs.length && (!planned || ui.objFold));
+      const pp = renderStudyPlans(cur, fullName, objs.length > 0, panelFree);
+      if (PANEL.matches && pp && panelFree) ui.objPanel = pp;
       // B-375: an exam with neither objectives nor a plan still fills the panel: the exam, its date and Quiz me
       if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName);
       paintPlanPop();
