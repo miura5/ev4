@@ -131,18 +131,12 @@
         // B-265: a line that failed on a transient error keeps its Try again after a reload, while it is her last line
         const asked = isLastEv && m.error === 'upstream_error' && m.replyTo && allMsgs().find(x => x.id === m.replyTo);
         const ask = T.retry.get(m.id) || (asked && { text: asked.text, tier: m.tier, replyTo: m.replyTo });
+        // B-452 (Matt): no Go deeper under a quick reply; asking again goes deeper.
         if (ask)
           meta.append(
             btn('Try again', () => {
               T.retry.delete(m.id);
               chat(ask.text, { tier: ask.tier, replyTo: ask.replyTo });
-            })
-          );
-        else if (isLastEv && m.replyTo && m.tier === 'quick' && sample && !T.sampleOff)
-          meta.append(
-            btn('Go deeper', () => {
-              const q = allMsgs().find(x => x.id === m.replyTo);
-              if (q) chat(q.text, { tier: 'default', replyTo: q.id });
             })
           );
       }
@@ -247,13 +241,15 @@
       renderSurface(); // B-78: the reply's cards as surfaces, beside her or in the sheet
       renderStage();
       // The newest line stays in view unless he has scrolled up to read.
+      // B-452: a pin the page makes on its own waits while he scrolls (autoPin); his own send pins at once.
       if ((CAP.stick || T.scrollTo) && ui.tab === 'ev') {
+        const his = !!T.scrollTo;
         T.scrollTo = null;
         T.firstScroll = false;
-        requestAnimationFrame(pinNow);
+        requestAnimationFrame(his ? pinNow : autoPin);
         clearTimeout(CAP.repin);
         CAP.repin = setTimeout(() => {
-          if (CAP.stick && ui.tab === 'ev') pinNow();
+          if (CAP.stick && ui.tab === 'ev') autoPin();
         }, 450);
       } // again once late layout (cards, folded lines) settles
     }

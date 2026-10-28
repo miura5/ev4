@@ -598,29 +598,8 @@ const statusShown = page =>
         if (shot && scheme === 'light') await page.screenshot({ path: `${shots}/panel-${label}-${w}.png` });
       };
       await look('ev', true);
-      // a review opened on Conversation: the panel holds it, in the same shade, its count once
-      const chip = page.locator('#qchips button', { hasText: /^Start review/ });
-      if (await chip.count()) {
-        await chip.first().click();
-        await page.waitForSelector('#ev-surf', { timeout: 4000 }).catch(() => {});
-        await look('ev-review', true);
-        const once = await page.evaluate(() => {
-          const s = document.getElementById('ev-surf');
-          if (!s) return null;
-          const t = s.innerText;
-          const m = t.match(/\b(\d+) of (\d+)\b/g) || [];
-          return { counts: m.length, text: t.slice(0, 120) };
-        });
-        ok(
-          `[${w} ${scheme}] a review on Conversation shows its count once (D-327)`,
-          !!once && once.counts === 1,
-          JSON.stringify(once)
-        );
-        await page
-          .locator('#ev-surf .sf-head')
-          .click()
-          .catch(() => {});
-      } // B-357 (D-316): the demo's chips open no review on Conversation unless no weak spot names a Quiz me
+      // B-452 retired the Start review chip that opened a review here (Matt's call); the review surface's own checks
+      // stay in captions.cjs.
       for (const t of ['today', 'progress', 'record', 'system']) {
         await page.$eval('#tab-' + t, b => b.click());
         await look(t, t === 'today');

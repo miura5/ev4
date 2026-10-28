@@ -404,19 +404,19 @@ async function open(browser, viewport) {
       ok(`${tag} a Your-turn reply files its job and fires the builder`, filed);
     }
 
-    // B-200 (D-208): a quick-ask chip puts his line in the thread on the tap's next frame, the record 2 s behind. Each
-    // paint check here reads the page on the first frame after the tap, with a loose 500 ms bound (the record answers
-    // 2 s later; a loaded machine stretches a frame's time, so the old 100 ms budget flaked) (B-357).
+    // B-200 (D-208): a quick ask puts his line in the thread on the send's next frame, the record 2 s behind. Each
+    // paint check here reads the page on the first frame after the send, with a loose 500 ms bound (the record answers
+    // 2 s later; a loaded machine stretches a frame's time, so the old 100 ms budget flaked) (B-357). B-452 retired the
+    // chips (Matt's call), so the quick ask is typed and sent.
+    await page.click('#tab-ev');
     const chipPaint = await page.evaluate(async () => {
-      // B-408: Start a note and study opens Notes with no line of his (the Notes demo), so the chip measured is the next
-      const b = [...document.querySelectorAll('#qchips button')].find(
-        x => !/^Your turn|^Resume |^Start a note and study$/.test(x.textContent)
-      );
-      if (!b) return null;
-      const said = b.textContent.trim();
+      const said = 'What’s due this week?';
+      const input = document.getElementById('ev-input');
+      input.value = said;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
       window.__writeDelayMs = 2000;
       const t0 = performance.now();
-      b.click();
+      document.getElementById('ev-form').requestSubmit();
       await new Promise(r => requestAnimationFrame(() => r()));
       const ms = Math.round(performance.now() - t0);
       const shown = [...document.querySelectorAll('#thread .msg.matt, #thread .cap-echo')].some(m =>
@@ -426,7 +426,7 @@ async function open(browser, viewport) {
       return { said, shown, ms };
     });
     ok(
-      `${tag} a chip shows his line on the tap's frame, the record 2 s behind (D-208)`,
+      `${tag} a typed quick ask shows his line on the send's frame, the record 2 s behind (D-208)`,
       !!chipPaint && chipPaint.shown && chipPaint.ms < 500,
       JSON.stringify(chipPaint)
     );

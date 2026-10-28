@@ -515,10 +515,8 @@ const SIZES = [
       JSON.stringify({ fit, f0 })
     );
     await page.screenshot({ path: `${shots}/frame-app-ev-390-before.png` });
-    for (const [what, s] of [
-      ['the message box', '#ev-input'],
-      ['the quick-ask chips', '#qchips'],
-    ]) {
+    // B-452 retired the quick-ask chips (Matt's call), and with them their swipe case.
+    for (const [what, s] of [['the message box', '#ev-input']]) {
       if (!(await page.locator(s).first().isVisible())) {
         ok(`[390 app] ${what} is on screen to swipe`, false);
         continue;

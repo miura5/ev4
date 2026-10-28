@@ -228,8 +228,8 @@
       await evSay(E.prepReply(list, pa.date, today), card, { tier: 'local', replyTo: mid });
       return true;
     }
-    // B-353 (D-314): the demo's "Quiz me on <topic>" chip names his weakest open weak spot: the open concept spot with
-    // an objective that has the shortest streak, the soonest due first among equals.
+    // B-353 (D-314): "Quiz me on <topic>" (typed; B-452 retired its chip) names his weakest open weak spot: the open
+    // concept spot with an objective that has the shortest streak, the soonest due first among equals.
     function weakestSpot() {
       return (M.models || [])
         .filter(w => (w.kind || 'concept') === 'concept' && w.objective && w.derived && E.isActive(w))
@@ -247,10 +247,6 @@
       if (head.length >= 4) t = head;
       if (t.length > 28) t = t.slice(0, 28).replace(/\s+\S*$/, '');
       return /^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t;
-    }
-    function quizChip() {
-      const w = weakestSpot();
-      return w ? 'Quiz me on ' + topicLabel(w) : 'Start review';
     }
     function quizTopicAsk(label) {
       const w = weakestSpot();

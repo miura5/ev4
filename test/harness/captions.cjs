@@ -429,14 +429,12 @@ async function sideBySide(browser, left, right, out, vp) {
     const gc = await page.evaluate(() => ({
       cards: document.querySelectorAll('#thread .msg.greet .ev-card').length,
       chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
+      row: !!document.getElementById('qchips').getClientRects().length,
     }));
     ok(
-      // B-408 (D-325): on desktop the first is the Notes demo's Start a note and study; the phone keeps its session
-      `[${scheme}] the greeting has no card; its offers are the demo's five chips, ${scheme === 'desktop' ? 'Start a note and study' : 'Start a study session'} first (B-358)`,
-      gc.cards === 0 &&
-        gc.chips.length === 5 &&
-        gc.chips[0] === (scheme === 'desktop' ? 'Start a note and study' : 'Start a study session') &&
-        !gc.chips.includes('File it'),
+      // B-452 (Matt): the quick-ask pills under the composer are gone (the five at rest); the empty row takes no room
+      `[${scheme}] the greeting has no card, and no quick-ask pills sit under the composer (B-452)`,
+      gc.cards === 0 && gc.chips.length === 0 && !gc.row,
       JSON.stringify(gc)
     );
     ok(
@@ -638,6 +636,9 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.waitForTimeout(600);
     }
     // Back to now: scrolling away shows the pill; tapping her returns.
+    const stage0 = await page.evaluate(() =>
+      Math.round(document.getElementById('hero').getBoundingClientRect().height)
+    );
     await page.evaluate(() => {
       const t = document.getElementById('thread');
       t.scrollTop = Math.max(170, t.scrollHeight - t.clientHeight - 600);
@@ -647,9 +648,32 @@ async function sideBySide(browser, left, right, out, vp) {
     v = await view(page);
     ok(`[${scheme}] scrolling away shows Back to now`, v.now, JSON.stringify({ top: v.scrollTop, max: v.maxScroll }));
     await page.screenshot({ path: `${shots}/captions-back-to-now-${scheme}.png` });
-    // B-209 (D-213): reading back, her stage is folded and she is the flower in the pane's header.
-    ok(`[${scheme}] reading back folds her stage to the header's 24 px flower`, await page.isVisible('#mh-her'));
-    await page.click((await page.isVisible('#mh-her')) ? '#mh-her' : '#hero');
+    // B-452 (Matt; it retires B-209's fold while reading back): her stage holds still while he reads back, so nothing
+    // moves under his scroll; Back to now is centred over the thread column, just above the composer.
+    const back = await page.evaluate(() => {
+      const r = el => document.getElementById(el).getBoundingClientRect();
+      const n = r('ev-now'),
+        t = r('thread'),
+        f = r('ev-form');
+      return {
+        stage: Math.round(r('hero').height),
+        flower: !!document.getElementById('mh-her').getClientRects().length,
+        offCentre: Math.round(Math.abs(n.left + n.width / 2 - (t.left + t.width / 2))),
+        aboveField: Math.round(f.top - n.bottom),
+        inThread: n.top >= t.top && n.bottom <= t.bottom + 12,
+      };
+    });
+    ok(
+      `[${scheme}] reading back keeps her stage still (no fold under his scroll, B-452)`,
+      Math.abs(back.stage - stage0) <= 1 && !back.flower,
+      JSON.stringify({ stage0, ...back })
+    );
+    ok(
+      `[${scheme}] Back to now is centred over the thread column, just above the composer (B-452)`,
+      back.offCentre <= 2 && back.aboveField >= 0 && back.aboveField <= 24 && back.inThread,
+      JSON.stringify(back)
+    );
+    await page.click('#hero');
     await page.waitForTimeout(900);
     v = await view(page);
     ok(
@@ -1010,17 +1034,16 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(lo)
     );
     await page.screenshot({ path: `${shots}/captions-line-cards-${scheme}.png` });
-    // B-360 (D-316): the demo's chips stay, one row, in a conversation too, typing or not; the composer stays.
-    // below 1200 px an open surface is a sheet over the composer, and the chips wait under it (B-78)
+    // B-452 (Matt) retired B-360's chips: in a conversation, typing or not, no pills, and the composer stays.
     const sheet = await page.evaluate(() => document.body.classList.contains('surface-open') && innerWidth < 1200);
-    const quietChips = sheet || (await page.isVisible('#qchips'));
+    const quietChips = !(await page.isVisible('#qchips .qchip'));
     await page.fill('#ev-input', 'x');
     await page.waitForTimeout(100);
-    const typed = sheet || (await page.isVisible('#qchips'));
+    const typed = !(await page.isVisible('#qchips .qchip'));
     await page.fill('#ev-input', '');
     ok(
-      `[${scheme}] the chips stay in a conversation, typing or not, beside a kept composer (B-360)`,
-      quietChips && typed && (await page.isVisible('#ev-input')) && (await page.isVisible('#ev-send'))
+      `[${scheme}] no quick-ask pills in a conversation, typing or not, beside a kept composer (B-452)`,
+      quietChips && typed && (sheet || ((await page.isVisible('#ev-input')) && (await page.isVisible('#ev-send'))))
     );
     if (scheme === 'desktop') {
       // D-122 as amended: the side column exists only while it holds something. With nothing in it her stage centres in
@@ -1188,7 +1211,7 @@ async function sideBySide(browser, left, right, out, vp) {
       };
     });
     ok(
-      `[${scheme}] a stored failed line offers Try again, not Go deeper (B-265)`,
+      `[${scheme}] a stored failed line offers Try again, and no Go deeper (B-265, B-452)`,
       failed.tryAgain && !failed.deeper,
       JSON.stringify(failed)
     );
@@ -2299,20 +2322,66 @@ async function sideBySide(browser, left, right, out, vp) {
         .slice(1)
         .map((x, i) => (x.top != null && r[i].top != null ? Math.abs(x.top - r[i].top) : 0))
         .filter(d => d > 90);
+      // B-452 (Matt) retires B-249's one fold: her stage keeps its height the whole way up.
       ok(
-        `[jank ${tag}] scrolling up through a pull: Back to now comes once, her stage folds at most once and never comes back, no jump (B-249)`,
+        `[jank ${tag}] scrolling up through a pull: Back to now comes once, her stage never changes height, no jump (B-249, B-452)`,
         flips(r, x => x.back) <= 1 &&
-          flips(r, x => x.hero > 30) <= 1 &&
-          !(r[r.length - 1].hero > 30 && r.some(x => x.hero <= 30)) &&
+          Math.max(...r.map(x => x.hero)) - Math.min(...r.map(x => x.hero)) <= 1 &&
           !jumps.length,
         JSON.stringify({
           back: flips(r, x => x.back),
-          hero: flips(r, x => x.hero > 30),
+          hero: [...new Set(r.map(x => x.hero))],
           jumps,
           seq: r.filter((x, i) => !i || JSON.stringify(x) !== JSON.stringify(r[i - 1])).slice(0, 40),
         })
       );
       await page.screenshot({ path: `${shots}/jank-pull-${tag}.png` });
+      // B-452: wheeling back down to now, the page never moves the thread itself (no scroll it sets, which would stop
+      // the trackpad's momentum): every step is his, and Back to now goes once he is there.
+      await page.evaluate(() => {
+        const t = document.getElementById('thread'),
+          d = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop');
+        window.__setScrolls = 0;
+        Object.defineProperty(t, 'scrollTop', {
+          configurable: true,
+          get: () => d.get.call(t),
+          set: x => {
+            const was = d.get.call(t);
+            d.set.call(t, x);
+            if (Math.abs(d.get.call(t) - was) > 1) window.__setScrolls++;
+          },
+        });
+        for (const k of ['scrollTo', 'scrollBy'])
+          t[k] = (...a) => {
+            window.__setScrolls++;
+            return Element.prototype[k].apply(t, a);
+          };
+      });
+      const down = [];
+      for (let i = 0; i < 400; i++) {
+        await page.mouse.wheel(0, 60);
+        await page.waitForTimeout(30);
+        const at = await page.evaluate(() => {
+          const t = document.getElementById('thread');
+          return Math.round(t.scrollHeight - t.clientHeight - t.scrollTop);
+        });
+        down.push(at);
+        if (at < 2) break;
+      }
+      const sets = await page.evaluate(() => window.__setScrolls);
+      await page.waitForTimeout(700);
+      const end = await page.evaluate(sets => ({ sets, back: !document.getElementById('ev-now').hidden }), sets);
+      await page.evaluate(() => {
+        const t = document.getElementById('thread');
+        delete t.scrollTop;
+        delete t.scrollTo;
+        delete t.scrollBy;
+      });
+      ok(
+        `[jank ${tag}] wheeling back down to now: the page sets no scroll of its own, and Back to now goes (B-452)`,
+        end.sets === 0 && !end.back && down[down.length - 1] < 2,
+        JSON.stringify({ ...end, steps: down.length, left: down[down.length - 1] })
+      );
       ok(`[jank ${tag}] no page errors`, errors.length === 0, errors.join(' | '));
       await ctx.close();
     }

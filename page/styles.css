@@ -429,8 +429,8 @@ body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
 .card-line .cl-go{flex:none;display:flex;align-items:center;color:var(--soft)}
 .card-line .cl-go svg{width:14px;height:14px}
 body.captions .msg-cards{gap:8px}
-/* B-85: the chips under the greeting, or in an empty focused input; out of the way in a conversation or session. */
-body.chips-quiet #qchips{display:none}
+/* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
+#qchips:empty{display:none}
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are a weight, in the text colour (D-270). */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
@@ -440,9 +440,14 @@ body.captions .composer{position:relative;bottom:auto;padding-top:34px;backgroun
 body.captions .composer::after{display:none}
 body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:calc(13.5px * var(--ts));color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .28s ease,transform .28s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.captions .cap-echo.on{opacity:1;transform:none}
-body.captions .cap-now{position:absolute;left:50%;transform:translateX(-50%);z-index:5;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--accent-edge);background:var(--surface);color:var(--accent-text);font-size:calc(13px * var(--ts));display:flex;align-items:center;gap:6px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-body.captions .cap-now svg{width:14px;height:14px}
+/* B-452 (Matt): Back to now floats centred over the thread column, just above the composer; it covers the thread and
+   moves nothing under him. */
+body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.18);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+body.captions .cap-now:hover{background:var(--hover);color:var(--text)}
+body.captions .cap-now svg{width:13px;height:13px}
+@media (max-width:599px){body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:22px}}
 body.captions .cap-now[hidden]{display:none}
+body:not(.on-ev) .cap-now{display:none}
 body.captions .composer>*{max-width:660px;width:100%;margin-inline:auto;box-sizing:border-box}
 body.captions .composer>.cap-echo{max-width:none}
 @media (min-width:1024px){
@@ -701,18 +706,13 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
 
 /* ============================================================ B-209 (D-213): the E.V. tab in C =================
    Her stage is one size per layout (104, 112 or 128, 140 or 168 px; 70% in a session), set in px by the page. While he
-   reads back, or under 560 px tall, it folds and she is the 24 px Dial Arc in the header, with Back to now beside it. */
+   is under 560 px tall, it folds and she is the 24 px Dial Arc in the header (B-452: no longer while he reads back). */
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{align-items:flex-start;padding-top:var(--stage-pad,24px);box-sizing:border-box}
 body.captions.her-folded .hero{padding-top:0;overflow:hidden}
 body.captions .hero>.ev-av{transform:none}
 .mh-her{display:none;appearance:none;border:0;background:none;padding:0;width:24px;height:24px;flex:0 0 24px;cursor:pointer;border-radius:6px}
 .mh-her:hover{background:var(--surface)}
 body.on-ev.her-folded .mh-her{display:grid;place-items:center}
-.mh .cap-now{position:static;transform:none;margin-left:auto;min-height:28px;height:28px;padding:0 10px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:transparent;color:var(--quiet);font:500 calc(13px * var(--ts)) var(--sans);display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
-.mh .cap-now:hover{color:var(--text)}
-.mh .cap-now svg{width:14px;height:14px}
-body:not(.on-ev) .mh .cap-now{display:none}
-.mh .cap-now[hidden]{display:none}
 /* the send: a quiet circle that fills in Ember when he types (D-270) */
 .compose-row #ev-send{background:var(--raised);border:0;box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);width:36px;height:36px;min-height:36px;flex:0 0 36px;align-self:center}
 .compose-row #ev-send.on{background:var(--her);color:var(--on-her);box-shadow:none}
@@ -804,7 +804,6 @@ body.captions.on-ev .wrap{max-width:680px}
 .mh .sbar button:hover{background:var(--surface);color:var(--text)}
 .mh .sbar button.end{color:var(--text)}
 .mh .sbar .s-led{background:var(--quiet)} .mh .sbar.brk .s-led{background:var(--att)}
-.mh .sbar~.cap-now{margin-left:0}
 @media (max-width:599px){.mh .sbar .s-acts button:not(.end):not(:first-child){display:none}}
 .opt kbd.opt-n{flex:0 0 22px;width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);background:none;box-shadow:inset 0 0 0 1px var(--line2)}
 .opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
@@ -1011,7 +1010,6 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
 .sk-tog::after{transition-duration:.16s}
 .sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
 body.captions.her-folded .hero{transition-duration:.16s}
-body.captions .hero.snap{transition:none} /* B-249: a fold he scrolled into is at once, his place held */
 /* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
 .work{margin-top:2px}.work-line{font-size:calc(13px * var(--ts));padding:2px 0}.work-line:disabled{cursor:default}.work-line:disabled::after{content:''}
 .work-changes{margin:2px 0 0}.work-changes li{padding:4px 0;border:0}.work-changes .tlink{text-align:left}
@@ -1092,7 +1090,7 @@ button.btn:disabled{opacity:.45;cursor:default}
 .mh .seg{flex-shrink:1;min-width:0} /* a view's switch scrolls inside itself before New leaves the header */
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
 .mh::after{content:"";order:8;flex:1 1 0;min-width:0}
-.mh > :is(.cap-now,.sbar){order:9;margin-left:0}
+.mh > .sbar{order:9;margin-left:0}
 .new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:0;box-sizing:border-box}
 .new-wrap .menu[hidden]{display:none}
 .new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
@@ -2248,13 +2246,11 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
   #new-dlg .new-body #new-text,#p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
 }
 /* B-431 (UI review of 74499d4): read-along's toggle is filled only when on; on the phone the header's New sits inside
-   the 48 px header with room above and below (its tap area still 44 px), Back to now takes its place in the header's
-   row instead of over the title, and the tab bar stays inside the screen. */
+   the 48 px header with room above and below (its tap area still 44 px), and the tab bar stays inside the screen. */
 .mh .n-read{background:transparent;box-shadow:none}
 .mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
 @media (max-width:599px){
   .mh #new-btn{height:34px;min-height:34px;position:relative}
   .mh #new-btn::after{content:"";position:absolute;inset:-5px 0}
-  body.captions .mh .cap-now{position:static;left:auto;transform:none;margin-left:auto;min-height:32px;height:32px}
   .side{box-sizing:border-box}
 }

@@ -104,13 +104,14 @@
     }
     // B-340 (D-312): as in the demo, her and her lines sit down by the chips while they leave room: the room left in
     // her lines' scroller goes above her stage, so a short conversation reads from the composer up.
-    function dropSync() {
+    function dropSync(force) {
       const box = $('thread'),
         inn = box.firstElementChild,
         p = $('p-ev');
-      // B-387: while he reads back (Back to now up) the room above her holds still: her fold and a pull's lift change
-      // the scroller's height and content, and re-measuring then moved her lines under him mid-scroll.
-      if (!inn || p.hidden || !capNow.hidden) return;
+      // B-387: while he reads back (Back to now up) the room above her holds still: re-measuring then moved her lines
+      // under him mid-scroll. B-452: nor while he scrolls, so the thread never changes height under his scroll. A pull
+      // (force) re-measures at once, at rest at the top, and holds his place itself.
+      if (!inn || p.hidden || (!force && (!capNow.hidden || scrolling()))) return;
       const kids = [...inn.children].filter(c => !c.classList.contains('cap-pull') && c.getClientRects().length);
       const cur = parseFloat(p.style.getPropertyValue('--ev-drop')) || 0;
       const content = kids.length
@@ -125,26 +126,6 @@
         dropSync();
       } catch {}
     }, 300);
-    // B-85: the chips show under the greeting (her stage idle), or while the input is focused and empty; in a conversation,
-    // a session or a skills run they stay out of the way. A tap on a chip holds them until its click lands.
-    const CH = { hold: false };
-    // B-340 (D-312): as in the demo, the chips stay under her lines at rest, in a conversation and in a session.
-    function syncChips() {
-      document.body.classList.remove('chips-quiet');
-    }
-    $('qchips').addEventListener('pointerdown', () => {
-      CH.hold = true;
-    });
-    ['pointerup', 'pointercancel'].forEach(ev =>
-      $('qchips').addEventListener(ev, () =>
-        setTimeout(() => {
-          CH.hold = false;
-          syncChips();
-        }, 350)
-      )
-    );
-    $('ev-input').addEventListener('focus', () => syncChips());
-    $('ev-input').addEventListener('blur', () => setTimeout(syncChips, 200));
     // B-428: the phone's keyboard may leave the window panned when it closes; E.V.'s frame never scrolls, so put it back
     $('ev-input').addEventListener('blur', () =>
       setTimeout(() => {
@@ -211,62 +192,23 @@
       document.body.classList.toggle('opening', opening);
       document.body.classList.toggle('core-big', !opening && !activeSession() && !!T.bigCore);
       renderMood();
-      const sa = activeSession();
-      let chips =
-        COMMENT && sa && sa.status === 'active'
-          ? ['Quiz me now']
-          : ((T.greet && T.greet.chips) || ['What’s due this week?', 'How ready am I?']).filter(
-              c => !(c === 'Start a study session' && (sa || notesOn()))
-            );
-      // B-408 (D-325): from 1024 px, as the Notes demo, a session on a note offers the one way back to it
-      if (sa && sa.status === 'active' && notesOn() && noteOfSession(sa)) chips = ['Back to my note'];
-      // B-362 (D-316): on a break, the demo's one chip back to work
-      if (sa && sa.status === 'active' && E.sessionState(sa, now()).onBreak) chips = ['I’m back early'];
-      // B-358 (D-314): at rest, the demo's five chips and only those.
-      // B-357: a skills run left going keeps its Resume chip first (the runner waits behind it, B-82)
-      const resume = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
-      // B-408 (D-325): from 1024 px a session is in Notes, so the first chip is the Notes demo's Start a note and study
-      if (!sa)
-        chips = [
-          ...resume,
-          notesOn() ? 'Start a note and study' : 'Start a study session',
-          'What’s due this week?',
-          quizChip(),
-          'How did this week go?',
-          'Plan the rest of today',
-        ];
+      // B-452 (Matt): no quick-ask pills under the composer (the five at rest, and a session's Quiz me now, I'm back early
+      // and Back to my note); each is still reachable by typing it, or from the session's own controls. Only a skills run
+      // left going keeps its Resume chip (B-357), its one way back to the runner (B-82).
+      const chips = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
       renderSession();
       renderSkillDock();
       const qc = $('qchips');
       if (qc.dataset.k !== chips.join('|')) {
         qc.dataset.k = chips.join('|');
-        const bs = chips.map(c => {
-          const b = /^Resume .+ · \d+ of \d+$/.test(c)
-            ? btn(c, () => skillPark(false))
-            : c === 'I’m back early' // B-377 (D-316): as the demo, her line only
-              ? btn(c, () => guard(null, () => breakOrResume('resume')))
-              : c === 'Start a note and study' // B-408: as the Notes demo, a new note with its session, no line of his
-                ? btn(c, () => {
-                    const from = whereNow();
-                    showTab('notes');
-                    guard(null, () => newNote(from));
-                  })
-                : c === 'Back to my note'
-                  ? btn(c, () => {
-                      const s = activeSession();
-                      if (s && noteOfSession(s)) guard(null, () => noteSession(noteOfSession(s)));
-                    })
-                  : btn(c, () => {
-                      if (/^attach a file$/i.test(c)) $('ev-file').click(); // B-381: inside his tap, before any await
-                      guard(null, () => quick(c));
-                    });
-          b.className = 'qchip';
-          return b;
-        });
-        // B-360: one row at every size (styles.css scrolls it sideways when it overflows).
-        qc.replaceChildren(...bs);
+        qc.replaceChildren(
+          ...chips.map(c => {
+            const b = btn(c, () => skillPark(false));
+            b.className = 'qchip';
+            return b;
+          })
+        );
       }
-      syncChips();
       renderCheckin();
       const sb = $('ev-send');
       const sk = T.busy ? 'stop' : 'send';
@@ -294,7 +236,6 @@
     input.addEventListener('blur', () => typing(false));
     input.addEventListener('input', () => {
       grow();
-      syncChips();
       typing(!!input.value.trim());
     });
     input.addEventListener('keydown', e => {

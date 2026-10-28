@@ -1449,20 +1449,9 @@ async function tap(page, locator, name) {
       gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards && !gb.shown,
       JSON.stringify(gb)
     );
-    // B-358 (D-316): at rest the chips are the demo's five, Start a study session first; B-408 (D-325): on desktop the
-    // Notes demo's Start a note and study takes its place
+    // B-452 (Matt) retired B-358's five chips at rest: no quick-ask pills under the composer
     const gm = await page.evaluate(() => [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent));
-    const first = scheme === 'desktop' ? 'Start a note and study' : 'Start a study session';
-    ok(
-      `[${scheme}] at rest the demo's five chips, ${first} first`,
-      gm.length === 5 &&
-        gm[0] === first &&
-        gm.includes('What’s due this week?') &&
-        gm.includes('How did this week go?') &&
-        gm.includes('Plan the rest of today') &&
-        gm.some(c => /^(Quiz me on |Start review$)/.test(c)),
-      JSON.stringify(gm)
-    );
+    ok(`[${scheme}] at rest no quick-ask pills under the composer (B-452)`, gm.length === 0, JSON.stringify(gm));
     await page.click('#tab-today');
     await page.waitForTimeout(100);
     // B-201: the Sunday card carries the build recap, one sentence from the Chart.
@@ -1721,8 +1710,8 @@ async function tap(page, locator, name) {
     );
     ok('job card shows queued', /queued/.test(await page.locator('#ev-surf').textContent()));
     ok(
-      'Go deeper offered on the quick reply',
-      (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 1
+      'no Go deeper under the quick reply (B-452, Matt)',
+      (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 0
     );
     ok(
       'chat context carries the greeting as record data and the reply-once rule',
@@ -4457,8 +4446,8 @@ async function tap(page, locator, name) {
       return !!s && Object.values(s.events || {}).some(test);
     };
     const hostCalls = () => ss.evaluate(() => window.__mcpCalls.filter(c => String(c[0]).startsWith('host:')).length);
-    // B-408 (D-325): at 1280 the Conversation offers no session of its own (the Notes demo's Start a note and study leads
-    // the chips) and has no session card; at 390 Start a study session leads the demo's five (B-358).
+    // B-408 (D-325): the Conversation has no session card. B-452 (Matt) retired the chips: at 1280 and 390 no pill offers
+    // a session; typing Start a study session starts one.
     const restView = () =>
       ss.evaluate(() => ({
         chips: [...document.querySelectorAll('#qchips .qchip')].map(c => c.textContent),
@@ -4473,16 +4462,11 @@ async function tap(page, locator, name) {
     const rest390 = await restView();
     await ss.screenshot({ path: `${shots}/b408-rest-390.png` });
     ok(
-      'B-408: at 1280 no session card and no Start a study session (Start a note and study first); at 390 Start a study session first of the five',
-      !rest1280.card &&
-        rest1280.chips[0] === 'Start a note and study' &&
-        !rest1280.chips.includes('Start a study session') &&
-        !rest390.card &&
-        rest390.chips.length === 5 &&
-        rest390.chips[0] === 'Start a study session',
+      'B-408, B-452: at 1280 and 390 no session card and no quick-ask pills',
+      !rest1280.card && !rest1280.chips.length && !rest390.card && !rest390.chips.length,
       JSON.stringify({ rest1280, rest390 })
     );
-    await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).click();
+    await send(ss, 'Start a study session');
     for (let i = 0; i < 40 && !(await sess()); i++) await ss.waitForTimeout(100);
     await ss.waitForTimeout(400);
     let S1 = await sess();
@@ -4589,15 +4573,11 @@ async function tap(page, locator, name) {
         chips: [...document.querySelectorAll('#qchips .qchip')].filter(c => c.offsetParent).map(c => c.textContent),
       }));
       ok(
-        'in a session: no Reading line (B-362, as the demo), and Quiz me now is the one chip',
-        !rv.reading && rv.chips.join() === 'Quiz me now',
+        'in a session: no Reading line (B-362, as the demo), and no quick-ask pills (B-452)',
+        !rv.reading && !rv.chips.length,
         JSON.stringify(rv)
       );
     }
-    ok(
-      'chip hidden while a session runs',
-      (await ss.locator('#qchips .qchip', { hasText: 'Start a study session' }).count()) === 0
-    );
     await ss.screenshot({ path: `${shots}/session-bar.png` });
     // B-408 (D-325): at 1280 the phone's session shows in the strip on every view (as a Notes session does), never as
     // the header's line: the minutes to her next check, what it is on, Break and End.
@@ -4665,8 +4645,8 @@ async function tap(page, locator, name) {
               }
             : w;
     }, WRAP);
-    // Quiz me now: 1 to 3 questions on his objectives and weak spots, as a check card
-    await ss.locator('#qchips .qchip', { hasText: 'Quiz me now' }).click();
+    // Quiz me now (typed; B-452 retired its chip): 1 to 3 questions on his objectives and weak spots, as a check card
+    await send(ss, 'Quiz me now');
     for (let i = 0; i < 50 && !(await hasEvent(e => e.type === 'check' && e.items)()); i++)
       await ss.waitForTimeout(100);
     await ss.waitForTimeout(300);
@@ -4973,7 +4953,8 @@ async function tap(page, locator, name) {
       }));
       ok(
         'B-91: a reopen in the same conversation starts clean at her greeting (his earlier lines fold behind the pull)',
-        planted >= 2 && v.msgs.length === 1 && /greet/.test(v.msgs[0]) && v.greet && v.step === 'idle' && v.chips >= 1,
+        // B-452: no quick-ask pills under it any more
+        planted >= 2 && v.msgs.length === 1 && /greet/.test(v.msgs[0]) && v.greet && v.step === 'idle' && v.chips === 0,
         JSON.stringify({ planted, ...v })
       );
       ok('B-91: no page errors', rErr.length === 0, rErr.join(' | '));
@@ -5061,7 +5042,7 @@ async function tap(page, locator, name) {
     );
     ok(
       '[your turn 390] no Your turn chip while nothing waits',
-      chips.length > 0 && !chips.some(c => /^Your turn/.test(c)),
+      !chips.some(c => /^Your turn/.test(c)),
       chips.join(' | ')
     );
     await page.close();
@@ -5103,12 +5084,8 @@ async function tap(page, locator, name) {
     const chips = await page.evaluate(() =>
       [...document.querySelectorAll('#qchips button')].map(b => b.textContent.trim())
     );
-    // B-358 (D-316): no Your turn chip; the demo's five chips, and Your turn is asked in words
-    ok(
-      `${tag} the greeting offers the demo's five chips, no Your turn chip`,
-      chips.length === 5 && !chips.some(c => /^Your turn/.test(c)),
-      chips.join(' | ')
-    );
+    // B-358 (D-316): no Your turn chip, and Your turn is asked in words; B-452: no quick-ask pills at all
+    ok(`${tag} the greeting offers no pills, no Your turn chip`, chips.length === 0, chips.join(' | '));
     await send(page, 'Your turn');
     await page.waitForTimeout(500);
     const card = await page.evaluate(() =>

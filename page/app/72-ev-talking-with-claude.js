@@ -1029,7 +1029,7 @@
     async function chat(text, o = {}) {
       if (T.busy) return;
       // B-381: the line a score may come from is this turn's own, and only when it is his new line (never a Try again,
-      // Go deeper or Read from here)
+      // or Read from here)
       T.scoreText = o.fromMatt ? String(text || '') : '';
       if (!sample || T.sampleOff) {
         await evSay(

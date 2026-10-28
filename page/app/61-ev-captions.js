@@ -45,7 +45,8 @@
       'afterbegin',
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
     );
-    $('mh').append(capNow); // B-209 (D-213): Back to now sits in the pane's header
+    // B-452 (Matt): Back to now floats centred over the thread column, just above the composer (no longer in the header)
+    $('composer').prepend(capNow);
     const capSide = el('aside');
     capSide.id = 'ev-side';
     capSide.setAttribute('aria-label', 'Beside E.V.');
@@ -68,7 +69,7 @@
     new MutationObserver(() => {
       sideSync();
       requestAnimationFrame(() => {
-        if (CAP.stick) pinNow();
+        if (CAP.stick) autoPin();
       });
     }).observe(capSide, { childList: true });
     sideSync();
@@ -142,18 +143,17 @@
     // B-209: when her stage folds or unfolds while he is at now, keep now in view once its height has settled.
     $('hero').addEventListener('transitionend', e => {
       if (e.propertyName !== 'height' || !CAP.stick) return;
-      pinNow();
+      autoPin();
       capBox.dispatchEvent(new Event('scroll'));
     });
-    function renderStage(o) {
-      // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower while he
-      // reads back or on a screen under 560 px tall.
+    function renderStage() {
+      // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower on a screen
+      // under 560 px tall. B-452 (Matt): her stage no longer folds while he reads back. That fold changed the thread's
+      // height mid-scroll and moved his scroll to make up for it, which stopped the trackpad's momentum and made the
+      // thread feel rigid.
       const z = MO_SIZE(innerWidth, stageState());
       const h = $('hero');
-      const hold = o && o.hold,
-        was = hold ? h.getBoundingClientRect().height : 0,
-        st = capBox.scrollTop;
-      const folded = innerHeight < FZ.foldBelowHeightPx || !capNow.hidden;
+      const folded = innerHeight < FZ.foldBelowHeightPx;
       const pad = innerWidth < 600 ? 14 : innerWidth < 1200 ? 24 : 36;
       heroOrb.resize(z.px);
       h.style.setProperty('--core-scale', '1');
@@ -163,25 +163,6 @@
       h.dataset.px = String(folded ? 24 : z.px);
       h.dataset.short = folded ? '1' : '';
       document.body.classList.toggle('her-folded', folded);
-      if (hold) {
-        // B-249: at once, and the thread scrolls by what her stage gave or took, so the lines he reads stay put.
-        h.classList.add('snap');
-        const now = h.getBoundingClientRect().height;
-        // From the scroll before the fold, which may clamp it. At the top of a short thread there is no scroll above
-        // his place to give: the room under the pull grows by what is missing (the lift), and goes again at now.
-        let to = st - (was - now);
-        if (to < 0) {
-          CAP.lift = (CAP.lift || 0) - to;
-          to = 0;
-        } else if (!folded && CAP.lift) {
-          const r = Math.min(CAP.lift, to);
-          CAP.lift -= r;
-          to -= r;
-        }
-        capPull.style.marginBottom = CAP.lift ? CAP.lift + 'px' : '';
-        if (to !== st) capBox.scrollTop = to;
-        requestAnimationFrame(() => requestAnimationFrame(() => h.classList.remove('snap')));
-      }
     }
     // The talk the page holds (the shell's read window, spec.ui.page.subscribe): the edge a pull past today stops at.
     const TALK_DAYS = (
@@ -210,11 +191,41 @@
                 : 'Hold for earlier'
               : 'Keep scrolling for earlier';
     }
+    // B-452: while he scrolls (a wheel, a touch, a scroll key, and the momentum that follows them) the page never moves
+    // the thread itself: a pin owed meanwhile (a new line while he was at now) waits until his scroll comes to rest.
+    const SCROLL_REST_MS = 220;
+    CAP.userAt = 0;
+    const scrollInput = () => {
+      CAP.userAt = Date.now();
+    };
+    for (const k of ['wheel', 'touchstart', 'touchmove']) capBox.addEventListener(k, scrollInput, { passive: true });
+    capBox.addEventListener('keydown', e => {
+      if (/^(Page|Arrow)(Up|Down)$|^(Home|End| )$/.test(e.key)) scrollInput();
+    });
+    const scrolling = () => Date.now() - CAP.userAt < SCROLL_REST_MS;
+    // The pin owed lands once his scroll has rested, and only while he is still at now.
+    function payPin() {
+      clearTimeout(CAP.restT);
+      CAP.restT = setTimeout(() => {
+        if (scrolling()) return payPin();
+        CAP.pinOwed = false;
+        if (CAP.stick && ui.tab === 'ev') pinNow();
+      }, SCROLL_REST_MS);
+    }
+    // The page's own pins (a new line, a surface, a resize): at once, unless he is scrolling.
+    function autoPin() {
+      if (!scrolling()) return pinNow();
+      CAP.pinOwed = true;
+      payPin();
+    }
     capBox.addEventListener(
       'scroll',
       () => {
         const t = capBox,
           fromBottom = t.scrollHeight - t.clientHeight - t.scrollTop;
+        // Scroll events that follow his input (momentum) keep his scroll going; once they stop, a pin owed lands.
+        if (Date.now() - CAP.userAt < 1200) CAP.userAt = Date.now();
+        if (CAP.pinOwed) payPin();
         // Now is her latest reply as a whole (D-122 as amended): when it is pinned, scrolling down through its card is
         // still now; Back to now shows once he scrolls above her latest line into earlier ones.
         const atAnchor = CAP.anchorTop != null && Math.abs(t.scrollTop - CAP.anchorTop) < 30;
@@ -222,15 +233,12 @@
         // B-248: the bottom of the thread is always now. A fold above (the surface closing) clamps the scroll under a
         // pinned anchor; the anchor follows it rather than reading as reading back.
         if (fromBottom < 2 && CAP.anchorTop != null && t.scrollTop < CAP.anchorTop) CAP.anchorTop = t.scrollTop;
-        // B-249: reading back holds until he is back at now (no flip at one line), and her stage folds once, at once,
-        // with his place held.
+        // B-249: reading back holds until he is back at now (no flip at one line). B-452: Back to now floats over the
+        // thread, so showing it moves nothing under him.
         const atNow = fromBottom < 30 || (CAP.anchorTop != null && t.scrollTop >= CAP.anchorTop - 30);
         const away =
           !atNow && (!capNow.hidden || (CAP.anchorTop != null ? t.scrollTop < CAP.anchorTop - 40 : fromBottom > 140));
-        if (capNow.hidden === away) {
-          capNow.hidden = !away;
-          renderStage({ hold: true });
-        }
+        if (capNow.hidden === away) capNow.hidden = !away;
         // Leaving the top after an edge (the start of today, the 7-day edge) readies the next full pull.
         if ((CAP.pull === 'start' || CAP.pull === 'window') && t.scrollTop > 40) CAP.pull = null;
         const p = Math.max(0, Math.min(1, (160 - t.scrollTop) / 160));
@@ -270,15 +278,11 @@
         CAP.loaded++;
         CAP.pull = null;
         renderThread();
+        // B-452: the lines loaded give the thread the room her drop held below a short conversation, at once, so he
+        // reads back in the whole thread (her stage no longer folds for it); his place is held below either way.
+        dropSync(true);
         const now = at();
-        let want = was != null && now != null ? top + now - was : capBox.scrollHeight - h + top;
-        // The lines loaded take the lift's place first (it was only there to hold him).
-        if (CAP.lift) {
-          const r = Math.min(CAP.lift, want);
-          CAP.lift -= r;
-          capPull.style.marginBottom = CAP.lift ? CAP.lift + 'px' : '';
-          want -= r;
-        }
+        const want = was != null && now != null ? top + now - was : capBox.scrollHeight - h + top;
         // B-387: her pinned line moved down with the lines loaded above it, so the place that counts as now moves too;
         // left where it was, his held place read as now and her stage came back mid-scroll.
         if (CAP.anchorTop != null) CAP.anchorTop += want - top;
@@ -301,9 +305,8 @@
       CAP.stick = true;
       capNow.hidden = true;
       CAP.room = 0;
+      CAP.pinOwed = false;
       capIn.style.minHeight = '';
-      CAP.lift = 0;
-      capPull.style.marginBottom = '';
       renderStage();
       renderThread();
       requestAnimationFrame(() => {

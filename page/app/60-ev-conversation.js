@@ -741,8 +741,8 @@
     const coreStage = () => MO_SIZE(innerWidth, 'idle');
     const heroOrb = CORE.make(coreStage().px, { follow: true, pointer: true });
     $('hero').append(heroOrb.el);
-    // While he reads back, or on a screen under 560 px tall, her stage folds and she is the 24 px flower in the pane's
-    // header (D-213); tapping her there is tapping her.
+    // On a screen under 560 px tall her stage folds and she is the 24 px flower in the pane's header (D-213; B-452 ended
+    // the fold while he reads back); tapping her there is tapping her.
     if ($('mh-her')) {
       $('mh-her').append(
         CORE.make(24, { follow: true, when: () => document.body.classList.contains('her-folded') }).el
@@ -761,7 +761,7 @@
       renderStage();
       if (CAP.stick)
         requestAnimationFrame(() => {
-          pinNow();
+          autoPin();
           capBox.dispatchEvent(new Event('scroll'));
         });
     });

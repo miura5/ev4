@@ -5464,7 +5464,7 @@
    "opens": "The page always opens on E.V. A #tab link can open another tab.",
    "greeting": "EVCore.greeting on each open, frozen for that open. B-129 (D-167, amending 'never stored'): its headline is worded by one quick-tier call from greeting(ctx).situation and his last 7 headlines, held to the facts by EVCore.checkHeadline, with core's line on a 2 s timeout or a failed check; the last 7 headlines are kept in talk/memory.headlines. The briefing under it stays code.",
    "quickAsks": "Greeting chips and their typed equivalents are answered on the page with no model call: Start review, Start a study session, What's due this week?, Give me 5 more, How ready am I?, I'm wiped, Show my progress, plus End session, Take a break, Resume and Add 5 minutes while a session runs.",
-   "chat": "sample with the persona, rules and a compact record summary as the first turn, then up to 14 recent turns after talk/memory.upTo. Tier: quick by default; default for explain/why/compare questions or long messages, and for 'Go deeper'.",
+   "chat": "sample with the persona, rules and a compact record summary as the first turn, then up to 14 recent turns after talk/memory.upTo. Tier: quick by default; default for explain/why/compare questions or long messages.",
    "tools": [
     "show_card",
     "start_job",
