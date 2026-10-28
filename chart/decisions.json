@@ -34,7 +34,7 @@
   "date": "Oct 28",
   "title": "Past the second review, another round only for a feature-breaking or crucial gap; small ones go to the next batch",
   "why": "Matt, Oct 28: the two-round limit (review then one fix and a final review; at most two fix waves per release) stands, but the build manager may run one more round when what is still open would break a feature, lose or corrupt data, or cost money unexpectedly. Small tweaks still open after the second review are filed for the next batch and named on the release card.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"
