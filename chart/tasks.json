@@ -8312,7 +8312,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Builder took B-450: plan UI merged into the Study view, built from mock v3 with Matt's changes and the reviewer's five fixes.",
+  "notes": "Built and pushed (f55ea61, ac8c357): plan cards under the exam card per course tab, the settings popover and instructions sheet, Draft with score, question and Approve, badges with per-badge filters, Plan screen retired. npm test, smoke and run.cjs (studyPlanChecks at 1280 and 390) green; check --touched next.",
   "commit": null,
   "source": "Matt, chat, Oct 27 (B-449 split)",
   "words": "Study > Plan interface for study plans: a sliders button opening his editable plan instructions (save, reset to the brief), the draft view with score, open questions, scope and days grouped by week with tag, minutes and done-state, Approve, and Ask for changes and Make a plan through the chat.",
