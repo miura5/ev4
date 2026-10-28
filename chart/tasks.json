@@ -8144,7 +8144,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder agent: claimed; Worker cache hint + note-aware chat context + Ask E.V. chip",
+  "notes": "builder agent: built and pushed 6a616a3 (Worker cache marks, bridge prefix, noteChatPlan/condenseTurns, Ask E.V. chip); npm test 838/838, smoke 28/28, notes 144/144, frame 173/173; 10 follow-ups on a 3,000-token note bill 33% of before. Left: data-path review, ship staging and the /api/claude/usage staging proof",
   "commit": null,
   "source": "Matt, chat, Oct 27 (recommendation accepted as the plan)",
   "words": "When a chat is opened from a note, attach the whole note once with prompt caching, send later edits as changes instead of rereading the note, condense older turns, and offer an optional 'Ask E.V.' chip on selected text.",
