@@ -113,13 +113,13 @@ const imagesOf = content => (Array.isArray(content) ? content.filter(b => b && b
 const SMOKE_JOBS = {
   'study-guide': { kind: 'study-guide', brief: 'A one-page guide on fluid volume deficit.' },
   'practice-set': { kind: 'practice-set', brief: '5 questions on fluid volume deficit.' },
-  'exam-plan': { kind: 'exam-plan', brief: 'A study plan for E4.' },
+  'exam-plan': { kind: 'exam-plan', brief: 'A new study plan for E4.' }, // B-449: E4 has a plan: new words make one
   'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
   'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
   general: { kind: 'general', brief: 'List the major electrolytes and their normal ranges.' },
   'plant-shape': { kind: 'general', title: PLANTS.shape, brief: 'Anything.' },
-  'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A study plan for E4.' },
+  'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A new study plan for E4.' },
 };
 const SMOKE_ASK = /^Smoke job (\S+) \((\d+)\)$/;
 const titleOf = (name, scheme) => `${SMOKE_JOBS[name].title || 'Smoke ' + name} ${scheme}`;
@@ -964,7 +964,8 @@ async function main() {
           if (!job || !r || r.status !== 'failed' || !/didn’t pass E\.V\.’s checks/.test(r.error || ''))
             held.push(`${name}: ${r ? r.status + ' ' + r.error : 'no result'}`);
           if (job && talkOf(job.id).length) held.push(name + ': a message was written');
-          if (asked !== 1) held.push(`${name}: ${asked} asks`);
+          // B-449: a study plan that misses its shape gets its one fix ask
+          if (asked !== (name === 'plant-plan' ? 2 : 1)) held.push(`${name}: ${asked} asks`);
         }
         if (
           docs.some(

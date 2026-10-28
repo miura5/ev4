@@ -474,6 +474,7 @@ test('B-229 (D-233) lint: his words are his: no row with a tool, worker or build
     journal: ['text'],
     notes: ['title', 'label', 'blocks'],
     planedits: ['ticks'],
+    settings: ['instructions'], // B-449: his study plan instructions
   });
   for (const [c, fields] of Object.entries(his))
     for (const f of fields) {

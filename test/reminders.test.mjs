@@ -96,7 +96,8 @@ test('B-197: no identifier message says flag, violation or accuse, in the page, 
       .readdirSync(path.join(ROOT, 'core'))
       .filter(f => f.endsWith('.mjs'))
       .map(f => ['core/' + f, read('core/' + f)]),
-    ['spec/ev.spec.json', read('spec/ev.spec.json')],
+    // B-449: the study plan instructions are Matt's own document (docs/study-plan-brief.md), not an identifier message
+    ['spec/ev.spec.json', read('spec/ev.spec.json').replace(/"instructions": "(?:[^"\\]|\\.)*"/, '"instructions": ""')],
   ];
   for (const [name, src] of files) assert.deepEqual(accusingStrings(src), [], name);
   // Planted: the lint catches the old kind of line, and passes the new one.

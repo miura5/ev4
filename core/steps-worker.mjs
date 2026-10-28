@@ -48,19 +48,17 @@ export const CODE_STEPS = {
         .map(({ w }) => ({ weakspotId: w.id, topic: w.topic, objective: w.objective }));
       context.passages = passages(idx, q, 6);
     }
+    let instructions = null;
     if (kind === 'exam-plan') {
-      const exam =
-        (db.exams || []).find(
-          e => new RegExp(`\\b${e.id}\\b`).test(q) || (e.title && q.toLowerCase().includes(e.title.toLowerCase()))
-        ) || null;
-      context.exam = exam ? { id: exam.id, title: exam.title, date: exam.date, course: exam.course } : null;
-      context.objectives = (db.objectives || [])
-        .filter(o => !exam || o.exam === exam.id)
-        .map(o => ({ id: o.id, text: o.text, chapters: o.chapters || '' }));
-      context.dates = EV.liveDates(db.dates, db.dateedits)
-        .filter(d => d.date >= ctx.date && (!exam || !exam.date || d.date <= exam.date))
-        .map(d => ({ date: d.date, title: d.title, kind: d.kind, graded: !!d.graded }));
-      context.passages = passages(idx, q, 4);
+      // B-449 (D-354, D-356): a course's current section, or an edit of a draft; core picks the window and the material
+      Object.assign(
+        context,
+        EV.studyPlanContext(db, { date: ctx.date, job, spec, models: ms, constants: EV.constants() })
+      );
+      instructions = EV.studyPlanInstructions(
+        (db.settings || []).find(d => d.id === 'study-plan'),
+        spec
+      );
     }
     if (kind === 'clinical-prep') {
       // D-103 (B-46): the clinical the brief names by date, else the next one, and its read set (core.clinicalReadSet).
@@ -157,11 +155,20 @@ export const CODE_STEPS = {
       }
     }
     ctx.job = job;
+    const edit = kind === 'exam-plan' && context.mode === 'edit';
     ctx.jobBrief = {
-      job: { id: job.id, kind, title: job.title, brief: job.brief },
-      guide: kinds[kind] ? kinds[kind].guide : '',
+      job: {
+        id: job.id,
+        kind,
+        title: job.title,
+        brief: job.brief,
+        ...(job.course ? { course: job.course } : {}),
+        ...(job.revise ? { revise: job.revise } : {}),
+      },
+      guide: kinds[kind] ? (edit ? kinds[kind].edit.guide : kinds[kind].guide) : '',
       today: ctx.date,
       context,
+      ...(instructions ? { instructions } : {}),
       ...(groups ? { groups } : {}),
     };
     return { say: [`Job ${job.id} (${kind}): ${job.title}`] };
@@ -176,7 +183,7 @@ export const AGENT_MATERIAL = {
 
 export const AGENT_FOLDS = {
   /** {text, links?, items?, plan?, failed?}: jobresults/<id>, what the job made, and E.V.'s message in talk/<date>. */
-  'job-result'(answer, db, ctx) {
+  'job-result'(answer, db, ctx, spec) {
     const job = ctx.job;
     const writes = [];
     const say = [];
@@ -244,7 +251,56 @@ export const AGENT_FOLDS = {
         say.push(`Practice set ${setId}: ${items.length} of ${raw.length} questions kept.`);
       } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
     }
-    if (
+    const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
+    const saved = (planId, data, days) => {
+      writes.push({
+        op: 'set',
+        collection: 'plans',
+        id: planId,
+        data: { ...EV.envelope('worker', ctx.source, ctx.now), ...data },
+      });
+      result.planId = planId;
+      draftCard = { type: 'plan', id: planId }; // the card names it
+      say.push(`Plan ${planId}: ${days} days.`);
+    };
+    if (job.kind === 'exam-plan' && ctx.planUsage) result.usage = ctx.planUsage;
+    if (!failed && job.kind === 'exam-plan' && answer.ask && !answer.plan && !(answer.ops || []).length) {
+      // B-449: one question for Matt instead of a plan: only E.V.'s question is written, as her message
+      result.text = String(answer.ask);
+      result.asked = true;
+    } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
+      // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
+      const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);
+      const r = EV.applyPlanPatch(draft, answer);
+      const planId = EV.nextPlanId(db.plans || [], draft.exam || draft.id);
+      if (r.skipped) result.text += ` (${r.skipped} of the changes named no task in the plan, so I left them out.)`;
+      saved(planId, r.plan, r.plan.days.length);
+    } else if (
+      !failed &&
+      job.kind === 'exam-plan' &&
+      planCtx.mode === 'make' &&
+      planCtx.section &&
+      answer.plan &&
+      Array.isArray(answer.plan.days)
+    ) {
+      // B-449: a study plan for the section: a draft until Matt accepts it from its card (planedits names it)
+      const r = EV.studyPlanDoc(answer.plan, {
+        section: planCtx.section,
+        dates: planCtx.dates,
+        spec,
+        openQuestions: answer.openQuestions,
+        score: answer.score,
+        instructions: ctx.jobBrief.instructions && ctx.jobBrief.instructions.from,
+      });
+      if (r.plan.days.length) {
+        if (r.dropped) say.push(`${r.dropped} tasks outside the section were left out.`);
+        const inForce = EV.planViews(db.plans || [], db.planedits || []).some(x => x.exam === r.plan.exam);
+        saved(EV.nextPlanId(db.plans || [], r.plan.exam), r.plan, r.plan.days.length);
+        result.text += inForce
+          ? ` Your current ${r.plan.exam} plan stays in force; this draft waits on its card until you use it.`
+          : ' It waits on its card as a draft until you use it.';
+      } else result.text += ' (The plan had no days inside the section, so nothing was saved.)';
+    } else if (
       !failed &&
       job.kind === 'exam-plan' &&
       answer.plan &&
@@ -252,22 +308,14 @@ export const AGENT_FOLDS = {
       Array.isArray(answer.plan.days) &&
       answer.plan.days.length
     ) {
-      // B-45 (D-102): the exam's first plan is plans/<exam>; any later one is a draft plans/<exam>-<n>, a Fact
-      // never changed, that Matt makes the plan in force from its card. Nothing is replaced.
+      // B-45 (D-102): an exam plan in the older shape: the exam's first plan is plans/<exam>; any later one is a draft
+      // plans/<exam>-<n>, a Fact never changed, that Matt makes the plan in force from its card. Nothing is replaced.
       const p = answer.plan;
       const exists = (db.plans || []).some(x => (x.exam || x.id) === p.exam);
-      const planId = EV.nextPlanId(db.plans || [], p.exam);
-      writes.push({
-        op: 'set',
-        collection: 'plans',
-        id: planId,
-        data: { ...EV.envelope('worker', ctx.source, ctx.now), ...pick(p, ['exam', 'title', 'days']) },
-      });
+      saved(EV.nextPlanId(db.plans || [], p.exam), pick(p, ['exam', 'title', 'days']), p.days.length);
       result.text += exists
         ? ` Your current ${p.exam} plan stays in force; this draft waits on its card until you use it.`
         : '';
-      draftCard = { type: 'plan', id: planId }; // the card names it; jobresults keep their shape
-      say.push(`Plan ${planId}: ${p.days.length} days.`);
     }
     const key = `m-${EV.compactTime(ctx.now)}-job`;
     const message = {

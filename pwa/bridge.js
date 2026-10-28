@@ -786,6 +786,11 @@
         jobId: id,
         release: meta ? meta.content : 'v4',
         reload: fresh,
+        // B-449: a study plan reads this hour's and today's tokens first, and stops with a plain line when there's no room
+        usage: async () => {
+          const r = await api('claude/usage');
+          return r.ok ? r.json() : null;
+        },
         ask: async body => {
           const r = await api('claude', {
             method: 'POST',

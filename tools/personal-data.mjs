@@ -17,6 +17,7 @@ export const RECORD_COLLECTIONS = [
   'objectives',
   'plans',
   'planedits',
+  'settings',
   'dates',
   'dateedits',
   'days',

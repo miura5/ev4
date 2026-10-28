@@ -23,6 +23,7 @@ import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
 import { makeNotes } from './notes.mjs';
+import { makeStudyPlans } from './study-plans.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -1044,11 +1045,9 @@ const EVCore = (() => {
   function planInForceId(plans, planedit, examId) {
     const mine = (plans || []).filter(p => planExam(p) === examId);
     const want = planedit && planedit.plan;
-    return (
-      (want && mine.find(p => p.id === want) ? want : null) ||
-      (mine.find(p => p.id === examId) || mine[0] || {}).id ||
-      null
-    );
+    if (want && mine.find(p => p.id === want)) return want;
+    const older = mine.filter(p => !p.section); // B-449: a study plan is a draft until he accepts it
+    return (older.find(p => p.id === examId) || older[0] || {}).id || null;
   }
   /** Every exam's plan in force as a view, ticks merged in from its planedits document; drafts are left out. */
   function planViews(plans, planedits) {
@@ -1319,6 +1318,7 @@ const EVCore = (() => {
   // ---------------------------------------------------------------- day plan (budget in minutes across both courses)
   // Fixed items (D-086): his own time, never E.V.'s study budget.
   const FIXED_KINDS = ['graded', 'clinical', 'exam'];
+  const PLAN_CUT = { terminology: 10, other: 20, review: 35, val: 45, drill: 50, sim: 55, reading: 70 }; // cut first
   // B-392: a heads-up row's title. The page's row shows its day beside it (rowText drops the words there); a title that
   // already carries its own due clause, as "(due 11:59pm)", gets no second one.
   function headsUpTitle(title) {
@@ -1456,39 +1456,32 @@ const EVCore = (() => {
       if (!day) continue;
       for (const t of day.tasks) {
         if (['clinical'].includes(t.kind) && blocks.some(b => b.kind === 'clinical')) continue;
-        const same = records.find(b => similarity(b.title, t.text) >= C.planDay.sameItem);
+        // B-449: a task whose ref names one of today's dated items is that item, before any likeness of words
+        const refDay = t.ref && dates.find(d => 'dates/' + d.id === t.ref && d.date === date);
+        const byRef = refDay && (blocks.find(b => b.ref === t.ref) || records.find(b => b.kind === refDay.kind));
+        const same = byRef || records.find(b => similarity(b.title, t.text) >= C.planDay.sameItem);
         if (same) {
           (same.planTasks = same.planTasks || []).push(t.id);
           continue;
         }
         const done = taskDone(p, { ...t, date }, date, sets, answers);
-        const cutRank =
-          {
-            terminology: 10,
-            other: 20,
-            review: 35,
-            val: 45,
-            drill: 50,
-            sim: 55,
-            reading: 70,
-            graded: 99,
-            clinical: 99,
-            exam: 99,
-          }[t.kind] || 20;
-        const optional = /^optional\b|^only if\b|^if\b/i.test(t.text);
         const fixed = FIXED_KINDS.includes(t.kind);
+        const cutRank = fixed ? 99 : PLAN_CUT[t.kind] || 20;
+        const optional = /^optional\b|^only if\b|^if\b/i.test(t.text);
+        const own = Number.isInteger(t.minutes) && t.minutes >= 0; // B-449: the plan's own estimate
         add({
           id: 'plan-' + t.id,
           kind: t.kind,
           title: t.text,
           tag: t.tag ? PLAN_TAG_LABELS[t.tag] || t.tag.toUpperCase() : t.kind === 'reading' ? 'READING' : null,
-          minutes: done || fixed ? 0 : M[t.kind] != null ? M[t.kind] : M.other,
+          minutes: done ? 0 : own ? t.minutes : fixed ? 0 : M[t.kind] != null ? M[t.kind] : M.other,
           required: ['graded', 'clinical', 'exam'].includes(t.kind),
           cut: optional ? 5 : cutRank,
           done,
           plan: p.exam,
           taskId: t.id,
           drill: t.drill || null,
+          ...(t.doneWhen ? { doneWhen: t.doneWhen } : {}),
           chapters: t.chapters || null,
         });
       }
@@ -1583,6 +1576,7 @@ const EVCore = (() => {
         deferred: !!b.deferred,
         ref: 'plans/' + b.plan + '#' + b.taskId,
         set: s ? s.id : null,
+        ...(b.doneWhen ? { doneWhen: b.doneWhen } : {}), // B-449: when the task counts as done
       });
     }
     for (const b of plan.blocks.filter(b => ['reviews', 'checks'].includes(b.kind)))
@@ -2376,6 +2370,8 @@ const EVCore = (() => {
     ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
     ...SKILLS, // skills practice, Quizlet cards, weak-spot cards and workouts (D-108)
     ...SHARE, // shareable practice pages (D-110)
+    // B-449: study plans (core/study-plans.mjs)
+    ...makeStudyPlans({ ...LIB, addDays, liveDates, isActive, examViews, planDrafts, planViews, taskDone, editBase }),
     ...NOTES, // his notes' blocks: the editor's model, paste and the saved document (B-402)
     VERSION,
     TZ,

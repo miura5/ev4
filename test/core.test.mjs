@@ -1439,6 +1439,7 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'sessions',
     'share',
     'skills',
+    'study-plans',
   ]);
 });
 

@@ -109,7 +109,8 @@ test('B-324: a study guide is saved in E.V., not as a Claude Doc; a shareable pa
 test('B-324: a reply that fails the checks writes nothing it made; the job is marked failed', async () => {
   for (const [kind, title, why] of [
     ['general', PLANTS.shape + ' x', /answer: \/text: required/],
-    ['exam-plan', PLANTS.plan + ' x', /plans\/E4-\d+: \/days\/0\/date: required/],
+    // B-449: a study plan is held to its own answer shape, after its one fix ask
+    ['exam-plan', PLANTS.plan + ' x', /answer: \/plan\/days\/0\/date: required/],
   ]) {
     const { r, writes } = await run(kind, { title, brief: 'a study plan for E4' });
     assert.equal(r.status, 'refused');

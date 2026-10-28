@@ -8291,7 +8291,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: plan generation (settings/study-plan, section window, context, answer shape, self-score fix ask, Worker 24k for job asks, usage check, planDay merge) on the exam-plan job",
+  "notes": "builder: generation built and tested (settings/study-plan, section, make on Sonnet with one fix ask, edit as a Haiku patch per D-356, Worker purposes per D-355, planDay refs and minutes, chat routing); npm test and smoke green; staging proof next",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",

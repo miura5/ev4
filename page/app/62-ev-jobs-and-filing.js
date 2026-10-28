@@ -35,7 +35,7 @@
       }
     }
     const jobText = id => (TASKS.jobText || 'Job {id}').replace('{id}', id);
-    async function startJob({ kind, title, brief }) {
+    async function startJob({ kind, title, brief, course, revise }) {
       kind = KINDS[kind] ? kind : 'general';
       title =
         String(title || '')
@@ -51,7 +51,16 @@
         op: 'set',
         collection: 'jobs',
         id,
-        data: { ...envelope('E.V. Home'), schema: 2, kind, title, brief },
+        data: {
+          ...envelope('E.V. Home'),
+          schema: 2,
+          kind,
+          title,
+          brief,
+          // B-449: a study plan names its course, and a change names the plan it changes (D-356)
+          ...(kind === 'exam-plan' && course ? { course: String(course).slice(0, 40) } : {}),
+          ...(kind === 'exam-plan' && revise ? { revise: String(revise).slice(0, 80) } : {}),
+        },
       }); // B-177: jobs schema 2
       const fired = await fire(TASKS.worker, jobText(id));
       await write({ op: 'update', collection: 'jobs', id, data: { fired } });

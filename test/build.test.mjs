@@ -227,7 +227,9 @@ test('B-425: a docs-only commit keeps the build commit; a code commit moves it; 
 test('B-425: no build, run, check or test code reads a file under docs/ (so a docs commit can keep the build commit)', () => {
   // a read naming docs/ in its call, a path literal under docs/, or a path built with a 'docs' segment (save for the
   // export folders named docs inside a run's own directory: core/cli.mjs and tools/pwa-copy.mjs)
-  const allowed = /path\.join\((out|dir), 'docs'/;
+  // B-449: docs/study-plan-brief.md is the study plans' default instructions, built into the spec; its drift test reads
+  // it, so an edit of the brief is a build change (the spec copy follows it), never a docs-only one
+  const allowed = /path\.join\((out|dir), 'docs'|docs\/study-plan-brief\.md/;
   const reads = [
     /(readFileSync|readdirSync|existsSync|statSync|createReadStream)\([^)]*['"`]docs[/'"`]/,
     /['"`]docs\/[^'"`\s]/,

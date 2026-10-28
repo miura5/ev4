@@ -285,8 +285,9 @@ const withoutProse = o =>
       : o;
 /** What spec.json holds for one target's page: PAGE_SPEC_KEYS, each made here. */
 export function pageSpecFor(spec, schemas, { target, release }) {
+  // a retired collection (idchecks, D-324) is written by no one any more, the page included
   const pageWrites = Object.entries(spec.collections)
-    .filter(([c, x]) => !c.startsWith('_') && x && (x.writers || []).includes('page'))
+    .filter(([c, x]) => !c.startsWith('_') && x && !x.retired && (x.writers || []).includes('page'))
     .map(([c]) => c);
   const worker = (spec.tasks[target] || {}).worker;
   const make = {

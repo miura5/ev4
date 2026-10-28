@@ -109,6 +109,42 @@
        "type": "string",
        "pattern": "^[0-9a-f]{7,40}$",
        "description": "B-178 (D-195): a builder job: the commit staging is green at"
+      },
+      "planId": {
+       "type": "string",
+       "minLength": 1,
+       "description": "B-449: an exam-plan job: the plans/<id> it saved"
+      },
+      "asked": {
+       "type": "boolean",
+       "description": "B-449: an exam-plan job asked Matt one question instead of a plan"
+      },
+      "usage": {
+       "type": "object",
+       "description": "B-449: an exam-plan job: the tokens its asks used, as the API counted them",
+       "properties": {
+        "asks": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "input": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "output": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "cacheRead": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "cacheWrite": {
+         "type": "integer",
+         "minimum": 0
+        }
+       },
+       "additionalProperties": false
       }
      },
      "required": [],

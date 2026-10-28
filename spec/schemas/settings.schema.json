@@ -1,0 +1,68 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/settings",
+ "title": "settings/<id>",
+ "description": "B-449: settings/study-plan, Matt's instructions for his study plans",
+ "x-ev": {
+  "collection": "settings",
+  "class": "Edit",
+  "writers": [
+   "page"
+  ],
+  "schema": 1
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "updatedAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "instructions": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "maxLength": 40000,
+   "description": "the instructions the study plan ask follows; null: the default (docs/study-plan-brief.md)"
+  },
+  "missing": {
+   "enum": [
+    "ask",
+    "note"
+   ],
+   "description": "B-450: when something is missing, ask him one question (the default) or note it as an open question and go on"
+  },
+  "approved": {
+   "enum": [
+    "today",
+    "plan"
+   ],
+   "description": "B-450: an approved plan's tasks go to Today (the default) or stay in the plan"
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "updatedAt",
+  "instructions"
+ ],
+ "additionalProperties": false
+}

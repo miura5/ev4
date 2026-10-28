@@ -325,7 +325,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a named exam. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a course’s current section, through its next exam (name the course and any exam id, and keep his words, like cram or the time he has, in the brief); when he already has a plan, his words decide between a change to it and a new plan from today, and if they don’t, you are told to ask him first. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -342,7 +342,21 @@
             // B-182 (D-196): a builder job (a reply, Ship it, a build) is his to start from the page, never the model's.
             if (((EV_SPEC.jobs && EV_SPEC.jobs.builderKinds) || []).includes(i.kind))
               return `refused: a ${i.kind} job starts only from his own tap or words on the page`;
-            const r = await startJob({ kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') });
+            const job = { kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') };
+            if (job.kind === 'exam-plan') {
+              // B-449 (D-356): a change to the plan he has is a patch; new words make a new plan from today; else ask
+              const words = (T.scoreText || '') + ' ' + job.brief;
+              const course = E.studyPlanCourse({ title: job.title, brief: words }, S.exams);
+              const sec = course && E.studyPlanSection({ exams: S.exams, course, date: today });
+              const has = sec && E.latestPlanDraft(S.plansRaw, S.planedits, sec.exam.id);
+              const inForce = sec && S.plans.find(p => (p.exam || p.id) === sec.exam.id);
+              const cur = has || inForce || null;
+              const go = E.studyPlanRoute(words, { hasPlan: !!cur });
+              if (go.route === 'ask') return 'start nothing yet: ask him "' + go.question + '"';
+              if (course) job.course = course;
+              if (go.route === 'change') job.revise = cur.id;
+            }
+            const r = await startJob(job);
             addCard({ type: 'job', id: r.id });
             pend.jobId = r.id;
             return r.fired.ok ? 'started ' + r.id : 'created ' + r.id + ' but not started: ' + fireCopy(r.fired.error);

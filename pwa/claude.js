@@ -80,11 +80,47 @@ export const TOKEN_WEIGHTS = {
   cache_creation_input_tokens: 1.25,
   cache_read_input_tokens: 0.1,
 };
-/** Tokens one Messages API answer used, from its usage numbers, weighted as billed (D-352) and rounded to a whole
- * number (0 when it has none). */
-export function tokensOf(res) {
+/** Tokens one Messages API answer used, from its usage numbers, weighted as billed (D-352) and by the model's price
+ * against Haiku's (`scale`, B-449: a study plan's Sonnet tokens count 3 each), rounded to a whole number (0 when it has
+ * none). */
+export function tokensOf(res, scale = 1) {
   const u = (res && res.usage) || {};
-  return Math.round(Object.entries(TOKEN_WEIGHTS).reduce((a, [k, w]) => a + Math.max(0, Number(u[k]) || 0) * w, 0));
+  return Math.round(
+    Object.entries(TOKEN_WEIGHTS).reduce((a, [k, w]) => a + Math.max(0, Number(u[k]) || 0) * w, 0) * scale
+  );
+}
+
+// B-449 (D-355, D-356): the Worker chooses the model; the page never names one (a model field it sends is ignored). An
+// ask may name a purpose, checked here: only making a study plan ('exam-plan') goes to Sonnet, with a longer answer
+// allowed; a plan edit ('plan-edit'), any other ask or none stays on Haiku with the usual answer length. An unknown
+// purpose is refused.
+export const ASK_TOKENS = 8192; // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
+export const PURPOSES = {
+  // B-449 (D-355): making a study plan
+  'exam-plan': {
+    model: env => env.CLAUDE_PLAN_MODEL || 'claude-sonnet-5-5',
+    maxTokens: 24000,
+    scale: 3, // Sonnet's input and output cost about 3 times Haiku's, so its tokens count 3 each against the ceilings
+  },
+  // D-356: a change to a plan draft is a patch, on Haiku with the usual length
+  'plan-edit': { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: ASK_TOKENS, scale: 1 },
+};
+/** {model, maxTokens, scale} for an ask's purpose and max_tokens, or an error string. */
+export function purposeOf(body, env = {}) {
+  const purpose = body && body.purpose;
+  const asked = body && body.max_tokens;
+  // an ask with no purpose keeps the usual model and length, whatever model or max_tokens it sent
+  if (purpose == null)
+    return { model: env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: ASK_TOKENS, scale: 1, purpose: null };
+  const p = Object.prototype.hasOwnProperty.call(PURPOSES, purpose) ? PURPOSES[purpose] : null;
+  if (!p) return 'purpose: no such purpose';
+  let maxTokens = ASK_TOKENS;
+  if (asked != null) {
+    if (!Number.isInteger(asked) || asked < 1 || asked > p.maxTokens)
+      return 'max_tokens: a whole number from 1 to ' + p.maxTokens;
+    maxTokens = asked;
+  }
+  return { model: p.model(env), maxTokens, scale: p.scale, purpose };
 }
 
 /** This hour's and today's tokens. */
@@ -203,7 +239,8 @@ export async function claimRead(env, read, ms = Date.now()) {
   };
 }
 
-/** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?}, and GET /api/claude/usage. */
+/** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?, purpose?, max_tokens?}, and GET
+ * /api/claude/usage. */
 export async function handleClaude(request, env, url) {
   if (url.pathname === '/api/claude/usage' && request.method === 'GET')
     return json({ ...(await usageNow(env)), limits: await limitsOf(env) });
@@ -243,6 +280,9 @@ export async function handleClaude(request, env, url) {
   if (typeof read === 'string') return json({ error: read }, 400);
   const marks = cacheOf(body && body.cache, messages);
   if (typeof marks === 'string') return json({ error: marks }, 400);
+  const use = purposeOf(body, env);
+  if (typeof use === 'string') return json({ error: use }, 400);
+  if (use.purpose && read) return json({ error: 'purpose: a read-along ask has none' }, 400);
   const over = ceilingProblem(await usageNow(env), await limitsOf(env));
   if (over) return json(over, 429);
   // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
@@ -276,8 +316,8 @@ export async function handleClaude(request, env, url) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
-        max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
+        model: use.model, // B-449 (D-355): the Worker's choice, by purpose; never the page's
+        max_tokens: use.maxTokens,
         messages: markedMessages(messages, marks), // B-442: only the Worker's own cache marks reach the API
         ...(tools && tools.length
           ? { tools: withoutCacheControl(tools), ...(tool_choice ? { tool_choice } : {}) }
@@ -299,7 +339,7 @@ export async function handleClaude(request, env, url) {
   if (!r.ok) await unclaim();
   let used = 0;
   try {
-    used = tokensOf(JSON.parse(text));
+    used = tokensOf(JSON.parse(text), use.scale);
   } catch {}
   // an answer already made is returned even when its count can't be written (logged; the next write adds on)
   if (used)

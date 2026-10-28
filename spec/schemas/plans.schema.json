@@ -92,6 +92,15 @@
            "integer"
           ]
          }
+        },
+        "minutes": {
+         "type": "integer"
+        },
+        "doneWhen": {
+         "type": "string"
+        },
+        "ref": {
+         "type": "string"
         }
        },
        "required": [
@@ -104,6 +113,45 @@
      "date"
     ]
    }
+  },
+  "section": {
+   "type": "object",
+   "required": [
+    "course",
+    "from",
+    "to"
+   ]
+  },
+  "scope": {
+   "type": "array"
+  },
+  "keyDates": {
+   "type": "array"
+  },
+  "openQuestions": {
+   "type": "array"
+  },
+  "score": {
+   "type": "object",
+   "required": [
+    "criteria",
+    "total"
+   ]
+  },
+  "instructions": {
+   "enum": [
+    "settings",
+    "default"
+   ],
+   "description": "B-449: whose instructions the plan followed"
+  },
+  "revises": {
+   "type": "string",
+   "description": "B-449: the plans/<id> this draft revises"
+  },
+  "editedSinceScore": {
+   "type": "boolean",
+   "description": "D-356: an edit changed the plan after the model scored it; score is the baseline"
   }
  },
  "required": [

@@ -4,17 +4,34 @@
 // text for the rest. A job whose title holds a plant answers badly on purpose:
 //   PLANT-SHAPE  an answer with no text (the do-job shape requires it)
 //   PLANT-PLAN   an exam plan whose day has no date (plans/<id> refuses it)
-export const PLANTS = { shape: 'PLANT-SHAPE', plan: 'PLANT-PLAN' };
+//   PLANT-LOW    a study plan scoring itself under the bar on the first ask, and well on its fix ask (B-449)
+//   PLANT-ASK    a study plan answered with one question instead
+// A study plan edit whose request says "look up" reads the section's dates first (D-356).
+export const PLANTS = { shape: 'PLANT-SHAPE', plan: 'PLANT-PLAN', low: 'PLANT-LOW', ask: 'PLANT-ASK' };
 
+/** A message's words: its string, or its text blocks joined (a study plan's ask is in blocks, B-449). */
+const wordsOf = m =>
+  !m
+    ? ''
+    : typeof m.content === 'string'
+      ? m.content
+      : (m.content || [])
+          .filter(b => b && b.type === 'text')
+          .map(b => b.text)
+          .join('\n\n');
 /** The brief inside a job request (the one JSON block of its prompt), or null when it is not a job request. */
 export function briefOf(body) {
   const tool = ((body && body.tools) || []).find(t => t && t.name === 'answer');
   if (!tool) return null;
-  const last = [...(body.messages || [])].reverse().find(m => m.role === 'user');
-  const text = typeof (last && last.content) === 'string' ? last.content : '';
-  const m = text.match(/```json\n([\s\S]*?)\n```/);
+  const first = (body.messages || []).find(m => m.role === 'user');
+  const m = wordsOf(first).match(/```json\n([\s\S]*?)\n```/);
   return m ? JSON.parse(m[1]) : null;
 }
+/** B-449: a later turn of the same ask (a fix ask or a lookup's answer): its last user message holds tool results. */
+const laterTurn = body => {
+  const last = [...((body && body.messages) || [])].reverse().find(m => m.role === 'user');
+  return !!last && Array.isArray(last.content) && last.content.some(b => b && b.type === 'tool_result');
+};
 
 export const STUB_TEXT = {
   'study-guide': 'Stub study guide: fluid volume deficit. Key rules: watch intake and output, daily weights.',
@@ -23,8 +40,100 @@ export const STUB_TEXT = {
   general: 'Stub general: done.',
 };
 
+/** B-449: a study plan, in the plan shape, over the section in the brief: a preview on its first day and, when the
+ * section's first day has a dated item of the course, a task that is that item. */
+function studyPlanAnswer(brief, later) {
+  const title = brief.job.title || '';
+  const ctx = brief.context;
+  if (title.includes(PLANTS.ask)) return { text: 'One question first.', ask: 'Is the care plan draft graded?' };
+  const s = ctx.section;
+  const dated = (ctx.dates || []).find(d => d.date === s.from && d.course === s.course);
+  const days = title.includes(PLANTS.plan)
+    ? [{ label: 'no date', tasks: [] }]
+    : [
+        {
+          date: s.from,
+          label: 'Preview',
+          tasks: [
+            {
+              id: 't1',
+              text: 'Preview the next chapter: headings, figures, bold terms',
+              tag: 'PRACTICE',
+              kind: 'reading',
+              minutes: 30,
+              doneWhen: 'every heading skimmed and 5 terms listed',
+            },
+            ...(dated
+              ? [
+                  {
+                    id: 't2',
+                    text: dated.title,
+                    tag: 'GRADED',
+                    kind: dated.graded ? 'graded' : 'other',
+                    minutes: 45,
+                    doneWhen: 'submitted',
+                    ref: 'dates/' + dated.id,
+                  },
+                ]
+              : []),
+          ],
+        },
+        {
+          date: s.to,
+          label: 'Exam',
+          tasks: [
+            {
+              id: 't3',
+              text: 'Light review, early night',
+              tag: 'REVIEW',
+              kind: 'review',
+              minutes: 20,
+              doneWhen: 'in bed by 10',
+            },
+          ],
+        },
+      ];
+  const low = title.includes(PLANTS.low) && !later;
+  return {
+    text: 'Stub study plan.',
+    plan: {
+      exam: s.exam.id,
+      title: 'Stub plan for ' + s.exam.id,
+      section: { course: s.course, from: s.from, to: s.to },
+      scope: [{ topic: 'Stub topic', objectives: (ctx.objectives || []).slice(0, 1).map(o => o.id) }],
+      keyDates: (ctx.dates || []).slice(0, 3).map(d => ({ date: d.date, title: d.title, ref: 'dates/' + d.id })),
+      days,
+    },
+    openQuestions: ['Stub: is the review lecture recorded?'],
+    score: low ? { criteria: [3, 3, 3, 3, 3, 3, 3, 2], total: 61 } : { criteria: [5, 5, 4, 4, 4, 4, 4, 5], total: 88 },
+  };
+}
+/** D-356: a study plan edit's patch over the draft in the brief: the first task's minutes changed and one task added. */
+function planEditAnswer(brief) {
+  const draft = brief.context.draft;
+  const first = draft.days[0];
+  return {
+    text: 'Stub edit: changed one task and added one.',
+    ops: [
+      { op: 'edit', id: first.tasks[0].id, set: { minutes: 20 } },
+      {
+        op: 'add',
+        date: first.date,
+        task: {
+          id: 'stub-new',
+          text: 'Stub: 10 terms',
+          tag: 'PRACTICE',
+          kind: 'terminology',
+          minutes: 10,
+          doneWhen: '10 cards',
+        },
+      },
+    ],
+  };
+}
+
 /** The answer tool's input for one brief. */
-export function answerFor(brief) {
+export function answerFor(brief, later = false) {
   const kind = brief.job.kind;
   const title = brief.job.title || '';
   if (title.includes(PLANTS.shape)) return { links: [] };
@@ -43,6 +152,9 @@ export function answerFor(brief) {
     });
     return { text: 'Stub practice set: two questions.', items: [q(1), q(2)] };
   }
+  if (kind === 'exam-plan' && ctx.mode === 'make' && ctx.section) return studyPlanAnswer(brief, later);
+  if (kind === 'exam-plan' && ctx.mode === 'edit' && ctx.draft) return planEditAnswer(brief);
+  if (kind === 'exam-plan' && ctx.mode && ctx.refused) return { text: 'Stub: nothing to plan.', failed: ctx.refused };
   if (kind === 'exam-plan') {
     const exam = ctx.exam ? ctx.exam.id : 'E4';
     const day = (date, i) => ({
@@ -61,12 +173,21 @@ export function answerFor(brief) {
 /** A Messages API reply that calls the answer tool. */
 export function jobReply(body) {
   const brief = briefOf(body);
+  const later = laterTurn(body);
+  // D-356: an edit whose request says "look up" reads the section's dates before it answers
+  const tail = wordsOf((body.messages || [])[0]);
+  const look =
+    !later && brief && brief.context && brief.context.mode === 'edit' && /look up/i.test(tail.split('```').pop());
   return {
     id: 'msg_stub_job',
     type: 'message',
     role: 'assistant',
     model: 'stub',
-    content: [{ type: 'tool_use', id: 'toolu_stub', name: 'answer', input: answerFor(brief) }],
+    content: [
+      look
+        ? { type: 'tool_use', id: 'toolu_stub_look', name: 'lookup', input: { ref: 'dates' } }
+        : { type: 'tool_use', id: 'toolu_stub', name: 'answer', input: answerFor(brief, later) },
+    ],
     stop_reason: 'tool_use',
     usage: { input_tokens: 0, output_tokens: 0 },
   };
