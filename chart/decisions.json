@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-364",
+  "date": "Oct 28",
+  "title": "Reverts D-361: never more than two review rounds (a review, one fix, a final review) and at most two fix waves per release; anything still open goes on the release card and the next batch",
+  "why": "Matt, Oct 28 morning: enough fix waves. D-361's extra rounds for crucial gaps let one release run through many rounds overnight. The two-round limit in CLAUDE.md's Review bar stands with no exception; open gaps are named on the card and filed.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-363",
   "date": "Oct 28",
   "title": "Agents never write hand-made documents into a staging or live record outside the suite collection; staging probes already written are named once in the deploy check's allowlist",
