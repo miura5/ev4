@@ -8228,7 +8228,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: cause found on staging (3 asks to /api/claude, Haiku, ~25 s, 4.7k-5.6k output tokens of which ~3k thinking): the reply's shape drifts (one ask gave \"correct\": 0 for [0]) and validateItem refused each drifted item, so a batch of five drifted items was binned as 'not a usable shape'; an unknown weakspotId dropped the item and a max_tokens cut lost all. Fixed in 2a5adda (practiceReply normalize/replyItems/salvage on both practice paths), test/practice-reply.test.mjs; npm test, smoke and run harness green. Waiting on review and ship staging.",
+  "notes": "x",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Quiz me took a long time and then said the set did not come back in a usable shape and to try again.",
