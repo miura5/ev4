@@ -16,6 +16,7 @@
       workout: 'Workout',
       skill: 'Skills run',
       job: 'Background job',
+      newplan: 'A new study plan',
       checkin: 'Check-in',
       session: 'Study session',
       plan: 'Exam plan',

@@ -13,7 +13,46 @@
       if (meta) h.append(el('span', 'meta', meta));
       return h;
     };
+    // D-362 (B-449): the one way chat starts a new (Sonnet) study plan: his tap on the chip E.V. offered, which starts one
+    // exam-plan job with the words that led to it. Once the job is in the record the chip is that job's card; a tap not
+    // yet saved shows it started, so a second tap can't start another.
+    const newPlanTapped = new Set();
     const CARDS = {
+      newplan(box, c, key) {
+        const job = E.studyPlanChipStarted(c, S.jobs);
+        if (job) return CARDS.job(box, { type: 'job', id: job.id }); // the job it started, as its own card shows it
+        box.append(head2('A new study plan', c.course));
+        const started = newPlanTapped.has(key);
+        box.append(
+          el(
+            'p',
+            'meta',
+            started
+              ? 'Started: it shows here when it’s ready, as a draft beside the plan you have.'
+              : 'A whole new plan from today. The plan you have stays until you use the new one.'
+          )
+        );
+        if (started) return;
+        const a = el('div', 'actions');
+        a.append(
+          btn(
+            `Make a new ${c.course} plan`,
+            ev =>
+              guard(
+                ev.target,
+                async () => {
+                  newPlanTapped.add(key);
+                  await startJob(E.studyPlanChipJob(c));
+                  render();
+                },
+                null,
+                () => newPlanTapped.delete(key)
+              ),
+            { primary: true }
+          )
+        );
+        box.append(a);
+      },
       // B-189: what to bring on a class, lab, clinical or validation day, asked in words: that day's prep check, open,
       // each item naming where it came from (calendar, announcement, course calendar, library, his kit).
       prep(box, c, key) {

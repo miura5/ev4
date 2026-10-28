@@ -451,169 +451,195 @@ test('D-356: a patch applies add, edit, move and remove in order; an op naming n
   assert.equal(draft.days[0].tasks.length, 2, 'the draft itself is never changed');
 });
 
-test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan ask, change for an edit, else one question', () => {
-  const ROUTES = {
-    new: [
-      // no remake word: replan, start over, from scratch, a plan from today, a cram plan
-      'replan for my failed checkoff', // Matt's
-      'make me a cram plan for the dosage assessment',
-      'remake it from scratch',
-      'start over from today',
-      'plan from today please',
-      'I need a plan starting today',
-      'make it start from now',
-      'make a plan from today',
-      'scrap it and plan from today',
-      'cram plan for E4, add the labs too',
-      'I need to cram for the exam',
-      'cramming mode for Monday',
-      // a remake word whose object is plainly the whole plan, then nothing or a reason
-      'redo the plan around my revalidation', // Matt's
-      'redo the plan',
-      'redo my exam plan',
-      'redo the exam plan',
-      'redo my pharm plan',
-      'rewrite my E4 plan',
-      'rewrite my NUR 112 plan',
-      'rewrite my E4 plan around my revalidation',
-      'scrap this plan and start again',
-      'scrap my current E4 plan and start again',
-      'rework everything',
-      'redo the whole thing',
-      // D-361: case, punctuation, quotes and a missing article are folded
-      'redo plan',
-      'redo study plan',
-      'can u redo the plan pls',
-      'scrap the whole plan, it’s not working',
-      '"redo the plan"',
-      'REDO THE PLAN!',
-      'redo the plan for E4',
-      'redo the plan for my revalidation',
-      'cram plan for E4',
-      'rebuild the whole plan',
-      'remake the study plan',
-    ],
-    change: [
-      // an edit with no remake word
-      'add revalidation practice for the injection checkoff before Monday', // Matt's
-      'add skills practice for my revalidation', // Matt's
-      'schedule two mock runs before my retry', // Matt's
-      'move the drill to Thursday',
-      'add a new task for the lab',
-      'remove the reading from today',
-      'drop the drill from tonight',
-      'move the quiz review from today to Friday',
-      'add a new one-hour block Sunday',
-      'add a cram session on Sunday',
-      'make Thursday lighter',
-      'swap the drill and the preview',
-      'make the preview shorter',
-      // a remake word whose object is plainly one task
-      'scrap the Friday drill',
-      'redo the practice quiz on Thursday',
-      'rework the Sunday block to 30 minutes',
-      'rebuild the Sunday mock',
-      'add a redo of the dosage practice quiz',
-      'rewrite the Friday drill and move it to Saturday',
-      'redo the drill from today on Friday',
-      // D-361: a cram word beside a task, a day or an edit word is a change
-      'cram the labs into thursday',
-      'i want to cram the drug cards on friday',
-      'add cramming time on sunday',
-    ],
-    ask: [
-      // a remake word that leaves a doubt: the whole plan, or just that task?
-      'redo the plan’s Friday drill',
-      "redo the plan's Friday drill",
-      'redo the plan task on Friday',
-      'scrap the plan task for Friday',
-      'rewrite the study plan block on Sunday',
-      'redo it on Friday',
-      'scrap the drill, redo it on Friday',
-      'scrap this',
-      'scrap all this',
-      'redo all of this',
-      'rewrite all of it',
-      'this plan is bad, rewrite it',
-      'redo it from now',
-      'remake it from tonight',
-      // D-361: "for" a day, date or week is when, not why
-      'redo the plan for friday',
-      'scrap the plan for tomorrow',
-      'scrap everything for friday',
-      'rebuild the plan for next week',
-      'redo the plan for 11/3',
-      // a cram word with no plan, exam, task, day or edit
-      'cram',
-      'I want to cram',
-    ],
-  };
-  for (const [want, phrases] of Object.entries(ROUTES))
-    for (const w of phrases) assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, want, w);
-  for (const w of ROUTES.ask)
-    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).question, 'The whole plan, or just that task?', w);
-  // no remake word and no edit: the plan-level question
-  for (const w of ['what about my plan for E4', 'the plan looks terrible'])
-    assert.deepEqual(EV.studyPlanRoute(w, { hasPlan: true }), {
-      route: 'ask',
-      question: 'Change the current plan, or make a new one from today?',
+// ---------------------------------------------------------------- chat (D-362)
+// Every study plan line from the three B-456 reviews and B-449's: none starts a new (Sonnet) plan from chat.
+const OFFERED = [
+  // a plain whole-plan ask: an edit still, and the Make a new plan chip beside it
+  'redo the plan around my revalidation', // Matt's
+  'replan for my failed checkoff', // Matt's
+  'make me a cram plan',
+  'make me a cram plan for the dosage assessment',
+  'I need to cram for the exam',
+  'redo the plan',
+  'redo plan',
+  'redo study plan',
+  'redo my exam plan',
+  'redo the exam plan',
+  'redo my pharm plan',
+  'rewrite my E4 plan',
+  'rewrite my NUR 112 plan',
+  'rewrite my E4 plan around my revalidation',
+  'scrap this plan and start again',
+  'scrap my current E4 plan and start again',
+  'scrap the whole plan, it’s not working',
+  'rework everything',
+  'redo the whole thing',
+  'rebuild the whole plan',
+  'remake the study plan',
+  'remake it from scratch',
+  'can u redo the plan pls',
+  '"redo the plan"',
+  'REDO THE PLAN!',
+  'redo the plan for E4',
+  'redo the plan for my revalidation',
+  'cram plan for E4',
+  'cramming mode',
+  'start over',
+];
+const NOT_OFFERED = [
+  // Matt's three edits
+  'add revalidation practice for the injection checkoff before Monday',
+  'add skills practice for my revalidation',
+  'schedule two mock runs before my retry',
+  // edits and single-task asks
+  'move the drill to Thursday',
+  'add a new task for the lab',
+  'remove the reading from today',
+  'drop the drill from tonight',
+  'move the quiz review from today to Friday',
+  'add a new one-hour block Sunday',
+  'add a cram session on Sunday',
+  'make Thursday lighter',
+  'swap the drill and the preview',
+  'make the preview shorter',
+  'scrap the Friday drill',
+  'redo the practice quiz on Thursday',
+  'rework the Sunday block to 30 minutes',
+  'rebuild the Sunday mock',
+  'add a redo of the dosage practice quiz',
+  'rewrite the Friday drill and move it to Saturday',
+  'redo the drill from today on Friday',
+  'cram the labs into thursday',
+  'i want to cram the drug cards on friday',
+  'add cramming time on sunday',
+  'cramming mode for Monday',
+  // the doubtful ones the reviews found
+  'replan the friday drill',
+  'not the whole plan',
+  'rebuild the friday plan',
+  'new plan for the drill',
+  'redo the plan’s Friday drill',
+  "redo the plan's Friday drill",
+  'redo the plan task on Friday',
+  'scrap the plan task for Friday',
+  'rewrite the study plan block on Sunday',
+  'redo it on Friday',
+  'scrap the drill, redo it on Friday',
+  'scrap this',
+  'scrap all this',
+  'redo all of this',
+  'rewrite all of it',
+  'this plan is bad, rewrite it',
+  'redo it from now',
+  'remake it from tonight',
+  'redo the plan for friday',
+  'scrap the plan for tomorrow',
+  'scrap everything for friday',
+  'rebuild the plan for next week',
+  'redo the plan for 11/3',
+  'the whole plan',
+  'just that task',
+  'the plan looks terrible',
+  'what about my plan for E4',
+  'cram',
+  'I want to cram',
+];
+
+test('D-362: no study plan line in chat starts a new plan: each is a Haiku edit of the plan he has; the chip is only offered', () => {
+  const db = record();
+  const chat = (said, plans = db.plans) =>
+    EV.studyPlanChatAsk({
+      said,
+      brief: said,
+      title: 'Study plan: NUR 112',
+      exams: db.exams,
+      plansRaw: plans,
+      planedits: db.planedits || [],
+      date: TODAY,
     });
-  assert.equal(EV.studyPlanRoute('move the drill', { hasPlan: false }).route, 'new', 'no plan yet: a new one');
-  assert.doesNotMatch(
-    fs.readFileSync(path.join(ROOT, 'core/study-plans.mjs'), 'utf8').match(/const TASK_WORDS[\s\S]*?\);/)[0],
-    /module[\s\S]*\bmodule\b/,
-    'TASK_WORDS names module once'
-  );
+  for (const w of [...OFFERED, ...NOT_OFFERED])
+    assert.deepEqual(chat(w).edit, { course: 'NUR 112', revise: 'E4' }, `${w}: an edit, never a new plan`);
+  for (const w of OFFERED)
+    assert.deepEqual(chat(w).offer, { type: 'newplan', course: 'NUR 112', brief: w.trim() }, `${w}: the chip`);
+  for (const w of NOT_OFFERED) assert.equal(chat(w).offer, null, `${w}: no chip`);
+  // with no plan to change, nothing starts: the chip is all E.V. offers
+  const none = chat('move the drill to Thursday', []);
+  assert.deepEqual([none.edit, none.offer && none.offer.course], [null, 'NUR 112']);
+  // the page: start_job's exam-plan path is the edit or nothing; the route, its question and its pending state are gone
+  const page = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
+  assert.match(page, /const go = E\.studyPlanChatAsk\(\{/);
+  assert.match(page, /if \(go\.offer\) addCard\(go\.offer\);/);
+  assert.match(page, /if \(!go\.edit\)\s+return/);
+  assert.match(page, /Object\.assign\(job, go\.edit, \{ title: 'Plan changes' \}\)/);
+  assert.match(page, /type === 'newplan'\) throw/, 'the model can’t show the chip itself');
+  const all = ['core/study-plans.mjs', ...fs.readdirSync(path.join(ROOT, 'page/app')).map(f => 'page/app/' + f)]
+    .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
+    .join('\n');
+  assert.doesNotMatch(all, /studyPlanRoute|planAsk|The whole plan, or just that task\?/);
 });
 
-test('D-361: his answer to the route’s question routes the original request, with its brief', () => {
-  const ask = { said: 'redo it on Friday', brief: 'Redo the Friday task for E4 (his words: redo it on Friday)' };
-  const q = EV.studyPlanRouteTurn({ ...ask, hasPlan: true });
-  assert.equal(q.route, 'ask');
-  assert.equal(q.question, 'The whole plan, or just that task?');
-  assert.deepEqual(q.pending, { question: q.question, brief: ask.brief, words: `${ask.said} ${ask.brief}` });
-  // the next turn: the model calls start_job again with his answer as the latest line and its own new brief
-  for (const [said, route] of [
-    ['the whole plan', 'new'],
-    ['The whole thing.', 'new'],
-    ['everything', 'new'],
-    ['just that task', 'change'],
-    ['just the task', 'change'],
-    ['only that', 'change'],
-    ['the task', 'change'],
-  ]) {
-    const a = EV.studyPlanRouteTurn({ said, brief: 'his answer: ' + said, pending: q.pending, hasPlan: true });
-    assert.deepEqual([a.route, a.brief, a.pending], [route, ask.brief, null], said);
-  }
-  // anything else is routed afresh, as any ask
-  const other = EV.studyPlanRouteTurn({
-    said: 'move the drill to Saturday',
-    brief: 'x',
-    pending: q.pending,
-    hasPlan: true,
+test('D-362: tapping the chip starts exactly one exam-plan job with the words that led to it', async () => {
+  const c = { type: 'newplan', course: 'NUR 112', brief: '  redo the plan around my revalidation ' };
+  const j = EV.studyPlanChipJob(c);
+  assert.deepEqual(j, {
+    kind: 'exam-plan',
+    title: 'Study plan: NUR 112',
+    brief: 'redo the plan around my revalidation',
+    course: 'NUR 112',
   });
-  assert.deepEqual([other.route, other.brief], ['change', 'x']);
-  const again = EV.studyPlanRouteTurn({ said: 'hmm', brief: 'x', pending: q.pending, hasPlan: true });
-  assert.equal(again.route, 'ask');
-  // the plan-level question takes change or new
-  const p = EV.studyPlanRouteTurn({ said: 'what about my plan for E4', brief: 'b', hasPlan: true });
-  assert.equal(p.question, 'Change the current plan, or make a new one from today?');
-  assert.equal(
-    EV.studyPlanRouteTurn({ said: 'a new one', brief: 'y', pending: p.pending, hasPlan: true }).route,
-    'new'
+  assert.equal(EV.studyPlanChipStarted(c, []), null);
+  const started = { id: 'job-chip', schema: 2, ...j };
+  assert.equal(EV.studyPlanChipStarted(c, [started]).id, 'job-chip', 'once started, the chip is that job');
+  assert.equal(EV.studyPlanChipStarted(c, [{ ...started, revise: 'E4' }]), null, 'an edit job is not it');
+  const cards = fs.readFileSync(path.join(ROOT, 'page/app/67-ev-cards.js'), 'utf8');
+  assert.match(cards, /const job = E\.studyPlanChipStarted\(c, S\.jobs\);\s+if \(job\) return CARDS\.job/);
+  assert.match(cards, /const started = newPlanTapped\.has\(key\);[\s\S]*if \(started\) return;/);
+  assert.match(
+    cards,
+    /guard\(\s*ev\.target,[\s\S]*?newPlanTapped\.add\(key\);\s+await startJob\(E\.studyPlanChipJob\(c\)\);/
   );
-  assert.deepEqual(
-    (({ route, brief }) => [route, brief])(
-      EV.studyPlanRouteTurn({ said: 'change it', brief: 'y', pending: p.pending, hasPlan: true })
-    ),
-    ['change', 'b']
-  );
-  // the page keeps the question between turns and routes through the turn
-  const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
-  assert.match(chat, /E\.studyPlanRouteTurn\(\{ said, brief: job\.brief, pending, hasPlan: !!cur \}\)/);
-  assert.match(chat, /T\.planAsk = go\.pending/);
-  assert.match(chat, /job\.brief = go\.brief/);
-  assert.match(chat, /job\.revise = cur\.id/);
+  assert.match(cards, /`Make a new \$\{c\.course\} plan`/);
+  // the job it starts makes a new plan on Sonnet, naming its job to the Worker
+  const { r, asks, writes } = await run(record(), { id: 'job-chip', ...j });
+  assert.equal(r.status, 'done', r.said);
+  assert.deepEqual([asks.length, asks[0].purpose, asks[0].job], [1, 'exam-plan', 'job-chip']);
+  assert.match(words(asks[0]), /redo the plan around my revalidation/);
+  assert.equal(writes.filter(w => w.collection === 'plans').length, 1);
+});
+
+test('D-362: the Haiku edit may answer “this needs a whole new plan” with the chip instead of a patch', async () => {
+  const db = await withDraft();
+  const reply = () => ({
+    content: [
+      {
+        type: 'tool_use',
+        id: 'tu',
+        name: 'answer',
+        input: { text: 'That one needs a whole new plan.', newPlan: 'rebuilt around his revalidation' },
+      },
+    ],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 10, output_tokens: 10 },
+  });
+  const brief = 'rebuild all of it around my revalidation';
+  const { r, asks, writes, jobId } = await run(db, { title: 'Plan changes', brief, revise: 'E4-2' }, { reply });
+  assert.equal(r.status, 'done', r.said);
+  assert.equal(asks[0].purpose, 'plan-edit');
+  assert.ok(!writes.some(w => w.collection === 'plans'), 'no patch, no plan');
+  const res = writes.find(w => w.collection === 'jobresults' && w.data.status === 'done');
+  assert.equal(res.data.result.offerNewPlan, true);
+  assert.ok(validate('jobresults', res.data, { id: jobId }).ok);
+  const msg = Object.values(writes.find(w => w.collection === 'talk').data.messages)[0];
+  assert.deepEqual(msg.cards, [
+    { type: 'job', id: jobId },
+    { type: 'newplan', course: 'NUR 112', brief },
+  ]);
+  assert.equal(msg.text, 'That one needs a whole new plan.');
+  // the edit is told it may
+  const edit = spec.jobs.kinds['exam-plan'].edit;
+  assert.deepEqual(edit.output.properties.newPlan, { type: 'string', minLength: 1, maxLength: 300 });
+  assert.match(edit.guide, /needs a whole new plan[^.]*give no ops and say why in newPlan/);
+  assert.match(words(asks[0]), /say why in newPlan/);
 });
 
 // ---------------------------------------------------------------- the Worker (D-355, D-356)

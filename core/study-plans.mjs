@@ -334,60 +334,9 @@ export function makeStudyPlans(core) {
     };
   }
 
-  // D-360, D-361 (B-449, B-456): a plan ask's route. new (a Sonnet plan from today, 3x the cost and a draft that
-  // replaces his) only for an unmistakable whole-plan ask; change (a Haiku patch) for an edit; ask (one free question)
-  // whenever a remake or cram word leaves a doubt. When unsure, ask, never new.
-  const DAYS = 'mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday';
-  const MONTHS = 'jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec';
-  /** A day, date or week: "for" before one is when, not why ("redo the plan for friday"). */
-  const WHEN = `(the\\s+|this\\s+|next\\s+)?(week|weekend|days?|today|tonight|tomorrow|${DAYS}|${MONTHS}|\\d+)`;
-  /** Whole-plan asks that need no reading of an object: replan, start over, from scratch, a plan from today, and a
-   * cram plan, a cram mode or cramming for the exam. */
-  const WHOLE_ASK = new RegExp(
-    '\\b(' +
-      [
-        're-?plan(ning)?',
-        'start(ing)? (over|again|fresh)',
-        'from scratch',
-        'new (study )?(plan|schedule)',
-        'another plan',
-        'fresh (plan|start)',
-        '(plan|start(ing)?|begin(ning)?|make (me )?(a|a new) plan) from (today|now|tonight)',
-        'plan (starting|beginning) (today|now|tonight)',
-        'cram(ming)? (plan|schedule|mode)',
-        'cram(ming)? for (the|my|this) ([\\w-]+ )?(exam|test|final|midterm|assessment)',
-        'cram(ming)? for [a-z]{1,4} ?\\d+',
-      ].join('|') +
-      ')\\b',
-    'i'
-  );
-  const REMAKE = /\b(re-?make|re-?do|re-?write|re-?work|re-?build|scrap)\b/gi;
-  const CRAM = /\bcram(ming)?\b/i;
-  /** A remake word's object that is plainly the whole plan ("the plan", "my exam plan", "study plan", "everything",
-   * "the whole thing"), with nothing after it but a reason ("around my revalidation", "for E4", ", it's not working")
-   * or "and start again". "for" a day, date or week is no reason. */
-  const WHOLE_OBJECT = new RegExp(
-    "^\\s+(everything|the whole thing|((the|my|this|that|our)\\s+)?([\\w-]+\\s+){0,3}?(plan|schedule))(?![\\w'])\\s*([.!?]+\\s*)?" +
-      `($|,?\\s*(around|for(?!\\s+${WHEN}\\b)|because|since|as|so|given|after|now that|to fit|it'?s|it is|this is|that'?s)\\b` +
-      '|,?\\s*and (start|begin) (over|again|fresh)\\b)',
-    'i'
-  );
-  const TASK_WORDS = new RegExp(
-    '\\b(drills?|quiz|quizzes|review|blocks?|mocks?|readings?|preview|session|task|lecture|practice|sim|module|' +
-      'flashcards?|cards|terms|terminology|slot|labs?|runs?|checklist|exam practice|chapter|ch|catch-up|time|' +
-      `${DAYS}|today|tonight|tomorrow|morning|afternoon|evening|\\d+ ?(min|mins|minutes|hours?|hrs?))\\b`,
-    'i'
-  );
-  const NOT_ONE_TASK = /\b(plan|plans|schedule|it|this|that|these|those|everything|all|whole|thing|stuff)\b|plan's/i;
-  /** One remake word's reading: 'whole', 'task' or 'unclear', from what follows it in its clause. */
-  function remakeObject(rest) {
-    if (WHOLE_OBJECT.test(rest)) return 'whole';
-    const clause = rest.split(/[,;.!?]|\band\b|\bthen\b/i)[0];
-    if (!NOT_ONE_TASK.test(clause) && TASK_WORDS.test(clause)) return 'task';
-    return 'unclear';
-  }
-  const CHANGE_WORDS =
-    /\b(move|swap|add|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
+  // D-362 (B-449, B-456): chat words never start a new (Sonnet) plan: every plan ask in chat is a Haiku edit of the
+  // plan he has. This check only decides whether E.V. offers the "Make a new <course> plan" chip beside her reply,
+  // and it is conservative: a plain whole-plan ask with nothing that points at one task, day or time, and no "not".
   /** His words folded: one case, curly quotes straight, quotes, "please" and chat shorthand gone, spaces single. */
   const fold = t =>
     ` ${String(t || '')} `
@@ -397,65 +346,64 @@ export function makeStudyPlans(core) {
       .replace(/\b(please|pls|plz|thanks|thx|asap)\b/g, ' ')
       .replace(/\bu\b/g, 'you')
       .replace(/\s+/g, ' ')
-      .replace(/\s+([,;.!?])/g, '$1')
       .trim();
-  /** The questions asked when his words don't say which (D-356, D-360). */
-  const ROUTE_QUESTION = 'Change the current plan, or make a new one from today?';
-  const REMAKE_QUESTION = 'The whole plan, or just that task?';
-  /**
-   * D-356, D-360: what a plan ask becomes: 'new' (a Sonnet plan from today), 'change' (a Haiku patch of the plan he
-   * has) or 'ask' (one short question first). With no plan for the exam yet, every ask is a new plan. Each remake word
-   * is read by its object: all of them plainly the whole plan is new, all of them one task is a change, else ask. A
-   * cram word that is no cram plan is a change beside a task, a day or an edit word, else ask.
-   */
-  function studyPlanRoute(words, { hasPlan } = {}) {
-    if (!hasPlan) return { route: 'new' };
+  const WHOLE_PLAN = new RegExp(
+    '\\b(' +
+      [
+        're-?plan(ning)?( (it|everything|the (whole )?plan|my (whole )?plan))?( (for|around|because|since)\\b.*)?$',
+        'start(ing)? (over|again|fresh)',
+        'from scratch',
+        '(make|need|want|build|give) (me )?(a )?(new|fresh|whole new) (study )?plan',
+        'cram(ming)? (plan|schedule|mode)',
+        'cram(ming)? for (the|my|this) ([\\w-]+ )?(exam|test|final|midterm|assessment)',
+        "(re-?make|re-?do|re-?write|re-?work|re-?build|scrap) (everything|the whole thing|((the|my|this|that) )?([\\w-]+ ){0,2}(plan|schedule))(?![\\w'])",
+      ].join('|') +
+      ')',
+    'i'
+  );
+  /** Words that point at one task, a day or a time, or say not: then no chip is offered. */
+  const ONE_TASK =
+    /\b(not (the |a |my )?(whole|entire|all|everything|plan)|just|only|drills?|quiz|quizzes|blocks?|mocks?|readings?|preview|session|task|lecture|sim|module|flashcards?|cards|terms|terminology|slot|labs?|runs?|checklist|chapter|ch|catch-up|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tonight|tomorrow|morning|afternoon|evening|week|weekend|\d+ ?(min|mins|minutes|hours?|hrs?))\b|plan's|\d+\/\d+/;
+  /** D-362: whether his words plainly ask for a whole new plan (E.V. then offers the chip; it never starts one). */
+  function studyPlanLooksNew(words) {
     const w = fold(words);
-    if (WHOLE_ASK.test(w)) return { route: 'new' };
-    const reads = [...w.matchAll(REMAKE)].map(m => remakeObject(w.slice(m.index + m[0].length)));
-    if (reads.length) {
-      if (reads.every(r => r === 'whole')) return { route: 'new' };
-      if (reads.every(r => r === 'task')) return { route: 'change' };
-      return { route: 'ask', question: REMAKE_QUESTION };
-    }
-    if (CRAM.test(w))
-      return TASK_WORDS.test(w) || CHANGE_WORDS.test(w)
-        ? { route: 'change' }
-        : { route: 'ask', question: REMAKE_QUESTION };
-    if (CHANGE_WORDS.test(w)) return { route: 'change' };
-    return { route: 'ask', question: ROUTE_QUESTION };
+    return WHOLE_PLAN.test(w) && !ONE_TASK.test(w);
   }
   /**
-   * D-361: his answer to the question the route asked: 'new', 'change', or null when it doesn't answer it (then his
-   * words are routed as any ask).
+   * D-362: what a study plan ask in chat does. edit: the Haiku change of the plan he has ({course, revise}), or null
+   * when he has none (chat never starts a new plan). offer: the Make a new <course> plan chip (a newplan card with his
+   * words as its brief) when he has no plan yet or his words plainly ask for a whole new one, else null.
    */
-  function studyPlanRouteAnswer(reply, question) {
-    const w = fold(reply);
-    const whole =
-      /\b(the )?whole (plan|thing)\b|\beverything\b|\ball of it\b|\b(a |the )?new (plan|one)\b|^(the )?plan[.!]?$/;
-    const one =
-      /\b(just|only) (that|the|this|that one|the one)( task| one| thing)?\b|\b(that|the|this) (task|one)\b|\bjust that\b|\bonly that\b/;
-    const change = /^(change( it| the (current )?(plan|one))?|the current (plan|one)|keep (it|the plan)[\w ]*)[.!]?$/;
-    const a = whole.test(w) ? 'new' : null;
-    const b = (question === ROUTE_QUESTION ? change : one).test(w) ? 'change' : null;
-    return a && b ? null : a || b;
+  function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date }) {
+    const course = studyPlanCourse({ title, brief: `${said} ${brief}` }, exams);
+    const sec = course && studyPlanSection({ exams, course, date });
+    const cur =
+      (sec &&
+        (latestPlanDraft(plansRaw, planedits, sec.exam.id) ||
+          planViews(plansRaw || [], planedits || []).find(p => (p.exam || p.id) === sec.exam.id))) ||
+      null;
+    const offer =
+      sec && (!cur || studyPlanLooksNew(said || brief))
+        ? { type: 'newplan', course: sec.course, brief: chipBrief(brief) }
+        : null;
+    return { course: sec ? sec.course : course, edit: cur ? { course: sec.course, revise: cur.id } : null, offer };
   }
-  /**
-   * D-361: one start_job turn of a plan ask, with the question asked before it (pending: {question, brief, words}):
-   * when his line answers that question, his answer routes the original request and its brief is the job's;
-   * otherwise his words and the brief are routed afresh. {route, brief, question?, pending} (pending is what to keep
-   * for the next turn: the question just asked, else null).
-   */
-  function studyPlanRouteTurn({ said, brief, pending = null, hasPlan }) {
-    if (pending && hasPlan) {
-      const a = studyPlanRouteAnswer(said, pending.question);
-      if (a) return { route: a, brief: pending.brief, words: pending.words, pending: null };
-    }
-    const words = `${said || ''} ${brief || ''}`.trim();
-    const go = studyPlanRoute(words, { hasPlan });
-    if (go.route !== 'ask') return { route: go.route, brief, words, pending: null };
-    return { route: 'ask', question: go.question, brief, words, pending: { question: go.question, brief, words } };
-  }
+  const chipBrief = b =>
+    String(b || '')
+      .trim()
+      .slice(0, 1500);
+  /** D-362: the job his tap on the chip starts: one new plan (exam-plan, no revise) with the chip's brief. */
+  const studyPlanChipJob = c => ({
+    kind: 'exam-plan',
+    title: `Study plan: ${c.course}`,
+    brief: chipBrief(c.brief),
+    course: c.course,
+  });
+  /** D-362: the job a chip already started (so it shows that job, never a second tap), else null. */
+  const studyPlanChipStarted = (c, jobs) =>
+    (jobs || []).find(
+      j => j.kind === 'exam-plan' && !j.revise && j.course === c.course && j.brief === chipBrief(c.brief)
+    ) || null;
 
   /**
    * The lookup an edit ask may make (D-356): one date, material, objective or note of his record by id, small; or
@@ -737,9 +685,10 @@ export function makeStudyPlans(core) {
     studyPlanContext,
     studyPlanLookup,
     studyPlanProgress,
-    studyPlanRoute,
-    studyPlanRouteAnswer,
-    studyPlanRouteTurn,
+    studyPlanLooksNew,
+    studyPlanChatAsk,
+    studyPlanChipJob,
+    studyPlanChipStarted,
     studyPlanScoreOk,
     studyPlanDoc,
     applyPlanPatch,

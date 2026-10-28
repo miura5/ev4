@@ -297,6 +297,19 @@ export const AGENT_FOLDS = {
       // B-449: one question for Matt instead of a plan: only E.V.'s question is written, as her message
       result.text = String(answer.ask);
       result.asked = true;
+    } else if (
+      !failed &&
+      job.kind === 'exam-plan' &&
+      planCtx.mode === 'edit' &&
+      planCtx.draft &&
+      answer.newPlan &&
+      !(answer.ops || []).length
+    ) {
+      // D-362: the edit found his ask needs a whole new plan: no patch; E.V. offers the Make a new plan chip with his
+      // words as its brief (one tap starts the exam-plan job; nothing starts here)
+      result.offerNewPlan = true;
+      const course = (planCtx.draft.section && planCtx.draft.section.course) || job.course || null;
+      if (course) draftCard = { type: 'newplan', course, brief: String(job.brief || '').slice(0, 1500) };
     } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
       // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
       const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);

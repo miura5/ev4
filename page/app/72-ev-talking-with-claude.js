@@ -296,7 +296,7 @@
           },
           execute: i => {
             const type = str(i.type, 20);
-            if (!CARDS[type] || type === 'link') throw new Error('unknown card type ' + type);
+            if (!CARDS[type] || type === 'link' || type === 'newplan') throw new Error('unknown card type ' + type);
             const c = { type };
             if (type === 'set') {
               if (!S.sets.some(s => s.id === i.id)) throw new Error('no set with id ' + i.id);
@@ -325,7 +325,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a study plan for a course’s current section, through its next exam (name the course and any exam id, and keep his words, like cram or the time he has, in the brief); when he already has a plan, his words decide between a change to it and a new plan from today, and if they don’t, you are told to ask him first. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -344,22 +344,24 @@
               return `refused: a ${i.kind} job starts only from his own tap or words on the page`;
             const job = { kind: str(i.kind, 20), title: str(i.title, 90), brief: String(i.brief || '') };
             if (job.kind === 'exam-plan') {
-              // B-449 (D-356, D-360, D-361): a change to the plan he has is a patch; an unmistakable whole-plan ask is
-              // a new plan from today; else one question, whose answer (his next line) routes the original request
-              const pending = T.planAsk && Date.now() - T.planAsk.at < 30 * 60000 ? T.planAsk : null;
-              const said = T.scoreText || '';
-              const first = (pending && pending.words) || `${said} ${job.brief}`;
-              const course = E.studyPlanCourse({ title: job.title, brief: `${first} ${job.brief}` }, S.exams);
-              const sec = course && E.studyPlanSection({ exams: S.exams, course, date: today });
-              const has = sec && E.latestPlanDraft(S.plansRaw, S.planedits, sec.exam.id);
-              const inForce = sec && S.plans.find(p => (p.exam || p.id) === sec.exam.id);
-              const cur = has || inForce || null;
-              const go = E.studyPlanRouteTurn({ said, brief: job.brief, pending, hasPlan: !!cur });
-              T.planAsk = go.pending ? { ...go.pending, at: Date.now() } : null;
-              if (go.route === 'ask') return 'start nothing yet: ask him "' + go.question + '"';
-              job.brief = go.brief;
-              if (course) job.course = course;
-              if (go.route === 'change') job.revise = cur.id;
+              // B-449, D-362: chat words never start a new (Sonnet) plan. A plan ask here is a Haiku edit of the plan
+              // he has; when his words plainly ask for a whole new one, E.V. offers the Make a new <course> plan chip
+              // beside her reply (one tap starts it), and with no plan to edit the chip is all she offers.
+              const go = E.studyPlanChatAsk({
+                said: T.scoreText || '',
+                brief: job.brief,
+                title: job.title,
+                exams: S.exams,
+                plansRaw: S.plansRaw,
+                planedits: S.planedits,
+                date: today,
+              });
+              if (go.offer) addCard(go.offer);
+              if (!go.edit)
+                return go.offer
+                  ? `started nothing: he has no ${go.offer.course} plan yet, so you offered the Make a new ${go.offer.course} plan chip; tell him one tap starts it`
+                  : 'started nothing: there is no plan to change and no exam ahead for that course; say so';
+              Object.assign(job, go.edit, { title: 'Plan changes' });
             }
             const r = await startJob(job);
             addCard({ type: 'job', id: r.id });
