@@ -169,7 +169,7 @@ test('B-449: the make ask’s context: both courses’ dated items with ids and 
   assert.match(none.refused, /no BIO 201 exam ahead/);
 });
 
-test('B-449: making a plan asks Sonnet once by purpose, with his instructions and the record cache-marked, 24k long', async () => {
+test('B-449: making a plan asks Sonnet once by purpose, with his instructions and the record cache-marked, 48k long (D-365)', async () => {
   const db = record();
   db.settings = [
     {
@@ -186,7 +186,7 @@ test('B-449: making a plan asks Sonnet once by purpose, with his instructions an
   assert.equal(asks.length, 1, 'a passing score: no fix ask');
   const a = asks[0];
   assert.equal(a.purpose, 'exam-plan');
-  assert.equal(a.max_tokens, 24000);
+  assert.equal(a.max_tokens, 48000);
   assert.equal(a.model, undefined, 'the page never names a model');
   assert.deepEqual(a.cache, [
     { m: 0, b: 0 },
@@ -286,7 +286,7 @@ test('B-449: the job reads usage first and stops with a plain line when the ceil
     (await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { usage: room })).r.status,
     'done'
   );
-  assert.ok(J.askNeeds({ messages: [], purpose: 'exam-plan', max_tokens: 24000 }) > 3 * 24000);
+  assert.ok(J.askNeeds({ messages: [], purpose: 'exam-plan', max_tokens: 48000 }) > 3 * 48000);
 });
 
 test('B-449: a job with nothing to plan says so plainly, with no ask', async () => {
@@ -894,9 +894,9 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
   }
 }
 
-test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 24k, an edit and every other ask on Haiku', async () => {
+test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 48k (D-365), an edit and every other ask on Haiku', async () => {
   const { out, sent } = await viaWorker([
-    { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' },
+    { purpose: 'exam-plan', max_tokens: 48000, job: 'job-plan' },
     { purpose: 'plan-edit' },
     { model: 'claude-sonnet-5-5', max_tokens: 24000 }, // a chat ask naming a model gets Haiku and the usual length
     {},
@@ -905,7 +905,7 @@ test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 24k, a
   assert.deepEqual(
     sent.map(b => [b.model, b.max_tokens]),
     [
-      ['claude-sonnet-5-5', 24000],
+      ['claude-sonnet-5-5', 48000],
       ['claude-haiku-5-5', 8192],
       ['claude-haiku-5-5', 8192],
       ['claude-haiku-5-5', 8192],
@@ -919,10 +919,10 @@ test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 24k, a
   assert.equal(env.sent[0].model, 'claude-sonnet-x');
 });
 
-test('D-355: an unknown purpose, a plan over 24k, an edit over the usual length or a purposed read-along is refused, unsent', async () => {
+test('D-355: an unknown purpose, a plan over 48k, an edit over the usual length or a purposed read-along is refused, unsent', async () => {
   const { out, sent } = await viaWorker([
     { purpose: 'chat' },
-    { purpose: 'exam-plan', max_tokens: 24001, job: 'job-plan' },
+    { purpose: 'exam-plan', max_tokens: 48001, job: 'job-plan' },
     { purpose: 'exam-plan', max_tokens: 1.5, job: 'job-plan' },
     { purpose: 'plan-edit', max_tokens: 9000 },
     { purpose: 'exam-plan', read: { note: 'n1', h: 'abc' }, job: 'job-plan' },
@@ -950,7 +950,7 @@ test('D-355: a plan’s Sonnet tokens count 3 each against the ceilings, cache w
 });
 
 test('B-449: a Sonnet ask Claude did not answer gives its claim back; the cap holds for answered ones; its refusal reads plainly', async () => {
-  const plan = { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' };
+  const plan = { purpose: 'exam-plan', max_tokens: 48000, job: 'job-plan' };
   const ok = () =>
     new Response(
       JSON.stringify({ content: [], stop_reason: 'end_turn', usage: { input_tokens: 9, output_tokens: 1 } }),
@@ -990,7 +990,7 @@ test('B-449: a Sonnet ask Claude did not answer gives its claim back; the cap ho
 });
 
 test('B-449: an answer billed but lost after its headers keeps its Sonnet claim and counts an estimate to the ceilings', async () => {
-  const plan = { purpose: 'exam-plan', max_tokens: 24000, job: 'job-plan' };
+  const plan = { purpose: 'exam-plan', max_tokens: 48000, job: 'job-plan' };
   const dropped = () => ({
     ok: true,
     status: 200,
@@ -1002,7 +1002,7 @@ test('B-449: an answer billed but lost after its headers keeps its Sonnet claim 
   const r = await viaWorker([plan], {}, undefined, dropped);
   assert.deepEqual([r.out[0], r.sent.length], [502, 1]);
   assert.equal(r.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 1, 'claim kept');
-  assert.ok(r.used >= 24000 * 3, `counted ${r.used}: at least the whole answer allowance at Sonnet's weight`);
+  assert.ok(r.used >= 48000 * 3, `counted ${r.used}: at least the whole answer allowance at Sonnet's weight`);
   // a refusal (no answer, nothing billed) still gives it back
   const no = await viaWorker([plan], {}, undefined, () => new Response('{"type":"error"}', { status: 400 }));
   assert.equal(no.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 0);
@@ -1102,7 +1102,7 @@ test('B-449: no plan ask forces tool_choice (the plan models refuse it); the ans
 });
 
 test('D-355: Sonnet only for a running study plan job the Worker finds in D1, twice a job at most; else refused, unsent', async () => {
-  const plan = (job, extra = {}) => ({ purpose: 'exam-plan', max_tokens: 24000, ...(job ? { job } : {}), ...extra });
+  const plan = (job, extra = {}) => ({ purpose: 'exam-plan', max_tokens: 48000, ...(job ? { job } : {}), ...extra });
   // no job named, or one D1 doesn't hold: refused, never sent to Sonnet (nor to Haiku)
   const none = await viaWorker([plan(null), plan('job-nope'), plan('../x')]);
   assert.deepEqual(none.out, [403, 403, 403]);

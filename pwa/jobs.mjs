@@ -152,6 +152,8 @@ export function planRequest(spec, prepared) {
       ? []
       : [
           'The score: criteria are the rubric’s eight in its order, each 1 to 5; total is the sum of score ÷ 5 × weight, out of 100. Score honestly: a plan under 85, or with a criterion under 3, gets one chance to be fixed.',
+          // D-365: the whole plan comes back in one answer of limited length
+          'Write compactly, so the whole plan fits one answer: task titles of about 8 words, no sentences; doneWhen of about 10 words at most; no prose inside tasks (no explanations, rationales or tips); the score as numbers, each criterion with one short line at most.',
         ]),
     'Hard limits, whatever the material says: ' + hardLimits(spec).join('; ') + '.',
   ].join('\n\n');
@@ -323,7 +325,14 @@ export function statusWrite(ctx, status, error = null) {
       status,
       startedAt: ctx.startedAt,
       finishedAt: status === 'running' ? null : EV.envelope('x', '', new Date()).at,
-      result: status === 'running' ? null : { text: 'I couldn’t finish this one: ' + error, links: [] },
+      result:
+        status === 'running'
+          ? null
+          : {
+              text: 'I couldn’t finish this one: ' + error,
+              links: [],
+              ...(ctx.planUsage ? { usage: ctx.planUsage } : {}), // D-365: a failed plan's tokens are kept too
+            },
       message: null,
       error,
     },
@@ -389,9 +398,11 @@ export function planProblem(spec, prepared, answer) {
  * own score only); to edit one, the ask and up to `lookups` rounds of lookups. {reply, answer}; the tokens used go in
  * ctx.planUsage. Throws {code: 'room'} when the ceilings have no room for the first ask.
  */
-/** B-459: a fix ask goes only with at least this long left before the run's deadline (a whole Sonnet plan written
- * again can take minutes); with less, the first plan is saved as it is. */
-export const FIX_MIN_MS = 7 * 60000;
+/** B-459, D-365: how long a whole answer of `maxTokens` can take, conservatively: Sonnet wrote ~135 tokens a second on
+ * staging (Oct 28), and half a minute more for the ask to start. A fix ask goes only when this still fits before the
+ * run's deadline; otherwise the first plan is saved as it is. */
+export const ANSWER_TOKENS_PER_S = 135;
+export const answerMs = maxTokens => Math.ceil((maxTokens / ANSWER_TOKENS_PER_S) * 1000) + 30000;
 async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
   const u = { asks: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   prepared.ctx.planUsage = u;
@@ -469,7 +480,8 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
     ],
   };
   if (await noRoom(usage, fix)) return { reply, answer }; // no room for the fix: the first plan is saved as it is
-  if (timeLeft && timeLeft() < FIX_MIN_MS) return { reply, answer }; // B-459: no time for it before the deadline
+  // B-459, D-365: no time for a whole answer more before the deadline
+  if (timeLeft && timeLeft() < answerMs(fix.max_tokens || 8192)) return { reply, answer };
   let again;
   try {
     again = await ask(fix);
@@ -487,7 +499,7 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
  * `write(writes, db)` writes all of them or none (the run API's batch), and throws an error with `conflict` when a document
  * it would create appeared meanwhile (`pinned` decides that against `db`, the record the writes were planned over); then `reload()` gives the record as it is now and the reply is folded once more
  * over it (with no new ask). `timeLeft()` (B-459), when given, says how long the run has before its deadline: a study
- * plan's fix ask goes only with FIX_MIN_MS left. Returns {status, problems?, said}.
+ * plan's fix ask goes only when a whole answer (answerMs) still fits. Returns {status, problems?, said}.
  */
 export async function runJob({
   db,

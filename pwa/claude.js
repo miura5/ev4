@@ -99,7 +99,7 @@ export const PURPOSES = {
   // B-449 (D-355): making a study plan
   'exam-plan': {
     model: env => env.CLAUDE_PLAN_MODEL || 'claude-sonnet-5-5',
-    maxTokens: 24000,
+    maxTokens: 48000, // D-365: a long section's plan, written compactly, fits
     scale: 3, // Sonnet's input and output cost about 3 times Haiku's, so its tokens count 3 each against the ceilings
     job: true, // bound to its job (planJobProblem, claimPlanAsk)
   },

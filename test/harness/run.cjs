@@ -1689,7 +1689,7 @@ async function studyPlanChecks(page) {
     'A new plan with no result 2 minutes after it was asked frees the card as Try again, says why, with no record change',
     freed.button === 'Try again' &&
       freed.disabled === false &&
-      /^Your last plan didn’t finish: It didn’t start/.test(freed.mini || '') &&
+      /^Your last plan didn’t finish: it didn’t start/.test(freed.mini || '') &&
       jobsBefore === (await page.evaluate(() => JSON.stringify(window.__db.jobs || {}))),
     JSON.stringify(freed)
   );

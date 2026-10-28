@@ -15,7 +15,7 @@ import { apiUrl, assembleStream } from '../pwa/claude.js';
 import { jobReply } from '../pwa/job-stub.mjs';
 import { seedRecord } from '../pwa/seed.mjs';
 import { jobsSpec } from '../tools/build-pwa.mjs';
-import { staleRuns, STALE_MS, FIX_MIN_MS, APP_SOURCE } from '../pwa/jobs.mjs';
+import { staleRuns, STALE_MS, answerMs, APP_SOURCE } from '../pwa/jobs.mjs';
 import { PLANTS, toSse } from '../pwa/job-stub.mjs';
 import EV from '../core/evcore.mjs';
 
@@ -180,7 +180,7 @@ test('B-459: the alarm runs the plan to done in the Worker, through the Worker�
     assert.ok(s.sent.length >= 1 && s.sent.length <= 2, s.sent.length + ' asks');
     assert.ok(s.sent.every(x => x.url === 'https://api.anthropic.com/v1/messages'));
     assert.equal(s.sent[0].body.model, 'claude-sonnet-5-5', 'the Worker picks Sonnet for the make ask');
-    assert.equal(s.sent[0].body.max_tokens, 24000);
+    assert.equal(s.sent[0].body.max_tokens, 48000, 'D-365');
     assert.equal(s.claims().n, s.sent.length, 'each Sonnet ask is claimed against the job’s cap');
     assert.ok(s.used() > 0, 'the tokens are counted');
     const plans = s.env.DB.sql
@@ -247,7 +247,7 @@ test('B-459: past the deadline the ask is aborted and the run failed with a plai
     assert.ok(res.finishedAt);
     assert.equal(s.claims().n, 1, 'the claim stays');
     assert.ok(
-      s.used() >= 24000 * 3,
+      s.used() >= 48000 * 3,
       'a conservative estimate (its whole answer allowance at Sonnet’s weight) is counted'
     );
   } finally {
@@ -336,7 +336,13 @@ test('B-459: a fix ask goes only with enough time left before the deadline; else
   }
   const tight = setup({ title: PLANTS.low + ' NUR 112' });
   try {
-    await runPlanJob({ env: tight.env, jobId: tight.id, jobsSpec: SPEC, release: 'v4', deadlineMs: FIX_MIN_MS - 1000 });
+    await runPlanJob({
+      env: tight.env,
+      jobId: tight.id,
+      jobsSpec: SPEC,
+      release: 'v4',
+      deadlineMs: answerMs(48000) - 1000,
+    });
     assert.equal(tight.sent.length, 1, 'too little time: no fix ask');
     assert.equal(tight.doc('jobresults').status, 'done', 'the first plan is saved as it is');
   } finally {
@@ -490,7 +496,7 @@ test('B-459: a plan’s asks stream; a stream cut in transit fails the job, keep
     assert.equal(res.status, 'failed');
     assert.match(res.error, /cut off/);
     assert.equal(s.claims().n, 1, 'the claim stays');
-    assert.ok(s.used() >= 24000 * 3, 'a conservative estimate is counted');
+    assert.ok(s.used() >= 48000 * 3, 'a conservative estimate is counted');
   } finally {
     s.restore();
   }
@@ -513,11 +519,11 @@ test('B-459: a new plan that failed shows in Study with its plain reason and Try
       { ...failed, result: { failed: 'it took longer than 14 minutes, so E.V. stopped it. Try again.' } },
       now
     ),
-    'It took longer than 14 minutes, so E.V. stopped it.'
+    'it took longer than 14 minutes, so E.V. stopped it.'
   );
   assert.match(
     EV.studyPlanJobFailed({ ...job, status: 'queued', at: new Date(now - 3 * 60000).toISOString() }, now),
-    /^It didn’t start/
+    /^it didn’t start/
   );
   assert.equal(EV.studyPlanJobFailed({ ...failed, revise: 'E4' }, now), null, 'an edit is not a new plan');
   assert.equal(EV.studyPlanJobFailed({ ...job, status: 'running', startedAt: job.at }, now), null);
@@ -526,4 +532,55 @@ test('B-459: a new plan that failed shows in Study with its plain reason and Try
   assert.match(page, /const why = E\.studyPlanJobFailed\(j\);\s*if \(why\) return \{ failed: j, why \};/);
   assert.match(page, /`Your last plan didn’t finish: \$\{js\.why\}`/);
   assert.match(page, /making \? 'Making…' : failed \? 'Try again' : 'Make a plan'/);
+});
+
+test('D-365: a fix ask goes only when a whole 48k answer (about 6 minutes at 135 tokens a second) still fits the deadline', async () => {
+  assert.ok(answerMs(48000) > 6 * 60000 && answerMs(48000) < 7 * 60000, String(answerMs(48000)));
+  for (const [deadlineMs, asks] of [
+    [answerMs(48000) + 5000, 2],
+    [answerMs(48000) - 1000, 1],
+  ]) {
+    const s = setup({ title: PLANTS.low + ' NUR 112' });
+    try {
+      await runPlanJob({ env: s.env, jobId: s.id, jobsSpec: SPEC, release: 'v4', deadlineMs });
+      assert.equal(s.sent.length, asks, `deadline ${deadlineMs}: ${asks} asks`);
+      assert.equal(s.doc('jobresults').status, 'done');
+    } finally {
+      s.restore();
+    }
+  }
+});
+
+test('D-365: a plan cut at max_tokens fails, saves nothing, and keeps the tokens it used on its jobresult', async () => {
+  const s = setup({ reply: body => ({ ...jobReply(body), stop_reason: 'max_tokens' }) });
+  try {
+    await s.start();
+    await s.object().alarm();
+    const res = s.doc('jobresults');
+    assert.equal(res.status, 'failed');
+    assert.match(res.error, /cut short/);
+    assert.deepEqual(res.result.usage, { asks: 1, input: 1000, output: 500, cacheRead: 0, cacheWrite: 0 });
+    assert.equal(
+      EV.studyPlanJobFailed({ kind: 'exam-plan', status: 'failed', result: { failed: res.error } }).charAt(0),
+      't',
+      'lowercase mid-sentence'
+    );
+  } finally {
+    s.restore();
+  }
+});
+
+test('D-365: the make ask and his default instructions ask for compact output', async () => {
+  const brief = fs.readFileSync(path.join(ROOT, 'docs/study-plan-brief.md'), 'utf8');
+  assert.match(brief, /\*\*Compact output\.\*\*/);
+  assert.match(brief, /doneWhen is about 10 words at most/);
+  const s = setup();
+  try {
+    await runPlanJob({ env: s.env, jobId: s.id, jobsSpec: SPEC, release: 'v4' });
+    const first = s.sent[0].body.messages[0].content[0].text;
+    assert.match(first, /Write compactly, so the whole plan fits one answer/);
+    assert.match(first, /\*\*Compact output\.\*\*/, 'his instructions carry it too');
+  } finally {
+    s.restore();
+  }
 });

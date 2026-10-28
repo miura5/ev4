@@ -19,7 +19,7 @@ import { handleClaude } from './claude.js';
 
 /** A run still going this long after its alarm started is stopped: its ask aborted, and the job marked failed. Under the
  * alarm's own 15-minute wall limit, so the Worker never runs a plan past it; a fix ask goes only with jobs.mjs
- * FIX_MIN_MS left. The page's stall rule (core studyPlanJobStalled, 20 minutes) waits past both. */
+ * answerMs: a whole answer more still fits. The page's stall rule (core studyPlanJobStalled, 20 minutes) waits past both. */
 export const PLAN_DEADLINE_MS = 14 * 60000;
 /** A run begins only this soon after the job was written: the page frees the course's guard 2 minutes after a job with
  * no result (core studyPlanJobStalled), so a run that began later could race a second tap's new job. */
@@ -77,12 +77,13 @@ async function batchNow(env, writes, seen) {
 }
 
 /** jobresults/<id> set to failed with `why`, unless it already ended (done or failed): true when this wrote it. */
-export async function failIfRunning(env, jobId, release, why) {
+export async function failIfRunning(env, jobId, release, why, usage = null) {
   for (let tries = 0; tries < 3; tries++) {
     const res = await docOf(env, 'jobresults', jobId);
     if (res && res.data.status !== 'running') return false;
     const ctx = contextFor({ jobId, now: new Date(), release: (res && res.data.release) || release });
     if (res && res.data.startedAt) ctx.startedAt = res.data.startedAt;
+    if (usage && usage.asks) ctx.planUsage = usage; // D-365: the tokens a failed plan used are kept on its result
     try {
       await batchNow(env, [statusWrite(ctx, 'failed', why)], res ? { jobresults: [{ id: jobId }] } : {});
       return true;
@@ -145,6 +146,8 @@ export async function runPlanJob({
   }
   let stopped = false;
   const abort = new AbortController();
+  // D-365: the answered asks' tokens, for a run the deadline stops (the runner keeps its own for every other end)
+  const used = { asks: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   const job = (async () => {
     if (!spec || !schemas) throw new Error('the job runner’s spec was not given');
     return runJob({
@@ -161,7 +164,14 @@ export async function runPlanJob({
       },
       ask: async body => {
         if (stopped) throw new Error('the run was stopped');
-        return askVia(env, body, abort.signal);
+        const reply = await askVia(env, body, abort.signal);
+        const x = (reply && reply.usage) || {};
+        used.asks++;
+        used.input += Number(x.input_tokens) || 0;
+        used.output += Number(x.output_tokens) || 0;
+        used.cacheRead += Number(x.cache_read_input_tokens) || 0;
+        used.cacheWrite += Number(x.cache_creation_input_tokens) || 0;
+        return reply;
       },
       write: async (writes, seen) => {
         if (stopped) throw new Error('the run was stopped'); // nothing is written past the deadline
@@ -183,13 +193,13 @@ export async function runPlanJob({
     abort.abort();
     await Promise.race([job, new Promise(ok => setTimeout(ok, 5000))]);
     const why = `it took longer than ${minutes(deadlineMs)} minutes, so E.V. stopped it. Try again.`;
-    await failIfRunning(env, jobId, release, why);
+    await failIfRunning(env, jobId, release, why, used);
     return { status: 'failed', said: why };
   }
   if (out.e) {
     const why = 'it stopped before it finished. Try again.';
     console.log('plan job ' + jobId + ' stopped:', String((out.e && out.e.message) || out.e));
-    await failIfRunning(env, jobId, release, why);
+    await failIfRunning(env, jobId, release, why, used);
     return { status: 'failed', said: why };
   }
   return out.r;

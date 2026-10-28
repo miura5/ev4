@@ -37,7 +37,7 @@ export function makeStudyPlans(core) {
   const kindOf = spec => (spec && spec.jobs && spec.jobs.kinds && spec.jobs.kinds['exam-plan']) || {};
   const rulesOf = spec => ({
     purpose: 'exam-plan',
-    maxTokens: 24000,
+    maxTokens: 48000, // D-365
     pass: 85,
     floor: 3,
     pastDays: 3,
@@ -468,6 +468,8 @@ export function makeStudyPlans(core) {
    *  reason (its "Try again" left to the card's button), or a stall's. */
   function studyPlanJobFailed(j, nowMs = Date.now()) {
     if (!j || j.kind !== 'exam-plan' || j.revise) return null;
+    // D-365: the reason follows "Your last plan didn’t finish:", so it starts lowercase, but for a name (Claude, E.V.)
+    const mid = t => (/^(Claude|E\.V\.|Sonnet|Haiku|Matt)\b/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1));
     const plain = t =>
       String(t || '')
         .replace(/\s*(Tap Make a plan to try again|Try again)\.?\s*$/i, '')
@@ -478,10 +480,10 @@ export function makeStudyPlans(core) {
         ''
       );
       const s = why || 'it stopped before it finished';
-      return s.charAt(0).toUpperCase() + s.slice(1).replace(/([^.!?])$/, '$1.');
+      return mid(s).replace(/([^.!?])$/, '$1.');
     }
     const stalled = studyPlanJobStalled(j, nowMs);
-    return stalled ? plain(stalled) : null;
+    return stalled ? mid(plain(stalled)) : null;
   }
   /** D-362 (B-456): a new-plan job's id, the same in every tab for the course's next new plan of the day, so two tabs
    * that both start one write one document (the second create is refused or merges into the first, never a second

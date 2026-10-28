@@ -124,6 +124,12 @@ For each exam section:
 
 Remember checkmarks per task, and open on today's date. Keep wording plain and short.
 
+**Compact output.** The whole plan comes back in one answer of limited length, so a long section must stay compact:
+- Task titles are short: about 8 words, no sentences.
+- A task's doneWhen is about 10 words at most.
+- No prose inside tasks: no explanations, rationales or tips. Anything worth saying goes once in the open questions.
+- The rubric score is numbers, each criterion with one short line at most.
+
 ## 9. Course profiles
 
 The core above applies to every course. Add the matching profile.
