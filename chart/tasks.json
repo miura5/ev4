@@ -8291,7 +8291,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder fix round (0382f7f D-359 budget; c4e71aa gaps): routing fixed for plain edits; cloud exam-plan jobs refused plainly (page read-only since Oct 26); plans.schema tag enum for section plans; Sonnet bound to a running exam-plan job in D1, 2 asks per job; edit prefix carries the ladder, load and re-planning rules. npm test 875 pass, smoke 28/28. Staging proof next (the manager)",
+  "notes": "Final review (fresh, after one fix round): routing, cloud path, plans.schema enum, Sonnet binding (D1 job check, atomic 2-ask cap, schema.sql applied by both deploy workflows) and the edit prefix all closed. One gap remains, filed as B-456: remake words on a single task still route to a new Sonnet plan. Checks retired: B-45's cloud exam-plan draft test (page read-only), B-161's 50 KB budget (D-359). npm test 875/0, smoke 28/28. Size +319 -88. Next: staging with the real plan job.",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",
