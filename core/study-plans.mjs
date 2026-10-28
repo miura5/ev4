@@ -334,47 +334,61 @@ export function makeStudyPlans(core) {
     };
   }
 
-  // D-356 (B-449): words that ask for a new plan (a remake of a bad one, a plan from today, a cram plan), and words
-  // that name a change to the one he has. New words win: "rewrite it and add labs" is a new plan.
-  // B-456: a remake word is a new plan only when its object is the plan ("redo the plan", "rewrite my E4 plan", "scrap
-  // it", "redo the whole thing"); with one task as its object ("scrap the Friday drill") it is a change.
-  const REMAKE = 're-?make|re-?do|re-?write|re-?work|re-?build|scrap';
-  const WHOLE =
-    '(it|everything|all of it|the whole thing|(the|my|this|that)( whole| entire| current| study| [a-z]{1,4} ?\\d+)* (plan|schedule))';
-  const NEW_WORDS = new RegExp(
+  // D-360 (B-449, B-456): a plan ask's route. new (a Sonnet plan from today, replacing nothing but costing 3x) only for
+  // an unmistakable whole-plan ask; change (a Haiku patch) for an edit; ask (one free question) whenever a remake word
+  // leaves a doubt. When unsure, ask, never new.
+  /** Whole-plan asks that need no reading of an object: replan, start over, from scratch, a plan from today, a cram plan. */
+  const WHOLE_ASK = new RegExp(
     '\\b(' +
       [
-        'new (study )?(plan|schedule)',
-        'cram(ming)?(?! (session|block|slot|hour|day))', // a cram plan, not a cram session added to the plan
-        `(${REMAKE}) ${WHOLE}`,
-        're-?plan',
+        're-?plan(ning)?',
         'start(ing)? (over|again|fresh)',
         'from scratch',
-        'fresh (plan|start)',
+        'new (study )?(plan|schedule)',
         'another plan',
-        'throw (it|this|that) (out|away)',
-        // "from today" alone is a change ("remove the reading from today"); after plan, start or a remake it is new
-        '(plan|start(ing)?|begin(ning)?|re-?do( it)?|re-?make( it)?|make (it|one|a plan|the plan)) from (today|now|tonight)',
+        'fresh (plan|start)',
+        '(plan|start(ing)?|begin(ning)?|make (me )?(a|a new) plan) from (today|now|tonight)',
         'plan (starting|beginning) (today|now|tonight)',
-        'plan (is|was|looks|seems) (bad|terrible|awful|useless|weak|not good|no good)',
-        '(it|this|that) (is|was) (bad|terrible|awful|useless)',
-        '(bad|terrible|awful|useless|weak) plan',
+        'cram(ming)?(?! (session|block|slot|hour|day|run))', // a cram plan, not a cram session added to the plan
       ].join('|') +
       ')\\b',
     'i'
   );
+  const REMAKE = /\b(re-?make|re-?do|re-?write|re-?work|re-?build|scrap)\b/gi;
+  /** A remake word's object that is plainly the whole plan ("the plan", "my exam plan", "my E4 plan", "everything",
+   * "the whole thing"), with nothing after it but a reason ("around my revalidation") or "and start again". */
+  const WHOLE_OBJECT =
+    /^\s+(everything|the whole thing|(the|my|this|that|our)\s+([\w-]+\s+){0,3}?(plan|schedule))(?![\w'’])\s*(?:[.!?]\s*)?($|,?\s*(around|for|because|since|as|so|given|after|now that|to fit)\b|,?\s*and (start|begin) (over|again|fresh)\b)/i;
+  const TASK_WORDS =
+    /\b(drill|drills|quiz|quizzes|review|block|blocks|mock|mocks|reading|readings|preview|session|task|lecture|practice|sim|module|flashcards?|cards|terms|terminology|slot|lab|run|runs|checklist|module|exam practice|chapter|ch|catch-up|monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tonight|tomorrow|morning|afternoon|evening|\d+ ?(min|mins|minutes|hours?|hrs?))\b/i;
+  const NOT_ONE_TASK = /\b(plan|plans|schedule|it|this|that|these|those|everything|all|whole|thing|stuff)\b|plan['’]s/i;
+  /** One remake word's reading: 'whole', 'task' or 'unclear', from what follows it in its clause. */
+  function remakeObject(rest) {
+    if (WHOLE_OBJECT.test(rest)) return 'whole';
+    const clause = rest.split(/[,;.!?]|\band\b|\bthen\b/i)[0];
+    if (!NOT_ONE_TASK.test(clause) && TASK_WORDS.test(clause)) return 'task';
+    return 'unclear';
+  }
   const CHANGE_WORDS =
-    /\b(move|swap|add|re-?make|re-?do|re-?write|re-?work|re-?build|scrap|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
-  /** The question asked when his words don't say which (D-356). */
+    /\b(move|swap|add|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
+  /** The questions asked when his words don't say which (D-356, D-360). */
   const ROUTE_QUESTION = 'Change the current plan, or make a new one from today?';
+  const REMAKE_QUESTION = 'The whole plan, or just that task?';
   /**
-   * D-356: what a plan ask becomes: 'new' (a Sonnet plan from today), 'change' (a Haiku patch of the plan he has) or
-   * 'ask' (one short question first). With no plan for the exam yet, every ask is a new plan.
+   * D-356, D-360: what a plan ask becomes: 'new' (a Sonnet plan from today), 'change' (a Haiku patch of the plan he
+   * has) or 'ask' (one short question first). With no plan for the exam yet, every ask is a new plan. Each remake word
+   * is read by its object: all of them plainly the whole plan is new, all of them one task is a change, else ask.
    */
   function studyPlanRoute(words, { hasPlan } = {}) {
     if (!hasPlan) return { route: 'new' };
     const w = String(words || '');
-    if (NEW_WORDS.test(w)) return { route: 'new' };
+    if (WHOLE_ASK.test(w)) return { route: 'new' };
+    const reads = [...w.matchAll(REMAKE)].map(m => remakeObject(w.slice(m.index + m[0].length)));
+    if (reads.length) {
+      if (reads.every(r => r === 'whole')) return { route: 'new' };
+      if (reads.every(r => r === 'task')) return { route: 'change' };
+      return { route: 'ask', question: REMAKE_QUESTION };
+    }
     if (CHANGE_WORDS.test(w)) return { route: 'change' };
     return { route: 'ask', question: ROUTE_QUESTION };
   }

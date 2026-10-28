@@ -451,66 +451,91 @@ test('D-356: a patch applies add, edit, move and remove in order; an op naming n
   assert.equal(draft.days[0].tasks.length, 2, 'the draft itself is never changed');
 });
 
-test('D-356: the chat’s choice: a change is a patch, new words a new plan from today, anything else one question', () => {
-  assert.equal(EV.studyPlanRoute('make me a cram plan for the dosage assessment', { hasPlan: true }).route, 'new');
-  assert.equal(EV.studyPlanRoute('remake it from scratch', { hasPlan: true }).route, 'new');
-  assert.equal(EV.studyPlanRoute('start over from today', { hasPlan: true }).route, 'new');
-  assert.equal(EV.studyPlanRoute('move the drill to Thursday', { hasPlan: true }).route, 'change');
-  assert.equal(EV.studyPlanRoute('add a new task for the lab', { hasPlan: true }).route, 'change');
-  const ask = EV.studyPlanRoute('what about my plan for E4', { hasPlan: true });
-  assert.deepEqual(ask, { route: 'ask', question: 'Change the current plan, or make a new one from today?' });
+test('D-356, D-360: the chat’s choice: new only for an unmistakable whole-plan ask, change for an edit, else one question', () => {
+  const ROUTES = {
+    new: [
+      // no remake word: replan, start over, from scratch, a plan from today, a cram plan
+      'replan for my failed checkoff', // Matt's
+      'make me a cram plan for the dosage assessment',
+      'remake it from scratch',
+      'start over from today',
+      'plan from today please',
+      'I need a plan starting today',
+      'make it start from now',
+      'make a plan from today',
+      'scrap it and plan from today',
+      'cram plan for E4, add the labs too',
+      'I need to cram for the exam',
+      'cramming mode for Monday',
+      // a remake word whose object is plainly the whole plan, then nothing or a reason
+      'redo the plan around my revalidation', // Matt's
+      'redo the plan',
+      'redo my exam plan',
+      'redo the exam plan',
+      'redo my pharm plan',
+      'rewrite my E4 plan',
+      'rewrite my NUR 112 plan',
+      'rewrite my E4 plan around my revalidation',
+      'scrap this plan and start again',
+      'scrap my current E4 plan and start again',
+      'rework everything',
+      'redo the whole thing',
+      'rebuild the whole plan',
+      'remake the study plan',
+    ],
+    change: [
+      // an edit with no remake word
+      'add revalidation practice for the injection checkoff before Monday', // Matt's
+      'add skills practice for my revalidation', // Matt's
+      'schedule two mock runs before my retry', // Matt's
+      'move the drill to Thursday',
+      'add a new task for the lab',
+      'remove the reading from today',
+      'drop the drill from tonight',
+      'move the quiz review from today to Friday',
+      'add a new one-hour block Sunday',
+      'add a cram session on Sunday',
+      'make Thursday lighter',
+      'swap the drill and the preview',
+      'make the preview shorter',
+      // a remake word whose object is plainly one task
+      'scrap the Friday drill',
+      'redo the practice quiz on Thursday',
+      'rework the Sunday block to 30 minutes',
+      'rebuild the Sunday mock',
+      'add a redo of the dosage practice quiz',
+      'rewrite the Friday drill and move it to Saturday',
+      'redo the drill from today on Friday',
+    ],
+    ask: [
+      // a remake word that leaves a doubt: the whole plan, or just that task?
+      'redo the plan’s Friday drill',
+      "redo the plan's Friday drill",
+      'redo the plan task on Friday',
+      'scrap the plan task for Friday',
+      'rewrite the study plan block on Sunday',
+      'redo it on Friday',
+      'scrap the drill, redo it on Friday',
+      'scrap this',
+      'scrap all this',
+      'redo all of this',
+      'rewrite all of it',
+      'this plan is bad, rewrite it',
+      'redo it from now',
+      'remake it from tonight',
+    ],
+  };
+  for (const [want, phrases] of Object.entries(ROUTES))
+    for (const w of phrases) assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, want, w);
+  for (const w of ROUTES.ask)
+    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).question, 'The whole plan, or just that task?', w);
+  // no remake word and no edit: the plan-level question
+  for (const w of ['what about my plan for E4', 'the plan looks terrible'])
+    assert.deepEqual(EV.studyPlanRoute(w, { hasPlan: true }), {
+      route: 'ask',
+      question: 'Change the current plan, or make a new one from today?',
+    });
   assert.equal(EV.studyPlanRoute('move the drill', { hasPlan: false }).route, 'new', 'no plan yet: a new one');
-  // a rewrite of a bad plan, a plan from today and a cram plan are each a new plan (Sonnet), never a patch
-  for (const w of [
-    'this plan is bad, rewrite it',
-    'rewrite my E4 plan',
-    'the plan looks terrible',
-    'scrap it and plan from today',
-    'plan from today please',
-    'I need a plan starting today',
-    'make it start from now',
-    'cram plan for E4, add the labs too',
-    'I need to cram for the exam',
-    'cramming mode for Monday',
-    'redo the whole thing',
-    'rework everything',
-    'rebuild the whole plan',
-    'scrap my current E4 plan and start again',
-    'remake the study plan',
-    'rewrite all of it',
-  ])
-    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
-  for (const w of [
-    'start over from today',
-    'make a plan from today',
-    'redo it from now',
-    'remake it from tonight',
-    'redo the plan around my revalidation',
-    'replan for my failed checkoff',
-  ])
-    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
-  // plain edits that name a day stay a patch (the review's four): "from today" alone is no new plan, nor "a new one-hour"
-  for (const w of [
-    'remove the reading from today',
-    'drop the drill from tonight',
-    'move the quiz review from today to Friday',
-    'add a new one-hour block Sunday',
-    'add revalidation practice for the injection checkoff before Monday',
-    'add skills practice for my revalidation',
-    'schedule two mock runs before my retry',
-    'add a cram session on Sunday',
-    'make Thursday lighter',
-    'swap the drill and the preview',
-    // B-456: a remake word with one task as its object is a change, even beside a change word
-    'scrap the Friday drill',
-    'redo the practice quiz on Thursday',
-    'rework the Sunday block to 30 minutes',
-    'rebuild the Sunday mock',
-    'add a redo of the dosage practice quiz',
-    'rewrite the Friday drill and move it to Saturday',
-    'redo the drill from today on Friday',
-  ])
-    assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'change', w);
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
   assert.match(chat, /E\.studyPlanRoute\(words, \{ hasPlan: !!cur \}\)/, 'the chat’s start_job routes through it');
   assert.match(chat, /job\.revise = cur\.id/);
