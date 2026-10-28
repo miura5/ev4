@@ -8750,5 +8750,22 @@
   "board": {
    "row": "v4 B-470: On live, Ask for changes on the NUR 112 exam plan (a rewrite from…"
   }
+ },
+ {
+  "id": "B-471",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): While working with the exam plan, the page showed the notice 'Background jobs need the Claude Code Remote connector, which this view can't reach. Open the page in claude.ai'; in a view without the connector the page should route the job through the Worker (as the app does) or say plainly where the job can be started.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live test)",
+  "words": "While working with the exam plan, the page showed the notice 'Background jobs need the Claude Code Remote connector, which this view can't reach. Open the page in claude.ai'; in a view without the connector the page should route the job through the Worker (as the app does) or say plainly where the job can be started.",
+  "reportedAt": "2026-10-28T22:05:23.470Z",
+  "board": {
+   "row": "v4 B-471: While working with the exam plan, the page showed the notice…"
+  }
  }
 ]
