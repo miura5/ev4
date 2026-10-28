@@ -8592,5 +8592,23 @@
   "board": {
    "row": "v4 B-463: A plan edit's reply named the wrong weekday (said Tue 28 Oct for a…"
   }
+ },
+ {
+  "id": "B-464",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): The release's UI review (78/100) asks for: objectives folded to one line whenever a plan exists, the done count shown once, wording that fits a course with no objectives, the Chats panel clear of the send button at 1280, the plan filter chips and exam title fitting at 390, spacing under Today's budget card, and Approve disabled while E.V. is changing the plan.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review of the release at c8a819f",
+  "words": "The release's UI review (78/100) asks for: objectives folded to one line whenever a plan exists, the done count shown once, wording that fits a course with no objectives, the Chats panel clear of the send button at 1280, the plan filter chips and exam title fitting at 390, spacing under Today's budget card, and Approve disabled while E.V. is changing the plan.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T20:19:23.259Z",
+  "board": {
+   "row": "v4 B-464: The release's UI review (78/100) asks for: objectives folded to one…"
+  }
  }
 ]
