@@ -8060,7 +8060,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "harnesses: notes 149/149 (new [1280 writing clock] and [1280 writing minutes] sections), frame 173/173, smoke 28/28, npm test green (state/current fixture regenerated for the schema change); run.cjs running",
+  "notes": "builder agent: pushed b0e0bd2; npm test 839/839, smoke 28/28, notes 155/155 on rebased main, frame 173/173, run 390/390. Decided: a note session counts up with no 25-minute end (supersedes D-333 for notes; Today tasks keep their countdown), saves itself after 60 min paused. Ready for review and staging.",
   "commit": null,
   "source": "Matt, chat, Oct 27",
   "words": "Notes study time: keep the session timer going in a note, but record and add up time only while the note is actively being written; study time should not depend on E.V. reading the note; and the E.V. conversation should be reachable at any time from a note to ask questions or generate questions.",
