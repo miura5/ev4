@@ -8375,7 +8375,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: review round: the fallback folds case, spacing and trailing punctuation but keeps symbols",
+  "notes": "Review: first round found a symbol-contradiction gap (fixed in 07241c6); final fresh review No gaps. Checks: npm test 854 pass, none retired or loosened. Size: +92 -1. Judgment call on the card: spacing inside numbers is folded ('5 0' matches '50'). Ready for the next staging batch.",
   "commit": null,
   "source": "review of B-446 (second round)",
   "words": "A Quiz me matrix question whose columns differ only by a symbol, such as up and down arrows, is saved with every row keyed to the first column instead of being refused.",
