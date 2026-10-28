@@ -473,6 +473,11 @@ test('D-356: the chat’s choice: a change is a patch, new words a new plan from
     'I need to cram for the exam',
     'cramming mode for Monday',
     'redo the whole thing',
+    'rework everything',
+    'rebuild the whole plan',
+    'scrap my current E4 plan and start again',
+    'remake the study plan',
+    'rewrite all of it',
   ])
     assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'new', w);
   for (const w of [
@@ -496,6 +501,14 @@ test('D-356: the chat’s choice: a change is a patch, new words a new plan from
     'add a cram session on Sunday',
     'make Thursday lighter',
     'swap the drill and the preview',
+    // B-456: a remake word with one task as its object is a change, even beside a change word
+    'scrap the Friday drill',
+    'redo the practice quiz on Thursday',
+    'rework the Sunday block to 30 minutes',
+    'rebuild the Sunday mock',
+    'add a redo of the dosage practice quiz',
+    'rewrite the Friday drill and move it to Saturday',
+    'redo the drill from today on Friday',
   ])
     assert.equal(EV.studyPlanRoute(w, { hasPlan: true }).route, 'change', w);
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');

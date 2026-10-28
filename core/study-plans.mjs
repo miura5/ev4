@@ -336,22 +336,22 @@ export function makeStudyPlans(core) {
 
   // D-356 (B-449): words that ask for a new plan (a remake of a bad one, a plan from today, a cram plan), and words
   // that name a change to the one he has. New words win: "rewrite it and add labs" is a new plan.
+  // B-456: a remake word is a new plan only when its object is the plan ("redo the plan", "rewrite my E4 plan", "scrap
+  // it", "redo the whole thing"); with one task as its object ("scrap the Friday drill") it is a change.
+  const REMAKE = 're-?make|re-?do|re-?write|re-?work|re-?build|scrap';
+  const WHOLE =
+    '(it|everything|all of it|the whole thing|(the|my|this|that)( whole| entire| current| study| [a-z]{1,4} ?\\d+)* (plan|schedule))';
   const NEW_WORDS = new RegExp(
     '\\b(' +
       [
         'new (study )?(plan|schedule)',
         'cram(ming)?(?! (session|block|slot|hour|day))', // a cram plan, not a cram session added to the plan
-        're-?make',
-        're-?do',
-        're-?write',
-        're-?work',
-        're-?build',
+        `(${REMAKE}) ${WHOLE}`,
         're-?plan',
         'start(ing)? (over|again|fresh)',
         'from scratch',
         'fresh (plan|start)',
         'another plan',
-        'scrap',
         'throw (it|this|that) (out|away)',
         // "from today" alone is a change ("remove the reading from today"); after plan, start or a remake it is new
         '(plan|start(ing)?|begin(ning)?|re-?do( it)?|re-?make( it)?|make (it|one|a plan|the plan)) from (today|now|tonight)',
@@ -364,7 +364,7 @@ export function makeStudyPlans(core) {
     'i'
   );
   const CHANGE_WORDS =
-    /\b(move|swap|add|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
+    /\b(move|swap|add|re-?make|re-?do|re-?write|re-?work|re-?build|scrap|schedule|put|slot|fit|insert|include|remove|drop|delete|take off|change|shift|replace|push|pull|shorter|longer|lighter|heavier|fewer|more time|less time|instead|rename|edit|tweak|split|merge)\b/i;
   /** The question asked when his words don't say which (D-356). */
   const ROUTE_QUESTION = 'Change the current plan, or make a new one from today?';
   /**
