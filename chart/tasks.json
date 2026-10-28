@@ -8633,9 +8633,9 @@
   "id": "B-466",
   "kind": "bug",
   "title": "Bug (reported Oct 28): Per D-366 the full check runs nightly only and must not gate a live release: remove R-06 from ship live (chart/rules.json, marked ended) and from tools/pwa-live.mjs's gate, keeping R-02 (staging green at the commit) and Matt's OK.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "ship live and tools/pwa-live.mjs no longer check R-06 (a full check or green nightly at the commit); R-06 is marked ended in chart/rules.json citing D-366; R-02 (staging green at the commit) and R-04 (Matt's OK) are still enforced and their refusals still covered by npm test; ship live at 5c4e68a proceeds past the rules step.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8645,6 +8645,10 @@
   "reportedAt": "2026-10-28T20:52:03.529Z",
   "board": {
    "row": "v4 B-466: Per D-366 the full check runs nightly only and must not gate a live…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:10:22.209Z"
   }
  }
 ]
