@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { buildPages, loadSchemas, PAGE_SPEC_KEYS } from '../tools/build.mjs';
+import { buildPages, loadSchemas, PAGE_SPEC_KEYS, releaseOf } from '../tools/build.mjs';
 import { deployCalls, verify } from '../core/deploy.mjs';
 import { makeValidator } from '../core/validate.mjs';
 
@@ -121,7 +121,7 @@ function specReads() {
 // Read by core only in node: the Canvas libraries (registry.canvas) are the evening run's.
 const NODE_ONLY = ['registry'];
 
-test('B-161 (A-3): the page gets exactly the spec keys its files read, and its spec.json is under 50 KB', () => {
+test('B-161 (A-3), D-359: the page gets exactly the spec keys its files read; its spec.json stays under the 96 KB growth guard', () => {
   const reads = specReads();
   const read = Object.keys(reads).filter(k => !NODE_ONLY.includes(k));
   const unread = PAGE_SPEC_KEYS.filter(k => !reads[k] && k !== 'worker');
@@ -129,13 +129,15 @@ test('B-161 (A-3): the page gets exactly the spec keys its files read, and its s
   assert.deepEqual(unpublished, [], `read but not published: ${unpublished.map(k => k + ' (' + [...reads[k]] + ')')}`);
   assert.deepEqual(unread, [], 'published but read by no page file');
   assert.ok(reads.worker, 'the page reads its worker');
+  // D-359: measured as published, on the real release string (a shallow clone has no tag: a release as long as one)
+  const real = buildPages({ root: ROOT, spec, schemas, release: releaseOf(ROOT) || `v${spec.specVersion}.99+999` });
   for (const t of ['live', 'staging']) {
-    const json = pages[t]['spec.json'];
+    const json = real[t]['spec.json'];
     assert.deepEqual(Object.keys(JSON.parse(json)), PAGE_SPEC_KEYS);
-    // B-186 (D-203): actions is a key the v4.4 minor adds on purpose, with its own budget (test/actions.test.mjs);
-    // everything else keeps B-161's 50 KB.
+    // B-186 (D-203): actions is a key the v4.4 minor adds on purpose, with its own budget (test/actions.test.mjs).
+    // D-359: B-161's fixed 50 KB is retired; everything else is held to a growth guard at 96 KB.
     const rest = Buffer.byteLength(json) - Buffer.byteLength(JSON.stringify(JSON.parse(json).actions || null));
-    assert.ok(rest < 50000, `${t} spec.json is ${rest} bytes without actions`);
+    assert.ok(rest < 96000, `${t} spec.json is ${rest} bytes without actions, over the 96 KB growth guard (D-359)`);
     assert.ok(!json.includes('Documents/'), 'no Mac folder');
   }
   // The page's schemas lose only their notes: every field, definition and required list is kept (a field named
