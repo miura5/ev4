@@ -8725,7 +8725,7 @@
   "milestone": "After Notes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Matt, Oct 28 evening: the plan fixes (B-469, B-470) and B-465 ship to live ahead of the rest of the batch (B-448, B-461, B-464, B-462, B-463). Proof and testing happen in the PWA, not the claude.ai page (Matt: the claude.ai pages are to be retired).",
   "commit": null,
   "source": "chat, Oct 28 evening (Matt, live test)",
   "words": "On live (v4.5.15), an exam plan cannot be put away: with a NUR 112 plan in place there is no way to discard it, so Make a plan cannot run again for that exam; Matt needs a control on the plan that removes it from Study (the plan is retired by marking, never deleted, B-11) and brings Make a plan back.",
