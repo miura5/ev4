@@ -8441,7 +8441,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: c86f08b review fixes: the chip's brief is his own line (said, carried on the edit job), none without his line, bound to its chip by key; the briefing's draft its plan offers the chip; no page file starts an exam-plan job itself. npm test 880 pass, smoke 28/28",
+  "notes": "builder: d35a2d2: the chip skips the edit; one new-plan guard per course (record read before the write, a per-course daily job id) shared by the chip, Make a plan and Remake; smoke:pwa taps the chip, 31/31. npm test 881 pass",
   "commit": null,
   "source": "final review of B-449",
   "words": "A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
