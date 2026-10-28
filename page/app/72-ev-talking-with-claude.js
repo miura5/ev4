@@ -177,9 +177,26 @@
         L.push('Earlier conversations, summarized: ' + String(S.memory.summary).slice(0, 1200));
       return L.join('\n');
     }
+    // B-442: a note as the chat sends it: {id, title, text}, from the editor while it is open there (his newest words,
+    // saved or not), else from the record; null when there is no such note
+    function noteNow(id) {
+      const doc = (S.notes || []).find(n => n.id === id);
+      const live = typeof NOTE !== 'undefined' && NOTE.open === id && NOTE.blocks ? NOTE.blocks : null;
+      const blocks = live || (doc && doc.blocks);
+      if (!blocks) return null;
+      return {
+        id,
+        title: (doc && doc.title) || E.noteTitleOf(blocks) || 'Untitled',
+        text: blocks.map(b => E.noteText(b)).join('\n'),
+      };
+    }
     // B-405 (D-327): a pop-up chat's turn sees only its own thread's lines; the Conversation's sees only its own.
     function history(beforeId, thread) {
       const upTo = thread ? '' : (S.memory && S.memory.upTo) || '';
+      // B-442: older turns go condensed, the last few whole
+      return E.condenseTurns(history14(beforeId, thread, upTo));
+    }
+    function history14(beforeId, thread, upTo) {
       return (thread ? everyMsg().filter(m => m.thread === thread) : allMsgs())
         .filter(m => !m.pending && m.id < beforeId && m.id > upTo && (m.text || (m.cards || []).length))
         .slice(-14)
@@ -721,6 +738,12 @@
               case 'notes': {
                 // D-335: his notes are open to read; archived ones say so, discarded ones are left out
                 const text = n => (n.blocks || []).map(b => E.noteText(b)).join('\n');
+                // B-442: the note this chat sent whole is not read again (its changes come with his latest message)
+                if (i.id && T.noteAsk && i.id === T.noteAsk)
+                  return JSON.stringify({
+                    id: i.id,
+                    note: 'already whole at the top of this conversation; changes since are in his latest message',
+                  });
                 const one = i.id ? (S.notes || []).find(n => n.id === i.id) : null;
                 if (i.id && !one) return JSON.stringify({ error: 'no note ' + i.id });
                 const found = one
@@ -1041,21 +1064,33 @@
         },
       };
       if (!T.noTools && toolMax !== 0) opts.tools = buildTools(pend);
+      // B-442: from a note, the note goes once whole as the cached first block, and later asks only what changed
+      const nk = o.note ? (o.thread || '') + '|' + o.note : '';
+      const nn = o.note ? noteNow(o.note) : null;
+      const plan = nn ? E.noteChatPlan(T.noteSeen.get(nk), nn, Date.now()) : null;
+      const inApp = !!(window.claude && window.claude.host === 'ev-app');
+      if (plan && inApp) opts.prefix = plan.prefix;
       let error = null;
+      T.noteAsk = plan ? o.note : null;
       try {
         const res = await sample(
           [
             {
               role: 'user',
               content:
+                (plan && !inApp ? plan.prefix + '\n\n' : '') +
                 evContext() +
-                (o.view ? `\nHe is asking in the side chat over the ${o.view} view; that view is what he sees.` : ''),
+                (o.view ? `\nHe is asking in the side chat over the ${o.view} view; that view is what he sees.` : '') +
+                (plan
+                  ? '\nHis note is whole at the top of this conversation, as you last read it; what changed since comes with his latest message. Answer from those; no lookup of it is needed.'
+                  : ''),
             },
             ...history(o.replyTo || id, o.thread),
-            { role: 'user', content: text },
+            { role: 'user', content: (plan && plan.delta ? plan.delta + '\n\nHe asks: ' : '') + text },
           ],
           opts
         );
+        if (plan) T.noteSeen.set(nk, plan.seen);
         pend.text = lastRound(res.text, pend.cut) + (res.truncated ? '\n\n(Cut short. Ask for less at once.)' : '');
       } catch (e) {
         const code = (e && e.code) || 'upstream_error';
@@ -1081,11 +1116,12 @@
             'session_expired',
           ].includes(code)
         )
-          T.retry.set(id, { text, tier, replyTo: o.replyTo, thread: o.thread, view: o.view });
+          T.retry.set(id, { text, tier, replyTo: o.replyTo, thread: o.thread, view: o.view, note: o.note });
       } finally {
         T.busy = false;
         T.ctl = null;
         T.streaming = false;
+        T.noteAsk = null;
       }
       pend.pending = false;
       await postMsg({

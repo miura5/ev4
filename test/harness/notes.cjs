@@ -2384,6 +2384,98 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-442: words selected in a note offer Ask E.V., which quotes them into the chat; an ask from the note sends it
+  // whole once, and the next ask the same copy with only what changed since (her lookup of it is not read again)
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 B-442]';
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    const id = await page.evaluate(() => document.querySelector('#notes-rows .n-row').dataset.note);
+    await openFromList(page, id);
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const chipOff = await page.evaluate(() => document.getElementById('note-ask').hidden);
+    const quote = await page.evaluate(() => {
+      const b = document.getElementById('note-body');
+      const blk = [...b.children].find(x => x.textContent.trim().length > 12);
+      b.focus();
+      const r = document.createRange();
+      r.selectNodeContents(blk);
+      getSelection().removeAllRanges();
+      getSelection().addRange(r);
+      return String(getSelection()).replace(/\s+/g, ' ').trim();
+    });
+    await until(page, () => !document.getElementById('note-ask').hidden, null, 2000);
+    const chip = await page.evaluate(() => {
+      const r = document.getElementById('note-ask').getBoundingClientRect();
+      return {
+        text: document.getElementById('note-ask').textContent,
+        x: r.left,
+        y: r.top,
+        w: innerWidth,
+        h: innerHeight,
+      };
+    });
+    ok(
+      `${tag} no chip until words are selected; then "Ask E.V." shows on screen by the selection`,
+      chipOff && chip.text === 'Ask E.V.' && chip.x >= 0 && chip.x < chip.w && chip.y >= 0 && chip.y < chip.h,
+      JSON.stringify(chip)
+    );
+    await page.click('#note-ask');
+    await until(page, () => !document.getElementById('evchat').hidden, null, 2000);
+    const box = await page.evaluate(() => document.getElementById('evc-input').value);
+    ok(
+      `${tag} Ask E.V. opens the chat with the selected words quoted in its box`,
+      box === '“' + quote.slice(0, 600) + '” ',
+      JSON.stringify(box)
+    );
+    await page.evaluate(i => {
+      window.__chatCalls = [];
+      window.__toolResults = [];
+      window.__chatScript = [{ tool: 'lookup', input: { what: 'notes', id: i } }];
+      window.__chatReply = 'It ties to your preload line.';
+    }, id);
+    await page.click('#evc-input');
+    await page.keyboard.press('End');
+    await page.keyboard.type('what does this mean?');
+    await page.keyboard.press('Enter');
+    await until(page, () => window.__chatCalls.length === 1 && !document.querySelector('#evchat .dots'), null, 4000);
+    await page.waitForTimeout(300);
+    // he writes a line, then asks again
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.press('Enter');
+    await page.keyboard.insertText('Afterload rises with vasoconstriction.');
+    await page.fill('#evc-input', 'And this new line?');
+    await page.press('#evc-input', 'Enter');
+    await until(page, () => window.__chatCalls.length === 2, null, 4000);
+    const asks = await page.evaluate(() =>
+      window.__chatCalls.map(c => ({ first: c.input[0].content, last: c.input[c.input.length - 1].content }))
+    );
+    const results = await page.evaluate(() => window.__toolResults.map(String));
+    const head = s => String(s).split('--- end of his note ---')[0];
+    ok(
+      `${tag} the first ask sends the note whole at the top, with its id`,
+      asks[0] && /whole, as E\.V\. last read it/.test(asks[0].first) && asks[0].first.includes('notes id ' + id),
+      asks[0] && asks[0].first.slice(0, 200)
+    );
+    ok(
+      `${tag} the second sends the same copy byte for byte, and only the new line as a change with his question`,
+      asks[1] &&
+        head(asks[1].first) === head(asks[0].first) &&
+        !head(asks[1].first).includes('Afterload rises') &&
+        /\+ Afterload rises with vasoconstriction\.\n\nHe asks: And this new line\?$/.test(asks[1].last),
+      asks[1] && asks[1].last.slice(-300)
+    );
+    ok(
+      `${tag} her lookup of the note she was sent whole does not read it again`,
+      results.length >= 1 && /already whole at the top/.test(results[0]) && results.every(r => r.length < 400),
+      results.map(r => r.slice(0, 120)).join(' | ')
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });

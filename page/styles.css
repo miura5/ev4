@@ -2128,6 +2128,9 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-stb .sicon{color:var(--quiet)}
 #p-notes .menu{position:absolute;z-index:30;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box;display:flex;flex-direction:column}
 #p-notes .menu[hidden],#p-notes .n-lkp[hidden]{display:none}
+/* B-442: Ask E.V. on words selected in a note, under the selection */
+.n-ask{position:fixed;z-index:35;box-shadow:0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.14)}
+.n-ask[hidden]{display:none}
 #p-notes .menu .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
 #p-notes .menu .mi:hover,#p-notes .menu .mi:focus-visible,#p-notes .menu .mi.on{background:var(--hover)}
 #p-notes .menu .mi.on{font-weight:500}

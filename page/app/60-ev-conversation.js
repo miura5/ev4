@@ -37,6 +37,8 @@
       workOpen: new Set(), // B-227: the work lines opened in place (message ids, job:<id>)
       uploads: new Map(),
       reading: false,
+      noteSeen: new Map(), // B-442: per chat and note, the copy of the note last sent whole ({id, text, prefix, at})
+      noteAsk: null, // B-442: the note an ask in flight sent whole, which its lookup does not read again
     };
     let talkQ = Promise.resolve();
     // B-394: lines still waiting in talkQ, and the refusals of the current run, said in one toast once the queue is clear

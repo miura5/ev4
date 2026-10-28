@@ -141,6 +141,41 @@ export function readOf(read) {
   return { note: String(read.note), h: String(read.h) };
 }
 
+// B-442: prompt caching. The page never sends cache_control itself: any it sent is dropped, and it may instead name at
+// most CACHE_MARKS content blocks ({m: message index, b: block index}) for the Worker to mark as cache breakpoints
+// (cache_control {type: 'ephemeral'}: the prefix up to that block is cached for about 5 minutes, read at about a tenth).
+export const CACHE_MARKS = 2;
+const CACHEABLE = new Set(['text', 'image', 'document', 'tool_result']);
+/** A copy of `x` with every cache_control key dropped, at any depth. */
+export function withoutCacheControl(x) {
+  if (Array.isArray(x)) return x.map(withoutCacheControl);
+  if (!x || typeof x !== 'object') return x;
+  const out = {};
+  for (const [k, v] of Object.entries(x)) if (k !== 'cache_control') out[k] = withoutCacheControl(v);
+  return out;
+}
+/** The cache hint checked against the messages: null when none, the marks [{m, b}], or an error string. */
+export function cacheOf(hint, messages) {
+  if (hint == null) return null;
+  const bad = 'cache: up to ' + CACHE_MARKS + ' marks {m, b}, each naming a text, image, document or tool_result block';
+  if (!Array.isArray(hint) || !hint.length || hint.length > CACHE_MARKS) return bad;
+  const marks = [];
+  for (const h of hint) {
+    if (!h || typeof h !== 'object' || !Number.isInteger(h.m) || !Number.isInteger(h.b)) return bad;
+    const msg = Array.isArray(messages) ? messages[h.m] : null;
+    const blk = msg && Array.isArray(msg.content) ? msg.content[h.b] : null;
+    if (!blk || typeof blk !== 'object' || !CACHEABLE.has(blk.type)) return bad;
+    marks.push({ m: h.m, b: h.b });
+  }
+  return marks;
+}
+/** The messages as sent to the API: the page's cache_control dropped, then the checked marks set. */
+export function markedMessages(messages, marks) {
+  const out = withoutCacheControl(messages);
+  for (const { m, b } of marks || []) out[m].content[b].cache_control = { type: 'ephemeral' };
+  return out;
+}
+
 /** Marks a read of `read.note` at text `read.h`, or answers why not (unchanged text, or too soon after the last). */
 export async function claimRead(env, read, ms = Date.now()) {
   const row = await env.DB.prepare(
@@ -161,7 +196,7 @@ export async function claimRead(env, read, ms = Date.now()) {
   };
 }
 
-/** POST /api/claude with {messages, tools?, tool_choice?, read?}, and GET /api/claude/usage. */
+/** POST /api/claude with {messages, tools?, tool_choice?, read?, cache?}, and GET /api/claude/usage. */
 export async function handleClaude(request, env, url) {
   if (url.pathname === '/api/claude/usage' && request.method === 'GET')
     return json({ ...(await usageNow(env)), limits: await limitsOf(env) });
@@ -199,6 +234,8 @@ export async function handleClaude(request, env, url) {
   const { messages, tools, tool_choice } = body || {};
   const read = readOf(body && body.read);
   if (typeof read === 'string') return json({ error: read }, 400);
+  const marks = cacheOf(body && body.cache, messages);
+  if (typeof marks === 'string') return json({ error: marks }, 400);
   const over = ceilingProblem(await usageNow(env), await limitsOf(env));
   if (over) return json(over, 429);
   // the mark before the claim, so a failed call gives the text back (B-418 review): the same text may be read again
@@ -234,8 +271,10 @@ export async function handleClaude(request, env, url) {
       body: JSON.stringify({
         model: env.CLAUDE_MODEL || 'claude-haiku-5-5',
         max_tokens: 8192, // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
-        messages,
-        ...(tools && tools.length ? { tools, ...(tool_choice ? { tool_choice } : {}) } : {}),
+        messages: markedMessages(messages, marks), // B-442: only the Worker's own cache marks reach the API
+        ...(tools && tools.length
+          ? { tools: withoutCacheControl(tools), ...(tool_choice ? { tool_choice } : {}) }
+          : {}),
       }),
     });
   } catch (e) {

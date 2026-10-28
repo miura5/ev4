@@ -561,6 +561,8 @@
       NOTE.view = on ? 'editor' : 'list';
       nList.hidden = on;
       nEd.hidden = !on;
+      const ask = !on && document.getElementById('note-ask'); // B-442: the Ask E.V. chip goes with the editor
+      if (ask) ask.hidden = true;
       closeStyleMenu(false);
       closeLink(false);
       closeCourseMenu();
@@ -823,6 +825,43 @@
       NOTE.sel = s;
       updateBar();
     });
+    // B-442: words selected in the note offer Ask E.V., which opens the chat with them quoted in its box
+    const askChip = el('button', 'btn neutral sm n-ask', 'Ask E.V.');
+    askChip.type = 'button';
+    askChip.id = 'note-ask';
+    askChip.hidden = true;
+    askChip.setAttribute('aria-label', 'Ask E.V. about the selected words');
+    askChip.addEventListener('mousedown', e => e.preventDefault()); // the selection stays
+    askChip.addEventListener('click', () => {
+      const q = String(getSelection() || '');
+      askChip.hidden = true;
+      popQuote(q);
+    });
+    document.body.append(askChip);
+    function placeAsk() {
+      const s = getSelection();
+      const on =
+        NOTE.view === 'editor' &&
+        !nEd.hidden &&
+        s &&
+        s.rangeCount &&
+        !s.isCollapsed &&
+        body.contains(s.anchorNode) &&
+        body.contains(s.focusNode) &&
+        String(s).trim().length > 1;
+      if (!on) {
+        askChip.hidden = true;
+        return;
+      }
+      const r = s.getRangeAt(0).getBoundingClientRect();
+      askChip.hidden = false;
+      const w = askChip.offsetWidth || 80,
+        h = askChip.offsetHeight || 28;
+      askChip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+      askChip.style.top = (r.bottom + h + 12 > innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+    }
+    document.addEventListener('selectionchange', placeAsk);
+    nScroll.addEventListener('scroll', placeAsk, { passive: true });
 
     // ---- styles, marks and links
     function noteSetStyle(type) {

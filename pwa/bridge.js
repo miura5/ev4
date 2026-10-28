@@ -1006,6 +1006,17 @@
       const last = turns[turns.length - 1];
       last.content = [...blocks, { type: 'text', text: last.content }];
     }
+    // B-442: a prefix (the open note, sent whole and unchanged while its cache lives) goes first in the first turn, as
+    // its own block, and the Worker is asked to mark it as the cache breakpoint: the tools and it are read from the cache
+    // on every later ask and tool round that starts the same way
+    const prefix = typeof opts.prefix === 'string' && opts.prefix ? opts.prefix : '';
+    if (prefix) {
+      const first = turns[0];
+      first.content = [
+        { type: 'text', text: prefix },
+        ...(Array.isArray(first.content) ? first.content : [{ type: 'text', text: first.content }]),
+      ];
+    }
     const tools = (opts.tools || []).map(t => ({
       name: t.name,
       description: t.description,
@@ -1026,6 +1037,7 @@
             ...(tools.length && round === ROUNDS - 1 ? { tool_choice: { type: 'none' } } : {}),
             // B-418 (D-339): a read-along ask names the note and its text's mark, for the Worker's read limits
             ...(opts.read && round === 0 ? { read: opts.read } : {}),
+            ...(prefix ? { cache: [{ m: 0, b: 0 }] } : {}), // B-442: the Worker marks it; never raw cache_control
           }),
           signal: opts.signal,
         });

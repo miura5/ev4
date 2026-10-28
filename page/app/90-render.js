@@ -582,6 +582,21 @@
       }
       popShow({ hist: false });
     }
+    // B-442: Ask E.V. on words selected in a note: the chat opens with them quoted in its box, for his question after
+    function popQuote(quote) {
+      const q = String(quote || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 600);
+      if (!q) return;
+      popShow({ hist: false });
+      F.input.value = E.restoredBox(F.input.value, '“' + q + '” ');
+      popGrow();
+      setTimeout(() => {
+        F.input.focus();
+        F.input.setSelectionRange(F.input.value.length, F.input.value.length);
+      }, 0);
+    }
     async function popSend(raw) {
       const text = String(raw || '').trim();
       if (!text || T.busy) return;
@@ -604,7 +619,13 @@
       }
       noteAnswer(mid, th); // B-406: in a Notes session's chat, his line answers its open check
       const nid = openNoteId();
-      await chat(text, { replyTo: mid, fromMatt: true, thread: th, view: nid ? noteView(nid) : viewName() });
+      await chat(text, {
+        replyTo: mid,
+        fromMatt: true,
+        thread: th,
+        view: nid ? noteView(nid) : viewName(),
+        ...(nid ? { note: nid } : {}), // B-442: the open note goes with the ask, once whole, then as changes
+      });
     }
     function popMsgEl(m, last) {
       const checks = (m.cards || []).filter(c => c && c.type === 'check' && CARDS.check);
@@ -665,6 +686,7 @@
                   replyTo: ask.replyTo,
                   thread: ask.thread,
                   view: ask.view || viewName(),
+                  ...(ask.note ? { note: ask.note } : {}),
                 });
               },
               { cls: 'btn neutral sm' }

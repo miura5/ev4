@@ -8,7 +8,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import worker from '../pwa/worker.js';
-import { HOUR_TOKENS, DAY_TOKENS, READ_GAP_MS, ceilingsOf, tokensOf, ceilingProblem, readOf } from '../pwa/claude.js';
+import {
+  HOUR_TOKENS,
+  DAY_TOKENS,
+  READ_GAP_MS,
+  ceilingsOf,
+  tokensOf,
+  ceilingProblem,
+  readOf,
+  cacheOf,
+} from '../pwa/claude.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
@@ -309,5 +318,35 @@ test('B-435: a D1 with no settings table (schema not yet applied) keeps the defa
     };
     assert.equal((await ask()).status, 200);
     assert.deepEqual((await usage()).limits, { hour: HOUR_TOKENS, day: DAY_TOKENS });
+  });
+});
+
+test('B-442: the page names cache marks, never raw cache_control; the Worker checks them, drops any it was sent, and marks', async () => {
+  const note = { type: 'text', text: 'His note, whole' };
+  const msgs = [
+    { role: 'user', content: [note, { type: 'text', text: 'context' }] },
+    { role: 'user', content: 'q' },
+  ];
+  assert.deepEqual(cacheOf([{ m: 0, b: 0 }], msgs), [{ m: 0, b: 0 }]);
+  assert.equal(cacheOf(null, msgs), null);
+  for (const bad of [[], [{ m: 1, b: 0 }], [{ m: 0, b: 5 }], [{ m: '0', b: 0 }], { m: 0, b: 0 }, [1, 2, 3]])
+    assert.equal(typeof cacheOf(bad, msgs), 'string', JSON.stringify(bad));
+  await withApi(1000, async ({ ask, sent }) => {
+    // a mark on the note: the API gets cache_control on that block only
+    assert.equal((await ask({ messages: msgs, cache: [{ m: 0, b: 0 }] })).status, 200);
+    assert.deepEqual(sent[0].messages[0].content[0], { ...note, cache_control: { type: 'ephemeral' } });
+    assert.equal(sent[0].messages[0].content[1].cache_control, undefined);
+    // raw cache_control from the page, on a block or a tool, never reaches the API
+    const raw = [
+      { role: 'user', content: [{ type: 'text', text: 'x', cache_control: { type: 'ephemeral', ttl: '1h' } }] },
+    ];
+    const tools = [
+      { name: 't', description: 'd', input_schema: { type: 'object' }, cache_control: { type: 'ephemeral' } },
+    ];
+    assert.equal((await ask({ messages: raw, tools })).status, 200);
+    assert.equal(JSON.stringify(sent[1]).includes('cache_control'), false);
+    // a bad hint is refused before the API, and every limit still holds
+    assert.equal((await ask({ messages: msgs, cache: [{ m: 1, b: 0 }] })).status, 400);
+    assert.equal(sent.length, 2);
   });
 });

@@ -214,6 +214,7 @@ async function shim(env, idb, net = { down: false }, { status } = {}) {
     db,
     events,
     net,
+    sample: () => window.claude.use('sample'),
     sync: () => [...events].reverse().find(e => e[0] === 'ev-sync')?.[1],
     kept: () => events.filter(e => e[0] === 'ev-note-kept').map(e => e[1]),
     /** back online: the 'online' event, then the outbox sent; resolves when the record has it. */
@@ -1418,4 +1419,47 @@ test('B-409 review (shim): a seen stamp another tab left in IndexedDB never lets
   const hugeKept = idb.box().some(o => o.refused && JSON.stringify(o.doc.blocks) === JSON.stringify(HUGE().blocks));
   assert.ok(hugeKept, 'the refused words are kept, as their own note');
   assert.ok(textOfAll(env).includes('T3 again'), 'his later save landed');
+});
+
+test('B-442 (shim): a prefix goes first in the first turn as its own block and the Worker is asked to mark it, every tool round', async () => {
+  const env = envOf();
+  const bodies = [];
+  const answer = content =>
+    new Response(
+      JSON.stringify({ content, stop_reason: content.some(b => b.type === 'tool_use') ? 'tool_use' : 'end_turn' }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    );
+  const s = await shim(env, fakeIDB(), undefined, {
+    status: async (url, init) => {
+      if (!/\/api\/claude$/.test(url)) return null;
+      const b = JSON.parse(init.body);
+      bodies.push(b);
+      return b.tools && b.tools.length && b.messages.length === 1
+        ? answer([{ type: 'tool_use', id: 'tu1', name: 'look', input: {} }])
+        : answer([{ type: 'text', text: 'Done.' }]);
+    },
+  });
+  const sample = await s.sample();
+  const res = await sample(
+    [
+      { role: 'user', content: 'context' },
+      { role: 'user', content: 'q' },
+    ],
+    { prefix: 'His note, whole', tools: [{ name: 'look', description: 'd', execute: async () => 'ok' }] }
+  );
+  assert.equal(res.text, 'Done.');
+  assert.equal(bodies.length, 2);
+  for (const b of bodies) {
+    assert.deepEqual(b.cache, [{ m: 0, b: 0 }]);
+    assert.deepEqual(b.messages[0].content, [
+      { type: 'text', text: 'His note, whole' },
+      { type: 'text', text: 'context\n\nq' },
+    ]);
+    assert.equal(JSON.stringify(b).includes('cache_control'), false);
+  }
+  // no prefix: no hint, and the turn stays a string
+  bodies.length = 0;
+  await sample('hi', {});
+  assert.equal(bodies[0].cache, undefined);
+  assert.equal(bodies[0].messages[0].content, 'hi');
 });
