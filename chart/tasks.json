@@ -8481,9 +8481,9 @@
   "id": "B-458",
   "kind": "bug",
   "title": "Bug (reported Oct 28): The staging deploy check still lets a client pass a document by stamping the app's source with a scheduled pipeline's writer (for example morning or watchdog); the app's runner only writes as worker or page, so other writers with that source should be flagged.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "tools/pwa-staging.mjs's 'E.V. app' rule also requires data.writer to be worker or page; a seed document stamped 'E.V. app' with a pipeline writer (morning, watchdog, builder) is flagged, tested; the local staging recordDiffs stays clean; npm test green.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8493,6 +8493,10 @@
   "reportedAt": "2026-10-28T11:46:53.591Z",
   "board": {
    "row": "v4 B-458: The staging deploy check still lets a client pass a document by…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T11:47:01.886Z"
   }
  }
 ]
