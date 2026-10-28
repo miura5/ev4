@@ -260,5 +260,16 @@ export function makeInsights(core) {
     };
   }
 
-  return { answerStats, readiness, readinessAudit, predictReadiness, examViews, calibrate, examRetro };
+  /** B-447: a day (YYYY-MM-DD) as words from another (today): today, tomorrow, in N days, yesterday or N days ago;
+   *  a day already past reads as past, never "in -1 days". */
+  function relDay(day, from) {
+    const n = diffDays(from, day);
+    if (!Number.isFinite(n)) return '';
+    if (n === 0) return 'today';
+    if (n === 1) return 'tomorrow';
+    if (n === -1) return 'yesterday';
+    return n > 0 ? 'in ' + n + ' days' : -n + ' days ago';
+  }
+
+  return { answerStats, readiness, readinessAudit, predictReadiness, examViews, calibrate, examRetro, relDay };
 }

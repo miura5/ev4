@@ -1169,10 +1169,7 @@
         );
       return head + '. Next: ' + each.join(', then ') + '.';
     }
-    const relDay = d => {
-      const n = Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 864e5);
-      return n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days';
-    };
+    const relDay = d => E.relDay(d, today); // B-447: a past day reads as past (yesterday, N days ago)
     function dateObjective(d) {
       // what "Quiz me on it" quizzes: the objective of his upcoming exams in its course that its title names; for an
       // exam, else its first objective not yet solid. None: no Quiz me.

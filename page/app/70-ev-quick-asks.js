@@ -104,7 +104,7 @@
         const r = E.readiness({ examId: ex.id, weakspots: M.models });
         const d = E.diffDays(today, ex.date);
         return [
-          `${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : ' is today'}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`,
+          `${(ex.title || ex.id).replace(/:.*$/, '')}${d > 0 ? ' in ' + plural(d, 'day') : d === 0 ? ' is today' : ' was ' + E.relDay(ex.date, today)}: ${r.pctSolid ?? 0}% of its weak spots solid, about ${r.need} correct reviews to go.`,
           [{ type: 'readiness' }, { type: 'audit' }],
         ];
       },

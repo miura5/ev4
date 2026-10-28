@@ -316,7 +316,10 @@
         const r = E.readiness({ examId: ex.id, weakspots: M.models });
         const d = E.diffDays(today, ex.date);
         box.append(
-          head2('Readiness · ' + (ex.title || ex.id).replace(/:.*$/, ''), d === 0 ? 'today' : plural(d, 'day') + ' out')
+          head2(
+            'Readiness · ' + (ex.title || ex.id).replace(/:.*$/, ''),
+            d > 0 ? plural(d, 'day') + ' out' : E.relDay(ex.date, today)
+          )
         );
         const big = el('p', 'big', r.pctSolid != null ? r.pctSolid + '% solid' : 'No weak spots yet');
         box.append(big);
@@ -904,7 +907,7 @@
         const r = E.readiness({ examId: ex.id, weakspots: M.models });
         const d = E.diffDays(today, ex.date);
         return {
-          text: `${exShort(ex)} readiness · ${r.pctSolid != null ? r.pctSolid + '% solid' : 'no weak spots yet'} · ${d === 0 ? 'today' : plural(d, 'day') + ' out'}`,
+          text: `${exShort(ex)} readiness · ${r.pctSolid != null ? r.pctSolid + '% solid' : 'no weak spots yet'} · ${d > 0 ? plural(d, 'day') + ' out' : E.relDay(ex.date, today)}`,
           go: openIn('progress', 'progress', 'readiness'), // B-381: the Progress view itself
         };
       },

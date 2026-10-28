@@ -231,10 +231,10 @@
       }
       const plan = examPlan(cur.exam);
       const days = E.diffDays(today, cur.exam.date);
-      const when = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
+      const when = (days < 0 ? 'was ' : 'is ') + E.relDay(cur.exam.date, today); // B-447
       if (!plan)
         return {
-          text: `${cur.course} ${ex} is ${when}. Its objectives aren’t in the record yet.`,
+          text: `${cur.course} ${ex} ${when}. Its objectives aren’t in the record yet.`,
           act: ['Quiz me', b => courseQuiz(b)], // B-375
         };
       const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
@@ -242,8 +242,8 @@
       const left = ts.filter(t => !isDone(t)).length;
       return {
         text: left
-          ? `${cur.course} ${ex} is ${when}, with ${plural(left, 'plan task')} left.`
-          : `${cur.course} ${ex} is ${when}, and its plan is done.`,
+          ? `${cur.course} ${ex} ${when}, with ${plural(left, 'plan task')} left.`
+          : `${cur.course} ${ex} ${when}, and its plan is done.`,
         act: ['Quiz me', b => courseQuiz(b)],
       };
     }
@@ -372,7 +372,6 @@
       const objs = S.objectives
         .filter(o => o.exam === ex.id)
         .sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
-      const days = E.diffDays(today, ex.date);
       const exName = (ex.title || ex.id).replace(/:.*$/, '');
       const fullName = exName.includes(cur.course) ? exName : cur.course + ' ' + exName;
       const head = el('div', 'ov-head');
@@ -383,10 +382,7 @@
           'span',
           'meta',
           // B-431: the date and the days left each stay whole on the phone (non-breaking spaces inside each)
-          ' · ' +
-            nbsp(dayMonth(ex.date)) +
-            ' · ' +
-            nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+          ' · ' + nbsp(dayMonth(ex.date)) + ' · ' + nbsp(E.relDay(ex.date, today))
         )
       );
       const bar = el('div', 'pbar ov-bar');
@@ -406,22 +402,18 @@
         ...(items.rows.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)])
       );
       // B-375: an exam with neither objectives nor a plan still fills the panel: the exam, its date and Quiz me
-      if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName, days);
+      if (PANEL.matches && !ui.objPanel) ui.objPanel = examDetail(ex, fullName);
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
     }
     /** B-375: the panel for an exam with no objectives and no plan, laid out as an objective's pane. */
-    function examDetail(ex, fullName, days) {
+    function examDetail(ex, fullName) {
       const d = el('div', 'ov-detail');
       d.append(el('span', 'lab', 'Exam'), el('div', 'od-name', fullName));
       const st = el('div', 'od-row');
       st.append(
         el('span', 'badge', 'No objectives yet'),
-        el(
-          'span',
-          'mini',
-          nbsp(dayMonth(ex.date)) + ' · ' + nbsp(days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
-        )
+        el('span', 'mini', nbsp(dayMonth(ex.date)) + ' · ' + nbsp(E.relDay(ex.date, today)))
       );
       d.append(
         st,
@@ -785,13 +777,12 @@
       for (const d of all) {
         const b = el('button', 'up');
         b.type = 'button';
-        const days = E.diffDays(today, d.date);
         const un = el('span', 'un');
         un.append(el('i', 'dot'), el('span', 'ut', d.title || ''));
         b.append(
           el('span', 'ud', OV_WD[new Date(d.date + 'T12:00:00Z').getUTCDay()] + ' ' + Number(d.date.slice(8))),
           un,
-          el('span', 'ud', days <= 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days')
+          el('span', 'ud', E.relDay(d.date, today))
         );
         b.addEventListener('click', openWeek);
         list.append(b);
