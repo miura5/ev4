@@ -8282,5 +8282,27 @@
    "outcome": "task",
    "at": "2026-10-28T02:36:37.393Z"
   }
+ },
+ {
+  "id": "B-449",
+  "kind": "request",
+  "title": "Request (reported Oct 27): Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",
+  "dod": "Waits for Matt's rubric; then a planning pass (code owns units, dates, capacity, approval and Today distribution; a versioned prompt from the rubric fills content in a strict format; the rubric also scores plans in code), brought to Matt before building; after the architecture review.",
+  "milestone": "After Notes",
+  "status": "blocked",
+  "depends": [],
+  "notes": "Parked by D-347 until after the review; waits on Matt's rubric results. Review inputs noted: plan items on Today's list vs separate; Notes and Sessions merged in Record now that the timer runs for the whole note.",
+  "commit": null,
+  "source": "Matt, chat, Oct 27",
+  "words": "Exam study plans are weak: asked for a plan for a course, E.V. should know the current unit (exams as landmarks), build a detailed plan in Study he can extend and approve, and an approved plan should flow into Today's lists; generalized to any course with units, guided by a rubric he is defining in another chat.",
+  "reportedAt": "2026-10-28T02:37:15.469Z",
+  "board": {
+   "row": "v4 B-449: Exam study plans are weak: asked for a plan for a course, E.V. should…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T02:37:15.715Z"
+  },
+  "waitingOn": "Matt"
  }
 ]
