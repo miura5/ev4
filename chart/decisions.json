@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-360",
+  "date": "Oct 28",
+  "title": "Plan routing: a new plan only when the ask is unmistakable; any other ask with a remake word gets the one free question, never a guessed Sonnet rebuild",
+  "why": "Two reviews of B-456 kept finding phrasings where a word-list router guesses wrong in both directions ('redo the plan's Friday drill', 'redo it on Friday', 'redo the exam plan', 'scrap this'). A wrong guess toward new costs 3x and replaces his draft; a wrong guess toward change is cheap but wrong. The page already has a free one-line question for unclear asks, so it decides the doubtful cases: new only for an unmistakable whole-plan ask (replan, start over, from scratch, plan from today, a cram plan, a remake word whose object is plainly the whole plan with nothing after it but a reason); a single-task edit with no remake word stays change; everything else with a remake word asks 'The whole plan, or just that task?'.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-359",
   "date": "Oct 28",
   "title": "The page spec's fixed 50 KB budget (B-161) is retired; a growth guard at 96 KB replaces it, and the exact key-list check stays",
