@@ -8388,5 +8388,23 @@
    "outcome": "task",
    "at": "2026-10-28T03:53:33.106Z"
   }
+ },
+ {
+  "id": "B-454",
+  "kind": "request",
+  "title": "Request (reported Oct 27): The notes writing timer starts only for a new note. It should also start when he opens an existing note and types in it for a few seconds, including going back into a note after ending a session, so editing an earlier note counts as study time.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 27",
+  "words": "The notes writing timer starts only for a new note. It should also start when he opens an existing note and types in it for a few seconds, including going back into a note after ending a session, so editing an earlier note counts as study time.",
+  "reworded": true,
+  "reportedAt": "2026-10-28T03:53:46.866Z",
+  "board": {
+   "row": "v4 B-454: The notes writing timer starts only for a new note. It should also…"
+  }
  }
 ]
