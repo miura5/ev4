@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-361",
+  "date": "Oct 28",
+  "title": "Past the second review, another round only for a feature-breaking or crucial gap; small ones go to the next batch",
+  "why": "Matt, Oct 28: the two-round limit (review then one fix and a final review; at most two fix waves per release) stands, but the build manager may run one more round when what is still open would break a feature, lose or corrupt data, or cost money unexpectedly. Small tweaks still open after the second review are filed for the next batch and named on the release card.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-360",
   "date": "Oct 28",
   "title": "Plan routing: a new plan only when the ask is unmistakable; any other ask with a remake word gets the one free question, never a guessed Sonnet rebuild",
