@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-362",
+  "date": "Oct 28",
+  "title": "A new (Sonnet) study plan starts only from Matt's tap; chat words never start one; supersedes D-360's three-way router",
+  "why": "Three review rounds of B-456 kept finding sentences a word router sends to a new plan wrongly ('replan the friday drill', 'not the whole plan', 'rebuild the friday plan', an answer reused after a topic change). A wrong 'new' costs 3x and replaces his draft; a word list cannot be made safe. So: Make a plan / Remake in the Study view, and a 'Make a new plan' chip E.V. offers in chat when an ask looks like a whole new plan, are the only ways to start one; one tap confirms, with the brief taken from his words. Every other plan ask in chat goes to the Haiku edit, which may answer by offering that chip instead of patching. The free 'whole plan or just that task' question and its pending answer state are retired.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-361",
   "date": "Oct 28",
   "title": "Past the second review, another round only for a feature-breaking or crucial gap; small ones go to the next batch",
