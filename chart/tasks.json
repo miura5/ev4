@@ -8441,7 +8441,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: d35a2d2: the chip skips the edit; one new-plan guard per course (record read before the write, a per-course daily job id) shared by the chip, Make a plan and Remake; smoke:pwa taps the chip, 31/31. npm test 881 pass",
+  "notes": "builder: e26d231 deploy check: jobs.key takes the new-plan id (and the B-324 proof id), app-source writes held to key and schema, D-363 probes named; recordDiffs against staging locally is clean. npm test 890 pass, smoke 28/28, smoke:pwa 31/31",
   "commit": null,
   "source": "final review of B-449",
   "words": "A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
