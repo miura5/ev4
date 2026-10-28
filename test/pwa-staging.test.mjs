@@ -145,12 +145,83 @@ test('B-389: a page save is held to the spec, not only its writer field: a page 
     ['workouts', 'wo-20261025-101010-1', true],
     ['workouts', 'wo-2026-1', false],
     ['jobs', 'job-20261025-101010-study-guide', true],
+    // B-456: a new plan's job, the same id in every tab (core studyPlanNewJobId)
+    ['jobs', 'job-20261028-newplan-nur112-1', true],
+    ['jobs', 'job-20261028-newplan-nur112-12', true],
+    ['jobs', 'job-20261028-newplan-NUR112-1', false],
+    ['jobs', 'job-20261028-newplan-nur112-0', false],
+    ['jobs', 'job-20261028-newplan-nur-112-1', false],
+    ['jobs', 'job-20261028-newplan-nur112', false],
+    // B-324: the staging job proof's jobs, and the sets jobs make (a job's set has its job's id)
+    ['jobs', 'job-proof-20261025112053-study-guide', true],
+    ['jobs', 'job-proof-2026102511205-study-guide', false],
+    ['sets', 'job-proof-20261025115525-practice-set', true],
+    ['sets', 'job-20261025-101010-practice-set', true],
+    ['sets', 'job-anything', false],
     ['idchecks', 'abc-matt', true],
     ['talk', 'memory', true],
     ['talk', 'notes', false],
   ])
     assert.equal(keyOk(c, id), ok, `${c}/${id}`);
   assert.equal(keyPattern('job sets'), null);
+});
+
+// A job's result as the app's job runner writes it (pwa/jobs.mjs statusWrite).
+const APPRESULT = {
+  schema: 2,
+  writer: 'worker',
+  at: '2026-10-25T18:31:19.275Z',
+  source: APP_SOURCE,
+  release: 'v4.5.14',
+  status: 'running',
+  startedAt: '2026-10-25T18:31:19.275Z',
+  finishedAt: null,
+  result: null,
+  message: null,
+  error: null,
+};
+
+test('B-456: a new plan’s job passes the deploy check; the app’s source is held to the spec; D-363’s probes are named', () => {
+  const seed = { a: { 1: {} } };
+  const base = [{ c: 'a', id: '1', data: {} }];
+  const red = docs => recordDiffs({ docs: [...base, ...docs] }, seed);
+  const id = 'job-20261028-newplan-nur112-1';
+  const job = {
+    schema: 2,
+    writer: 'page',
+    at: '2026-10-28T15:00:00.000Z',
+    source: 'E.V. Home',
+    kind: 'exam-plan',
+    title: 'Study plan: NUR 112',
+    brief: 'start over',
+    course: 'NUR 112',
+    chip: 'm1-0',
+  };
+  const ok = red([
+    { c: 'jobs', id, data: job },
+    { c: 'jobresults', id, data: APPRESULT },
+  ]);
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual([ok.added.page, ok.added.app], [{ jobs: 1 }, 1]);
+  // a client stamping the app's source is held to the key and the schema like any page save
+  assert.equal(red([{ c: 'jobresults', id, data: { source: APP_SOURCE, writer: 'worker' } }]).problems.length, 1);
+  assert.equal(
+    red([{ c: 'jobs', id: 'not-a-job', data: { ...job, source: APP_SOURCE, writer: 'page' } }]).problems.length,
+    1
+  );
+  assert.equal(red([{ c: 'talk', id: 'j', data: { source: APP_SOURCE, writer: 'worker' } }]).problems.length, 1);
+  // D-363: the B-449 probe written by hand into staging, named once; nothing else of its kind passes
+  const probe = 'job-20261028-probe-b449-tc';
+  const hand = { schema: 2, at: '2026-10-28T16:00:00.000Z', source: 'B-449 probe' };
+  const named = red([
+    { c: 'jobs', id: probe, data: { ...hand, writer: 'page' } },
+    { c: 'jobresults', id: probe, data: { ...hand, writer: 'worker' } },
+  ]);
+  assert.deepEqual([named.problems, named.added.probe], [[], 2]);
+  assert.equal(
+    red([{ c: 'jobs', id: 'job-20261028-probe-b449-xx', data: { ...hand, writer: 'page' } }]).problems.length,
+    1
+  );
 });
 
 test('B-389: the record is held to the seed by document; what the seed lacks must come from a known writer', () => {
@@ -167,7 +238,7 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   }));
   const extra = [
     ...suiteRun,
-    { c: 'talk', id: 'j', data: { source: APP_SOURCE, writer: 'worker' } },
+    { c: 'jobresults', id: 'job-20261025-101010-study-guide', data: APPRESULT },
     { c: 'dayedits', id: '2026-10-25', data: DAYEDIT },
   ];
   const ok = recordDiffs({ docs: [...docs, ...extra] }, seed);
@@ -176,7 +247,10 @@ test('B-389: the record is held to the seed by document; what the seed lacks mus
   assert.deepEqual(ok.added, { suite: SUITE_DOCS_PER_RUN, app: 1, page: { dayedits: 1 }, runs: {} });
 
   // A seed document gone is red, even when another document makes the count up.
-  const swapped = recordDiffs({ docs: [docs[0], { c: 'a', id: '3', data: { source: APP_SOURCE } }, docs[2]] }, seed);
+  const swapped = recordDiffs(
+    { docs: [docs[0], { c: 'jobresults', id: 'job-20261025-101010-x', data: APPRESULT }, docs[2]] },
+    seed
+  );
   assert.deepEqual(swapped.problems, ["a: 1 of the seed's 2 documents missing (2)"]);
   // A document from no known writer is red, in a seed collection or a new one.
   assert.deepEqual(

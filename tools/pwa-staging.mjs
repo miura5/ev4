@@ -35,7 +35,7 @@ const SCHEMAS = Object.fromEntries(
 const validate = makeValidator(SCHEMAS);
 
 /** One of the spec's id shapes (spec.collections.<c>.key, e.g. "YYYY-MM-DD", "ws-<date>-<objective>-<slug>",
- * "E1…E6", "<id-key>[-matt]") as a whole-id pattern; null for a shape no id is held to ("job sets"). */
+ * "E1…E6", "<id-key>[-matt]") as a whole-id pattern; null for a shape no id is held to (a prose shape such as "job sets"). */
 export function keyPattern(shape) {
   if (shape === 'auto') return /^[A-Za-z0-9_.:~+@-]+$/;
   if (/\s/.test(shape.replace(/<[^>]*>/g, ''))) return null;
@@ -46,6 +46,12 @@ export function keyPattern(shape) {
     if (tok === 'YYYY-MM-DD') out += DATE;
     else if (tok === 'YYYYMMDD-HHMMSS') out += '\\d{8}-\\d{6}';
     else if (tok === '<YYYYMMDD-HHMMSS>') out += '\\d{8}-\\d{6}';
+    // B-456: a new plan's job (job-<YYYYMMDD>-newplan-<course key>-<number>); B-324: the staging job proof's stamp
+    else if (tok === '<YYYYMMDD>') out += '\\d{8}';
+    else if (tok === '<YYYYMMDDHHMMSS>') out += '\\d{14}';
+    else if (tok === '<number>') out += '[1-9]\\d*';
+    else if (tok === '<course key>')
+      out += '[a-z0-9]+'; // a course name's letters and digits, as courseKey makes it
     else if (tok.startsWith('<')) out += /^<[^>]*date>$/i.test(tok) ? DATE : PART;
     else if (tok.startsWith('[')) out += '(?:' + keyPattern(tok.slice(1, -1)).source.slice(1, -1) + ')?';
     else if (tok === '*') out += PART;
@@ -154,6 +160,12 @@ export function isBumpCopy(d, have) {
   return !!bumped && Number(bumped.schema) >= Number(mig[3]);
 }
 
+/** D-363: the staging documents written by hand before agents were barred from it (B-449's probes, Oct 28). */
+export const PROBES = new Set([
+  'jobs/job-20261028-probe-b449-tc',
+  'jobresults/job-20261028-probe-b449-tc',
+  'jobs/job-guard-20261028092809', // the B-449 Worker guard probe (Oct 28), likewise by hand
+]);
 export function knownWriter(d, runs = new Map(), have = null) {
   const data = (d && d.data) || {};
   if (d.c === SUITE) return data.writer === 'run-api-suite' ? 'suite' : null;
@@ -161,7 +173,12 @@ export function knownWriter(d, runs = new Map(), have = null) {
   // spec's legacy collection has no writer, so the copy must match what core/migrate.mjs writes, and the document it
   // names must be in the record at the bumped schema.
   if (d.c === 'legacy') return isBumpCopy(d, have) ? 'migration' : null;
-  if (data.source === APP_SOURCE) return 'app';
+  // D-363: the hand-made staging documents written before that decision, named once; no others are ever added
+  if (PROBES.has(d.c + '/' + d.id)) return 'probe';
+  // B-456: the app's own writes are held to the spec too (an id of the collection's shape, a document its schema
+  // passes): a client could stamp the app's source on anything
+  if (data.source === APP_SOURCE)
+    return allows(d.c, data.writer) && keyOk(d.c, d.id) && validate(d.c, data, { id: d.id }).ok ? 'app' : null;
   // B-389: a page save is held to the spec, not only to its own writer field: a collection the page writes, an id of
   // that collection's shape (spec.collections.<c>.key), and a document its schema passes
   if (data.writer === 'page')
@@ -200,6 +217,7 @@ export function recordDiffs(body, seed = seedRecord()) {
     if (w === 'suite') added.suite++;
     else if (w === 'migration') added.migration = (added.migration || 0) + 1;
     else if (w === 'app') added.app++;
+    else if (w === 'probe') added.probe = (added.probe || 0) + 1;
     else if (w === 'page') added.page[d.c] = (added.page[d.c] || 0) + 1;
     else if (w === 'run' || w === 'role') added.runs[d.data.writer] = (added.runs[d.data.writer] || 0) + 1;
     else (unknown[d.c] = unknown[d.c] || []).push(d);

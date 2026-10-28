@@ -1564,7 +1564,8 @@
     "review-<date>",
     "<exam>-drill-<n>",
     "more-<date>-<n>",
-    "job sets"
+    "job-<YYYYMMDD-HHMMSS>-<slug>",
+    "job-proof-<YYYYMMDDHHMMSS>-<slug>"
    ],
    "holds": "items, kind, date, exam; items never change once written",
    "fromV3": "sets minus answers",
@@ -1986,7 +1987,11 @@
    "writers": [
     "page"
    ],
-   "key": "job-<YYYYMMDD-HHMMSS>-<slug>",
+   "key": [
+    "job-<YYYYMMDD-HHMMSS>-<slug>",
+    "job-<YYYYMMDD>-newplan-<course key>-<number>",
+    "job-proof-<YYYYMMDDHHMMSS>-<slug>"
+   ],
    "holds": "kind, title, brief, fired; the kinds build, reply, design, plan and ship are the builder's (D-194, jobs schema 2)",
    "fromV3": "jobs request fields",
    "schema": "spec/schemas/jobs.schema.json",

@@ -206,12 +206,41 @@ test('B-324: the app serves the runner and every module it imports, at paths its
 test('B-324: the staging check counts what the app’s job runner wrote as the app’s; the proof judges each kind', async () => {
   const { knownWriter } = await import('../tools/pwa-staging.mjs');
   const { judge, PROOF_JOBS, EXPECTED } = await import('../tools/pwa-jobs.mjs');
+  // B-456: the app's documents are held to the spec (key and schema), as a page save is
+  const at = '2026-10-25T11:20:53.000Z';
+  const proofJob = {
+    schema: 2,
+    writer: 'page',
+    at,
+    source: J.APP_SOURCE,
+    kind: 'general',
+    title: 'Staging proof',
+    brief: 'x',
+  };
+  const result = {
+    schema: 2,
+    writer: 'worker',
+    at,
+    source: J.APP_SOURCE,
+    release: 'v4.5.14',
+    status: 'running',
+    startedAt: at,
+    finishedAt: null,
+    result: null,
+    message: null,
+    error: null,
+  };
   const docs = [
     { c: 'talk', id: 'a', data: { source: 'E.V. Home' } },
+    { c: 'jobresults', id: 'job-proof-20261025112053-general', data: result },
+    { c: 'jobs', id: 'job-proof-20261025112053-general', data: proofJob },
+    { c: 'jobs', id: 'job-proof-x', data: proofJob },
     { c: 'talk', id: 'b', data: { source: J.APP_SOURCE } },
-    { c: 'jobs', id: 'job-proof-x', data: { source: J.APP_SOURCE } },
   ];
-  assert.deepEqual(docs.map(knownWriter), [null, 'app', 'app']);
+  assert.deepEqual(
+    docs.map(d => knownWriter(d)),
+    [null, 'app', 'app', null, null]
+  );
   assert.deepEqual(Object.keys(PROOF_JOBS), Object.keys(spec.jobs.kinds), 'the proof starts one job of each kind');
   const job = { data: { fired: { ok: true } } };
   const done = { data: { status: 'done', result: { text: 'x', setId: 's' } } };
