@@ -177,3 +177,69 @@ test('B-446 (review): a mended set holds only the schema fields and validates as
   const raw = { ...doc, items: items.map((q, i) => (i === 0 ? { ...q, question: 'x' } : q)) };
   assert.equal(makeValidator(schemas)('sets', raw, { id: 'more-2026-10-28-1' }).ok, false);
 });
+
+test('B-453: columns that differ only by a symbol match on exact text, else the question is refused', () => {
+  const N = EV.practiceReply.normalizeItem;
+  const grid = (columns, keys) =>
+    N({
+      type: 'matrix',
+      stem: 'Which change does each finding show in this client?',
+      matrix: { columns, rows: keys.map((k, i) => ({ text: 'Finding ' + (i + 1), correct: k, rationale: 'why' })) },
+      cjStep: 'analyze-cues',
+    });
+  const keyed = q => q.matrix.rows.map(r => r.correct);
+  const usable = q => EV.validateItem({ ...q, id: 'x' }).ok;
+  // the failing input: every row "↓" was keyed to the first column ("↑")
+  const arrows = grid(['↑', '↓', 'No change'], ['↓', '↓', '↓']);
+  assert.deepEqual(keyed(arrows), [1, 1, 1]);
+  assert.deepEqual(keyed(grid(['↑', '↓', 'No change'], ['↑', ' ↓ ', 'No change'])), [0, 1, 2]);
+  assert.deepEqual(keyed(grid(['> 5', '< 5'], ['< 5', '> 5', '< 5'])), [1, 0, 1]);
+  assert.deepEqual(keyed(grid(['Rh+', 'Rh-'], ['Rh-', 'Rh+', 'Rh-'])), [1, 0, 1]);
+  // no exact match, and the words name more than one column: refused, never the first column
+  for (const [cols, keys] of [
+    [
+      ['↑', '↓', 'No change'],
+      ['up', '↓', '↓'],
+    ], // "up" names no column
+    [
+      ['> 5', '< 5'],
+      ['>5', '< 5', '< 5'],
+    ],
+    [
+      ['Rh+', 'Rh-'],
+      ['rh-', 'Rh+', 'Rh-'],
+    ],
+  ]) {
+    const q = grid(cols, keys);
+    assert.equal(usable(q), false, JSON.stringify(keys));
+    assert.equal(keyed(q)[0], keys[0], 'the unreadable row is left as written, never keyed to a column');
+  }
+  // options alike: "> 5" names its own option, ">5" names both and is refused
+  assert.deepEqual(N({ options: ['> 5', '< 5', '= 5'], correct: ['< 5'] }).correct, [1]);
+  assert.deepEqual(N({ options: ['> 5', '< 5', '= 5'], correct: ['>5'] }).correct, ['>5']);
+  // words that name one choice still read as before
+  assert.deepEqual(N({ options: ['Hypokalemia', 'Hyperkalemia'], correct: ['hyperkalemia.'] }).correct, [1]);
+});
+
+test('B-453: a numeric answer or tolerance written as a string becomes the number it says', () => {
+  const N = EV.practiceReply.normalizeItem;
+  const dose = {
+    type: 'numeric',
+    topic: 'dosage',
+    stem: 'Give 250 mg from a supply of 125 mg per 5 mL. Round to the tenth. How many mL?',
+    unit: 'mL',
+    steps: ['250 / 125 x 5 = 10'],
+    cjStep: 'take-action',
+  };
+  const q = N({ ...dose, answer: ' 10 ', tolerance: '0.05' });
+  assert.equal(q.answer, 10);
+  assert.equal(q.tolerance, 0.05);
+  assert.ok(EV.validateItem({ ...q, id: 'x' }).ok);
+  assert.ok(EV.scoreAnswer(q, '10 mL').correct);
+  // what is not a number is left as written, and refused
+  const bad = N({ ...dose, answer: 'about 10', tolerance: 'half' });
+  assert.equal(bad.answer, 'about 10');
+  assert.equal(EV.validateItem({ ...bad, id: 'x' }).ok, false);
+  // only a numeric item's answer is read as a number
+  assert.equal(N({ type: 'open', answer: '10' }).answer, '10');
+});
