@@ -8419,7 +8419,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: candidate objectives in both More practice prompts, a Pick an objective menu on untagged To review rows, Accept all naming what needs a pick",
+  "notes": "builder: built (withObjective + candidates in both prompts, Pick an objective menu, end card names picks); npm test 854/0, smoke, notes harness 166/166 incl. pick at 390 and 1280; check --touched running",
   "commit": null,
   "source": "chat, Oct 27",
   "words": "After a More practice quiz, the proposed weak spot from a miss cannot be accepted: Accept all on the quiz's end card and Accept on the Weak spots list are both greyed out ('Pick an objective first'), with no way to pick one.",

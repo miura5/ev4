@@ -2018,17 +2018,18 @@ const openNoteId = page =>
     await page.context().close();
   }
 
-  // ---- B-409: To review's Accept with no objective says why it is off; Decline says what it did; the triage pane says
-  // nothing proposed counts until he decides
-  {
+  // ---- B-409, B-455: a To review row with no objective in the record has Pick an objective in place of the greyed
+  // Accept (its course's objectives); a pick accepts it under that one, an open spot due tomorrow. Decline says what it
+  // did; the triage pane says nothing proposed counts until he decides. At 390 and 1280.
+  for (const width of [390, 1280]) {
     const db = JSON.parse(JSON.stringify(seed));
     const at = new Date(Date.now() - 36e5).toISOString();
-    db.weakspots['ws-harness-noobj'] = {
+    const spot = (topic, extra = {}) => ({
       schema: 2,
       writer: 'page',
       at,
-      source: 'E.V.',
-      topic: 'Harness spot with no objective',
+      source: 'More practice',
+      topic,
       objective: '',
       exam: '',
       course: 'NUR 112',
@@ -2037,28 +2038,43 @@ const openNoteId = page =>
       proposed: true,
       initial: { streak: 0, nextDue: null, recurrence: 1, misses: 1 },
       events: {},
-    };
-    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
-    const tag = '[1280 B-409 triage]';
+      ...extra,
+    });
+    db.weakspots['ws-harness-noobj'] = spot('Harness spot with no objective');
+    db.weakspots['ws-harness-noobj2'] = spot('Harness spot tagged to an objective not in the record', {
+      objective: 'Z9-9',
+    });
+    const { page, errors } = await open(browser, { width, height: width < 600 ? 844 : 860 }, db);
+    const tag = `[${width} B-455 pick an objective]`;
     await page.click('#tab-study');
     await until(page, () => !document.getElementById('p-study').hidden);
     await page.click('#study-qweak');
     await until(page, () => !!document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]'));
+    const want = await page.evaluate(() =>
+      Object.entries(window.__db.objectives || {})
+        .filter(([, o]) => {
+          const e = (window.__db.exams || {})[o.exam];
+          return e && String(e.course || '').replace(/\s+/g, '') === 'NUR112';
+        })
+        .map(([id]) => id)
+        .sort()
+    );
     const r = await page.evaluate(() => {
-      const row = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]');
-      const acc = row && row.querySelector('button');
+      const row = id => document.querySelector(`#weak-list .trow[data-id="${id}"]`);
+      const btns = id => (row(id) ? [...row(id).querySelectorAll('.acts > button, .acts > .pick-wrap > button')] : []);
       return {
-        row: row ? row.innerText : '',
-        acc: acc ? [acc.textContent, acc.disabled, acc.title] : [],
+        row: row('ws-harness-noobj') ? row('ws-harness-noobj').innerText : '',
+        btns: btns('ws-harness-noobj').map(b => [b.textContent, b.disabled]),
+        btns2: btns('ws-harness-noobj2').map(b => [b.textContent, b.disabled]),
         side: document.body.innerText,
       };
     });
     ok(
-      `${tag} a proposed spot with no objective shows "Pick an objective first" by its greyed Accept`,
+      `${tag} a proposed spot with no objective in the record has Pick an objective in place of the greyed Accept`,
       /Pick an objective first/.test(r.row) &&
-        r.acc[0] === 'Accept' &&
-        r.acc[1] === true &&
-        r.acc[2] === 'Pick an objective first',
+        JSON.stringify(r.btns) === '[["Pick an objective",false],["Join",true],["Not now",false],["Decline",false]]' &&
+        r.btns2[0] &&
+        r.btns2[0][0] === 'Pick an objective',
       JSON.stringify(r)
     );
     ok(
@@ -2066,8 +2082,84 @@ const openNoteId = page =>
       /Nothing proposed counts until you decide\./.test(r.side) && /Not now: back tomorrow/.test(r.side),
       ''
     );
-    await page.screenshot({ path: path.join(shots, 'b409-to-review-noobj-1280.png') });
-    await page.click('#weak-list .trow[data-id="ws-harness-noobj"] button:has-text("Decline")');
+    const pickSel = '#weak-list .trow[data-id="ws-harness-noobj"] .pick-btn';
+    await page.click(pickSel);
+    await page.waitForTimeout(150);
+    const menu = await page.evaluate(() => {
+      const m = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu');
+      const b = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-btn');
+      if (!m || m.hidden) return null;
+      const r = m.getBoundingClientRect();
+      const items = [...m.querySelectorAll('[role="menuitem"]')];
+      return {
+        objs: items.map(x => x.dataset.obj).sort(),
+        expanded: b.getAttribute('aria-expanded'),
+        focused: items.includes(document.activeElement),
+        inView: r.left >= 0 && r.right <= innerWidth + 0.5,
+        tall: items.every(x => x.getBoundingClientRect().height >= (innerWidth < 600 ? 44 : 28)),
+      };
+    });
+    ok(
+      `${tag} the menu lists the course's objectives, opens focused, inside the screen, its rows tall enough to tap`,
+      !!menu &&
+        want.length > 0 &&
+        JSON.stringify(menu.objs) === JSON.stringify(want) &&
+        menu.expanded === 'true' &&
+        menu.focused &&
+        menu.inView &&
+        menu.tall,
+      JSON.stringify({ menu, want })
+    );
+    await page.screenshot({ path: path.join(shots, `b455-pick-objective-${width}.png`) });
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    const closed = await page.evaluate(
+      () => document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').hidden
+    );
+    ok(`${tag} Escape closes the menu`, closed, '');
+    const pickId = want[0];
+    await page.click(pickSel);
+    await page.click(`#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu [data-obj="${pickId}"]`);
+    const accepted = await until(
+      page,
+      id =>
+        Object.values((window.__db.weakspots['ws-harness-noobj'] || {}).events || {}).some(
+          e => e.type === 'accept' && e.objective === id && e.by === 'owner'
+        ),
+      pickId,
+      4000
+    );
+    await page.waitForTimeout(300);
+    const st = await page.evaluate(() => {
+      const C = window.EVCore,
+        L = c => Object.entries(window.__db[c] || {}).map(([id, d]) => ({ id, ...d }));
+      const m = C.buildWeakspots({
+        weakspots: L('weakspots'),
+        sets: L('sets'),
+        answers: L('answers'),
+        exams: L('exams'),
+      }).find(w => w.id === 'ws-harness-noobj');
+      return {
+        status: m && m.derived.status,
+        nextDue: m && m.derived.nextDue,
+        objective: m && m.objective,
+        tomorrow: C.addDays(C.chicagoDate(new Date()), 1),
+        listed: !!document.querySelector('#weak-list .wl[data-id="ws-harness-noobj"]'),
+        stillToReview: !!document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]'),
+      };
+    });
+    ok(
+      `${tag} a pick accepts it under that objective: an open spot due tomorrow, in the Open list`,
+      accepted &&
+        st.status === 'open' &&
+        st.nextDue === st.tomorrow &&
+        st.objective === pickId &&
+        st.listed &&
+        !st.stillToReview,
+      JSON.stringify({ accepted, st, pickId })
+    );
+    await page.screenshot({ path: path.join(shots, `b455-picked-${width}.png`) });
+    await page.click('#weak-list .trow[data-id="ws-harness-noobj2"] button:has-text("Decline")');
     const declined = await until(page, () => {
       const x = document.getElementById('toast');
       return x && !x.hidden && x.textContent === 'Declined. Nothing is counted.';

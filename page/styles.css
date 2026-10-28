@@ -1609,6 +1609,13 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .wk-list .trow .tt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px}
 .wk-list .trow .tt .wn{font-weight:500;overflow-wrap:anywhere}
 .wk-list .trow .acts{display:flex;gap:6px;flex-wrap:wrap}
+/* B-455: Pick an objective in place of a greyed Accept: the New menu's look, under its button, inside the screen */
+.wk-list .pick-wrap{position:relative}
+.wk-list .pick-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:min(320px,calc(100vw - 32px));max-height:min(320px,60dvh);overflow-y:auto;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;box-sizing:border-box}
+.wk-list .pick-menu[hidden]{display:none}
+.wk-list .pick-menu .mhd{font:500 calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:6px 9px 4px}
+.wk-list .pick-menu button.btn.mi{justify-content:flex-start;width:100%;height:auto;min-height:30px;padding:6px 9px;color:var(--text);font-weight:400;text-align:left;white-space:normal;flex:none}
+@media (max-width:599px){.wk-list .pick-menu button.btn.mi{min-height:44px}}
 .wk-list .empty{padding:40px 18px;text-align:center}
 #weak-quizlet{display:contents}
 #weak-quizlet[hidden]{display:none}

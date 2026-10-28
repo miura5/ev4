@@ -414,6 +414,15 @@ export function makeItemKinds(core) {
     }
     return keep(q, ITEM_KEYS);
   }
+  /** B-455: an item's objective held to the candidates its prompt named (the set's exam's, else its course's): kept
+   *  when it is one, else the only candidate when there is exactly one, else left off (a miss on an item whose
+   *  objective is not in the record proposes a spot that cannot be accepted until one is picked). */
+  function withObjective(q, ids) {
+    if (!q || typeof q !== 'object' || !Array.isArray(ids)) return q;
+    if (q.objective && ids.includes(q.objective)) return q;
+    const { objective, ...rest } = q;
+    return ids.length === 1 ? { ...rest, objective: ids[0] } : rest;
+  }
   /** B-446: the questions in a practice reply: {items}, a bare array, {questions} or {set: {items}}. */
   function replyItems(res) {
     if (Array.isArray(res)) return res;
@@ -461,7 +470,7 @@ export function makeItemKinds(core) {
 
   return {
     crossCourse,
-    practiceReply: { normalizeItem, replyItems, salvageItems, ITEM_KEYS }, // B-446
+    practiceReply: { normalizeItem, replyItems, salvageItems, withObjective, ITEM_KEYS }, // B-446, B-455
     displayOrder,
     gradeOpenLocal,
     gradePrompt,

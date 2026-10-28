@@ -811,26 +811,40 @@
           { cls: 'btn primary sm' }
         );
         all.disabled = !ok.length;
+        // B-455: the ones with no objective in the record wait for a pick on Weak spots; the line says how many, and
+        // Review opens those rows
+        const pick = fromThis.filter(w => !ok.includes(w));
+        if (pick.length && ok.length)
+          all.setAttribute(
+            'aria-label',
+            'Accept ' + ok.length + '; ' + pick.length + ' still need an objective picked'
+          );
         line.append(
           el(
             'span',
             'sp',
-            fromThis.length === 1
+            (fromThis.length === 1
               ? '1 miss is proposed as a weak spot.'
-              : fromThis.length + ' misses are proposed as weak spots.'
+              : fromThis.length + ' misses are proposed as weak spots.') +
+              (pick.length
+                ? ' ' +
+                  (pick.length === fromThis.length && pick.length === 1 ? 'It needs' : pick.length + ' need') +
+                  ' an objective picked.'
+                : '')
           ),
-          all,
+          ...(ok.length ? [all] : []), // with none to accept here, Review leads to the picks
           btn(
             'Review',
             () => {
               ui.openSet = null;
               ui.openObj = null;
               ui.mini = null;
+              ui.weakFocus = pick.map(w => w.id); // B-455: Weak spots opens on the first that needs a pick
               showTab('study');
               setStudy('weak');
               render();
             },
-            { cls: 'btn neutral sm' }
+            { cls: ok.length ? 'btn neutral sm' : 'btn primary sm' }
           )
         );
         parts.push(line);

@@ -854,6 +854,63 @@
      *  least 0.5 similar; off when none, the target named in its title); Not now hides it until tomorrow; Decline keeps
      *  it, uncounted. */
     const objKnown = w => !!w.objective && S.objectives.some(o => o.id === w.objective);
+    /** B-455: a To review row's Pick an objective: a small menu (the New menu's) of its candidates; a pick sends
+     *  weakspot-accept with that objective, so it opens from tomorrow under it. Escape or a tap outside closes it. */
+    function pickMenu(w, name, cands) {
+      const wrap = el('div', 'pick-wrap');
+      const menu = el('div', 'menu pick-menu');
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-label', 'Objective for ' + name);
+      menu.hidden = true;
+      const open = on => {
+        menu.hidden = !on;
+        b.setAttribute('aria-expanded', String(on));
+        if (on) menu.querySelector('button').focus();
+      };
+      const b = btn('Pick an objective', () => open(menu.hidden), { cls: 'btn neutral sm pick-btn' });
+      b.setAttribute('aria-haspopup', 'menu');
+      b.setAttribute('aria-expanded', 'false');
+      b.setAttribute('aria-label', 'Pick an objective to accept ' + name + ' under');
+      menu.append(el('div', 'mhd', 'Accept under'));
+      for (const o of cands) {
+        const mi = btn(
+          String(o.text || o.id),
+          ev => {
+            open(false);
+            guard(ev.currentTarget, () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: o.id }] }));
+          },
+          { cls: 'btn ghost sm mi' }
+        );
+        mi.setAttribute('role', 'menuitem');
+        mi.dataset.obj = o.id;
+        mi.title = o.text || o.id;
+        menu.append(mi);
+      }
+      menu.addEventListener('keydown', e => {
+        const items = [...menu.querySelectorAll('[role="menuitem"]')];
+        const i = items.indexOf(document.activeElement);
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          open(false);
+          b.focus();
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+        }
+      });
+      wrap.append(b, menu);
+      return wrap;
+    }
+    // B-455: a tap outside an open Pick an objective menu closes it (a pointer, not focus: a tapped button on the phone
+    // may never take focus)
+    document.addEventListener('pointerdown', e => {
+      for (const m of document.querySelectorAll('.pick-menu:not([hidden])'))
+        if (!m.parentElement.contains(e.target)) {
+          m.hidden = true;
+          m.parentElement.querySelector('.pick-btn').setAttribute('aria-expanded', 'false');
+        }
+    });
     function reviewRow(w) {
       const row = el('div', 'trow');
       row.dataset.id = w.id;
@@ -887,10 +944,18 @@
         () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: w.objective }] }),
         'btn neutral sm'
       );
-      acc.disabled = !objKnown(w); // its objective is changed in B-235's surface; with none there is nothing to count under
-      if (acc.disabled) {
-        acc.title = 'Pick an objective first';
-        acc.setAttribute('aria-label', 'Accept ' + name + ': pick an objective first');
+      acc.disabled = !objKnown(w); // with no objective in the record there is nothing to count it under
+      // B-455: in its place, Pick an objective: the spot's exam's objectives, else its course's; a pick accepts it
+      // under that one. With none in the record, Accept stays greyed and says why.
+      const cands = acc.disabled
+        ? candidateObjectives(
+            S.exams.find(e => e.id === E.examOf(w)),
+            wsCourse(w)
+          )
+        : [];
+      if (acc.disabled && !cands.length) {
+        acc.title = 'No objectives in the record for its course yet';
+        acc.setAttribute('aria-label', 'Accept ' + name + ': no objectives in the record for its course yet');
       }
       const join = tap(
         'Join',
@@ -903,7 +968,7 @@
       join.title = to ? 'Join to “' + (to.topic || to.id) + '”' : 'Nothing under this objective repeats it';
       const acts = el('div', 'acts');
       acts.append(
-        acc,
+        cands.length ? pickMenu(w, name, cands) : acc,
         join,
         tap('Not now', 'Not now: ' + name + ' comes back tomorrow', () =>
           weakAct('weakspot-snooze', { items: [{ id: w.id }], until: E.addDays(today, 1) })
@@ -938,6 +1003,18 @@
         out.push(all);
       } else out.push(el('div', 'empty', 'No weak spots open' + (course ? ' in ' + course : '') + '.'));
       $('weak-list').replaceChildren(...out);
+      // B-455: from a quiz's end card, Review opens on the first row that needs an objective picked
+      if (ui.weakFocus) {
+        const id = ui.weakFocus.find(x => $('weak-list').querySelector(`.trow[data-id="${CSS.escape(x)}"]`));
+        ui.weakFocus = null;
+        const row = id && $('weak-list').querySelector(`.trow[data-id="${CSS.escape(id)}"]`);
+        if (row)
+          requestAnimationFrame(() => {
+            row.scrollIntoView({ block: 'center' });
+            const b = row.querySelector('.pick-btn');
+            if (b) b.focus({ preventScroll: true });
+          });
+      }
       // B-365 (D-316): the side pane, in the demo's place. B-407: the demo's How triage works, now that a miss is
       // proposed and waits for his tap
       const p = el('div', 'ov-detail wk-side');
@@ -1281,15 +1358,21 @@
       const ex = S.exams
         .filter(e => e.kind === 'dosage' && e.date >= today)
         .sort((a, b) => (a.date < b.date ? -1 : 1))[0];
+      // B-455: the objectives an item may carry (the dosage exam's, else its course's), so a miss can be accepted
+      const cands = candidateObjectives(ex, ex ? E.courseOf(ex) : opt.course || (mats[0] && mats[0].course));
+      const ids = cands.map(o => o.id);
       const prompt = [
         'You write dosage calculation practice for Matt, a first-semester ADN nursing student. Return JSON only.',
         ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
         'He asked for: ' + String(opt.topic).slice(0, 200),
+        objectivesLine(cands),
         'Passages from his dosage material (ground every question in one; work the numbers with its method): ' +
           JSON.stringify(passages),
         'Write exactly 5 numeric questions. Each: type "numeric"; stem with the order, what is on hand and the rounding asked for; answer (a number); unit, one of ' +
           JSON.stringify(EV_SPEC.items.units) +
-          '; tolerance (half the rounding step: 0.05 for tenths, 0.5 for whole drops, 0 when exact); steps (the worked solution, one line each); objective (or omit); topic (short); cjStep "take-action"; sourceRef, the ref of the passage it rests on. Never from his medication table or drug cards.',
+          '; tolerance (half the rounding step: 0.05 for tenths, 0.5 for whole drops, 0 when exact); steps (the worked solution, one line each); objective (' +
+          (ids.length ? 'one of the objective ids above' : 'omit') +
+          '); topic (short); cjStep "take-action"; sourceRef, the ref of the passage it rests on. Never from his medication table or drug cards.',
         'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
         'Shape: {"items":[{"type":"numeric","topic":"...","stem":"...","answer":10,"unit":"mL","tolerance":0.05,"steps":["..."],"cjStep":"take-action","sourceRef":"materials/<id>"}]}',
       ]
@@ -1299,6 +1382,7 @@
       const fresh = E.practiceReply
         .replyItems(res)
         .map(E.practiceReply.normalizeItem)
+        .map(q => E.practiceReply.withObjective(q, ids)) // B-455
         .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }))
         .filter(q => E.validateItem(q).ok && refs.has(q.sourceRef));
       if (!fresh.length) {
@@ -1336,6 +1420,21 @@
       render();
       return true;
     }
+    /** B-455: the objectives an item or a proposed spot may carry: its exam's, else its course's. */
+    function candidateObjectives(ex, course) {
+      const own = ex ? S.objectives.filter(o => o.exam === ex.id) : [];
+      if (own.length || !course) return own;
+      return S.objectives.filter(o => {
+        const oe = S.exams.find(e => e.id === o.exam);
+        return !!oe && E.courseOf(oe) === E.courseOf({ course });
+      });
+    }
+    /** B-455: the prompt's line naming them; every item must carry one. */
+    const objectivesLine = cands =>
+      cands.length
+        ? 'Objectives (tag every question with one of these ids, exactly as written): ' +
+          JSON.stringify(cands.map(o => ({ id: o.id, text: o.text, chapters: o.chapters })))
+        : '';
     /** B-446: a practice ask; a reply cut short or wrapped in words keeps every whole question it holds. */
     async function askItems(prompt) {
       try {
@@ -1379,6 +1478,9 @@
         const objs = S.objectives
           .filter(o => (exId ? o.exam === exId : !opt.course || inCourse(o)))
           .map(o => ({ id: o.id, text: o.text, chapters: o.chapters }));
+        // B-455: the objectives an item may carry: these, else the course's (so a miss can be accepted)
+        const cands = objs.length ? objs : candidateObjectives(null, opt.course || (ex ? E.courseOf(ex) : null));
+        const ids = cands.map(o => o.id);
         const plan = opt.course && !objs.length && ex ? examPlan(ex) : null;
         const planTasks = plan
           ? (plan.days || []).flatMap(d => (d.tasks || []).map(t => t.text || '')).filter(Boolean)
@@ -1428,8 +1530,8 @@
             (opt.course || E.defaultCourse()) +
             '). Return JSON only.',
           ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
-          'Objectives: ' + JSON.stringify(objs),
-          opt.course && !objs.length
+          objectivesLine(cands),
+          !cands.length
             ? 'No objectives are in his record for this course yet, so leave "objective" out and write from what follows.'
             : '',
           planTasks.length ? 'His study plan for the exam: ' + JSON.stringify(planTasks.slice(0, 20)) : '',
@@ -1464,8 +1566,13 @@
           .map((q, i) => {
             const item = { ...q, id: 'm' + (i + 1) };
             // B-446: a weak spot id not in his record is left off (as a job's set does), never the question with it
-            if (item.weakspotId && !M.models.some(w => w.id === item.weakspotId)) delete item.weakspotId;
-            return { ...item, kind: item.weakspotId ? 'review' : 'check' };
+            const spot = item.weakspotId && M.models.find(w => w.id === item.weakspotId);
+            if (item.weakspotId && !spot) delete item.weakspotId;
+            // B-455: a review item carries its spot's objective; a check one of the candidates, else none
+            const tagged = spot
+              ? { ...item, ...(spot.objective ? { objective: spot.objective } : {}) }
+              : E.practiceReply.withObjective(item, ids);
+            return { ...tagged, kind: tagged.weakspotId ? 'review' : 'check' };
           })
           .filter(q => E.validateItem(q).ok)
           .map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })) // B-193 (D-205)

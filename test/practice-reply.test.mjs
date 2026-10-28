@@ -255,3 +255,53 @@ test('B-453: a numeric answer or tolerance written as a string becomes the numbe
   // only a numeric item's answer is read as a number
   assert.equal(N({ type: 'open', answer: '10' }).answer, '10');
 });
+
+test('B-455: an item is held to its candidate objectives; a planted dosage miss proposes a spot with a known one', () => {
+  const W = EV.practiceReply.withObjective;
+  // kept when it is a candidate, the only candidate when there is exactly one, else left off
+  assert.equal(W({ objective: 'D1-2' }, ['D1-1', 'D1-2']).objective, 'D1-2');
+  assert.equal(W({ objective: 'E4-3' }, ['D1-1']).objective, 'D1-1');
+  assert.equal(W({}, ['D1-1']).objective, 'D1-1');
+  assert.equal('objective' in W({ objective: 'E4-3' }, ['D1-1', 'D1-2']), false);
+  assert.equal('objective' in W({ objective: 'E4-3' }, []), false);
+  // a dosage reply with no objective (its prompt used to say "objective (or omit)"), its exam's one objective the
+  // candidate, missed: the proposed spot carries that objective, so Accept is on
+  const exams = [{ id: 'D1', course: 'NUR 112', title: 'Dosage exam', kind: 'dosage', date: '2026-11-05' }];
+  const objectives = [{ id: 'D1-1', exam: 'D1', text: 'Calculate oral and liquid doses' }];
+  const reply = {
+    items: [
+      {
+        type: 'numeric',
+        topic: 'Liquid dose',
+        stem: 'Give 250 mg from a supply of 125 mg per 5 mL. Round to the tenth. How many mL?',
+        answer: '10',
+        unit: 'mL',
+        tolerance: 0.05,
+        steps: ['250 / 125 x 5 = 10'],
+        cjStep: 'take-action',
+        sourceRef: 'materials/dose-handout',
+      },
+    ],
+  };
+  const [item] = EV.practiceReply
+    .replyItems(reply)
+    .map(EV.practiceReply.normalizeItem)
+    .map(q =>
+      W(
+        q,
+        objectives.map(o => o.id)
+      )
+    )
+    .map((q, i) => ({ ...q, id: 'm' + (i + 1), kind: 'check', type: 'numeric' }));
+  assert.ok(EV.validateItem(item).ok);
+  const set = { id: 'more-2026-10-28-1', kind: 'more', exam: 'D1', items: [item] };
+  const r = EV.planAnswer({ set, item, chosen: '12 mL', now: '2026-10-28T15:00:00Z', weakspots: [], exams });
+  assert.equal(r.correct, false);
+  const made = r.writes.find(w => w.collection === 'weakspots');
+  assert.ok(made, JSON.stringify(r.writes.map(w => w.collection)));
+  assert.equal(made.data.objective, 'D1-1');
+  assert.ok(
+    objectives.some(o => o.id === made.data.objective),
+    'a known objective: Accept is on'
+  );
+});
