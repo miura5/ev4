@@ -319,30 +319,58 @@ export function makeItemKinds(core) {
     numeric: 'numeric',
     open: 'open',
   };
-  /** One answer index as written: a number, "2", a letter (A is 0) or the choice's own words; null when unreadable. */
+  /** One answer index as written: a whole number as it is; a string as the choice's own words, else "2" (from 0),
+   *  else a letter (A is 0); null when unreadable, and null when a reading as words and one as an index or letter name different choices
+   *  (options O, A, B, AB with "A"; options 3, 8, 12, 15 with "3"): a dropped question beats a wrongly keyed one. */
   function answerIndex(x, choices) {
-    if (Number.isInteger(x)) return x;
+    if (Number.isInteger(x)) return x; // the asked shape: an index, as written
     if (typeof x !== 'string') return null;
     const s = x.trim();
-    if (/^\d+$/.test(s)) return Number(s);
-    if (/^[A-Fa-f]$/.test(s)) {
-      const i = s.toUpperCase().charCodeAt(0) - 65;
-      if (i < choices.length) return i;
-    }
-    const i = choices.findIndex(c => typeof c === 'string' && norm(c) === norm(s));
-    return i >= 0 ? i : null;
+    const byText = choices.findIndex(c => (typeof c === 'string' || typeof c === 'number') && norm(c) === norm(s));
+    let byPlace = null;
+    if (/^\d+$/.test(s)) byPlace = Number(s);
+    else if (/^[A-Fa-f]$/.test(s)) byPlace = s.toUpperCase().charCodeAt(0) - 65;
+    if (byPlace != null && byPlace >= choices.length) byPlace = null;
+    if (byText >= 0) return byPlace == null || byPlace === byText ? byText : null;
+    return byPlace;
   }
-  /** B-446: a question as Claude wrote it, mended where its shape drifted without changing what it says. */
+  // B-446 (review): the fields a stored item may hold (spec/schemas/sets.schema.json's items, which allow no other):
+  // ITEM_FIELDS (core/steps-shared.mjs) with the page's id and kind and an open item's keyPoints and modelAnswer.
+  const ITEM_KEYS = [
+    'id',
+    'kind',
+    'type',
+    'stem',
+    'options',
+    'correct',
+    'rationales',
+    'matrix',
+    'answer',
+    'unit',
+    'tolerance',
+    'steps',
+    'weakspotId',
+    'objective',
+    'topic',
+    'cjStep',
+    'verify',
+    'sourceRef',
+    'chapters',
+    'keyPoints',
+    'modelAnswer',
+  ];
+  const keep = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
+  /** B-446: a question as Claude wrote it, mended where its shape drifted without changing what it says, holding
+   *  only the fields a stored item may (an extra key would refuse the set's write). */
   function normalizeItem(raw) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw;
     const q = { ...raw };
     if (!q.stem)
       for (const k of ['question', 'q', 'prompt']) if (typeof q[k] === 'string' && q[k].trim()) q.stem = q[k];
     if (typeof q.type === 'string' && TYPE_ALIASES[slug(q.type)]) q.type = TYPE_ALIASES[slug(q.type)];
+    // options as {text} read as their words; a number option stays a number, so validateItem still refuses it
     if (Array.isArray(q.options))
-      q.options = q.options.map(o =>
-        o && typeof o === 'object' ? (o.text ?? o.label ?? o.option ?? o) : typeof o === 'number' ? String(o) : o
-      );
+      q.options = q.options.map(o => (o && typeof o === 'object' ? (o.text ?? o.label ?? o.option ?? o) : o));
     const opts = Array.isArray(q.options) ? q.options : [];
     if (q.correct != null && q.type !== 'numeric' && q.type !== 'open' && q.type !== 'matrix') {
       const c = Array.isArray(q.correct) ? q.correct : [q.correct];
@@ -352,12 +380,12 @@ export function makeItemKinds(core) {
     if (q.type === 'matrix' && q.matrix && typeof q.matrix === 'object' && Array.isArray(q.matrix.rows)) {
       const cols = Array.isArray(q.matrix.columns) ? q.matrix.columns : [];
       q.matrix = {
-        ...q.matrix,
+        ...keep(q.matrix, ['columns']),
         rows: q.matrix.rows.map(r => {
           if (!r || typeof r !== 'object') return r;
           const c = Array.isArray(r.correct) && r.correct.length === 1 ? r.correct[0] : r.correct;
           const i = answerIndex(c, cols);
-          return i == null ? r : { ...r, correct: i };
+          return keep(i == null ? r : { ...r, correct: i }, ['text', 'correct', 'rationale']);
         }),
       };
     }
@@ -371,7 +399,7 @@ export function makeItemKinds(core) {
       if (steps.includes(s)) q.cjStep = s;
       else if (steps.length) delete q.cjStep; // a step it could not name is no step, not a refused question
     }
-    return q;
+    return keep(q, ITEM_KEYS);
   }
   /** B-446: the questions in a practice reply: {items}, a bare array, {questions} or {set: {items}}. */
   function replyItems(res) {
@@ -420,7 +448,7 @@ export function makeItemKinds(core) {
 
   return {
     crossCourse,
-    practiceReply: { normalizeItem, replyItems, salvageItems }, // B-446
+    practiceReply: { normalizeItem, replyItems, salvageItems, ITEM_KEYS }, // B-446
     displayOrder,
     gradeOpenLocal,
     gradePrompt,
