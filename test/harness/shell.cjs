@@ -77,8 +77,26 @@ async function open(browser, { viewport, pre = '', overrides = {}, db = seed, sc
   });
   await page.addInitScript(pre + 'window.__db=' + JSON.stringify(db) + ';' + stub);
   await page.goto(ORIGIN + '/');
+  await settled(page);
   return { page, errors };
 }
+// B-389: every check reads a page whose boot has finished: the record answered and the first render said Live (or a
+// System problem), or the shell stopped with its refusal. The fixed sleeps after open() were shorter than a boot on a
+// loaded machine (the whole check runs its harnesses side by side), so a check read "Connecting to your record…"
+// and the static nav, and failed for the clock, not the page. Never a pass on timeout: a boot that never settles
+// leaves the status at its first words, and the checks that read it fail as before.
+const settled = page =>
+  page
+    .waitForFunction(
+      () => {
+        const s = document.getElementById('status');
+        return !!s && !/^Connecting to your record/.test(s.textContent);
+      },
+      null,
+      { timeout: 30000 }
+    )
+    .then(() => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))))
+    .catch(() => {});
 const statusText = page => page.evaluate(() => (document.getElementById('status') || {}).textContent || '');
 // B-357: a boot refusal is no refusal unless he can read it (the header's status is hidden while all is well)
 const statusShown = page =>
@@ -652,6 +670,7 @@ const statusShown = page =>
       );
       await page.click('#motion-seg [data-p="reduce"]');
       await page.reload();
+      await settled(page);
       await page.waitForTimeout(700);
       await page.$eval('#tab-system', b => b.click());
       await page.waitForTimeout(200);
