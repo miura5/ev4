@@ -2680,6 +2680,27 @@ const openNoteId = page =>
       chipOff && chip.text === 'Ask E.V.' && chip.x >= 0 && chip.x < chip.w && chip.y >= 0 && chip.y < chip.h,
       JSON.stringify(chip)
     );
+    // review: the chip never stays over another view (the selection survives a tab click)
+    await page.click('#tab-today');
+    await until(page, () => !document.getElementById('p-today').hidden, null, 2000);
+    await page.waitForTimeout(200);
+    const away = await page.evaluate(() => ({
+      chip: document.getElementById('note-ask').hidden,
+      sel: String(getSelection()).length,
+    }));
+    ok(`${tag} on Today the Ask E.V. chip is gone`, away.chip, JSON.stringify(away));
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('notes-editor').hidden, null, 2000);
+    await page.evaluate(() => {
+      const b = document.getElementById('note-body');
+      const blk = [...b.children].find(x => x.textContent.trim().length > 12);
+      b.focus();
+      const r = document.createRange();
+      r.selectNodeContents(blk);
+      getSelection().removeAllRanges();
+      getSelection().addRange(r);
+    });
+    await until(page, () => !document.getElementById('note-ask').hidden, null, 2000);
     await page.click('#note-ask');
     await until(page, () => !document.getElementById('evchat').hidden, null, 2000);
     const box = await page.evaluate(() => document.getElementById('evc-input').value);

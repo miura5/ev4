@@ -17,6 +17,20 @@ test('B-442: noteLineChanges names the lines removed and added, and where; nothi
   assert.equal(EV.noteLineChanges('a\nb\nc', 'a\nb\nc\nd'), '@ after: c\n+ d');
   assert.equal(EV.noteLineChanges('a\nb\nc', 'a\nB\nc'), '@ after: a\n+ B\n- b');
   assert.equal(EV.noteLineChanges('a\nb\nc', 'b\nc'), '@ at the start\n- a');
+  // a changed stretch past 250,000 line pairs (600 x 600 here) is read as all of it removed and added, in place
+  const olds = Array.from({ length: 600 }, (_, i) => 'old ' + i),
+    news = Array.from({ length: 600 }, (_, i) => 'new ' + i);
+  const wide = EV.noteLineChanges(['top', ...olds, 'end'].join('\n'), ['top', ...news, 'end'].join('\n')).split('\n');
+  assert.equal(wide[0], '@ after: top');
+  assert.equal(wide.length, 1 + 1200);
+  assert.deepEqual(
+    wide.slice(1, 601),
+    olds.map(x => '- ' + x)
+  );
+  assert.deepEqual(
+    wide.slice(601),
+    news.map(x => '+ ' + x)
+  );
   const two = EV.noteLineChanges('a\nb\nc\nd\ne', 'a\nx\nc\nd\ne\nf');
   assert.match(two, /^@ after: a\n\+ x\n- b\n@ after: e\n\+ f$/);
 });

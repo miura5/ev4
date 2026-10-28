@@ -843,6 +843,8 @@
       const on =
         NOTE.view === 'editor' &&
         !nEd.hidden &&
+        ui.tab === 'notes' &&
+        !notesPanel.hidden &&
         s &&
         s.rangeCount &&
         !s.isCollapsed &&

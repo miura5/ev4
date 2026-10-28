@@ -29,6 +29,8 @@
           : b.setAttribute('aria-current', b.dataset.tab === t ? 'page' : 'false')
       );
       document.querySelectorAll('section.panel').forEach(s => (s.hidden = s.id !== 'p-' + t));
+      const ask = t !== 'notes' && document.getElementById('note-ask'); // B-442: Ask E.V. stays with its note
+      if (ask) ask.hidden = true;
       // B-390: leaving the view an address opened (#system) clears it, so the same address opens it again (window's
       // history: the page has a history() of its own)
       if (location.hash && location.hash.slice(1) !== t)
