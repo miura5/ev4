@@ -8203,9 +8203,9 @@
   "id": "B-445",
   "kind": "request",
   "title": "Request (reported Oct 27): Connect weak spots and need-to-know points with typed links (for example causes, sign of, treats, contraindicates, comes before) proposed by E.V. and accepted by him, and use them to generate NCLEX-style clinical judgment and prioritization practice sets with plausible distractors, and to surface links between old and current material.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A planning pass first (after B-444 is underway): a short fixed set of link types, E.V.-proposed and accepted per link, where links live, how a clinical judgment set uses them (prioritization, distractors, cross-unit cues), token cost and tasks with definitions of done; brought to Matt before any build.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8214,6 +8214,10 @@
   "reportedAt": "2026-10-28T01:40:46.691Z",
   "board": {
    "row": "v4 B-445: Connect weak spots and need-to-know points with typed links (for…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T01:40:47.645Z"
   }
  }
 ]
