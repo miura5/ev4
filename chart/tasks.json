@@ -8543,9 +8543,9 @@
   "id": "B-461",
   "kind": "bug",
   "title": "Bug (reported Oct 28): Ask for changes on a plan does not reliably reach the plan edit: the chat may ask which task, or edit Today's list instead, before it changes the draft",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "With a plan draft open, Ask for changes reaches the plan edit path every time: it never asks which task and never edits Today's list instead; a test in npm test asserts the routing from the plan screen; proved by one real edit on staging.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8555,6 +8555,10 @@
   "reportedAt": "2026-10-28T19:54:04.821Z",
   "board": {
    "row": "v4 B-461: Ask for changes on a plan does not reliably reach the plan edit: the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-28T21:10:48.546Z"
   }
  },
  {
