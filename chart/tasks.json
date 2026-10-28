@@ -8441,7 +8441,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "builder: 7614d80 restructures studyPlanRoute per D-360 (new only when unmistakable, change for edits and single-task remakes, ask otherwise); outcome table of every reviewed phrase in the test; npm test 877 pass",
+  "notes": "builder: 955deec per D-361: cram read by its object, for+day asks, his answer to the question routes the original request (studyPlanRouteTurn, T.planAsk), words folded; npm test green",
   "commit": null,
   "source": "final review of B-449",
   "words": "A request to change one plan task with a remake word, such as 'scrap the Friday drill' or 'redo the practice quiz on Thursday', is routed to a whole new Sonnet plan that replaces the draft, instead of a Haiku edit.",
