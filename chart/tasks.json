@@ -9565,7 +9565,7 @@
   "depends": [
    "B-509"
   ],
-  "notes": "",
+  "notes": "Lane V3 pushed b2cf7b2: Notes on DS (Button, Segmented, Badge), rows keep markup with data-key/data-part; 44 rules in page/ds/views/notes.css; pixdiff 0.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
