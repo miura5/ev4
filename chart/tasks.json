@@ -9648,5 +9648,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:58:58.668Z"
   }
+ },
+ {
+  "id": "B-518",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): The week grid shows one card for a day that holds ten plan tasks, hiding how busy days are.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "The week grid shows one card for a day that holds ten plan tasks, hiding how busy days are.",
+  "reportedAt": "2026-10-29T15:59:03.958Z",
+  "board": {
+   "row": "v4 B-518: The week grid shows one card for a day that holds ten plan tasks,…"
+  }
  }
 ]
