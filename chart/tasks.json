@@ -9367,9 +9367,9 @@
   "id": "B-499",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Proposed weak spots can't be accepted: Accept stays disabled until an objective is picked, and 'Pick an objective' does nothing, so new misses never become weak spots.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A proposed weak spot can be accepted without picking an objective (filed under its course, objective optional and pickable later), the objective picker works when used, and every miss is proposed in the quiz's own course; tests; real run on staging.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9378,6 +9378,10 @@
   "reportedAt": "2026-10-29T15:31:44.330Z",
   "board": {
    "row": "v4 B-499: Proposed weak spots can't be accepted: Accept stays disabled until an…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:31:52.712Z"
   }
  },
  {
