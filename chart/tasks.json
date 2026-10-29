@@ -9732,5 +9732,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:37.286Z"
   }
+ },
+ {
+  "id": "B-522",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Counts disagree across views (weak spots 20/24, readiness), and Progress doesn't count today's ticked work or notes.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Counts disagree across views (weak spots 20/24, readiness), and Progress doesn't count today's ticked work or notes.",
+  "reportedAt": "2026-10-29T15:59:42.089Z",
+  "board": {
+   "row": "v4 B-522: Counts disagree across views (weak spots 20/24, readiness), and…"
+  }
  }
 ]
