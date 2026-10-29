@@ -9537,7 +9537,7 @@
   "depends": [
    "B-509"
   ],
-  "notes": "",
+  "notes": "Lane V1 pushed 15e28a3: Today's rows on DS.line with data-key and data-part=title, every badge via DS.badge; pixdiff 0. Moving Today's legacy rules and the Done group's Fold are folded into B-515 cleanup (D-396: ship fast; cleanup removes legacy anyway).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
