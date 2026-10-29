@@ -975,7 +975,7 @@ async function flashcardsChecks(page, scheme) {
   ok(`[${scheme}] Today shows Cards · n due (B-487)`, /^Cards · \d+ due$/.test(row), row);
   await page.screenshot({ path: `${shots}/fc-today-${scheme}.png` });
   if (row) {
-    await page.locator('#today-list .ti-cards .nm').click();
+    await page.locator('#today-list .ti-cards .fc-nm').click();
     await page.waitForTimeout(200);
     const s = await page.evaluate(() => {
       const d = document.getElementById('fc-dlg');

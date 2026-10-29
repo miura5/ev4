@@ -1043,7 +1043,7 @@
       const li = el('li', 'li ti-cards'); // not a day item: no tick, not counted with them
       const tk = el('span', 'tk');
       tk.append(svgIcon('M4 7h12v12H4zM8 4h12v12'));
-      const nm = el('button', 'nm ti-nm');
+      const nm = el('button', 'fc-nm'); // not a task's name: it opens the cards, never a task's view
       nm.type = 'button';
       nm.append(el('span', 'ti-t', 'Cards · ' + n + ' due'));
       nm.addEventListener('click', () => startDueCards());

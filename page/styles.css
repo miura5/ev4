@@ -1601,6 +1601,9 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .ov-sets .sx{flex:none;width:64px;display:flex;justify-content:flex-end}
 .pl-t .pl-set{flex:none}
 /* B-487 (D-368): Flashcards in Study (the Practice sets row look) and the deck's sheet: its cards and a session */
+#today-list .li .fc-nm{all:unset;flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.3}
+#today-list .li .fc-nm:hover .ti-t{text-decoration:underline;text-underline-offset:3px}
+#today-list .li .fc-nm:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 .ov-decks .fc-hr{display:flex;align-items:center;gap:8px}
 .ov-decks .fc-none{margin:6px 6px 4px;font-size:calc(13px * var(--ts))}
 .fc-dlg.new-dlg{width:min(600px,calc(100vw - 24px));margin:64px auto auto;max-height:calc(100dvh - 88px);overflow:auto}
