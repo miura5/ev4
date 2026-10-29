@@ -6,6 +6,17 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 29, ~5 am Central): overnight batch on staging, card sent, waiting on Matt
+
+- **Live: v4.5.16 at f39d054.** **Staging GREEN at 91847f6** with: B-472, B-461/B-477, B-448, B-464, B-481/B-480
+  (three fix rounds: null weak spot, answer in stem, over-strict rationale check), B-483 (two fix rounds: graded plan
+  ref, legacy tick scoped to its plan), B-478, B-479 (kind accepted; end-to-end still fails, B-485), B-462, B-463,
+  B-474, B-482, B-467 (deploy errors as annotations). One whole-release code review done (its two findings fixed).
+- Open follow-ups: B-484 (dosage sets come back short), B-485 (flashcards still routed to a general job), B-486
+  (day-item plan refs by exam id). Cloudflare asset uploads failed for ~1 h (code 10013); a re-run went through.
+- **Waiting on Matt:** his test on staging and "ship 91847f6". Then ship live (tags v4.5.17; re-ship staging), the
+  live calls, pwa-live dispatch and his Approve in GitHub. Heartbeats stop once the card is out.
+
 ## Update (Oct 28, ~11 pm Central): overnight run (Matt asleep; he asked the team to keep working)
 
 - **Live: v4.5.16 at f39d054.** Staging GREEN at c83d9c4 with B-472 (page no longer published), B-461 + B-477
