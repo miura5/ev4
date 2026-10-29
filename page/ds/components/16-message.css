@@ -1,1 +1,25 @@
-/* Proprietary 16 Message: the message component's rules, components layer (D-373, D-388); lane C2 (B-508) fills this file */
+/* Proprietary 16 Message (B-508): .message, a line of the conversation at today's captions look */
+:where(.message){
+  --message-fs:calc(15px * var(--ts)); --message-now:calc(20px * var(--ts));
+  display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-2);min-width:0;max-width:100%}
+@media (min-width:1024px){:where(.message){--message-fs:var(--fs-3)}}
+:where(.message-b){min-width:0;max-width:100%;overflow-wrap:anywhere;text-wrap:pretty;font-size:var(--message-fs);line-height:1.45;
+  color:var(--quiet)}
+:where(.message-b) p{margin:0}
+:where(.message-b) p + p{margin-top:var(--sp-2)}
+:where(.message-b) b{font-weight:var(--fw-semibold);color:var(--text)}
+.message[data-current=true] .message-b{font-size:var(--message-now);color:var(--text)}
+/* his: on the right, under a small You */
+.message[data-kind=his]{align-items:flex-end;align-self:flex-end;text-align:right;max-width:80%}
+.message[data-kind=his] .message-b{font-size:var(--fs-3)}
+:where(.message-who){display:block;font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--faint)}
+.message[data-state=pending] .message-b{color:var(--faint)}
+/* streaming: her words arriving, her mark where the next one lands (still: nothing he reads moves, D-271) */
+.message[data-state=streaming] .message-b > :last-child::after{content:"";display:inline-block;width:6px;height:6px;
+  margin-left:var(--sp-1);border-radius:var(--r-round);background:var(--her);vertical-align:middle}
+/* failed: the line stays; a plain reason under it with its red dot */
+:where(.message-s){margin:0;font-size:calc(12.5px * var(--ts));color:var(--text)}
+:where(.message-s)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 var(--sp-1_5) 1px 0;border-radius:var(--r-round);
+  background:var(--sem-red)}
+:where(.message-a){display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}
+.message[data-kind=his] .message-a{justify-content:flex-end}
