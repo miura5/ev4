@@ -261,6 +261,31 @@ test('B-449: one fix ask when the model’s own score is under 85 or a criterion
   assert.equal(two.writes.find(w => w.collection === 'plans').data.score.total, 60);
 });
 
+test('B-491: a plan answer whose plan arrives as its JSON text is read as the object; an unparseable one still fails', async () => {
+  const stringified = body => {
+    const rep = jobReply(body);
+    const use = rep.content.find(b => b.type === 'tool_use');
+    if (use && use.input.plan) use.input.plan = JSON.stringify(use.input.plan);
+    return rep;
+  };
+  const ok = await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply: stringified });
+  assert.equal(ok.r.status, 'done');
+  assert.equal(ok.asks.length, 1, 'read as it is, with no fix ask');
+  const plan = ok.writes.find(w => w.collection === 'plans');
+  assert.equal(typeof plan.data.days, 'object');
+  assert.ok(validate('plans', plan.data, { id: plan.id }).ok);
+  const broken = body => {
+    const rep = jobReply(body);
+    const use = rep.content.find(b => b.type === 'tool_use');
+    if (use && use.input.plan) use.input.plan = JSON.stringify(use.input.plan).slice(0, -1);
+    return rep;
+  };
+  const bad = await run(record(), { title: 'plan', brief: 'a plan', course: 'NUR 112' }, { reply: broken });
+  assert.equal(bad.r.status, 'refused');
+  assert.match(bad.r.said, /\/plan: expected object, got string/);
+  assert.ok(!bad.writes.some(w => w.collection === 'plans'), 'nothing it made is saved');
+});
+
 test('B-449: an answer with one question writes only E.V.’s question, no plan', async () => {
   const db = record();
   const { r, writes } = await run(db, { title: PLANTS.ask + ' plan', brief: 'a plan', course: 'NUR 112' });

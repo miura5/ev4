@@ -14,7 +14,7 @@
 // Pure of any host: the browser (bridge.js) and node (tools/pwa-jobs.mjs, the tests) pass in the record, the spec,
 // the schemas, how to ask Claude and how to write.
 import EV from '../core/evcore.mjs';
-import { validateAgainst, describeErrors, makeValidator } from '../core/validate.mjs';
+import { validateAgainst, describeErrors, makeValidator, parseStringFields } from '../core/validate.mjs';
 import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS, askedCount, practiceItems } from '../core/steps-worker.mjs';
 import { models } from '../core/steps-shared.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from '../core/derive.mjs';
@@ -236,11 +236,12 @@ const unfilled = a => {
   }
   return a;
 };
-/** The answer in a Messages API reply: the answer tool's input, else JSON in the text; null when there is none. */
-export function answerOf(reply) {
+/** The answer in a Messages API reply: the answer tool's input, else JSON in the text; null when there is none. Given the
+ * answer's shape, a field it expects as an object or array that came as its JSON text is read as that value (B-491). */
+export function answerOf(reply, shape) {
   const content = (reply && reply.content) || [];
   const use = content.find(b => b && b.type === 'tool_use' && b.name === 'answer');
-  if (use) return isObj(use.input) ? unfilled(use.input) : null;
+  if (use) return isObj(use.input) ? unfilled(parseStringFields(shape, use.input)) : null;
   const text = content
     .filter(b => b && b.type === 'text')
     .map(b => b.text)
@@ -249,7 +250,7 @@ export function answerOf(reply) {
     b = text.lastIndexOf('}');
   if (a < 0 || b <= a) return null;
   try {
-    return unfilled(JSON.parse(text.slice(a, b + 1)));
+    return unfilled(parseStringFields(shape, JSON.parse(text.slice(a, b + 1))));
   } catch {
     return null;
   }
@@ -458,9 +459,9 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
       reply = await ask(body);
       tally(u, reply);
     }
-    return { reply, answer: cutShort(reply) ? null : answerOf(reply) };
+    return { reply, answer: cutShort(reply) ? null : answerOf(reply, prepared.output) };
   }
-  const answer = cutShort(reply) ? null : answerOf(reply);
+  const answer = cutShort(reply) ? null : answerOf(reply, prepared.output);
   // B-449: the one fix ask: for a plan that misses its shape or its own score's bar, and for a reply with no answer in
   // it at all (a reply cut short is not asked again); by a tool_result when it answered by the tool, else (an answer in
   // the text, or none) by a plain line
@@ -513,7 +514,7 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
     return { reply, answer };
   }
   tally(u, again);
-  const better = cutShort(again) ? null : answerOf(again);
+  const better = cutShort(again) ? null : answerOf(again, prepared.output);
   if (better && better.plan && validateAgainst(prepared.output, better).ok) return { reply: again, answer: better };
   return { reply, answer };
 }
@@ -550,7 +551,7 @@ export async function topUp({ spec, prepared, ask, db, answer }) {
   } catch {
     return answer;
   }
-  const more = cutShort(again) ? null : answerOf(again);
+  const more = cutShort(again) ? null : answerOf(again, prepared.output);
   const extra = more && Array.isArray(more.items) ? more.items.slice(0, 40 - passed.length) : []; // the fold keeps the count asked
   return { ...answer, items: [...passed, ...extra] };
 }
@@ -617,7 +618,7 @@ export async function runJob({
     else if (plan) ({ reply, answer } = await planAsks({ spec, prepared, ask, usage, db, timeLeft }));
     else {
       reply = await ask(request(spec, prepared));
-      answer = cutShort(reply) ? null : answerOf(reply);
+      answer = cutShort(reply) ? null : answerOf(reply, prepared.output);
       if (prepared.kind === 'practice-set') {
         prepared.ctx.itemOk = itemCheck(prepared.ctx, makeValidator(schemas));
         answer = await topUp({ spec, prepared, ask, db, answer });

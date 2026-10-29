@@ -183,6 +183,35 @@ export function validateAgainst(schema, value) {
 }
 
 /**
+ * B-491: a model's tool answer sometimes carries a large object or array field as its JSON text ("plan": "{...}"). Before
+ * the answer is checked, each top-level field the schema expects as an object or array (and never as a string) that
+ * arrives as a string parsing to that type is read as the parsed value. A string that doesn't parse is left as it is,
+ * so the check refuses it as before.
+ */
+export function parseStringFields(schema, value) {
+  if (!schema || !value || typeof value !== 'object' || Array.isArray(value)) return value;
+  const props = schema.properties || {};
+  let out = value;
+  for (const [k, x] of Object.entries(value)) {
+    if (typeof x !== 'string' || !(k in props)) continue;
+    let s = props[k];
+    if (s && s.$ref && schema.$defs) s = schema.$defs[s.$ref.slice(8)];
+    const types = [].concat((s && s.type) || []);
+    if (types.includes('string') || !types.some(t => t === 'object' || t === 'array')) continue;
+    let parsed;
+    try {
+      parsed = JSON.parse(x);
+    } catch {
+      continue;
+    }
+    if (!types.includes(typeOf(parsed))) continue;
+    if (out === value) out = { ...value };
+    out[k] = parsed;
+  }
+  return out;
+}
+
+/**
  * Builds the registry's validator from {collection: schema}. validate(collection, doc, {id}) picks the document's own
  * shape when the schema lists one for that id (x-ev.documents: {id: "#/$defs/<name>"}), so talk/memory and system/spec
  * are checked as themselves. An unknown collection is an error, never a pass.
