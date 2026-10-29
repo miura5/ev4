@@ -8971,5 +8971,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:41:09.976Z"
   }
+ },
+ {
+  "id": "B-481",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live, a generated dosage practice question had the wrong answer key: a 20 kg child, 15 mg/kg/day divided every 12 hours, keyed 75 mg while the correct single dose is 150 mg (300 mg/day over 2 doses); the rationale itself worked out 150 mg and said the key was wrong, yet the item was shown and Matt's correct answer was marked wrong and proposed as a weak spot. A question whose rationale contradicts its key, or a calculation item whose key the math doesn't support, must never reach him.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "On live, a generated dosage practice question had the wrong answer key: a 20 kg child, 15 mg/kg/day divided every 12 hours, keyed 75 mg while the correct single dose is 150 mg (300 mg/day over 2 doses); the rationale itself worked out 150 mg and said the key was wrong, yet the item was shown and Matt's correct answer was marked wrong and proposed as a weak spot. A question whose rationale contradicts its key, or a calculation item whose key the math doesn't support, must never reach him.",
+  "reportedAt": "2026-10-29T03:42:47.480Z",
+  "board": {
+   "row": "v4 B-481: On live, a generated dosage practice question had the wrong answer…"
+  }
  }
 ]
