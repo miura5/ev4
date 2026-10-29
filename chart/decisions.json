@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-385",
+  "date": "Oct 29",
+  "title": "One-time exception to D-351 for the Proprietary build (Matt, Oct 29): up to four builders at once, each owning separate files — a flashcards track, a bugs track and a Proprietary track during setup, then lanes cut by a lane planner for the components and the invisible view moves — plus planning, test and review agents as needed; releases still go to staging one at a time and live only on Matt's word",
+  "why": "Setup, design and bug work are independent enough to run side by side, so the skeleton is ready when bugs and flashcards land and the invisible phase runs fast and consistently; file ownership and serialized staging keep the parallel work from colliding",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-351"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-384",
   "date": "Oct 29",
   "title": "Proprietary is built now, before the UI polish and before the Phase 3 review: token freeze and audit, component list settled from the UX map and the code, foundations, the Gallery, components, every view moved invisibly; then the UI polish lands through tokens and components; then the review and consolidation",
