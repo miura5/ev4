@@ -5970,5 +5970,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "91847f6",
+  "time": "2026-10-29T09:34:54.986Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "26ae113",
+  "tasks": [
+   "B-482",
+   "B-481",
+   "B-483"
+  ],
+  "summary": "Practice sets and quizzes E.V. makes are only reachable from their…; On live, a generated dosage practice question had the wrong answer…; On live, a study plan's tasks and Today's list are not one set of…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
