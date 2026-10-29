@@ -44,6 +44,7 @@
       const right = el('span', 'fc-hr');
       right.append(
         el('span', 'mini', decks.length ? due + ' due today' : ''),
+        btn('Import', () => openImport(course), { cls: 'btn ghost sm fc-import' }),
         btn('New deck', () => openDeckNew(course), { cls: 'btn ghost sm fc-newdeck' })
       );
       hd.append(el('span', 'lab', 'Flashcards'), right);
@@ -127,6 +128,162 @@
       FC.newCourse = course;
       fcShow();
       paintNewDeck();
+    }
+    // B-489: Import from Quizlet: his pasted export text, split by core (E.quizletParse) with a preview, made into a new
+    // deck or added to one of the course's decks (only new cards; a term the deck has is left out). Nothing is fetched
+    // from or sent to Quizlet, and no model reads it.
+    function openImport(course) {
+      FC.view = 'import';
+      FC.imp = { course, text: '', sep: 'auto', custom: '', dest: 'new', title: '' };
+      fcShow();
+      paintImport();
+    }
+    function importParsed() {
+      const m = FC.imp;
+      const sep = m.sep === 'auto' ? null : m.sep === 'custom' ? m.custom || null : m.sep;
+      const p = E.quizletParse(m.text, sep);
+      const deck = m.dest !== 'new' && deckById(m.dest);
+      if (!deck) return { ...p, add: Math.min(p.items.length, E.IMPORT_MAX), dupes: 0, deck: null };
+      const r = E.deckCardsAdd(deck, p.items, now());
+      return { ...p, add: r.added, dupes: r.dupes, deck };
+    }
+    function paintImport() {
+      const d = fcDialog();
+      const m = FC.imp;
+      const f = el('form', 'fc-body fc-imp');
+      f.addEventListener('submit', e => e.preventDefault());
+      f.append(
+        fcHead('Import from Quizlet', m.course),
+        el(
+          'p',
+          'meta fc-ihint',
+          'In Quizlet, open the set, choose Export and copy the text. Paste it here: one card per line. Nothing is sent to Quizlet.'
+        )
+      );
+      const ta = el('textarea', 'fc-in fc-paste');
+      ta.rows = 6;
+      ta.placeholder = 'Term<tab>Definition, one card per line';
+      ta.setAttribute('aria-label', 'Quizlet export text');
+      ta.value = m.text;
+      const opts = el('div', 'fc-iopts');
+      const sel = (label, cls, list, val, on) => {
+        const w = el('label', 'fc-iopt');
+        const x = el('select', cls);
+        for (const [v, t] of list) {
+          const o = el('option', null, t);
+          o.value = v;
+          x.append(o);
+        }
+        x.value = val;
+        x.addEventListener('change', () => on(x.value));
+        w.append(el('span', 'lab', label), x);
+        return w;
+      };
+      opts.append(
+        sel(
+          'Between term and definition',
+          'fc-sep',
+          [
+            ['auto', 'Tab or comma'],
+            ['tab', 'Tab'],
+            ['comma', 'Comma'],
+            ['custom', 'Custom'],
+          ],
+          m.sep,
+          v => ((m.sep = v), paintImport())
+        ),
+        sel(
+          'Into',
+          'fc-dest',
+          [['new', 'A new deck'], ...decksOf(m.course).map(x => [x.id, x.title || x.id])],
+          m.dest,
+          v => ((m.dest = v), paintImport())
+        )
+      );
+      if (m.sep === 'custom') {
+        const c = el('input', 'fc-in fc-custom');
+        c.type = 'text';
+        c.placeholder = 'e.g. -';
+        c.setAttribute('aria-label', 'Custom separator');
+        c.value = m.custom;
+        c.addEventListener('input', () => ((m.custom = c.value), preview()));
+        opts.append(c);
+      }
+      let ti = null;
+      if (m.dest === 'new') {
+        ti = el('input', 'fc-in fc-ititle');
+        ti.type = 'text';
+        ti.placeholder = 'Deck title';
+        ti.setAttribute('aria-label', 'Deck title');
+        ti.value = m.title;
+        ti.addEventListener('input', () => (m.title = ti.value));
+      }
+      const pv = el('div', 'fc-prev');
+      const go = btn('Import', ev => importSave(ev, ti), { primary: true });
+      go.classList.add('fc-igo');
+      function preview() {
+        const r = importParsed();
+        const lines = [];
+        if (m.text.trim()) {
+          let t = plural(r.add, 'card') + ' to import';
+          if (r.skipped) t += ' · ' + plural(r.skipped, 'line') + ' without a term and definition skipped';
+          if (r.dupes) t += ' · ' + r.dupes + ' already in the deck, left out';
+          if (r.items.length - r.dupes > E.IMPORT_MAX) t += ' · the first ' + E.IMPORT_MAX + ' only';
+          lines.push(el('span', 'meta fc-pn', t));
+        }
+        const list = el('div', 'fc-list');
+        for (const it of r.items.slice(0, 5)) {
+          const row = el('div', 'fc-row');
+          const tx = el('div', 'fc-tx');
+          tx.append(el('span', 'fc-term', it.term), el('span', 'fc-def', it.definition));
+          row.append(tx);
+          list.append(row);
+        }
+        if (r.items.length > 5) list.append(el('p', 'meta fc-more', 'and ' + (r.items.length - 5) + ' more'));
+        pv.replaceChildren(...lines, ...(r.items.length ? [list] : []));
+        go.textContent = r.add ? 'Import ' + plural(r.add, 'card') : 'Import';
+        go.disabled = !r.add;
+      }
+      ta.addEventListener('input', () => ((m.text = ta.value), preview()));
+      const ft = el('div', 'new-foot');
+      ft.append(
+        btn('Cancel', () => d.close(), { cls: 'btn neutral' }),
+        go
+      );
+      f.append(ta, opts);
+      if (ti) f.append(ti);
+      f.append(pv, ft);
+      preview();
+      const had = document.activeElement && document.activeElement.className;
+      d.replaceChildren(f);
+      const back = had && f.querySelector('select.' + String(had).split(' ')[0]);
+      (back || ta).focus({ preventScroll: true });
+    }
+    function importSave(ev, ti) {
+      const m = FC.imp;
+      const r = importParsed();
+      if (!r.add) return;
+      if (!r.deck && !m.title.trim()) return ti && ti.focus();
+      guard(ev.currentTarget, async () => {
+        let id;
+        if (r.deck) {
+          await write(E.deckCardsAdd(r.deck, r.items, now()).write);
+          id = r.deck.id;
+        } else {
+          const w = E.deckNew({
+            title: m.title,
+            course: m.course,
+            items: r.items,
+            source: 'Quizlet paste',
+            now: now(),
+            max: E.IMPORT_MAX,
+          });
+          await write(w);
+          id = w.id;
+        }
+        toast(plural(r.add, 'card') + ' imported');
+        openDeck(id);
+      });
     }
     function fcHead(title, sub) {
       const h = el('div', 'fc-head');

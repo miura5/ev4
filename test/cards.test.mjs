@@ -361,3 +361,60 @@ test('B-488: Learn’s I was right puts the session back as before the miss and 
   assert.deepEqual(EV.learnOverride(st), { first: false, learned: true });
   assert.deepEqual([st.missed['d/a'], st.learned, st.queue], [undefined, ['d/a'], ['d/b']]);
 });
+
+test('B-489: a Quizlet paste: tab or comma (guessed), a custom separator, ";" rows, bad lines skipped', () => {
+  const tab = EV.quizletParse('mcg\tmicrogram, 1/1000 of a mg\r\ngtt\tdrops\n\nno separator here\nPRN\t\n');
+  assert.equal(tab.sep, 'tab');
+  assert.deepEqual(tab.items, [
+    { term: 'mcg', definition: 'microgram, 1/1000 of a mg' },
+    { term: 'gtt', definition: 'drops' },
+  ]);
+  assert.equal(tab.skipped, 2);
+  const comma = EV.quizletParse('BID, twice a day\nTID, three times a day, with meals');
+  assert.equal(comma.sep, 'comma');
+  assert.deepEqual(comma.items[1], { term: 'TID', definition: 'three times a day, with meals' }, 'split at the first');
+  const custom = EV.quizletParse('qid - four times a day\nhs - at bedtime', ' - ');
+  assert.deepEqual(
+    custom.items.map(i => i.term),
+    ['qid', 'hs']
+  );
+  const semi = EV.quizletParse('a\tone;b\ttwo;c\tthree');
+  assert.equal(semi.items.length, 3);
+  assert.deepEqual(EV.quizletParse('').items, []);
+});
+
+test('B-489: an import makes a new deck (past 40 cards) or adds only new terms to one; no card there changes', () => {
+  const lines = Array.from({ length: 60 }, (_, i) => `term ${i + 1}\tdefinition ${i + 1}`).join('\n');
+  const p = EV.quizletParse(lines);
+  const w = EV.deckNew({
+    title: 'Imported',
+    course: 'NUR 112',
+    items: p.items,
+    source: 'Quizlet paste',
+    now: AT,
+    max: EV.IMPORT_MAX,
+  });
+  assert.equal(Object.keys(w.data.cards).length, 60);
+  assert.ok(validate('decks', w.data, { id: w.id }).ok);
+  const deck = { id: w.id, ...w.data };
+  deck.cards['c-001'] = { ...deck.cards['c-001'], state: 'review', ivl: 3, due: '2026-11-01' };
+  const add = EV.deckCardsAdd(
+    deck,
+    [
+      { term: 'TERM 1', definition: 'again' },
+      { term: 'New one', definition: 'fresh' },
+      { term: 'new one', definition: 'twice in the paste' },
+    ],
+    '2026-10-29T16:00:00Z'
+  );
+  assert.deepEqual([add.added, add.dupes], [1, 2]);
+  assert.equal(add.write.op, 'update');
+  const ids = Object.keys(add.write.data.cards);
+  assert.equal(ids.length, 1);
+  assert.match(ids[0], /^c-\d{17}$/);
+  assert.ok(!(ids[0] in deck.cards), 'only new entries are sent');
+  const merged = { ...deck, cards: { ...deck.cards, ...add.write.data.cards } };
+  const { id: _id, ...doc } = merged;
+  assert.ok(validate('decks', doc, { id: w.id }).ok);
+  assert.equal(merged.cards['c-001'].ivl, 3, 'the cards already there keep their schedules');
+});

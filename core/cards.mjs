@@ -169,7 +169,7 @@ export function makeCards(core) {
     /(?:\s*[;,|]\s*verify(?:\s*:\s*(?:true|yes))?|\s*[([]\s*verify(?:\s*:\s*(?:true|yes))?\s*[)\]]|\s+verify\s*:\s*(?:true|yes))[\s.;]*$/i;
   /** Cards from a list ({ term, definition, verify }): cleaned, empty ones left out, at most 40, keyed c-001 on. A
    * verify marker in the words is taken off them and kept as the flag alone (B-493). */
-  function cardsFrom(items, at) {
+  function cardsFrom(items, at, max = MAX_CARDS) {
     const out = {};
     let n = 0;
     for (const it of items || []) {
@@ -177,14 +177,14 @@ export function makeCards(core) {
         d0 = clean(it && it.definition, 1000);
       const term = t0.replace(VERIFY_TAIL, ''),
         def = d0.replace(VERIFY_TAIL, '');
-      if (!term || !def || n >= MAX_CARDS) continue;
+      if (!term || !def || n >= max) continue;
       const verify = !!(it.verify === true || it.verify === 'true' || term !== t0 || def !== d0);
       out['c-' + String(++n).padStart(3, '0')] = { term, definition: def, ...(verify ? { verify: true } : {}), at };
     }
     return out;
   }
   /** The set write of a new deck (the page's + New deck, or a flashcards job's fold). */
-  function deckNew({ title, course, items = [], writer = 'page', source, now, job, id }) {
+  function deckNew({ title, course, items = [], writer = 'page', source, now, job, id, max }) {
     const at = new Date(now || Date.now()).toISOString();
     return {
       op: 'set',
@@ -199,7 +199,7 @@ export function makeCards(core) {
         title: clean(title, 120) || 'Flashcards',
         createdAt: at,
         ...(job ? { job } : {}),
-        cards: cardsFrom(items, at),
+        cards: cardsFrom(items, at, max),
       },
     };
   }
@@ -362,6 +362,63 @@ export function makeCards(core) {
     return { learned, shaky, total: st.total, done: st.learned.length };
   }
 
+  // ---------------------------------------------------------------- B-489: a Quizlet paste
+  const IMPORT_MAX = 300; // a deck stays well under a document's 256 KiB with its schedules
+  /**
+   * B-489: Quizlet's export text (Export, then copy): one card per line (or per ";" when the text has no line breaks),
+   * term and definition split at the first tab, comma or the separator he names. sep: 'tab', 'comma', any other
+   * text, or null to guess (tab when the text has one, else comma). { items, skipped, sep }: lines with no term or no
+   * definition are skipped, never guessed at. Nothing is fetched from Quizlet.
+   */
+  function quizletParse(text, sep = null) {
+    const raw = String(text == null ? '' : text).replace(/\r\n?/g, '\n');
+    const s = sep || (raw.includes('\t') ? 'tab' : 'comma');
+    const cut = s === 'tab' ? '\t' : s === 'comma' ? ',' : String(s);
+    const lines = (!raw.trim().includes('\n') && raw.includes(';') && cut !== ';' ? raw.split(';') : raw.split('\n'))
+      .map(l => l.trim())
+      .filter(Boolean);
+    const items = [];
+    let skipped = 0;
+    for (const l of lines) {
+      const i = cut ? l.indexOf(cut) : -1;
+      const term = i < 0 ? '' : clean(l.slice(0, i), 300),
+        definition = i < 0 ? '' : clean(l.slice(i + cut.length), 1000);
+      if (term && definition) items.push({ term, definition });
+      else skipped++;
+    }
+    return { items, skipped, sep: s };
+  }
+  const termKey = t => clean(t, 300).toLowerCase();
+  /**
+   * B-489: cards added to a deck he has: one update with only the new entries (c-<UTC time><nnn>, new, due now), so no
+   * card already there changes; a term the deck already has (not retired) is left out. { write, added, dupes }.
+   */
+  function deckCardsAdd(deck, items, now, max = IMPORT_MAX) {
+    const at = new Date(now || Date.now()).toISOString();
+    const have = new Set(live(deck).map(([, c]) => termKey(c.term)));
+    const fresh = {};
+    let dupes = 0,
+      n = 0,
+      seq = 0;
+    for (const it of items || []) {
+      const t = clean(it && it.term, 300),
+        d = clean(it && it.definition, 1000);
+      if (!t || !d) continue;
+      if (have.has(termKey(t))) {
+        dupes++;
+        continue;
+      }
+      if (n >= max) break;
+      have.add(termKey(t));
+      n++;
+      let id;
+      do id = 'c-' + compact(at) + String(++seq).padStart(3, '0');
+      while ((deck.cards || {})[id]);
+      fresh[id] = { term: t, definition: d, at };
+    }
+    return { write: { op: 'update', collection: 'decks', id: deck.id, data: { cards: fresh } }, added: n, dupes };
+  }
+
   return {
     CARD_RATINGS: RATINGS,
     cardSched,
@@ -385,5 +442,8 @@ export function makeCards(core) {
     learnAnswer,
     learnOverride,
     learnSummary,
+    IMPORT_MAX,
+    quizletParse,
+    deckCardsAdd,
   };
 }

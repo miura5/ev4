@@ -1675,6 +1675,19 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .fc-sl li{display:flex;justify-content:space-between;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
 .fc-sl li:last-child{border-bottom:0}
 .fc-sl li .meta{flex:none;font-size:calc(12px * var(--ts))}
+/* B-489: Import from Quizlet: the paste, how it splits, where it goes, and a preview of the first cards */
+.fc-ihint{margin:0}
+.fc-paste{min-height:120px;font-family:var(--mono,ui-monospace,monospace);font-size:max(16px,calc(13px * var(--ts)))}
+.fc-iopts{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.fc-iopt{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}
+.fc-iopt .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.fc-iopt select{flex:none;height:36px;min-height:36px;padding:0 8px;border-radius:8px}
+.fc-custom{flex:none;width:8em}
+.fc-prev{display:flex;flex-direction:column;gap:6px}
+.fc-more{margin:4px 2px 0}
+@media (max-width:599px){
+  .fc-iopt select{height:44px;min-height:44px}
+}
 /* B-494: Today's Cards row keeps Start on a phone and on touch (it has no task panel to hold it) */
 @media (max-width:599px),(hover:none){
   #today-list .li.ti-cards .ti-start{display:inline-flex;visibility:visible}

@@ -826,7 +826,11 @@ async function flashcardsChecks(page, scheme) {
   if (!card.rows.length) return;
   const deckId = await page.evaluate(
     t => (Object.entries(window.__db.decks || {}).find(([, d]) => d.title === t) || [''])[0],
-    card.rows.find(r => / due$/.test(r.s)) ? card.rows.find(r => / due$/.test(r.s)).title : card.rows[0].title
+    card.rows.some(r => r.title === 'Dosage abbreviations') // the seeded deck, before any deck the checks import
+      ? 'Dosage abbreviations'
+      : card.rows.find(r => / due$/.test(r.s))
+        ? card.rows.find(r => / due$/.test(r.s)).title
+        : card.rows[0].title
   );
   const cardsOf = () => page.evaluate(id => JSON.parse(JSON.stringify(window.__db.decks[id].cards)), deckId);
   const before = await cardsOf();
@@ -1001,6 +1005,60 @@ async function flashcardsChecks(page, scheme) {
     );
     await page.evaluate(() => document.getElementById('fc-dlg').close());
   }
+  await importChecks(page, scheme);
+}
+// B-489: Import from Quizlet takes pasted export text, previews the first cards and makes a deck of them (no model call,
+// nothing sent to Quizlet); a line with no separator is skipped and said so.
+async function importChecks(page, scheme) {
+  await studyView(page, 'objectives');
+  await page.waitForTimeout(150);
+  await page.locator('#ov-decks .fc-import').click();
+  await page.waitForTimeout(150);
+  const paste = [
+    'Tachycardia\tHeart rate over 100',
+    'Bradycardia\tHeart rate under 60',
+    'a line with no tab',
+    'Apnea\tNo breathing',
+  ];
+  await page.fill('#fc-dlg .fc-paste', paste.join('\n'));
+  await page.fill('#fc-dlg .fc-ititle', 'Harness import ' + scheme);
+  await page.waitForTimeout(120);
+  const pv = await page.evaluate(() => ({
+    head: (document.querySelector('#fc-dlg .fc-ht h2') || {}).textContent,
+    note: (document.querySelector('#fc-dlg .fc-pn') || {}).textContent,
+    rows: [...document.querySelectorAll('#fc-dlg .fc-prev .fc-term')].map(x => x.textContent),
+    go: (document.querySelector('#fc-dlg .fc-igo') || {}).textContent,
+    spill: (d => !d || d.scrollWidth > d.clientWidth + 1)(document.getElementById('fc-dlg')),
+  }));
+  ok(
+    `[${scheme}] Import from Quizlet previews the pasted cards and says what it skipped (B-489)`,
+    pv.head === 'Import from Quizlet' &&
+      pv.rows.join() === 'Tachycardia,Bradycardia,Apnea' &&
+      /^3 cards to import · 1 line without/.test(pv.note || '') &&
+      pv.go === 'Import 3 cards' &&
+      !pv.spill,
+    JSON.stringify(pv)
+  );
+  await page.screenshot({ path: `${shots}/fc-import-${scheme}.png` });
+  await page.locator('#fc-dlg .fc-igo').click();
+  await page.waitForTimeout(500);
+  const made = await page.evaluate(t => {
+    const e = Object.entries(window.__db.decks || {}).find(([, d]) => d.title === t);
+    const d = document.getElementById('fc-dlg');
+    return {
+      deck: e ? { course: e[1].course, source: e[1].source, n: Object.keys(e[1].cards).length } : null,
+      open: (d && d.open && (d.querySelector('.fc-ht h2') || {}).textContent) || '',
+    };
+  }, 'Harness import ' + scheme);
+  ok(
+    `[${scheme}] Import makes a deck of the pasted cards for the course and opens it (B-489)`,
+    !!made.deck &&
+      made.deck.n === 3 &&
+      made.deck.source === 'Quizlet paste' &&
+      made.open === 'Harness import ' + scheme,
+    JSON.stringify(made)
+  );
+  await page.evaluate(() => document.getElementById('fc-dlg') && document.getElementById('fc-dlg').close());
 }
 // B-488: Written shows the definition and takes the typed term: a miss is Again with the answer and I was right (which
 // makes it Good); a near answer shows the right spelling and asks Hard / Good / Easy. Learn climbs each card from
