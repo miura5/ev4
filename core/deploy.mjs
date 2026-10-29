@@ -30,13 +30,8 @@ export function systemSize(id, doc, budget = {}) {
 // What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
 const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
 const ENVELOPE = ['schema', 'writer', 'at', 'source'];
-const STAMP = /<meta\s+name=["']ev-release["']\s+content=["']([^"']+)["']/i;
 
 export const artifactUrl = id => `https://claude.ai/artifact/${id}`;
-export const pageStamp = html => {
-  const m = (html || '').match(STAMP);
-  return m ? m[1] : null;
-};
 const strip = doc => {
   const out = { ...doc };
   for (const k of ENVELOPE) delete out[k];
@@ -78,63 +73,6 @@ export function contentHash(manifest, spec, sha256) {
   );
 }
 
-// B-28: a page's capability declaration, as the artifact service stores it, compared with the build's as data: an mcp
-// server is matched by name and its tools as a set; every other capability by its canonical JSON.
-const serverMap = c => Object.fromEntries(((c && c.mcp && c.mcp.servers) || []).map(s => [s.server, s]));
-export function capabilityDiffs(stored, built) {
-  const diffs = [],
-    st = stored || {},
-    bu = built || {};
-  for (const k of [...new Set([...Object.keys(st), ...Object.keys(bu)])].sort()) {
-    if (!(k in bu)) {
-      diffs.push(`${k}: stored, not in the build`);
-      continue;
-    }
-    if (!(k in st)) {
-      diffs.push(`${k}: in the build, not stored`);
-      continue;
-    }
-    if (k !== 'mcp') {
-      if (!same(st[k], bu[k])) diffs.push(`${k}: differs`);
-      continue;
-    }
-    const a = serverMap(st),
-      b = serverMap(bu);
-    for (const name of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) {
-      if (!b[name]) {
-        diffs.push(`mcp ${name}: stored, not in the build`);
-        continue;
-      }
-      if (!a[name]) {
-        diffs.push(`mcp ${name}: in the build, not stored`);
-        continue;
-      }
-      const ta = new Set(a[name].tools || []),
-        tb = new Set(b[name].tools || []);
-      const lacks = [...tb].filter(t => !ta.has(t)),
-        extra = [...ta].filter(t => !tb.has(t));
-      if (lacks.length) diffs.push(`mcp ${name}: stored without ${lacks.join(', ')}`);
-      if (extra.length) diffs.push(`mcp ${name}: stored with ${extra.join(', ')}, not in the build`);
-      const rest = o => {
-        const { server, tools, ...r } = o;
-        return r;
-      };
-      if (!same(rest(a[name]), rest(b[name]))) diffs.push(`mcp ${name}: settings differ`);
-    }
-  }
-  return diffs;
-}
-/** The host: tools (a local MCP server on Matt's Mac) the build declares that the stored declaration lacks: only a
- *  publish from the Claude desktop app on that Mac can add them (Oct 18: a cloud publish adding them answered 422). */
-export function hostToolsToAdd(stored, built) {
-  const a = serverMap(stored),
-    out = [];
-  for (const [name, s] of Object.entries(serverMap(built)))
-    if (name.startsWith('host:'))
-      for (const t of s.tools || []) if (!(a[name] && (a[name].tools || []).includes(t))) out.push(`${name} ${t}`);
-  return out;
-}
-const hostServers = c => Object.keys(serverMap(c)).filter(n => n.startsWith('host:'));
 /** spec.tasks.retired, from the built system/spec (envelope and all). */
 const retiredOf = dist =>
   dist && dist.spec && dist.spec.tasks && Array.isArray(dist.spec.tasks.retired) ? dist.spec.tasks.retired : [];
@@ -171,24 +109,7 @@ export function verifyReads({ manifest, target, stateDir }) {
         save: `${stateDir}/record/system/${id}.json`,
         note: 'Saved by the tool; note the version it prints for deploy --version.',
       });
-    const page = manifest.pages[target];
-    if (page.artifact)
-      reads.push({
-        tool: 'Artifact',
-        args: { action: 'read', url: artifactUrl(page.artifact) },
-        save: `${stateDir}/page.html`,
-        note: `Save it with node tools/tool-result.mjs Artifact ${stateDir}/page.html --html (or copy the file the read names, when it names one), and its stored capability declaration with node tools/tool-result.mjs Artifact ${stateDir}/page-declaration.json --declaration.`,
-      });
-    const published = Object.keys(page.files)
-      .slice(1)
-      .map(f => f.replace(/^page\/[^/]+\//, ''));
-    if (page.artifact && published.length)
-      reads.push({
-        tool: 'Artifact',
-        args: { action: 'read', url: artifactUrl(page.artifact), paths: published, out_dir: `${stateDir}/page-files` },
-        save: `${stateDir}/page-files/`,
-        note: 'Saved by the tool, one file per published path. The shell is held by the page read above: publishing wraps it, so the read must contain the built shell verbatim.',
-      });
+    // B-472 (D-367): the claude.ai page is no longer a view, so ship reads neither it nor its files.
   }
   return reads;
 }
@@ -220,7 +141,7 @@ function pushDiff(f, t) {
 
 /**
  * Diffs saved live state against the manifest. state: {triggers: [list_triggers entries] | null, record: {manifest,
- * spec, environments} (absent docs undefined) | null, pageHtml: string | null, pageFiles: {path: sha256} | null}.
+ * spec, environments} (absent docs undefined) | null, running}.
  * build: {pushed: bool}. sha256: the hash function (node's or the page's). Returns {green, lines: [{ok, what, detail}]}.
  */
 export function verify({ manifest, target, state, build, dist, sha256, now = new Date().toISOString() }) {
@@ -339,51 +260,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
     }
   }
 
-  const page = manifest.pages[target];
-  if (page.artifact || Object.keys(page.files).length) {
-    if (state.pageHtml == null) add(false, `${target} page read`, 'no saved page; run the read below');
-    else {
-      const stamp = pageStamp(state.pageHtml);
-      add(
-        stamp === manifest.release,
-        'page stamp',
-        stamp === manifest.release
-          ? stamp
-          : `the published page says ${stamp || '(no stamp)'}, the build is ${manifest.release}`
-      );
-      if (state.pageFiles) {
-        const changed = Object.keys({ ...page.files, ...state.pageFiles }).filter(
-          f => state.pageFiles[f] !== page.files[f]
-        );
-        add(
-          changed.length === 0,
-          'published page files',
-          changed.length ? `${changed.length} differ: ${changed.join(', ')}` : ''
-        );
-      }
-      // B-28: the capability declaration the artifact service holds, against the build's (manifest.pages.<target>).
-      if (page.capabilities) {
-        if (state.pageDeclaration == null)
-          add(
-            false,
-            'page capability declaration',
-            "not saved: save the page read's <artifact-stored-declaration> (tool-result --declaration)"
-          );
-        else {
-          const d = capabilityDiffs(state.pageDeclaration, page.capabilities),
-            adds = hostToolsToAdd(state.pageDeclaration, page.capabilities);
-          add(
-            d.length === 0,
-            'page capability declaration',
-            d.length
-              ? d.join('; ') +
-                  (adds.length ? ' (adding host: tools takes a publish from the Claude desktop app on the Mac)' : '')
-              : Object.keys(page.capabilities).sort().join(', ')
-          );
-        }
-      }
-    }
-  }
+  // B-472 (D-367): no page lines (stamp, published files, capability declaration): ship no longer publishes the page.
 
   const tasks = tasksFor(manifest, target);
   if (!state.triggers) add(false, 'scheduled tasks read', 'no saved list_triggers result; run the reads below');
@@ -562,41 +439,8 @@ export function deployCalls({
     args: { action: 'batch', url: artifactUrl(rec.artifact), writes },
   });
 
-  const page = manifest.pages[target];
-  const declared = state && state.pageDeclaration;
-  const declarationOk = !declared || !page.capabilities || capabilityDiffs(declared, page.capabilities).length === 0;
-  const published =
-    state &&
-    state.pageFiles &&
-    Object.keys(page.files).length &&
-    Object.keys({ ...page.files, ...state.pageFiles }).every(f => state.pageFiles[f] === page.files[f]) &&
-    declarationOk;
-  if (published) skipped.push(`${target} page: the published shell, files and capability declaration match this build`);
-  if (page.artifact && Object.keys(page.files).length && !published) {
-    const [shell, ...rest] = Object.keys(page.files);
-    // B-28: a host: server's tools are added only by a publish from the Claude desktop app on the Mac that runs it.
-    const adds = declared
-      ? hostToolsToAdd(declared, page.capabilities)
-      : hostServers(page.capabilities).map(n => n + ' (stored declaration not saved)');
-    const where = adds.length
-      ? ` (from the Claude desktop app on the Mac${target === 'live' ? ", with Matt's OK" : ''}: a cloud session cannot add ${adds.join(', ')})`
-      : '';
-    calls.push({
-      step: 'page' + where,
-      tool: 'Artifact',
-      args: {
-        action: 'publish',
-        url: artifactUrl(page.artifact),
-        file_path: `${distDir}/${shell}`,
-        files: Object.fromEntries(rest.map(f => [f.replace(/^page\/[^/]+\//, ''), `${distDir}/${f}`])),
-        capabilities: page.capabilities,
-      },
-    });
-    if (adds.length && declared)
-      skipped.push(
-        `${target} page from a cloud session: the same publish with capabilities exactly as stored (state/${target}/page-declaration.json) ships the files; verify-deploy stays red on the declaration until the desktop-app publish`
-      );
-  }
+  // B-472 (D-367): the claude.ai page is frozen; ship no longer publishes it (ship <target> --freeze-page prints the
+  // one-time frozen publish).
 
   for (const [key, t] of tasksFor(manifest, target)) {
     const promptFile = `${distDir}/prompts/${key}.txt`;

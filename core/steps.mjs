@@ -14,7 +14,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import EV from './evcore.mjs';
 import { verify, verifyReads } from './deploy.mjs';
-import { readState, withShell } from './verifystate.mjs';
+import { readState } from './verifystate.mjs';
 import { produce, classOf, factsSplitFor, examTomorrow } from './derive.mjs';
 import { watch, schedulerView } from './watch.mjs';
 import * as STUDY from './study.mjs';
@@ -809,7 +809,7 @@ export const AGENT_MATERIAL = {
   },
   /**
    * B-29: the reads verify-deploy needs for this run's own record, as exact calls: list_triggers (paged by its cursor),
-   * the record's system/*, its page and the page's files. This checkout is built into the run folder first (the gate
+   * and the record's system/* (B-472, D-367: the page is no longer read). This checkout is built into the run folder first (the gate
    * proved it is the deployed commit), so the run compares the record with what that commit builds, read-only.
    */
   'verify-brief'(db, ctx) {
@@ -886,7 +886,7 @@ function verifyOutcome(answer, ctx) {
       JSON.parse(fs.readFileSync(path.join(v.build, 'system', id + '.json'), 'utf8')),
     ])
   );
-  const state = withShell(readState(v.state), manifest, ctx.record, v.build);
+  const state = readState(v.state);
   // The commit is pushed: the gate found it in this checkout, a clone of origin's main.
   const r = verify({
     manifest,

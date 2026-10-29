@@ -204,7 +204,7 @@ test('B-318: ship carries the app read and dispatch as its own part, and reads i
     deploy: { ok: true, calls: [{ tool: 'ArtifactData' }, ...appCalls({ target: 'staging', commit: C }).calls] },
     rec: { deploys: [] },
     refusals: [],
-    skip: { tasks: true, pages: true },
+    skip: { tasks: true },
     stale: null,
   };
   const step = shipStep(base);
@@ -214,7 +214,7 @@ test('B-318: ship carries the app read and dispatch as its own part, and reads i
     ['ArtifactData', 'Bash'],
     'the dispatch is not skipped with the tasks and page'
   );
-  const again = shipStep({ ...base, stale: { tasks: false, pages: false, app: true } });
+  const again = shipStep({ ...base, stale: { tasks: false, app: true } });
   assert.deepEqual(
     again.reads.map(r => r.tool),
     ['ArtifactData', 'Bash']

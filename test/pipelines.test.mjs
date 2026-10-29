@@ -275,9 +275,7 @@ test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sund
       ['ArtifactData', 'get', 'spec'],
       ['ArtifactData', 'get', 'environments'],
       ['ArtifactData', 'get', 'seed'],
-      ['Artifact', 'read', null],
-      ['Artifact', 'read', null],
-    ]
+    ] // B-472 (D-367): no page reads
   );
   assert.ok(
     v.question.material.saves.every(x => x.save.startsWith(path.join(dir, 'verify', 'staging'))),
@@ -326,8 +324,7 @@ test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sund
   const vr = week.health.verify;
   assert.deepEqual([vr.target, vr.green, vr.at], ['staging', false, new Date(at).toISOString()]);
   assert.ok(
-    vr.differences.some(d => d.what === 'scheduled tasks read') &&
-      vr.differences.some(d => d.what === 'staging page read'),
+    vr.differences.some(d => d.what === 'scheduled tasks read') && !vr.differences.some(d => /page/.test(d.what)),
     JSON.stringify(vr.differences)
   );
   assert.equal(rebuildOne(out, spec, 'weeks', week).status, 'same');

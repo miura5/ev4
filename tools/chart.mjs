@@ -22,6 +22,7 @@
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
 //   ship <staging|live> [--done B-nn --commit sha]   the deploy checklist: the rules, the reads, deploy's calls, verify,
 //            the record (B-96); --done records those tasks done in the same command (B-147)
+//   ship <staging|live> --freeze-page [--matt-ok]   B-472 (D-367): prints the one-time publish of the frozen claude.ai page
 //   rollback live [--to sha] [--matt-ok --apply] [--no-test]   the way back (B-60): the previous live build's content at main's
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
@@ -53,7 +54,7 @@ import EVCORE from '../core/evcore.mjs';
 
 const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
-import { readState, withShell } from '../core/verifystate.mjs';
+import { readState } from '../core/verifystate.mjs';
 import { build, BOOKKEEPING, INERT } from './build.mjs';
 import { APPS, appRead, appCalls, appLines, expectedApp } from './pwa-app.mjs';
 
@@ -885,14 +886,13 @@ const tasksHash = tasks =>
       ])
     )
   );
-const pageHash = p => canonical(p ? [p.files, p.capabilities] : null);
 /**
  * What this deploy can skip reading, from the deployed system/manifest: its tasks (list_triggers) when the build's
- * tasks equal the deployed ones, its page (the page reads) when the build's page files and capabilities do, each only
- * when the record holds a green deploy of this target at the deployed commit (so what is there was verified).
+ * tasks equal the deployed ones, only when the record holds a green deploy of this target at the deployed commit (so
+ * what is there was verified). B-472 (D-367): the page is neither read nor published, so it has no skip.
  */
 export function skips({ manifest, target, deployed, rec }) {
-  if (!deployed) return { tasks: false, pages: false, from: null };
+  if (!deployed) return { tasks: false, from: null };
   const greenAt = rec.deploys.some(
     d => d.target === target && d.verify === 'green' && String(deployed.commit).startsWith(d.commit)
   );
@@ -904,28 +904,26 @@ export function skips({ manifest, target, deployed, rec }) {
     );
   return {
     tasks: greenAt && tasksHash(tasks(deployed)) === tasksHash(tasks(manifest)),
-    pages: greenAt && pageHash(deployed.pages && deployed.pages[target]) === pageHash(manifest.pages[target]),
     from: String(deployed.commit).slice(0, 7),
   };
 }
-/** Which part of a deploy a read or call (by its tool) or a verify line (by its what) is about: 'tasks' or 'pages'. */
+/** Which part of a deploy a read or call (by its tool) or a verify line (by its what) is about: 'tasks' or 'app'. */
 const PARTS = [
   ['tasks', /trigger/, /^(task |scheduled tasks read|retired tasks)/],
-  ['pages', /^Artifact$/, /^(\w+ page read|page stamp|published page files|page capability declaration)/],
   ['app', /^Bash$/, /^app /], // B-318: the Worker and its page files, through the target's workflow
 ];
 const partOf = x =>
   (PARTS.find(([, tool, what]) => (x.tool !== undefined ? tool : what).test(x.tool ?? x.what)) || [])[0];
 /**
  * The deploy checklist as one pure step: the refusals; else the reads still to make; else, when verify is green, the
- * deploy to record; else deploy's calls (minus the task and page calls the skips make needless).
+ * deploy to record; else deploy's calls (minus the task calls the skips make needless).
  */
 export function shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale }) {
   if (refusals.length) return { kind: 'refused', refusals };
   const deployedRead = state.record && state.record.manifest;
   const need = reads.filter(r => !partOf(r) || (deployedRead && !skip[partOf(r)]));
   const missing = need.filter(r => !r.have);
-  // After the calls, only what they changed is read again: a deploy with no task or page call leaves those reads true.
+  // After the calls, only what they changed is read again: a deploy with no task call leaves those reads true.
   const changed = r => !partOf(r) || stale[partOf(r)];
   if (stale)
     return {
@@ -941,9 +939,7 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
     };
   const why = what =>
     `not read: the build's ${what} equal the deployed manifest's (${skip.from}, green when deployed), so this deploy changes none`;
-  const lines = verifyResult.lines.map(l =>
-    !l.ok && skip[partOf(l)] ? { ...l, ok: true, detail: why(partOf(l) === 'tasks' ? 'tasks' : 'page files') } : l
-  );
+  const lines = verifyResult.lines.map(l => (!l.ok && skip[partOf(l)] ? { ...l, ok: true, detail: why('tasks') } : l));
   if (lines.every(l => l.ok))
     return {
       kind: 'verified',
@@ -959,7 +955,6 @@ export function shipStep({ target, manifest, state, verifyResult, reads, deploy,
     skipped: [
       ...(deploy.skipped || []).filter(x => !(skip.tasks && /^\w+\.\w+(-\w+)?: /.test(x))),
       ...(skip.tasks ? [why('tasks').replace('not read: ', 'no task call: ')] : []),
-      ...(skip.pages ? [why('page files').replace('not read: ', 'no page publish: ')] : []),
     ],
   };
 }
@@ -1114,6 +1109,46 @@ export function shipJobRefusals({ id, job, result, commit, now = Date.now() }) {
   return why;
 }
 
+/**
+ * B-472 (D-367): the one-time publish that freezes the claude.ai page: the build's dist/frozen/<target>/index.html in
+ * place of the page, with no capabilities (it reads nothing). Printed once for the build manager to make; ship itself
+ * never publishes the page again. Live takes Matt's explicit OK (--matt-ok writes dist/live-ok, B-58); a builder run
+ * prints nothing (D-200).
+ */
+function freezePage({ root, dist, manifest, target, mattOk }) {
+  const head = `ship ${target} --freeze-page`;
+  const page = manifest.pages[target] || {};
+  const why = [];
+  if (builderRun()) why.push('a builder run publishes no page (D-200): a build chat makes it');
+  if (!page.artifact) why.push(`no ${target} page in spec.registry.records`);
+  if (target === 'live' && !mattOk)
+    why.push("publishing the live page needs Matt's explicit OK in the chat (then pass --matt-ok)");
+  if (why.length) {
+    console.log([`${head}: REFUSED`, ...why.map(w => '  ' + w)].join('\n'));
+    return 1;
+  }
+  const file = path.join(dist, 'frozen', target, 'index.html');
+  if (target === 'live')
+    fs.writeFileSync(
+      path.join(dist, 'live-ok'),
+      JSON.stringify({ at: Date.now(), commit: manifest.commit, by: 'ship live --matt-ok' })
+    );
+  console.log(
+    [
+      `${head}: 1 call, once. It replaces the claude.ai page with one line that E.V. now lives in the app (D-367); ship never publishes the page again.`,
+      '',
+      `1. frozen page: Artifact`,
+      JSON.stringify(
+        { action: 'publish', url: artifactUrl(page.artifact), file_path: file, capabilities: {} },
+        null,
+        1
+      ),
+      '',
+      `Then look at it once (Artifact open ${artifactUrl(page.artifact)}). ${path.relative(root, file)} is the page as published.`,
+    ].join('\n')
+  );
+  return 0;
+}
 async function ship(o) {
   const root = rootOf(o),
     target = o._[1];
@@ -1126,6 +1161,7 @@ async function ship(o) {
   const dist = path.join(root, 'dist'),
     stateDir = path.join(dist, 'state', target);
   const { manifest } = await build({ root, out: dist });
+  if (o['freeze-page']) return freezePage({ root, dist, manifest, target, mattOk: Boolean(o['matt-ok']) });
   const read = f => readJson(path.join(dist, 'system', f + '.json'));
   const distDocs = { spec: read('spec'), environments: read('environments') };
   let pushed = false;
@@ -1135,7 +1171,7 @@ async function ship(o) {
   } catch {
     /* not pushed */
   }
-  const state = withShell(readState(stateDir), manifest, target, dist);
+  const state = readState(stateDir);
   const deployed = state.record && state.record.manifest;
   if (target === 'live') {
     // R-04 (D-083): Matt's explicit OK.
@@ -1199,7 +1235,6 @@ async function ship(o) {
     savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at
       ? {
           tasks: last.touched ? last.touched.tasks : true,
-          pages: last.touched ? last.touched.pages : true,
           app: last.touched ? Boolean(last.touched.app) : true,
         }
       : null;
@@ -1268,7 +1303,7 @@ async function ship(o) {
     stagingVerify,
     stateDir,
   });
-  // B-318: the app's deploy is a dispatch of its workflow, after the record and page calls; never while a run is going.
+  // B-318: the app's deploy is a dispatch of its workflow, after the record calls; never while a run is going.
   const appRunning = appSaved && appSaved.run && appSaved.run.status !== 'completed';
   if (app && deploy.ok && !appRunning && verifyResult.lines.some(l => !l.ok && /^app /.test(l.what))) {
     const a = appCalls({
@@ -1311,9 +1346,6 @@ async function ship(o) {
         ...(skip.tasks
           ? [`  not needed: list_triggers (the build's tasks equal the deployed manifest's, ${skip.from})`]
           : []),
-        ...(skip.pages
-          ? [`  not needed: the page reads (the build's page files equal the deployed manifest's, ${skip.from})`]
-          : []),
       ].join('\n')
     );
     return 1;
@@ -1334,7 +1366,6 @@ async function ship(o) {
     }
     const touched = {
       tasks: step.calls.some(c => partOf(c) === 'tasks'),
-      pages: step.calls.some(c => partOf(c) === 'pages'),
       app: step.calls.some(c => partOf(c) === 'app'),
     };
     // B-58: ship live prints these calls only on Matt's OK (R-04), so the live-write guard lets them through for a while.
@@ -2440,7 +2471,7 @@ async function rollback(o) {
       '',
     ];
     out.push(
-      `Going back undoes what ${tasksBetween.length ? tasksBetween.join(', ') : 'the builds since'} shipped: the page (shell, core.js, app.js, spec.json, styles.css), system/manifest, system/spec and system/environments, so every scheduled run from then on runs ${to.commit}'s code, and the live tasks' prompts where they differ (below).`
+      `Going back undoes what ${tasksBetween.length ? tasksBetween.join(', ') : 'the builds since'} shipped: system/manifest, system/spec and system/environments, so every scheduled run from then on runs ${to.commit}'s code, and the live tasks' prompts where they differ (below).`
     );
     out.push(
       "It does not undo: documents the live record holds (runs, state, health, his own entries) stay as written; an applied schema bump or migration stays applied and its legacy copies are kept (D-145); a Mac-bound task's prompt changes only from a chat linked to the Mac, with Matt present.",
@@ -2505,7 +2536,7 @@ async function rollback(o) {
     // The calls ship live will print for the restore build, against the saved live state (versions from this
     // session's last get; the file paths are where ship builds, dist/).
     const stateDir = path.join(root, 'dist', 'state', 'live'),
-      state = withShell(readState(stateDir), restored.manifest, 'live', restored.out);
+      state = readState(stateDir);
     const versions = versionsFrom(
       transcriptOf(o),
       `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`
@@ -2533,7 +2564,7 @@ async function rollback(o) {
       '  4. node tools/chart.mjs ship live --matt-ok, with every call and read it prints, until GREEN; it records the deploy (its rollback names the build left)',
       `  5. log a decision naming why live went back; bringing the newer work back later is git revert <the restore commit> and the normal path`,
       '',
-      `The live calls step 4 will print (from the saved live state; the shell's live page files and system documents become ${to.commit}'s):`,
+      `The live calls step 4 will print (from the saved live state; the system documents become ${to.commit}'s):`,
       formatDeploy('live', calls)
         .replace(/^deploy live: /, '')
         .replace(', then run verify-deploy live.', '.')

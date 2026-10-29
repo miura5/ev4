@@ -415,38 +415,26 @@ const M = (o = {}) => ({
 const READS = [
   { tool: 'mcp__claude-code-remote__list_triggers', have: false },
   { tool: 'ArtifactData', args: { doc_id: 'manifest' }, have: true },
-  { tool: 'Artifact', have: false },
 ];
 const VERIFY = {
   lines: [
     { ok: true, what: 'build is clean' },
     { ok: false, what: 'system/manifest commit' },
-    { ok: false, what: 'staging page read' },
     { ok: false, what: 'scheduled tasks read' },
   ],
 };
 const DEPLOY = {
   ok: true,
-  calls: [{ tool: 'ArtifactData' }, { tool: 'Artifact' }, { tool: 'mcp__claude-code-remote__update_trigger' }],
+  calls: [{ tool: 'ArtifactData' }, { tool: 'mcp__claude-code-remote__update_trigger' }],
   skipped: [],
 };
 
-test('B-96: ship skips the task and page reads (and their calls) when the deployed manifest, green when deployed, has the same', () => {
+test('B-96: ship skips the task reads (and their calls) when the deployed manifest, green when deployed, has the same', () => {
   const r = sample();
   r.deploys.push({ target: 'staging', commit: 'bbbbbbb', verify: 'green', time: 't', tasks: [] });
   const deployed = M({ commit: 'b'.repeat(40) });
   const skip = C.skips({ manifest: M(), target: 'staging', deployed, rec: r });
-  assert.deepEqual(skip, { tasks: true, pages: true, from: 'bbbbbbb' });
-  assert.equal(
-    C.skips({
-      manifest: M({ pages: { staging: { files: { 'page/staging/app.js': 'h2' }, capabilities: { db: {} } } } }),
-      target: 'staging',
-      deployed,
-      rec: r,
-    }).pages,
-    false,
-    'a changed page file is read'
-  );
+  assert.deepEqual(skip, { tasks: true, from: 'bbbbbbb' }); // B-472 (D-367): the page has no part to skip
   assert.equal(
     C.skips({ manifest: M(), target: 'staging', deployed, rec: sample() }).tasks,
     false,
@@ -468,9 +456,9 @@ test('B-96: ship skips the task and page reads (and their calls) when the deploy
   assert.deepEqual(
     step.calls.map(c => c.tool),
     ['ArtifactData'],
-    'no page publish, no trigger call'
+    'no trigger call'
   );
-  assert.ok(step.lines.filter(l => /page read|tasks read/.test(l.what)).every(l => l.ok && /not read/.test(l.detail)));
+  assert.ok(step.lines.filter(l => /tasks read/.test(l.what)).every(l => l.ok && /not read/.test(l.detail)));
   // Without the deployed manifest read yet: only that read is asked for.
   const first = C.shipStep({
     target: 'staging',
@@ -481,11 +469,11 @@ test('B-96: ship skips the task and page reads (and their calls) when the deploy
     deploy: DEPLOY,
     rec: r,
     refusals: [],
-    skip: { tasks: false, pages: false },
+    skip: { tasks: false },
     stale: null,
   });
   assert.deepEqual([first.kind, first.reads.map(x => x.tool)], ['reads', ['ArtifactData']]);
-  // After calls that touched neither tasks nor the page, only the system documents are read again.
+  // After calls that touched no task, only the system documents are read again.
   const again = C.shipStep({
     target: 'staging',
     manifest: M(),
@@ -495,8 +483,8 @@ test('B-96: ship skips the task and page reads (and their calls) when the deploy
     deploy: DEPLOY,
     rec: r,
     refusals: [],
-    skip: { tasks: false, pages: false },
-    stale: { tasks: false, pages: false },
+    skip: { tasks: false },
+    stale: { tasks: false },
   });
   assert.deepEqual(
     again.reads.map(x => x.tool),
@@ -1010,10 +998,8 @@ test("B-60: rollback live dry-runs going back to the previous live build at main
     )
   );
   assert.match(dry.out, new RegExp(`the restore build equals ${A.slice(0, 7)}'s build`));
-  assert.match(
-    dry.out,
-    /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"[\s\S]*2\. page[^\n]*: Artifact[\s\S]*"capabilities"/
-  );
+  assert.match(dry.out, /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"/);
+  assert.doesNotMatch(dry.out, /\d\. page[^\n]*: Artifact/, 'B-472 (D-367): no page publish');
   assert.match(dry.out, /rollback live --matt-ok --apply[\s\S]*ship staging[\s\S]*ship live --matt-ok/);
   // A dry run writes nothing: same head, clean tree, no worktree left, no live gate file.
   assert.deepEqual(

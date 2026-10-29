@@ -1,11 +1,17 @@
 // Clicks through the demo or the built page like a person: from each start, every visible control (nav items,
 // tabs, buttons, rows, chips), then every control that click revealed, two clicks deep.
-// Usage: node tools/fidelity/crawl.cjs demo|built [width] [starts] ; screenshots to
+// B-472 (D-367): the app (the PWA) is E.V.'s one view, so the UI click-through and the release card's screenshots
+// come from it: target app opens APP_URL (pwa/smoke.mjs's local wrangler dev Worker over the synthetic D1, or the
+// staging app) with APP_TOKEN put where the app keeps it (localStorage ev.token). built (dist/page/staging under the
+// harness stub) stays for the harnesses; the claude.ai page is frozen and never the target. The crawl clicks what a
+// person would (check-offs included), so against the staging app it writes to staging's D1: prefer the local Worker.
+//   APP_URL=http://127.0.0.1:8787 APP_TOKEN=<token> node tools/fidelity/crawl.cjs app 390
+// Usage: node tools/fidelity/crawl.cjs demo|built|app [width] [starts] ; screenshots to
 // $FIDELITY_OUT/crawl-<target>-<width>/ with index.json mapping each shot to its start and click path.
 // Starts (comma-separated): for the demo, board names in demo/project. The default is AppNotes (the whole app in
 // the L-frame, opening on Notes; D-327) and NoteEditor (a note open, so the format bar's style menu and link
 // popover, E.V.'s strip, its pop-up chat, history and minimize are one and two clicks in); Main is the old demo's
-// whole app. For the built page: app (as it boots), notes (the Notes tab) and note (the first note opened);
+// whole app. For the built page and the app: app (as it boots), notes (the Notes tab) and note (the first note opened);
 // the default is all three, and the Notes starts are skipped, with a line saying so, while the page has no Notes tab.
 // Read only: the built page runs on the synthetic record.
 const { chromium } = require('playwright');
@@ -78,19 +84,34 @@ function builtSetup() {
     await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
     await page.goto('https://ev.local/');
     await page.waitForTimeout(1800);
-    if (start === 'app') return true;
-    // The Notes starts: the Notes tab, then (for note) the first clickable thing in its panel, a note.
-    const tab = await page.$('#tab-notes');
-    if (!tab || !(await tab.isVisible())) return false;
-    await tab.click();
-    await page.waitForTimeout(700);
-    if (start === 'notes') return true;
-    const row = await page.$('#p-notes button, #p-notes [role=button], #p-notes a[href]');
-    if (!row) return false;
-    await row.click();
-    await page.waitForTimeout(700);
-    return true;
+    return toStart(page, start);
   };
+}
+// The app (B-472): APP_URL as served, signed in with APP_TOKEN; read only, as a person clicking.
+function appSetup() {
+  const url = process.env.APP_URL;
+  if (!url) throw new Error('crawl app needs APP_URL (and APP_TOKEN when the app asks for one)');
+  return async (page, start) => {
+    if (process.env.APP_TOKEN)
+      await page.addInitScript(t => localStorage.setItem('ev.token', t), process.env.APP_TOKEN);
+    await page.goto(url);
+    await page.waitForTimeout(2500);
+    return toStart(page, start);
+  };
+}
+async function toStart(page, start) {
+  if (start === 'app') return true;
+  // The Notes starts: the Notes tab, then (for note) the first clickable thing in its panel, a note.
+  const tab = await page.$('#tab-notes');
+  if (!tab || !(await tab.isVisible())) return false;
+  await tab.click();
+  await page.waitForTimeout(700);
+  if (start === 'notes') return true;
+  const row = await page.$('#p-notes button, #p-notes [role=button], #p-notes a[href]');
+  if (!row) return false;
+  await row.click();
+  await page.waitForTimeout(700);
+  return true;
 }
 
 // Visible clickable things, each with a stable key (its label and rough place) and a selector path to find it again.
@@ -150,7 +171,7 @@ async function controls(page) {
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
-  const bootBuilt = target === 'built' ? builtSetup() : null;
+  const bootBuilt = target === 'built' ? builtSetup() : target === 'app' ? appSetup() : null;
   const fresh = async start => {
     const page = await browser.newPage({ viewport: vp, colorScheme: 'light' });
     await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));

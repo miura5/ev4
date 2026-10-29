@@ -9,7 +9,9 @@ bottom strip); `Main.dc.html` stays the old demo's whole app; `canvas.json` name
 - `node tools/fidelity/demo-all.cjs`: every demo board at 1280x900 and 390x844, and the Notes boards (AppNotes,
   NotesList, NoteEditor, NoteStyleMenu, NoteStudyPopup, AppTodayEV, NoteStates) at 1280, 1706 and 2560, with geometry
   in report.json.
-- `node tools/fidelity/crawl.cjs demo|built [width] [starts]`: clicks every control two clicks deep from each start.
+- `node tools/fidelity/crawl.cjs demo|built|app [width] [starts]`: clicks every control two clicks deep from each start.
+  `app` (B-472, D-367) crawls the PWA at APP_URL with APP_TOKEN: the UI click-through and the release card's
+  screenshots come from the app, never the frozen claude.ai page.
   The demo starts by default at AppNotes and NoteEditor (style menu, link popover, E.V.'s strip and pop-up, history,
   minimize); pass `Main` for the old demo. The built page starts at app, notes and note; the Notes starts are skipped
   while the page has no Notes tab.

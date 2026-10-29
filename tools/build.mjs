@@ -399,6 +399,44 @@ export function coreParts(root, core) {
  * run. spec.json is what the page needs of the spec for its own target only; the build refuses a page that names
  * the other target's tasks or record (the v3 staging check, kept). null when the repository has no shell yet.
  */
+/**
+ * B-472 (D-367): the one-time frozen claude.ai page. The app (the PWA) is E.V.'s one view; this shell replaces the
+ * claude.ai page once (ship <target> --freeze-page prints that publish) with one calm line and the app's address
+ * when spec.registry names one. It is not hashed and ship never publishes it on its own.
+ */
+export function frozenPage(spec, target, release) {
+  const rec = ((spec.registry || {}).records || {})[target] || {};
+  const url = rec.app && typeof rec.app.url === 'string' && /^https:\/\//.test(rec.app.url) ? rec.app.url : null;
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ev-release" content="${esc(release)}">
+<meta name="ev-frozen" content="D-367">
+<title>E.V. Home</title>
+<style>
+:root { --bg: #fbfbfa; --fg: #1f2023; --muted: #6b6f76; --link: #4f5bd5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141518; --fg: #e6e6e8; --muted: #9a9ea6; --link: #8f9bff; } }
+:root[data-theme="dark"] { --bg: #141518; --fg: #e6e6e8; --muted: #9a9ea6; --link: #8f9bff; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); }
+body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; display: grid; place-items: center; min-height: 100vh; padding: 0 16px; box-sizing: border-box; }
+main { max-width: 32rem; text-align: center; }
+p { margin: 0 0 8px; }
+.muted { color: var(--muted); font-size: 14px; }
+a { color: var(--link); }
+</style>
+</head>
+<body>
+<main>
+<p>E.V. now lives in the app. This page is no longer updated.</p>
+${url ? `<p class="muted"><a href="${esc(url)}">${esc(url.replace(/^https:\/\//, ''))}</a></p>\n` : ''}</main>
+</body>
+</html>
+`;
+}
+
 export function buildPages({ root, spec, schemas, release }) {
   const ui = spec.ui && spec.ui.page;
   const shellFile = path.join(root, 'page', 'index.src.html');
@@ -614,6 +652,12 @@ export async function build({
       fs.mkdirSync(path.join(out, 'page', target), { recursive: true });
       for (const [f, body] of Object.entries(files)) fs.writeFileSync(path.join(out, 'page', target, f), body);
     }
+  // B-472 (D-367): the frozen page, beside the page and outside it (nothing hashes or ships it).
+  fs.rmSync(path.join(out, 'frozen'), { recursive: true, force: true });
+  for (const target of ['live', 'staging']) {
+    fs.mkdirSync(path.join(out, 'frozen', target), { recursive: true });
+    fs.writeFileSync(path.join(out, 'frozen', target, 'index.html'), frozenPage(spec, target, release));
+  }
   fs.rmSync(path.join(out, 'prompts'), { recursive: true, force: true });
   fs.mkdirSync(path.join(out, 'prompts'), { recursive: true });
   for (const [key, text] of Object.entries(prompts)) fs.writeFileSync(path.join(out, 'prompts', key + '.txt'), text);

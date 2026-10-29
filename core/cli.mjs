@@ -35,8 +35,8 @@ import {
   artifactUrl,
   contentHash,
 } from './deploy.mjs';
-import { readState, withShell } from './verifystate.mjs';
-export { readState, withShell };
+import { readState } from './verifystate.mjs';
+export { readState };
 import { seedStaging } from './seed.mjs';
 import { migrateBumps } from './migrate.mjs';
 import { chunkWrites } from './batches.mjs';
@@ -105,7 +105,7 @@ export function isPushed(root, commit) {
   }
 }
 
-// readState and withShell live in verifystate.mjs (B-29: the weekly's verify step reads the same saved state).
+// readState lives in verifystate.mjs (B-29: the weekly's verify step reads the same saved state).
 
 function load(o, target) {
   const root = o.root ? path.resolve(o.root) : HERE;
@@ -683,7 +683,7 @@ const commands = {
   async 'verify-deploy'(o) {
     const target = o._[1];
     const { root, dist, manifest, distDocs, stateDir, build } = load(o, target);
-    const state = withShell(readState(stateDir), manifest, target, dist);
+    const state = readState(stateDir);
     const result = verify({ manifest, target, state, build, dist: distDocs, sha256 });
     const reads = verifyReads({ manifest, target, stateDir });
     // B-318: the app (the Worker and its page files), from the saved read of its workflow (tools/pwa-app.mjs).
@@ -732,7 +732,7 @@ const commands = {
       mattOk: Boolean(o.mattOk),
       duringSession: Boolean(o.duringSession),
       builder: Boolean(builderRun()), // B-184 (D-200)
-      state: withShell(readState(stateDir), manifest, target, dist),
+      state: readState(stateDir),
       sha256,
       stagingVerify,
       stateDir,

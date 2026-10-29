@@ -1,5 +1,5 @@
-// deploy and verify-deploy (B-04): verify reports red with nothing deployed; a planted wrong prompt hash and a stale
-// page stamp are both reported; matching state is green; deploy prints exact calls and refuses what it must.
+// deploy and verify-deploy (B-04): verify reports red with nothing deployed; a planted wrong prompt hash is reported (the
+// page is no longer read, B-472); matching state is green; deploy prints exact calls and refuses what it must.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { copyRepo, git, ROOT } from './helpers.mjs';
 import { build, taskEntries } from '../tools/build.mjs';
-import { verify, pageStamp, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
+import { verify, canonical, contentHash, deployCalls } from '../core/deploy.mjs';
 
 // B-198 follow-up (Oct 22): these tests prove what a hand chat with Matt present can do (a tenet, a trigger printout, the
 // live health read), so they run as one whatever session runs them: a builder's own /tmp/ev/builder-run would refuse
@@ -77,20 +77,6 @@ async function deployedStaging() {
     const doc = JSON.parse(fs.readFileSync(path.join(dist, 'system', id + '.json'), 'utf8'));
     write(path.join(state, 'record/system', id + '.json'), { ...doc, at: '2026-10-18T00:00:00Z' });
   }
-  // The page as the platform serves it back: the built shell inside its skeleton, and each published file.
-  const built = path.join(dist, 'page', 'staging');
-  write(
-    path.join(state, 'page.html'),
-    '<!doctype html><html><head><meta charset=utf8></head><body>\n' +
-      fs.readFileSync(path.join(built, 'index.html'), 'utf8') +
-      '\n</body></html>'
-  );
-  for (const f of fs.readdirSync(built))
-    if (f !== 'index.html') {
-      fs.mkdirSync(path.join(state, 'page-files'), { recursive: true });
-      fs.copyFileSync(path.join(built, f), path.join(state, 'page-files', f));
-    }
-  write(path.join(state, 'page-declaration.json'), manifest.pages.staging.capabilities);
   write(path.join(state, 'record/system/seed.json'), {
     schema: 1,
     writer: 'deploy',
@@ -158,7 +144,7 @@ test('B-150: systemSize measures compact JSON and marks the warning and failing 
   assert.equal(systemSize('spec', doc(241 * 1024), {}).level, 'ok', 'no budget, no verdict');
 });
 
-test('a planted wrong prompt hash and a stale page stamp are both reported', async () => {
+test('a planted wrong prompt hash is reported, and an old saved page is not read (B-472, D-367)', async () => {
   const { dir, state, manifest } = await deployedStaging();
   const p = path.join(state, 'triggers-1.json');
   const page1 = JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -170,14 +156,9 @@ test('a planted wrong prompt hash and a stale page stamp are both reported', asy
   write(path.join(state, 'page.html'), '<!doctype html><meta name="ev-release" content="v4.0.0-old"><title>x</title>');
   const r = cli(dir, 'verify-deploy', 'staging');
   assert.equal(r.code, 1);
-  assert.match(r.out, /RED \(3 differences\)/);
+  assert.match(r.out, /RED \(1 difference\)/);
   assert.match(r.out, /NO  task staging\.[\w-]+: prompt hash differs from the manifest/);
-  assert.match(r.out, /NO  page stamp: the published page says v4\.0\.0-old, the build is v4\.\d+\.\d+/);
-  assert.match(
-    r.out,
-    /NO  published page files: 1 differ: page\/staging\/index\.html/,
-    'an old page does not hold the built shell'
-  );
+  assert.doesNotMatch(r.out, /page stamp|published page files|page capability declaration|Artifact \{"action":"read"/);
 });
 
 test('verify reports each kind of drift: missing task, schedule, binding, push, record content, file hashes', async () => {
@@ -210,8 +191,6 @@ test('verify reports each kind of drift: missing task, schedule, binding, push, 
     state: {
       triggers: gone,
       record: { manifest: rec, spec, environments: read(path.join(state, 'record/system/environments.json')) },
-      pageHtml: `<meta name="ev-release" content="${manifest.release}">`,
-      pageFiles: null,
     },
   });
   const bad = Object.fromEntries(result.lines.filter(l => !l.ok).map(l => [l.what, l.detail]));
@@ -257,8 +236,6 @@ test('verify reads a task with no notification setting as the server default, pu
         spec: read(path.join(state, 'record/system/spec.json')),
         environments: read(path.join(state, 'record/system/environments.json')),
       },
-      pageHtml: `<meta name="ev-release" content="${m.release}">`,
-      pageFiles: null,
     },
   });
   const line = what => result.lines.find(l => l.what === what);
@@ -535,9 +512,7 @@ test('B-184 (D-200): under the builder marker deploy prints no create_trigger or
   );
 });
 
-test('helpers: page stamps and canonical JSON', () => {
-  assert.equal(pageStamp('<head><meta name="ev-release" content="v4.1.2"></head>'), 'v4.1.2');
-  assert.equal(pageStamp('<head></head>'), null);
+test('helpers: canonical JSON', () => {
   assert.equal(canonical({ b: 1, a: [2, { d: 1, c: 2 }] }), canonical({ a: [2, { c: 2, d: 1 }], b: 1 }));
 });
 
@@ -594,7 +569,7 @@ test('verify-deploy: a task whose pipeline has no steps in the build is pending,
   const r = verify({
     manifest,
     target: 'staging',
-    state: { triggers: [], record: null, pageHtml: null },
+    state: { triggers: [], record: null },
     build: { commit: manifest.commit, dirty: false, pushed: true },
     sha256: s => s,
     now: '2026-10-18T06:00:00Z',
@@ -634,8 +609,6 @@ test('B-63 (D-114): verify compares content, not commit; the B-35 gate compares 
       state: {
         triggers,
         record: record(rec),
-        pageHtml: `<meta name="ev-release" content="${manifest.release}">`,
-        pageFiles: null,
       },
     }).lines.find(l => l.what === 'system/manifest commit');
   assert.deepEqual(
@@ -710,7 +683,7 @@ test('B-110, B-168: verify notes how far the deployed commit is behind origin/ma
       dist: dist2,
       sha256,
       build: { pushed: true, behind: () => 3, behindMain: () => behindMain },
-      state: { triggers, record: rec, pageHtml: null, pageFiles: null },
+      state: { triggers, record: rec },
     }).lines.find(l => l.what === "deployed commit within the runs' clone");
   assert.deepEqual(line(12), {
     ok: true,
@@ -738,7 +711,7 @@ test('B-110, B-168: verify notes how far the deployed commit is behind origin/ma
       dist: dist2,
       sha256,
       build: { pushed: true, behind: () => 3 },
-      state: { triggers, record: rec, pageHtml: null, pageFiles: null },
+      state: { triggers, record: rec },
     }).lines.some(l => /runs' clone/.test(l.what)),
     false,
     'a read-only verify without git (the weekly run) leaves the line out'
