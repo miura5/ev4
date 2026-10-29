@@ -10089,5 +10089,459 @@
    "outcome": "task",
    "at": "2026-10-29T21:16:55.681Z"
   }
+ },
+ {
+  "id": "B-539",
+  "kind": "task",
+  "title": "Neutral themes: the theme.js recipe sets base hue 270 and chroma 0.6, with surface steps for chrome, page, panel, raise, hover and selected in light and dark; Ember only for E.V., Send and the one primary",
+  "dod": "The Gallery shows both modes at 3 contrasts with every text pair at 4.5:1 or better; no warm tint left; ship staging GREEN",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-540",
+  "kind": "task",
+  "title": "Kind palette: badge and sidebar-dot colours by kind at one lightness and chroma (Learn, Practice, Review, Graded, Skills prep, Note, Class, Quiz, Session, Workout)",
+  "dod": "No black, white or grey kind dot anywhere; the Gallery shows every kind in both modes",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-541",
+  "kind": "task",
+  "title": "Badge: a 7 px coloured dot plus coloured text, no fill and no outline, set in a fixed-width column",
+  "dod": "Badges line up in one column on Today, Record and Progress at 1280; the Gallery is GREEN",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-542",
+  "kind": "task",
+  "title": "No outlines: rows, cards and badges lose their borders; groups are a filled band; side panels are a surface step on the page",
+  "dod": "A grep finds no row or card border in page/ds/components; Today, Record and Study match the round-5 shots",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-543",
+  "kind": "task",
+  "title": "Calm type scale: 12, 13, 14, 15 and 18 px at weights 400, 500 and 600; stats and the budget at 15 / 600; tabular numerals on times and counts",
+  "dod": "The token audit shows no view size above 18 px",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-544",
+  "kind": "task",
+  "title": "Line: one row shape; the title is one line with an ellipsis and the full text on hover and long press; at most one muted second line; rows are 36 px on the desk and 52 px on the phone",
+  "dod": "No row is taller than 52 px at 1280 on Matt's record; the Gallery is GREEN",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-545",
+  "kind": "task",
+  "title": "Flat check: 16 px on the desk and 20 px on the phone, solid green with a white tick, no shading; dark uses green at 62% over the surface",
+  "dod": "The Gallery shows rest, checked and focus in both modes",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-546",
+  "kind": "task",
+  "title": "Button groups are symmetric: one row, or a ⋯ menu for the rest",
+  "dod": "No control row wraps at 1280 on Today, Study or Record; Today's toolbar fits at 360",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-547",
+  "kind": "task",
+  "title": "Motion tokens and components: no scale() anywhere; press is a fill change (80 ms in, 140 ms out); folds animate height and opacity (240 ms open, 180 ms close); menus, popovers and toasts fade and rise 4–6 px; new rows reveal with a 40 ms stagger; view switches stay instant",
+  "dod": "A grep finds no scale( in styles.css or page/ds; the motion strips reproduce at 1280; reduced motion zeroes all durations",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-548",
+  "kind": "task",
+  "title": "Toast: sits above the footer strip on the desk and in E.V.'s line slot on the phone; carries Undo after a tick, an approve or a save",
+  "dod": "The toast never covers a row or the footer prompt at 1280 or 390; Undo restores the change",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-549",
+  "kind": "task",
+  "title": "Notice working state: says what is running, the usual time and the elapsed time; a failure says so in plain words",
+  "dod": "Remake shows the working notice within 300 ms, and a failed job reads as failed everywhere",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-550",
+  "kind": "task",
+  "title": "Meter and stat: a thin 4 px bar, a 15 px figure and a muted label; the whole stat opens its list; legends match the bar colours",
+  "dod": "Progress stats open their lists; no display-size numbers remain",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515",
+   "B-522"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-551",
+  "kind": "task",
+  "title": "E.V.'s ✦ line: one muted line with no fill, a small Ember ✦, and the whole line a button",
+  "dod": "It never wraps at 1280 and never reads as a banner; at 390 it opens the E.V. sheet",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-552",
+  "kind": "task",
+  "title": "Native baseline: tap highlight off, touch-action manipulation, no text selection or callout on controls, hover only under (hover: hover), default cursor on chrome, stable scrollbar gutter",
+  "dod": "Computed styles asserted in one harness check at 1280 and 390",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-553",
+  "kind": "task",
+  "title": "Desktop scroll pane: the window never scrolls; only the centre pane scrolls, with a thin themed scrollbar; the side panels become grid columns; fixes the 808 / 800 overflow",
+  "dod": "At 600 px and up, the scrolling element's height equals the viewport on every view; short views show no scrollbar; smoke GREEN at 1280 and 390",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-554",
+  "kind": "task",
+  "title": "Cheap scroll frames: no backdrop blur on the sticky header; content-visibility on the Record, Study and Done lists",
+  "dod": "A wheel-scroll probe at 1280 shows no more than 2 frames over 20 ms",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-555",
+  "kind": "task",
+  "title": "Keep scroll place: each view restores its pane scroll on return, and the last view and its scroll come back on relaunch",
+  "dod": "Scroll comes back within 4 px after a switch and after a reload; an empty or blocked localStorage still boots",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-556",
+  "kind": "task",
+  "title": "No layout shift on open: reserve the composer and thread heights before first paint",
+  "dod": "CLS under 0.05 on a cold E.V. tab at 1280 and 390",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-557",
+  "kind": "task",
+  "title": "Fonts and shell: self-host and precache Inter; stale-while-revalidate for the app shell",
+  "dod": "No Google Fonts request and no font swap on a cold open",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-558",
+  "kind": "task",
+  "title": "Theme colour follows the theme: light and dark theme-color metas, updated by theme.js on toggle",
+  "dod": "The metas match the sidebar ground in both modes",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-559",
+  "kind": "task",
+  "title": "Mac shortcuts and command menu: Cmd-1 to 6 switch views, / focuses the composer, Esc closes the top layer, Cmd-K opens a menu of views and actions built on Popover",
+  "dod": "Each works at 1280, and a smoke step covers them",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-560",
+  "kind": "task",
+  "title": "Composer keys: enterkeyhint send on the composer, done on answer fields, inputmode numeric on number fields; Enter sends on the desk",
+  "dod": "Matt checks it once",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-561",
+  "kind": "task",
+  "title": "Dock badge: navigator.setAppBadge set to the number due today where supported, cleared at zero",
+  "dod": "The badge shows and clears in a supporting browser",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-562",
+  "kind": "task",
+  "title": "Window-controls-overlay header for a Chrome install (optional, on Matt's choice of browser): the traffic lights inline in E.V.'s header with a drag region",
+  "dod": "In a Chrome install the header fills the title bar; Safari and the browser tab look unchanged; Matt checks it once in Chrome",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-563",
+  "kind": "task",
+  "title": "Safari settings tip: one line in System on desktop Safari only, saying to turn off navigation controls and turn on title-bar colour",
+  "dod": "The line shows only in desktop Safari",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-564",
+  "kind": "task",
+  "title": "Today view: one toolbar row (filter, List / Week, ‹ Today ›, Plan the rest, Add), To do and Done groups, Start and Write on rows, the budget panel, and E.V.'s changes as one line with Undo in its own column",
+  "dod": "It matches the round-5 shots at 1280 and 390 in light and dark on both courses; nothing overlaps",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-565",
+  "kind": "task",
+  "title": "Today Done group collapses by default, with lighter struck text",
+  "dod": "Done opens and closes by height and opacity; struck titles use the faint ink",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-566",
+  "kind": "task",
+  "title": "Today at 390: Start moves into the row's menu, and the minutes stay visible",
+  "dod": "No row at 390 shows a Start button; Start is reachable from each row's menu",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-567",
+  "kind": "task",
+  "title": "Study view: Practice sets table with Set, Questions, a coloured score, Date and an always-visible Retake / Resume / Start",
+  "dod": "It matches the round-5 shot on Matt's 12 sets at 1280 and 390",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-568",
+  "kind": "task",
+  "title": "Study plan card: one button row (Ask for changes, Remake, ⋯ holding Put away and plan settings); meta \"NUR 112 · Mon 2 Nov · on track\"; the title uses the full width, with hover for the whole title",
+  "dod": "No button row wraps; the title and the reading line fit at 1280",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-569",
+  "kind": "task",
+  "title": "Notes view: day groups, course dots, one-line titles, and the note on a surface panel with Quiz me on this note",
+  "dod": "It matches the round-5 shots at 1280 and 390 in light and dark",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-570",
+  "kind": "task",
+  "title": "Record view: opens on Notes, with a Notes / Sessions / Quizzes / Everything switch (Matt's OK); a fixed time column; the detail pane; fits 390 with the course filter as an icon",
+  "dod": "No overprint and no sideways scroll at 390",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-571",
+  "kind": "task",
+  "title": "Progress day panel: badge column, one-line titles with a muted second line, and a total that includes the running session",
+  "dod": "The panel's total matches Record and Today for the day",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515",
+   "B-522"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-572",
+  "kind": "task",
+  "title": "Conversation empty state and E.V. window: a greeting block in the top third with Next up and the composer under it; Coming up kept in the side pane; from 1024 px E.V. floats as a window that sizes to its content; below that it is a sheet (Matt's OK)",
+  "dod": "The avatar never sits low on an empty thread; the window has no empty space below a short answer",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan 9w83U8c79EjxijPXqs9xKi"
  }
 ]
