@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-391",
+  "date": "Oct 29",
+  "title": "Harnesses may also select by data-part (a named part of a view that is no component, e.g. a day total or a row's title); view lanes moving rules out of legacy put !important on each moved declaration until B-515 strips them, and drop an old class wherever a legacy rule on it would fight the component",
+  "why": "Pilot B-509 (bf5ca12): legacy outranks the views layer regardless of specificity, an old second class can repaint a component, and some parts had no D-387 anchor",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-387"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-390",
   "date": "Oct 29",
   "title": "Development is sequenced by completion, never time-gated: no holds around exams or calendar dates; each step starts when the one it depends on is done, and staging releases go out as they're ready; live still goes only on Matt's word, one bundled release at a time, with rollback as the safety net",
