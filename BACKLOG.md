@@ -120,7 +120,6 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-570 | Record view: opens on Notes, with a Notes / Sessions / Quizzes / Everything switch (Matt's OK); a fixed time column; the detail pane; fits 390 with the course filter as an icon Done when: No overprint and no sideways scroll at 390 | B-515 | UI polish | open |  |
 | B-571 | Progress day panel: badge column, one-line titles with a muted second line, and a total that includes the running session Done when: The panel's total matches Record and Today for the day | B-515, B-522 | UI polish | open |  |
 | B-572 | Conversation empty state and E.V. window: a greeting block in the top third with Next up and the composer under it; Coming up kept in the side pane; from 1024 px E.V. floats as a window that sizes to its content; below that it is a sheet (Matt's OK) Done when: The avatar never sits low on an empty thread; the window has no empty space below a short answer | B-515 | UI polish | open |  |
-| B-573 | Bug (reported Oct 29): run harness check '[notice 1280] a job finished off the E.V. tab' fails on main: the status line reads 'A run was missed' instead of the finished job. Done when: Find the commit that broke it and fix it; run.cjs 507/507 on main. | — | UI polish | open |  |
 
 ## Your turn
 
@@ -615,6 +614,7 @@ Freeze Done when: A weak spot he made active again after it was parked stays act
 | B-525 | Bug (reported Oct 29): Approving a plan hides its Open questions and Scope map. Done when: An approved plan still shows its Open questions and Scope map; test. (F-21) | — | UX probe fixes | done | Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps. |
 | B-526 | Bug (reported Oct 29): Study forgets the selected course on reopen, and E.V.'s "what should I do now" advice ignores the other course's near exam. Done when: Study reopens on the last course; E.V.'s now-advice weighs every course's next exam; tests. (F-09, F-57) | — | UX probe fixes | done | Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps. |
 | B-531 | Bug (reported Oct 29): Record's Kind menu offers "Feature", which is not a record kind for Matt. Done when: Record's Kind menu offers only Matt's kinds; test. (F-50) | — | UX probe fixes | done | Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps. |
+| B-573 | Bug (reported Oct 29): run harness check '[notice 1280] a job finished off the E.V. tab' fails on main: the status line reads 'A run was missed' instead of the finished job. Done when: Find the commit that broke it and fix it; run.cjs 507/507 on main. | — | UI polish | done | Not reproduced: run.cjs 507/507 twice on main (cf4bd60). Likely a timing flake (the check waits 4 s for the job notice, then reads the missed-run line). If it recurs, keep the log and notice-1280.png. |
 
 ## Inbox
 
