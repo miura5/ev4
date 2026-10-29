@@ -496,30 +496,8 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 /* B-104 (D-143, D-144): the calm Prep marker (quiet grey; never the red of urgent) and the prep
    check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
 .bi-prep,.prep-mark{flex:none;margin-left:8px;padding:0 7px;border-radius:999px;background:var(--plum-bg);color:var(--plum);font:600 calc(11.5px * var(--ts))/calc(20px * var(--ts)) var(--sans);letter-spacing:.02em}
-.prep-mark{margin-left:0}
-.prep{align-self:stretch;margin-top:6px;border-top:1px solid var(--line);text-align:left}
-.prep-row{appearance:none;display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:6px 2px;border:0;background:none;color:var(--ink2);font:500 calc(14px * var(--ts)) var(--sans);text-align:left;cursor:pointer}
-.prep-row:hover,.prep-row:active,.prep-row:focus{background:none;transform:none}
-.prep-row:focus-visible{outline:2px solid var(--accent-edge);outline-offset:2px}
-.prep-t{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prep.open .prep-t{white-space:normal}
-.prep-n{flex:none;color:var(--soft);font-size:calc(13px * var(--ts))}
 .prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform .25s var(--ease)}
 .prep.open .prep-row .chev{transform:rotate(180deg)}
-.prep.done .prep-t{color:var(--soft)} .prep.done .prep-mark{background:rgba(var(--do-rgb),.12);color:var(--do)}
-.prep-box[hidden]{display:none}
-.prep-note{margin:2px 0 8px;font-size:calc(14px * var(--ts));line-height:1.45;color:var(--soft)}
-.prep-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.prep-item{display:flex;align-items:center;gap:8px;min-height:44px}
-.prep-lab{flex:1 1 auto;min-width:0;display:flex;align-items:flex-start;gap:12px;padding:6px 0;cursor:pointer}
-.pi-txt{min-width:0;display:flex;flex-direction:column}
-.pi-t{font-size:calc(15px * var(--ts));line-height:1.4;color:var(--ink)}
-.prep-item.on .pi-t{color:var(--soft);text-decoration:line-through;text-decoration-color:rgba(var(--tint),.3)}
-.pi-c{font-size:calc(12.5px * var(--ts));line-height:1.4;color:var(--soft);overflow-wrap:anywhere}
-.pi-rm{flex:none;min-height:36px}
-.prep-add{display:flex;gap:8px;margin:6px 0 4px}
-.prep-add input{flex:1 1 auto;min-width:0;min-height:40px}
-.prep-add button{flex:none;min-height:40px}
 /* B-119: System. One lead line; pipelines, runs and each card's list fold under one line; only exceptions are marked (yellow). */
 /* B-120 (D-156): the page title only from 1024 px; below it the highlighted tab icon names the page. D-157: a problem in the status line reads yellow, on desktop only (System leads with it everywhere). */
 @media (max-width:1023px){.ptitle{display:none}}
@@ -584,13 +562,6 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .ins-list{margin:0}
 .ins-line{padding:6px 0;line-height:1.4}
 /* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
-.yt-place + .yt-place{margin-top:10px}
-.yt-label{font:600 calc(12.5px * var(--ts)) var(--sans);color:var(--soft);letter-spacing:.02em;margin:10px 0 2px}
-.yt-item{padding:8px 0}
-.yt-ask{margin:0;line-height:1.4}
-.yt-chips{margin-top:8px;justify-content:flex-start}
-.yt-confirm{margin:6px 0 0;color:var(--ink2);line-height:1.4}
-
 /* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}

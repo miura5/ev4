@@ -1,0 +1,32 @@
+/* ---- The E.V. window's cards: the prep checklist and Your turn (B-514, D-376, D-391): moved from page/styles.css. The
+   patterns layer sits under legacy (D-373), so every declaration says !important until B-515 strips them. A .prep-row
+   .chev rule stays in legacy: a later legacy rule shortens its transition. */
+.prep-mark{margin-left:0!important}
+.prep{align-self:stretch!important;margin-top:var(--sp-1_5)!important;border-top:1px solid var(--line)!important;text-align:left!important}
+.prep-row{appearance:none!important;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;width:100%!important;min-height:44px!important;padding:var(--sp-1_5) var(--sp-0_5)!important;border:0!important;background:none!important;color:var(--ink2)!important;font:var(--fw-medium) var(--fs-3) var(--sans)!important;text-align:left!important;cursor:pointer!important}
+.prep-row:hover,.prep-row:active,.prep-row:focus{background:none!important;transform:none!important}
+.prep-row:focus-visible{outline:2px solid var(--accent-edge)!important;outline-offset:2px!important}
+.prep-t{flex:1 1 auto!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.prep.open .prep-t{white-space:normal!important}
+.prep-n{flex:none!important;color:var(--soft)!important;font-size:var(--fs-2)!important}
+.prep.done .prep-t{color:var(--soft)!important} .prep.done .prep-mark{background:rgba(var(--do-rgb),.12)!important;color:var(--do)!important}
+.prep-box[hidden]{display:none!important}
+.prep-note{margin:var(--sp-0_5) 0 var(--sp-2)!important;font-size:var(--fs-3)!important;line-height:1.45!important;color:var(--soft)!important}
+.prep-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important}
+.prep-item{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;min-height:44px!important}
+.prep-lab{flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:flex-start!important;gap:var(--sp-3)!important;padding:var(--sp-1_5) 0!important;cursor:pointer!important}
+.pi-txt{min-width:0!important;display:flex!important;flex-direction:column!important}
+.pi-t{font-size:calc(15px * var(--ts))!important;line-height:var(--lh-ui)!important;color:var(--ink)!important}
+.prep-item.on .pi-t{color:var(--soft)!important;text-decoration:line-through!important;text-decoration-color:rgba(var(--tint),.3)!important}
+.pi-c{font-size:calc(12.5px * var(--ts))!important;line-height:var(--lh-ui)!important;color:var(--soft)!important;overflow-wrap:anywhere!important}
+.pi-rm{flex:none!important;min-height:36px!important}
+.prep-add{display:flex!important;gap:var(--sp-2)!important;margin:var(--sp-1_5) 0 var(--sp-1)!important}
+.prep-add input{flex:1 1 auto!important;min-width:0!important;min-height:40px!important}
+.prep-add button{flex:none!important;min-height:40px!important}
+.yt-place + .yt-place{margin-top:10px!important}
+.yt-label{font:var(--fw-semibold) calc(12.5px * var(--ts)) var(--sans)!important;color:var(--soft)!important;letter-spacing:.02em!important;margin:10px 0 var(--sp-0_5)!important}
+.yt-item{padding:var(--sp-2) 0!important}
+.yt-ask{margin:0!important;line-height:var(--lh-ui)!important}
+.yt-chips{margin-top:var(--sp-2)!important;justify-content:flex-start!important}
+.yt-confirm{margin:var(--sp-1_5) 0 0!important;color:var(--ink2)!important;line-height:var(--lh-ui)!important}
+
