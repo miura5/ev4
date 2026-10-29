@@ -9193,9 +9193,9 @@
   "id": "B-491",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Make a plan for the BIO 201 Chapter 9 lecture exam failed with 'the reply didn't pass E.V.'s checks (answer: /plan: expected object, got string)'. The Chapter 9 lab exam's plan had been put away while the job ran.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A plan job whose answer arrives with plan (or another object field) as a JSON string is read as that object instead of failing E.V.'s checks; test with a stringified plan answer; one real Make a plan on staging for a BIO 201 exam succeeds; putting away another exam's plan during a running job doesn't affect it.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9205,6 +9205,10 @@
   "reportedAt": "2026-10-29T14:00:56.758Z",
   "board": {
    "row": "v4 B-491: Make a plan for the BIO 201 Chapter 9 lecture exam failed with 'the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T14:01:39.880Z"
   }
  }
 ]
