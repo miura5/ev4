@@ -9495,7 +9495,7 @@
   "depends": [
    "B-506"
   ],
-  "notes": "Scaffold at d2a979f (one file per component, DS gathering, build layers by folder, tools/pixdiff.cjs; 0 changed pixels in 34 shots). Lanes C1 (B-507) and C2 (B-508) starting now.",
+  "notes": "Done in lane C1: nine components (3a1a7b6, 1aff5a1, a659c5b, 7889b5c, 89d387c, 1feb0d2, bf8d3cf) and the kit delegation alone (1ecfdc7); pixdiff 0 in 34 shots each time; markup identical except data-*; check --touched all green. A few commented !important rules beat legacy until B-515. For B-516: bad-tone chip 3.58:1 in light; 16 px ticks and fold-lines under 44 px on the phone. Staging with the pilot.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
