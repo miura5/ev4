@@ -1,1 +1,26 @@
-/* Proprietary 13 Choice: the choice component's rules, components layer (D-373, D-388); lane C2 (B-508) fills this file */
+/* Proprietary 13 Choice (B-508): .choice, the quiz runner's answers (today's .qz-card .opt) */
+:where(.choice){
+  --choice-ok:color-mix(in srgb,var(--sem-green) 11%,var(--surface)); --choice-ok-edge:color-mix(in srgb,var(--sem-green) 40%,var(--line2));
+  --choice-bad:color-mix(in srgb,var(--sem-red) 11%,var(--surface)); --choice-bad-edge:color-mix(in srgb,var(--sem-red) 40%,var(--line2));
+  display:flex;flex-direction:column;gap:var(--sp-2);border:0;padding:0;margin:0;min-width:0}
+:where(.choice) > legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+:where(.choice-o){position:relative;display:flex;align-items:center;gap:10px;min-height:52px;padding:var(--sp-2) 14px;
+  border-radius:9px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);box-sizing:border-box;
+  font:var(--fw-regular) var(--fs-3)/var(--lh-ui) var(--sans);color:var(--text);cursor:pointer;
+  transition:background var(--dur-2) var(--ease-out),box-shadow var(--dur-2) var(--ease-out)}
+/* the native input covers the row: the whole row is the tap target, and the browser keeps the group's keys */
+:where(.choice-o) > input{appearance:none;position:absolute;inset:0;width:100%;height:100%;margin:0;border:0;border-radius:inherit;
+  opacity:0;cursor:inherit}
+:where(.choice-o) > kbd{flex:0 0 20px;font:var(--fw-medium) calc(12.5px * var(--ts)) var(--sans);color:var(--quiet)}
+:where(.choice-o) > span{flex:1;min-width:0;overflow-wrap:anywhere}
+:where(.choice-o) > svg{width:16px;height:16px;flex:none;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.choice-o:not(:has(:disabled)):hover{background:var(--hover)}
+.choice-o:has(:checked):not([data-state]){box-shadow:inset 0 0 0 1.5px var(--text)}
+.choice-o:has(:checked) > kbd{color:var(--text)}
+.choice-o:has(:focus-visible){outline:2px solid var(--focus,var(--text));outline-offset:2px}
+.choice-o:has(:disabled){cursor:default}
+.choice-o:is([data-state=correct],[data-state=revealed]){background:var(--choice-ok);box-shadow:inset 0 0 0 1px var(--choice-ok-edge)}
+.choice-o[data-state=wrong]{background:var(--choice-bad);box-shadow:inset 0 0 0 1px var(--choice-bad-edge)}
+.choice-o:is([data-state=correct],[data-state=revealed]) > svg{stroke:var(--sem-green)}
+.choice-o[data-state=wrong] > svg{stroke:var(--sem-red)}
+@media (hover:none){:where(.choice-o) > kbd{display:none}}
