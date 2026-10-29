@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 29 | v4 staging deployed at 2eb1ee5 (02:46 CT), from 452004b: On live, the quick ask 'Which objectives aren't solid yet?' answered…; On live, asking E.V. for flashcards (NUR 112 dosage terms, units and…; A finished job's finish time is stamped with its start time, which…; A plan edit's reply named the wrong weekday (said Tue 28 Oct for a… (B-478, B-479, B-462, B-463). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 29 | v4 staging deployed at 452004b (01:45 CT), from aacddd6: On live, a study plan's tasks and Today's list are not one set of… (B-483). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 29 | v4 staging deployed at aacddd6 (01:22 CT), from 62f00d9: On live, a study plan's tasks and Today's list are not one set of… (B-483). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 29 | v4 staging deployed at 62f00d9 (00:59 CT), from 166bb47: On live, a generated dosage practice question had the wrong answer… (B-481). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
