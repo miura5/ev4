@@ -8950,5 +8950,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:36:01.689Z"
   }
+ },
+ {
+  "id": "B-480",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live, a practice set asked for as '10 weight-based dose problems' (a plan task) came back with 9 questions; when E.V. drops a question it wrote (a failed check), the set should be topped up to the asked count, or the set's line should say how many were dropped and why.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "On live, a practice set asked for as '10 weight-based dose problems' (a plan task) came back with 9 questions; when E.V. drops a question it wrote (a failed check), the set should be topped up to the asked count, or the set's line should say how many were dropped and why.",
+  "reportedAt": "2026-10-29T03:41:07.289Z",
+  "board": {
+   "row": "v4 B-480: On live, a practice set asked for as '10 weight-based dose problems'…"
+  }
  }
 ]
