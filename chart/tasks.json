@@ -9720,7 +9720,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 0bece6c: a running job's card shows 'Working · 1 min 20 s' and her status 'working · 2 min'; the plan card says 'Making your plan · …' and its button is Make a plan in every state; a failed or stalled job reads 'didn't finish', never 'something's ready'. run.cjs 506/506. Next release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "A long plan job shows no sign it is working, and a failed one is reported as \"something's ready\".",
