@@ -477,3 +477,28 @@ test('B-479: the Quizlet block is term TAB definition, one card per line, verify
     'mg/kg\tmilligrams per kilogram of body weight\nBSA\tbody surface area [verify]\nq6h\tevery 6 hours [verify]'
   );
 });
+
+test('B-462: a finished job is stamped when it finishes, and its done message sits after its start', async () => {
+  const { db, id } = withJob('general');
+  const writes = [];
+  const END = new Date(NOW.getTime() + 95000);
+  await J.runJob({
+    db,
+    spec,
+    schemas,
+    jobId: id,
+    now: NOW,
+    clock: () => END,
+    release: 'v4.5.5+1',
+    ask: async body => jobReply(body),
+    write: async w => writes.push(w),
+  });
+  const all = flat(writes);
+  const done = all.find(w => w.collection === 'jobresults' && w.data.status === 'done');
+  assert.equal(done.data.startedAt, NOW.toISOString());
+  assert.equal(done.data.finishedAt, END.toISOString());
+  const talk = all.find(w => w.collection === 'talk');
+  const [key, msg] = Object.entries(talk.data.messages)[0];
+  assert.equal(msg.at, END.toISOString(), 'the done note is placed when the job finished');
+  assert.equal(key, 'm-20261025-150135000-job');
+});

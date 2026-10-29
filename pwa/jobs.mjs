@@ -572,6 +572,7 @@ export async function runJob({
   reload,
   usage,
   now = new Date(),
+  clock = () => new Date(), // B-462: when the job finishes, for its result's finishedAt and its done message
   release,
   dir,
   timeLeft = null, // B-459: ms left before the Worker's deadline, when the run has one
@@ -635,6 +636,9 @@ export async function runJob({
     await save(status('failed', why));
     return { status: 'failed', said: why };
   }
+  // B-462: the result and its message are stamped when the job finishes, never with its start (never before it)
+  const end = new Date(clock());
+  if (end.getTime() > Date.parse(prepared.ctx.startedAt)) prepared.ctx.now = EV.envelope('x', '', end).at;
   let r;
   try {
     r = answer
