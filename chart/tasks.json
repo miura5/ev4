@@ -10005,5 +10005,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:39.523Z"
   }
+ },
+ {
+  "id": "B-535",
+  "kind": "request",
+  "title": "Request (reported Oct 29): A web address per view and arrow keys between views, so Back works.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "A web address per view and arrow keys between views, so Back works.",
+  "reportedAt": "2026-10-29T16:01:43.267Z",
+  "board": {
+   "row": "v4 B-535: A web address per view and arrow keys between views, so Back"
+  }
  }
 ]
