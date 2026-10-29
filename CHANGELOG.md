@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 28 | v4 staging deployed at c3f92d2 (23:39 CT), from c83d9c4: The release's UI review (78/100) asks for: objectives folded to one… (B-464). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at c83d9c4 (22:26 CT), from afac42f: From Today's list, go back to earlier days (as the week view's arrows… (B-448). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at afac42f (21:51 CT), from 958c9dc: Ask for changes on a plan does not reliably reach the plan edit: the… (B-461). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at 958c9dc (21:13 CT), from f39d054: Retire the claude.ai page as a view, step 1 (D-367): ship staging and… (B-472). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
