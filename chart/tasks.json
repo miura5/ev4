@@ -9013,5 +9013,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:46:57.294Z"
   }
+ },
+ {
+  "id": "B-483",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live, a study plan's tasks and Today's list are not one set of tasks: approving a plan did not put its tasks for today on Today's list; after Plan the rest added them, ticking an item in the Study plan does not tick it on Today and ticking on Today does not tick it in the plan. Each plan task should appear once on Today when its plan is approved and share one tick in both places; Plan the rest should not add copies of plan tasks.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "On live, a study plan's tasks and Today's list are not one set of tasks: approving a plan did not put its tasks for today on Today's list; after Plan the rest added them, ticking an item in the Study plan does not tick it on Today and ticking on Today does not tick it in the plan. Each plan task should appear once on Today when its plan is approved and share one tick in both places; Plan the rest should not add copies of plan tasks.",
+  "reportedAt": "2026-10-29T03:56:58.177Z",
+  "board": {
+   "row": "v4 B-483: On live, a study plan's tasks and Today's list are not one set of…"
+  }
  }
 ]
