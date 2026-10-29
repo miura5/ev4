@@ -10047,5 +10047,22 @@
    "outcome": "task",
    "at": "2026-10-29T19:26:46.471Z"
   }
+ },
+ {
+  "id": "B-537",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Staging e2e oddities (aa177a1): E.V. tells him to tap 'Make a new plan' (the button is Remake); the BIO mini quiz re-serves its 3 answered questions and its teaser shows a question it never asks; a pediatric dosing task's Open lands on the Study overview, not its set, and the set isn't listed under Practice sets; at 390 the last quiz card stays pinned above the composer over the newest reply; the import preview lists repeat terms it says it leaves out; Pick an objective offers every course objective unfiltered.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging e2e of aa177a1",
+  "words": "Staging e2e oddities (aa177a1): E.V. tells him to tap 'Make a new plan' (the button is Remake); the BIO mini quiz re-serves its 3 answered questions and its teaser shows a question it never asks; a pediatric dosing task's Open lands on the Study overview, not its set, and the set isn't listed under Practice sets; at 390 the last quiz card stays pinned above the composer over the newest reply; the import preview lists repeat terms it says it leaves out; Pick an objective offers every course objective unfiltered.",
+  "reportedAt": "2026-10-29T20:05:20.455Z",
+  "board": {
+   "row": "v4 B-537: Staging e2e oddities (aa177a1): E.V. tells him to tap 'Make a new…"
+  }
  }
 ]
