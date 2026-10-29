@@ -9678,7 +9678,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at a8e7658: quiz fits 390 (count line shrinks, long words wrap); reopening mid-quiz offers 'Quiz in progress · Resume quiz' in Study. run.cjs 493/493. Staging with tonight's release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "The quiz renders wider than a phone screen (545 px at 390), and reopening the app mid-quiz loses the quiz.",
