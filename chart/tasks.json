@@ -9632,9 +9632,9 @@
   "id": "B-517",
   "kind": "bug",
   "title": "Bug (reported Oct 29): \"Quiz me\" and Start session open a blank note or switch views; they should start the quiz or session in place.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "\"Quiz me\" in the conversation and Start session on a practice task start the quiz or drill where Matt is, in the task's course, and never create a note or switch view unasked; tests; real run on staging. (UX map F-32, F-51, F-56, F-62)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9643,6 +9643,10 @@
   "reportedAt": "2026-10-29T15:58:54.332Z",
   "board": {
    "row": "v4 B-517: \"Quiz me\" and Start session open a blank note or switch views; they…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:58:58.668Z"
   }
  }
 ]
