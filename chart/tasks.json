@@ -8894,9 +8894,9 @@
   "id": "B-477",
   "kind": "request",
   "title": "Request (reported Oct 28): Exams that overlap should be plannable together: Add exam should stay available after a course has one exam (BIO 201's lab exam hid it, so the Sunday lecture exam could not be added; NUR 112 has ATI dosage 11/2, Dosage Exam 1 11/4 and Exam 5 soon after); Study should offer Make a plan for every upcoming exam, not only the next; plans should account for each other's load and the next exam's plan should be offered as the current one wraps up, so studying moves cleanly from one exam to the next and stays ahead.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "(1) Add exam is always available in Study for a course (in its exam list), not only when it has none. (2) Study lists each upcoming exam of the course within 21 days with its own plan or Make a plan, not only the next. (3) Each plan's make and edit asks are given the other active plans' days and minutes and the course's and other course's upcoming exams, so plans share the day's budget and front-load the nearer exam; a plan edit asked to add or extend to another exam (B-476) either extends through it or, when it needs a new plan, says so in plain words with a Make a plan chip; never 'Not applicable'. (4) When an exam is 3 days out or less (or passed) and the course has a later exam with no plan, Study and the greeting offer Make a plan for it. Proved on staging in the app with NUR 112's ATI dosage, Dosage Exam 1 and Exam 5 and BIO 201's lab and lecture exams.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8905,6 +8905,10 @@
   "reportedAt": "2026-10-29T02:03:59.734Z",
   "board": {
    "row": "v4 B-477: Exams that overlap should be plannable together: Add exam should stay…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T02:04:12.910Z"
   }
  }
 ]
