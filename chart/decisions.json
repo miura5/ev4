@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-388",
+  "date": "Oct 29",
+  "title": "Proprietary is one file per component so lanes never share a file: page/app/01-ui-NN-<name>.js (hoisted function declarations) gathered by page/app/01-ui.js into DS, page/ds/components/NN-<name>.css and staging-only page/app/89-gallery-NN-<name>.js; view CSS moves to page/ds/views/<view>.css; the D-386 budget (about 900 JS / 900 CSS / 500 patterns) counts the totals, summed by a test",
+  "why": "The lane plan (Proprietary doc): parallel lanes on single shared files would collide; one file per component keeps file ownership exclusive while the budget still holds",
+  "status": "accepted",
+  "supersedes": [
+   "D-386"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-387",
   "date": "Oct 29",
   "title": "Harnesses select by role and name, data-ui, data-key (the record id an item shows) or the shell's fixed region ids; visual classes and data-kind/size/tone stay forbidden outside the Gallery's harness; old classes ride along one release",
@@ -16,7 +28,7 @@
   "date": "Oct 29",
   "title": "Proprietary's components live in page/app/01-ui.js under the namespace DS (not 02-ui.js / ui.*); page/ds/patterns.css holds the seven patterns (Shell, Week, Runner, Plan card, Thread, Note page, Triage) under a cap of about 500 lines; the budget of D-378 otherwise stands",
   "why": "02-navigation.js already holds const ui (the view state, 208 references), so ui.* would collide; patterns need a capped home too (B-504)",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-378"
   ],
