@@ -113,7 +113,7 @@
       'how did this week go': () => [weekLine(), [{ type: 'go', label: 'Open Progress', to: 'progress' }]],
       'plan the rest of today': () => {
         const np = restProposal();
-        if (!np.adds.length && !np.offs.length) return ['Nothing to change: today’s list already fits the plan.', []];
+        if (!np.adds.length && !np.offs.length) return [restNone(np), []];
         ui.restPlan = np;
         const bits = [
           np.adds.length ? plural(np.adds.length, 'thing') + ' to add' : '',

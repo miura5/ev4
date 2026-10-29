@@ -892,6 +892,34 @@
           why: b ? 'over today’s budget' : moved ? 'planned for ' + short(moved) : 'no longer in the plan',
         });
       }
+      // B-524 (F-60): over the budget she never says the list fits. When the plan's own take-offs leave the day still over,
+      // she proposes the smallest further cut from what may move (not graded work, exams, clinicals, validations or
+      // reviews, nor what he or E.V. added): the one smallest task that covers it, else the biggest until it is covered.
+      const bv = budgetView(budget, items, isDone);
+      let over = bv ? bv.over - offs.reduce((n, o) => n + o.minutes, 0) : 0;
+      if (over > 0) {
+        const movable = items.filter(
+          it =>
+            !it.added &&
+            !it.deferred &&
+            !isDone(it) &&
+            !FIXED.has(it.tag) &&
+            !/REVIEW/.test(it.tag || '') &&
+            !/^(date|exam|soon)-/.test(it.id || '') &&
+            Number(it.minutes) > 0 &&
+            !offs.some(o => o.id === it.id)
+        );
+        const one = movable.filter(it => Number(it.minutes) >= over).sort((a, b) => a.minutes - b.minutes)[0];
+        const cut = one ? [one] : [];
+        if (!one)
+          for (const it of [...movable].sort((a, b) => b.minutes - a.minutes)) {
+            if (cut.reduce((n, x) => n + Number(x.minutes), 0) >= over) break;
+            cut.push(it);
+          }
+        for (const it of cut)
+          offs.push({ id: it.id, text: it.text, minutes: Number(it.minutes) || 0, why: 'over today’s budget' });
+        over -= cut.reduce((n, x) => n + (Number(x.minutes) || 0), 0);
+      }
       // the time left once the take-offs go: the budget less what stays planned (done or not, as budgetView counts it)
       let room = budget ? budget.available - (budget.planned - offs.reduce((n, o) => n + o.minutes, 0)) : Infinity;
       const adds = [];
@@ -926,8 +954,13 @@
             why: 'a weak spot',
           });
       }
-      return { date: today, adds, offs };
+      return { date: today, adds, offs, over: Math.max(0, over) };
     }
+    // B-524 (F-60): what Plan the rest says when it has nothing to propose; "fits" only when the day is inside its budget
+    const restNone = np =>
+      np.over > 0
+        ? `Today’s list is ${np.over} min over, and what’s left is fixed (graded work, reviews, clinicals) or yours, so there’s nothing for E.V. to take off. Snooze a task to move it to tomorrow.`
+        : 'Nothing to change: today’s list already fits the plan.';
     const restEdit = p => ({ action: 'add', text: p.text, kind: p.kind, minutes: p.minutes, course: p.course });
     const offEdit = p => ({ action: 'remove', id: p.id });
     function restLeft(P) {
@@ -1073,7 +1106,7 @@
       rest.prepend(svgIcon('M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z'));
       rest.addEventListener('click', () => {
         const np = restProposal();
-        if (!np.adds.length && !np.offs.length) return toast('Nothing to change: today’s list already fits the plan.');
+        if (!np.adds.length && !np.offs.length) return toast(restNone(np));
         ui.restPlan = np;
         render();
       });

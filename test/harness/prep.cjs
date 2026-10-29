@@ -1103,6 +1103,83 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !a.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-524 (F-60): Plan the rest never says the list fits while the day is over its budget. Over by 30 minutes with a
+  // 40-minute reading and a 20-minute practice that may move, it proposes the one smallest cut that covers it (the
+  // reading); over with only fixed work left, its toast says so and never "fits". At 390 and 1280.
+  const overRecord = fixedOnly => {
+    const db = record();
+    db.weakspots = {};
+    db.planedits = {};
+    db.plans = {};
+    const day = db.days[today];
+    day.list.items = [
+      {
+        id: 'date-prep-clin',
+        text: 'Clinical: Mercy Hospital 4 West',
+        tag: 'CLINICAL',
+        minutes: 0,
+        ref: 'dates/prep-clin',
+      },
+      ...(fixedOnly
+        ? [{ id: 'date-p524-care', text: 'Care plan 2 draft', tag: 'GRADED', minutes: 90, ref: null }]
+        : [
+            { id: 'p524-read', text: 'Read Ch 41: oxygenation', tag: 'READING', minutes: 40, ref: null },
+            { id: 'p524-cards', text: 'Flashcards: oxygen devices', tag: 'PRACTICE', minutes: 20, ref: null },
+          ]),
+    ];
+    delete day.list.focus;
+    day.plan = { ...(day.plan || {}), budget: { available: 30, planned: fixedOnly ? 90 : 60, over: 0 }, deferred: [] };
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ]) {
+    const w = viewport.width,
+      tag = `[plan the rest over budget ${w}]`;
+    const ctx = await browser.newContext({ viewport });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await openPage(page, ct(today, 10, 0), overRecord(false));
+    await page.click('#tab-today');
+    await page.waitForTimeout(400);
+    await page.click('#p-today .ti-rest');
+    await page.waitForTimeout(300);
+    const o = await page.evaluate(() => ({
+      offs: [...document.querySelectorAll('#today-list .ti-list > li.ti-off')].map(li => li.dataset.id),
+      line: (document.querySelector('#p-today .ti-review') || {}).textContent || '',
+      toast: document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent,
+    }));
+    ok(
+      `${tag} over by 30 min, it proposes the one smallest cut that covers it (the 40-min reading), never "fits"`,
+      o.offs.join() === 'p524-read' &&
+        /take “Read Ch 41: oxygenation” off today, since it’s over today’s budget/.test(o.line) &&
+        !/fits/.test(o.toast),
+      JSON.stringify(o)
+    );
+    await page.screenshot({ path: `${shots}/today-rest-over-${w}.png` });
+    await ctx.close();
+    const ctx2 = await browser.newContext({ viewport });
+    const p2 = await ctx2.newPage();
+    p2.on('pageerror', e => errors.push(e.message));
+    await openPage(p2, ct(today, 10, 0), overRecord(true));
+    await p2.click('#tab-today');
+    await p2.waitForTimeout(400);
+    await p2.click('#p-today .ti-rest');
+    await p2.waitForTimeout(200);
+    const t = await p2.evaluate(() => ({
+      toast: document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent,
+      prop: document.querySelectorAll('#today-list .pmark').length,
+    }));
+    ok(
+      `${tag} over with only fixed work left, the toast says how far over and never "fits"`,
+      /^Today’s list is 60 min over/.test(t.toast) && !/fits/.test(t.toast) && !t.prop,
+      JSON.stringify(t)
+    );
+    ok(`${tag} no page errors`, !errors.length, errors.join(' | '));
+    await ctx2.close();
+  }
   // B-294: E.V.'s changes today. On Plan the rest's day, with a study session logged today and one task he added himself,
   // Accept all puts her add and her take-off in the right panel, newest first, each with Undo; his add and the session
   // never show. Undo on the take-off brings the reading back, and Undo on the add takes the drill off, each as one list
