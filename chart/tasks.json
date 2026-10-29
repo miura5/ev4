@@ -9921,5 +9921,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:08.069Z"
   }
+ },
+ {
+  "id": "B-531",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Record's Kind menu offers \"Feature\", which is not a record kind for Matt.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Record's Kind menu offers \"Feature\", which is not a record kind for Matt.",
+  "reportedAt": "2026-10-29T16:01:12.169Z",
+  "board": {
+   "row": "v4 B-531: Record's Kind menu offers \"Feature\", which is not a record kind for…"
+  }
  }
 ]
