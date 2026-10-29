@@ -278,6 +278,7 @@ test('B-455: an item is held to its candidate objectives; a planted dosage miss 
         unit: 'mL',
         tolerance: 0.05,
         steps: ['250 / 125 x 5 = 10'],
+        calc: { dose: 250, doseUnit: 'mg', stockAmount: 125, stockUnit: 'mg', stockMl: 5 }, // B-481
         cjStep: 'take-action',
         sourceRef: 'materials/dose-handout',
       },

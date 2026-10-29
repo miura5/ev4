@@ -1191,6 +1191,7 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
     unit: 'mL',
     tolerance: 0.05,
     steps: ['250 / 125 = 2', '2 x 5 mL = 10 mL'],
+    calc: { dose: 250, doseUnit: 'mg', stockAmount: 125, stockUnit: 'mg', stockMl: 5 }, // B-481: the key is worked again
     objective: 'D9-1',
     topic: 'Liquid oral doses',
     cjStep: 'take-action',
@@ -1202,7 +1203,14 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
     drills: {
       [drill.setId]: [
         n(),
-        n({ topic: 'IV rate', answer: 125, unit: 'mL/hr', steps: ['1000 mL / 8 hr = 125 mL/hr'] }),
+        n({
+          topic: 'IV rate',
+          stem: 'Infuse 1,000 mL of a made-up fluid over 8 hours. What is the rate in mL/hr?',
+          answer: 125,
+          unit: 'mL/hr',
+          steps: ['1000 mL / 8 hr = 125 mL/hr'],
+          calc: { volumeMl: 1000, hours: 8 },
+        }),
         n({ topic: 'From the syllabus', sourceRef: 'materials/made-up-syllabus' }),
         n({ topic: 'No steps', steps: [] }),
         {
@@ -1216,6 +1224,7 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
           cjStep: 'take-action',
           sourceRef: 'materials/made-up-dosage',
         },
+        n({ topic: 'Keyed wrong', answer: 5 }), // B-481: its calc works to 10 mL
       ],
     },
   });
@@ -1233,6 +1242,8 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
   const detail = r.plan.steps.find(s => s.id === 'write-practice').detail;
   assert.match(detail, /cites dosage material/);
   assert.match(detail, /numeric items only/);
+  // B-481: the worked answer is checked too (the detail line is cut, so it is the plan's set that shows it)
+  assert.ok(!data.items.some(q => q.topic === 'Keyed wrong'));
 
   // Without dosage material the drill is not written, and the run says why.
   const db2 = recordDb();

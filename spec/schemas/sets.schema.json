@@ -77,6 +77,11 @@
     "null"
    ]
   },
+  "asked": {
+   "type": "integer",
+   "minimum": 1,
+   "description": "B-480: the count the job asked for, when the set holds fewer (the rest did not pass E.V.’s checks)"
+  },
   "items": {
    "type": "array",
    "items": {

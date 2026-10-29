@@ -949,6 +949,12 @@ export const AGENT_FOLDS = {
         rejects.push(`${name}: ${v.errors.join(', ')}`);
         return null;
       }
+      // B-481: a key its own calc or rationale doesn't support is never shown
+      const bad = EV.practiceReply.answerKeyProblem({ ...q, calc: raw && raw.calc });
+      if (bad) {
+        rejects.push(`${name}: ${bad}`);
+        return null;
+      }
       // B-193 (D-205): an item on another course's passage still targets an objective of its own course.
       const cc = EV.crossCourse(q, {
         materials: db.materials,

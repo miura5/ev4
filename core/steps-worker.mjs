@@ -210,6 +210,40 @@ export const AGENT_MATERIAL = {
   },
 };
 
+/** B-480: how many questions a practice set's job asks for: the count its title or brief names ("10 weight-based dose
+ * problems"), else the count the answer wrote. */
+export function askedCount(job, wrote = 0) {
+  const words = [job && job.title, job && job.brief].map(t => String(t || '')).join(' ');
+  // a chapter, unit, week or exam number is no count ("chapter 39 questions")
+  const m = words.match(
+    /(?<!(?:\b(?:ch|chapters?|units?|modules?|weeks?|exams?|lectures?|e|w)\.?|#)\s*)\b(\d{1,2})\s+(?:[\w-]+\s+){0,4}?(?:questions?|problems?|items?|qs|calculations?|cases?)\b/i
+  );
+  const n = m ? Number(m[1]) : 0;
+  return n >= 1 && n <= 40 ? n : wrote;
+}
+/** A practice set's written items as kept: each in a stored item's fields, held to the item rules, the cross-course
+ * rule (B-193) and its own key (B-481: a key its calc or rationale doesn't support is dropped, never shown). */
+export function practiceItems(raw, db, target) {
+  const items = [];
+  for (const r of raw || []) {
+    const q = {
+      id: 'p' + (items.length + 1),
+      kind: r && r.weakspotId ? 'review' : 'check',
+      ...pick(r || {}, ITEM_FIELDS),
+    };
+    if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId;
+    if (EV.practiceReply.answerKeyProblem({ ...q, calc: r && r.calc })) continue;
+    const cross = EV.crossCourse(q, {
+      materials: db.materials,
+      exams: db.exams,
+      objectives: db.objectives,
+      set: { exam: target ? target.id : null },
+    }); // B-193
+    if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(cross.item);
+  }
+  return items;
+}
+
 export const AGENT_FOLDS = {
   /** {text, links?, items?, plan?, failed?}: jobresults/<id>, what the job made, and E.V.'s message in talk/<date>. */
   'job-result'(answer, db, ctx, spec) {
@@ -237,28 +271,15 @@ export const AGENT_FOLDS = {
     }
     if (!failed && job.kind === 'practice-set') {
       const raw = answer.items || [];
-      const items = [];
       const target = EV.targetExam({
         exams: db.exams || [],
         objectives: db.objectives || [],
         weakspots: models(db),
         date: ctx.date,
       });
-      for (const r of raw) {
-        const q = {
-          id: 'p' + (items.length + 1),
-          kind: r && r.weakspotId ? 'review' : 'check',
-          ...pick(r || {}, ITEM_FIELDS),
-        };
-        if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId;
-        const cross = EV.crossCourse(q, {
-          materials: db.materials,
-          exams: db.exams,
-          objectives: db.objectives,
-          set: { exam: target ? target.id : null },
-        }); // B-193
-        if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(cross.item);
-      }
+      // B-480: the count he asked for (the app's runner topped the set up once already); a set short of it says so
+      const asked = ctx.askedItems || askedCount(job, raw.length);
+      const items = practiceItems(raw, db, target).slice(0, asked);
       if (items.length) {
         const setId = 'job-' + job.id.replace(/^job-/, '');
         writes.push({
@@ -273,6 +294,7 @@ export const AGENT_FOLDS = {
             ...(target ? { exam: target.id } : {}),
             title: job.title,
             items,
+            ...(items.length < asked ? { asked } : {}),
             createdAt: ctx.now,
           },
         });

@@ -1074,7 +1074,8 @@
       $('pr-title').hidden = !!d;
       if (d) {
         fold.dataset.set = d.id;
-        fold.textContent = d.title || 'Practice';
+        const shortBy = E.practiceReply.setShortfall(d, E.validItems(d).length); // B-480
+        fold.textContent = (d.title || 'Practice') + (shortBy ? ' · ' + shortBy : '');
         fold.setAttribute('aria-label', (d.title || 'This set') + ': back to Objectives; your answers are kept');
       }
       if (!d) {
@@ -1226,7 +1227,8 @@
           (ids.length ? 'one of the objective ids above' : 'omit') +
           '); topic (short); cjStep "take-action"; sourceRef, the ref of the passage it rests on. Never from his medication table or drug cards.',
         'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
-        'Shape: {"items":[{"type":"numeric","topic":"...","stem":"...","answer":10,"unit":"mL","tolerance":0.05,"steps":["..."],"cjStep":"take-action","sourceRef":"materials/<id>"}]}',
+        EV_SPEC.items.calcGuide || '', // B-481: every dosage question's numbers, so its answer is worked again
+        'Shape: {"items":[{"type":"numeric","topic":"...","stem":"...","answer":10,"unit":"mL","tolerance":0.05,"steps":["..."],"calc":{"dose":250,"doseUnit":"mg","stockAmount":125,"stockUnit":"mg","stockMl":5},"cjStep":"take-action","sourceRef":"materials/<id>"}]}',
       ]
         .filter(Boolean)
         .join('\n');
@@ -1400,6 +1402,7 @@
               '. Keep every question on that topic; use a matching weak spot id only when it truly matches.'
             : '',
           'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
+          EV_SPEC.items.calcGuide || '', // B-481
           'Write exactly 5 questions. "single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
             JSON.stringify(E.CJ_STEPS) +
             '. Set verify true when the point relies on general knowledge rather than his chapters.',

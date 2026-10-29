@@ -129,7 +129,7 @@ const imagesOf = content => (Array.isArray(content) ? content.filter(b => b && b
 // B-324: the jobs the conversation starts, by name: "Smoke job <name>" makes the stub call start_job with this one.
 const SMOKE_JOBS = {
   'study-guide': { kind: 'study-guide', brief: 'A one-page guide on fluid volume deficit.' },
-  'practice-set': { kind: 'practice-set', brief: '5 questions on fluid volume deficit.' },
+  'practice-set': { kind: 'practice-set', brief: '2 questions on fluid volume deficit.' }, // the stub writes 2: no top-up (B-480)
   'exam-plan': { kind: 'exam-plan', brief: 'A new study plan for E4.' }, // D-362: offered as the chip, started by its tap
   'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },

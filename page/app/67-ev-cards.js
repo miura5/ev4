@@ -207,7 +207,8 @@
           return;
         }
         const cnt = el('span', 'meta');
-        const h = head2(s.title || 'Practice set');
+        const shortBy = E.practiceReply.setShortfall(s, E.validItems(s).length); // B-480: "9 of 10: 1 didn't pass E.V.'s checks"
+        const h = head2((s.title || 'Practice set') + (shortBy ? ' · ' + shortBy : ''));
         h.append(cnt); // B-191 (D-160): a set surface folds back into the conversation by its own head line
         box.append(h);
         const bar = el('i');

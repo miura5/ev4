@@ -15,7 +15,8 @@
 // the schemas, how to ask Claude and how to write.
 import EV from '../core/evcore.mjs';
 import { validateAgainst, describeErrors, makeValidator } from '../core/validate.mjs';
-import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS } from '../core/steps-worker.mjs';
+import { CODE_STEPS, AGENT_MATERIAL, AGENT_FOLDS, askedCount, practiceItems } from '../core/steps-worker.mjs';
+import { models } from '../core/steps-shared.mjs';
 import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from '../core/derive.mjs';
 
 /** The source every document the app's job runner writes carries; the staging count check knows it by this. */
@@ -505,6 +506,43 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
 }
 
 /**
+ * B-480: a practice set holds the count he asked for. The questions E.V.'s checks drop (B-481: a key its numbers or
+ * rationale don't support, or a shape the item rules refuse) are replaced once: one more ask, same model, for the
+ * missing count; what it writes meets the same checks in the fold. The count asked goes on the run's context, so a
+ * set still short of it says so. Any trouble with the second ask leaves the first answer as it was.
+ */
+export async function topUp({ spec, prepared, ask, db, answer }) {
+  if (!answer || answer.failed || !Array.isArray(answer.items)) return answer;
+  const { ctx } = prepared;
+  const asked = askedCount(ctx.job, answer.items.length);
+  ctx.askedItems = asked;
+  const target = EV.targetExam({
+    exams: db.exams || [],
+    objectives: db.objectives || [],
+    weakspots: models(db),
+    date: ctx.date,
+  });
+  const passed = answer.items.filter(r => practiceItems([r], db, target).length);
+  const missing = asked - passed.length;
+  if (missing <= 0) return answer;
+  const body = request(spec, prepared);
+  const stems = passed.map(r => String(r.stem || '').slice(0, 90));
+  const line =
+    `A top-up: ${missing} of the questions already written for this job didn’t pass E.V.’s checks (a calculation whose key its own numbers don’t give, an option list without the worked answer, or a rationale that disagrees with its key). ` +
+    `Write exactly ${missing} new question${missing === 1 ? '' : 's'} on the same brief, none repeating these stems: ${JSON.stringify(stems)}. ` +
+    'Work every calculation before writing its options, and give its calc. Put them in items, with a one-line text.';
+  let again;
+  try {
+    again = await ask({ ...body, messages: [{ role: 'user', content: body.messages[0].content + '\n\n' + line }] });
+  } catch {
+    return answer;
+  }
+  const more = cutShort(again) ? null : answerOf(again);
+  const extra = more && Array.isArray(more.items) ? more.items.slice(0, 40 - passed.length) : []; // the fold keeps the count asked
+  return { ...answer, items: [...passed, ...extra] };
+}
+
+/**
  * One job, start to end. `ask(body)` sends a Messages API request through the Worker and returns its reply;
  * `write(writes, db)` writes all of them or none (the run API's batch), and throws an error with `conflict` when a document
  * it would create appeared meanwhile (`pinned` decides that against `db`, the record the writes were planned over); then `reload()` gives the record as it is now and the reply is folded once more
@@ -566,6 +604,7 @@ export async function runJob({
     else {
       reply = await ask(request(spec, prepared));
       answer = cutShort(reply) ? null : answerOf(reply);
+      if (prepared.kind === 'practice-set') answer = await topUp({ spec, prepared, ask, db, answer });
     }
   } catch (e) {
     const why =
