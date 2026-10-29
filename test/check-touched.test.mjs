@@ -30,6 +30,11 @@ test('B-219: each harness is chosen by a path it covers (planted), and only it',
   );
   assert.deepEqual(harnessesFor(['page/app/30-progress.js']), ['run', 'look']);
   assert.deepEqual(harnessesFor(['page/app/73-ev-greeting.js']), ['run', 'captions', 'prep', 'greet', 'look']);
+  assert.deepEqual(
+    harnessesFor(['page/ds/tokens.css']),
+    harnessesFor(['page/styles.css']),
+    'B-501: tokens as the sheet'
+  );
   assert.deepEqual(harnessesFor(['page/styles.css']), [
     'components',
     'run',

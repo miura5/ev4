@@ -528,7 +528,8 @@ export function buildPages({ root, spec, schemas, release }) {
       'core.js': coreJs,
       'spec.json': specJson,
       'app.js': app,
-      'styles.css': read('page/styles.css'),
+      // B-501 (D-372): Proprietary's tokens (page/ds/tokens.css) ahead of the stylesheet, in one published file.
+      'styles.css': read('page/ds/tokens.css') + '\n' + read('page/styles.css'),
     };
     const want = [ui.shell, ...ui.files].sort().join();
     if (Object.keys(out[target]).sort().join() !== want)

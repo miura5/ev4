@@ -85,7 +85,7 @@ export function harnessesFor(paths) {
       ['components', 'look'].forEach(h => need.add(h)); // B-285: look uses its checks
     else if ((m = p.match(/^test\/harness\/([a-z]+)\.cjs$/)) && HARNESSES.includes(m[1])) need.add(m[1]);
     else if (/^test\/harness\/(views|contrast)\.cjs$/.test(p)) need.add('look');
-    else if (p === 'page/styles.css')
+    else if (p === 'page/styles.css' || /^page\/ds\/[\w-]+\.css$/.test(p))
       ['components', 'run', 'captions', 'prep', 'frame', 'notes', 'look'].forEach(h => need.add(h));
     else if ((m = p.match(/^page\/app\/(\d\d)-[a-z0-9-]+\.js$/)) && PARTS[m[1]]) PARTS[m[1]].forEach(h => need.add(h));
     else ALL.forEach(h => need.add(h));
