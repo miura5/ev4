@@ -1,1 +1,38 @@
-/* Proprietary 12 Field: the field component's rules, components layer (D-373, D-388); lane C2 (B-508) fills this file */
+/* Proprietary 12 Field (B-508): .entry, a label over today's input, select or textarea; a switch or checkbox row */
+:where(.entry){display:flex;flex-direction:column;gap:var(--sp-1_5);min-width:0}
+:where(.entry-top){display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+:where(.entry-l){flex:1;min-width:0;font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
+:where(.entry-s){flex:none;font-size:var(--fs-1);color:var(--quiet)}
+:where(.entry-h),:where(.entry-e){margin:0;font-size:calc(12.5px * var(--ts));line-height:var(--lh-ui);color:var(--faint)}
+:where(.entry-e){color:var(--text)}
+:where(.entry-e)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 var(--sp-1_5) 1px 0;border-radius:var(--r-round);
+  background:var(--sem-red)}
+/* the control: today's input (legacy's input[type=text], select, textarea) */
+:where(.entry-c){font:inherit;min-height:var(--tap);padding:9px var(--sp-3);border-radius:var(--r-lg);border:1px solid var(--line2);
+  background:var(--wash-1);color:var(--text);min-width:0;box-sizing:border-box;width:100%}
+:where(.entry-c)::placeholder{color:var(--faint)}
+:where(.entry-c):focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:2px}
+:where(.entry-c)[aria-invalid=true]{outline:1px solid var(--sem-red);outline-offset:-1px}
+:where(.entry-c):disabled{opacity:.5;cursor:default}
+:where(textarea.entry-c){min-height:110px;resize:vertical;line-height:var(--lh-read);field-sizing:content;max-height:50vh}
+/* a switch or a checkbox: the row is the label and the tap target; the native input covers it, a mark draws it */
+.entry:is([data-kind=switch],[data-kind=checkbox]) .entry-top{position:relative;min-height:32px;cursor:pointer}
+/* 44 px on the phone (D-383); the density token --line-h is legacy's status-line height here, so the query is said again */
+@media (max-width:599px),(pointer:coarse){.entry:is([data-kind=switch],[data-kind=checkbox]) .entry-top{min-height:var(--tap)}}
+.entry:is([data-kind=switch],[data-kind=checkbox]) .entry-c{appearance:none;position:absolute;inset:0;width:100%;height:100%;
+  min-height:0;margin:0;padding:0;border:0;opacity:0;cursor:inherit}
+.entry:is([data-kind=switch],[data-kind=checkbox]) .entry-l{order:2;font:var(--fw-regular) var(--fs-3) var(--sans);color:var(--text)}
+.entry:is([data-kind=switch],[data-kind=checkbox]) .entry-s{order:3}
+.entry-top:has(.entry-c:focus-visible){outline:2px solid var(--focus,var(--text));outline-offset:2px;border-radius:var(--r-sm)}
+.entry-top:has(.entry-c:disabled){opacity:.5;cursor:default}
+:where(.entry-mark){flex:none;display:grid;place-content:center;width:18px;height:18px;border-radius:5px;
+  box-shadow:inset 0 0 0 1.5px var(--faint);transition:background var(--dur-2) var(--ease-out)}
+.entry-c:checked + .entry-mark{background:var(--text);box-shadow:none}
+.entry-c:checked + .entry-mark::after{content:"";width:5px;height:9px;border:solid var(--bg);border-width:0 2px 2px 0;
+  transform:translateY(-1px) rotate(45deg)}
+.entry[data-kind=switch] .entry-mark{width:34px;height:20px;border-radius:var(--r-pill);place-content:center start;padding:0 3px;
+  box-sizing:border-box;background:var(--line2);box-shadow:none}
+.entry[data-kind=switch] .entry-mark::after{content:"";width:14px;height:14px;border-radius:var(--r-round);background:var(--surface);
+  border:0;transform:none;transition:translate var(--dur-2) var(--ease-std)}
+.entry[data-kind=switch] .entry-c:checked + .entry-mark{background:var(--text)}
+.entry[data-kind=switch] .entry-c:checked + .entry-mark::after{width:14px;height:14px;border:0;background:var(--bg);transform:none;translate:14px 0}
