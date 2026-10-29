@@ -9448,12 +9448,12 @@
   "title": "Settle Proprietary's component list now (moved ahead of the Phase 3 review by D-384): from the UX map probe's findings, the research report and the page code, fix the component list, the page/ds file layout, the @layer order, the harness selector policy, the budget and whether page/app/01-kit.js splits",
   "dod": "A short design note (Claude Doc section in the Proprietary doc) with the final component list and each component's states, mapped to the probe findings it fixes; any change to D-372 to D-379 recorded as a superseding decision; the Phase 3 review later reviews Proprietary as built",
   "milestone": "Phase 3 review",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-503"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Doc-only: final list of 16 components and 7 patterns in the Proprietary doc; D-386 and D-387 supersede D-378 and D-377.",
+  "commit": "228678a",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
