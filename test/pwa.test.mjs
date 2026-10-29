@@ -9,7 +9,8 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { build } from '../tools/build.mjs';
-import { buildPwa, releaseKeyed, HEAD, FOOT, NAME, RECORDS, SHIM } from '../tools/build-pwa.mjs';
+import { buildPwa, releaseKeyed, HEAD, FOOT, NAME, RECORDS, SHIM, ICON_FILES } from '../tools/build-pwa.mjs';
+import { ICONS, coreSource, colours } from '../tools/pwa-icons.mjs';
 import { listRepoFiles } from '../tools/personal-data.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -36,6 +37,37 @@ test('B-309: the manifest names the app E.V.', () => {
   assert.equal(m.name, NAME);
   assert.equal(m.short_name, NAME);
   assert.equal(NAME, 'E.V.');
+});
+
+// A PNG's width, height and colour type from its IHDR (2 = RGB, no alpha; 6 = RGBA).
+const pngInfo = f => {
+  const b = fs.readFileSync(f);
+  assert.equal(b.toString('latin1', 1, 4), 'PNG', f);
+  return { w: b.readUInt32BE(16), h: b.readUInt32BE(20), type: b[25] };
+};
+
+test('B-490: the icons are her idle avatar: any, maskable, apple-touch and favicon, each in the shim', () => {
+  const m = JSON.parse(fs.readFileSync(path.join(ROOT, 'pwa/manifest.webmanifest'), 'utf8'));
+  for (const i of m.icons) {
+    assert.ok(SHIM.includes(i.src), i.src + ' is copied into the app');
+    const { w, h } = pngInfo(path.join(ROOT, 'pwa', i.src));
+    assert.equal(`${w}x${h}`, i.sizes, i.src);
+  }
+  const by = p => m.icons.filter(i => i.purpose === p).map(i => i.sizes);
+  assert.deepEqual(by('any'), ['192x192', '512x512']);
+  assert.deepEqual(by('maskable'), ['512x512']);
+  assert.equal(m.background_color, colours().bg, 'the splash is her ground');
+  // iOS rounds the apple icon itself and a launcher masks the maskable one: both full-bleed, with no transparency
+  for (const f of ['apple-touch-icon.png', 'icon-maskable-512.png'])
+    assert.equal(pngInfo(path.join(ROOT, 'pwa', f)).type, 2, f);
+  assert.deepEqual(pngInfo(path.join(ROOT, 'pwa/apple-touch-icon.png')), { w: 180, h: 180, type: 2 });
+  assert.match(HEAD, /<link rel=apple-touch-icon href="apple-touch-icon\.png">/);
+  assert.match(HEAD, /<link rel=icon href="favicon\.svg" type="image\/svg\+xml">/);
+  for (const f of ICON_FILES) assert.ok(fs.existsSync(path.join(ROOT, 'pwa', f)), f);
+  for (const i of ICONS) assert.ok(ICON_FILES.includes(i.file), i.file + ' is shipped');
+  // drawn from the page's own Dial Arc, in her solid face
+  assert.match(coreSource(), /^const CORE = \(\(\) => \{/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'pwa/favicon.svg'), 'utf8'), new RegExp('fill="' + colours().av1 + '"'));
 });
 
 test('B-309: build-pwa wraps each record’s built page byte for byte, titled E.V.', async () => {

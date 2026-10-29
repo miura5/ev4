@@ -14,7 +14,16 @@ import { SPEC_KEYS } from '../pwa/jobs.mjs';
 
 export const RECORDS = ['staging', 'live'];
 export const NAME = 'E.V.';
-export const SHIM = ['bridge.js', 'sw.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+// B-490: the icons are her idle avatar, made by tools/pwa-icons.mjs and kept in pwa/.
+export const ICON_FILES = [
+  'icon-192.png',
+  'icon-512.png',
+  'icon-maskable-512.png',
+  'apple-touch-icon.png',
+  'favicon.svg',
+  'favicon-32.png',
+];
+export const SHIM = ['bridge.js', 'sw.js', 'manifest.webmanifest', ...ICON_FILES];
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -22,7 +31,8 @@ export const HEAD =
   '<!doctype html><html lang=en><head><meta charset=utf-8>' +
   `<title>${NAME}</title>` +
   '<meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">' +
-  '<link rel=manifest href="manifest.webmanifest"><link rel=apple-touch-icon href="icon-192.png">' +
+  '<link rel=manifest href="manifest.webmanifest"><link rel=apple-touch-icon href="apple-touch-icon.png">' +
+  '<link rel=icon href="favicon.svg" type="image/svg+xml"><link rel=icon href="favicon-32.png" sizes="32x32">' +
   `<meta name=apple-mobile-web-app-title content="${NAME}"><meta name=application-name content="${NAME}">` +
   '<meta name=apple-mobile-web-app-capable content=yes><meta name=mobile-web-app-capable content=yes>' +
   '<meta name=apple-mobile-web-app-status-bar-style content=black-translucent><meta name=theme-color content="#1c1a17">' +

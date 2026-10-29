@@ -14,7 +14,9 @@ phone (installed app) ──/api + token──► Worker ──► D1 (the recor
   the token.
 - `bridge.js`: the shim. Gives the page the `window.claude.use('db' | 'user')` it has on claude.ai, backed by the
   Worker. Adapted from `test/harness/stub.js`.
-- `sw.js`, `manifest.webmanifest`, `icon-*.png`: what makes it installable.
+- `sw.js`, `manifest.webmanifest`, the icons: what makes it installable. The icons (`icon-192.png`, `icon-512.png`,
+  `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.svg`, `favicon-32.png`) are her idle avatar, drawn by the
+  page's own Dial Arc; `node tools/pwa-icons.mjs` makes them again (B-490).
 - `../tools/build-pwa.mjs --record staging|live`: builds `public/` from that record's built page, wrapped byte for
   byte, with the app named "E.V." (window title and icon label).
 
