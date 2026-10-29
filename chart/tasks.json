@@ -9435,10 +9435,10 @@
   "title": "Tag the UX map probe's findings by Proprietary component: each finding maps to one of the 14 components or \"pattern\", plus a token family, so polish and the review use the same names (page/ views)",
   "dod": "A table mapping every probe finding to a component and a token family, added to the UX map doc's hand-off; no code change",
   "milestone": "Polish prep",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "Doc-only: table of all 66 findings by component/pattern/behaviour in the Proprietary doc; 42 behaviour filed as B-517 to B-535 or joined, 24 look/layout.",
+  "commit": "228678a",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv",
   "dependsText": "UX map probe (D-369)"
  },
