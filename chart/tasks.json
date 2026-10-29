@@ -9758,9 +9758,9 @@
   "id": "B-523",
   "kind": "bug",
   "title": "Bug (reported Oct 29): A weak-spot drill asks about a different topic than the spot it was started from.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A drill started from a weak spot uses that spot's objective and course; test. Depends on B-499. (F-42, F-43)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9769,6 +9769,10 @@
   "reportedAt": "2026-10-29T15:59:50.497Z",
   "board": {
    "row": "v4 B-523: A weak-spot drill asks about a different topic than the spot it was…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:59:55.172Z"
   }
  }
 ]
