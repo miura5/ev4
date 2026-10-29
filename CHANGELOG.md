@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 29 | v4 staging deployed at 62f00d9 (00:59 CT), from 166bb47: On live, a generated dosage practice question had the wrong answer… (B-481). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 29 | v4 staging deployed at 166bb47 (00:48 CT), from 6426001: On live, a generated dosage practice question had the wrong answer… (B-481). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 29 | v4 staging deployed at 6426001 (00:39 CT), from c3f92d2: On live, a generated dosage practice question had the wrong answer… (B-481). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at c3f92d2 (23:39 CT), from c83d9c4: The release's UI review (78/100) asks for: objectives folded to one… (B-464). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
