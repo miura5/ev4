@@ -836,7 +836,79 @@ export function makeStudyPlans(core) {
     return (planDrafts(plans, planedits, examId) || [])[0] || null;
   }
 
+  /**
+   * B-483: one task, one tick. A plan task is one item wherever it shows, ticked in its plan's planedits.
+   * planCopyKey: an add's words as listEdit stores them, for matching an added item to a plan task's words.
+   * planCopyRef: the plan task (plans/<exam>#<task>) dated `date` whose words an added item carries, or null.
+   * planCopyIds: the items added to a task's day (dayedit) with the task's words: copies Plan the rest made.
+   * dayWithPlanTasks: a day's saved list with the plan items it lacks appended (planned: buildDayList's plan items for
+   *   the day, filtered by the caller), their minutes added to the day's planned budget.
+   * joinPlanCopies: a dayView whose added items carrying a plan task's words become that task: one row with the plan's
+   *   ref, or none when the plan's own row is on the list (its minutes leave the budget).
+   */
+  // as listEdit stores an add's words, then EVCore's norm (lower case, words only)
+  const planCopyKey = t =>
+    String(t || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 140)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  const planTasks = p => ((p && p.days) || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
+  function planCopyRef(plans, date, text) {
+    const k = planCopyKey(text);
+    if (!k) return null;
+    for (const p of plans || [])
+      for (const t of planTasks(p))
+        if (t.date === date && planCopyKey(t.text) === k) return 'plans/' + (p.exam || p.id) + '#' + t.id;
+    return null;
+  }
+  function planCopyIds(dayedit, task) {
+    const k = planCopyKey(task && task.text);
+    const added = (dayedit && dayedit.added) || {};
+    return k ? Object.keys(added).filter(id => planCopyKey((added[id] || {}).text) === k) : [];
+  }
+  function dayWithPlanTasks(day, planned) {
+    const d = day || {};
+    const base = (d.list && d.list.items) || [];
+    const ids = new Set(base.map(it => it.id));
+    const refs = new Set(base.map(it => it.ref).filter(Boolean));
+    const add = (planned || []).filter(it => /^plans\//.test(it.ref || '') && !ids.has(it.id) && !refs.has(it.ref));
+    if (!add.length) return d;
+    const b = d.plan && d.plan.budget;
+    const mins = add.reduce((n, it) => n + (it.deferred ? 0 : Number(it.minutes) || 0), 0);
+    return {
+      ...d,
+      list: { ...(d.list || {}), items: [...base, ...add] },
+      ...(b ? { plan: { ...d.plan, budget: { ...b, planned: (b.planned || 0) + mins } } } : {}),
+    };
+  }
+  function joinPlanCopies(view, plans, date) {
+    const refs = new Set(view.items.filter(it => !it.added && it.ref).map(it => it.ref));
+    let less = 0;
+    const items = [];
+    for (const it of view.items) {
+      const ref = it.added && planCopyRef(plans, date, it.text);
+      if (!ref) items.push(it);
+      else if (refs.has(ref)) less += Number(it.minutes) || 0;
+      else {
+        refs.add(ref);
+        items.push({ ...it, ref });
+      }
+    }
+    const b = view.budget;
+    const budget =
+      b && less
+        ? { ...b, planned: Math.max(0, b.planned - less), over: Math.max(0, b.planned - less - (b.available || 0)) }
+        : b;
+    return { ...view, items, budget };
+  }
   return {
+    dayWithPlanTasks,
+    joinPlanCopies,
+    planCopyIds,
+    planCopyRef,
     STUDY_PLAN_TAGS: TAGS,
     settlePlanTags,
     studyPlanRules: rulesOf,

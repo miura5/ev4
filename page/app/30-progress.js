@@ -253,7 +253,7 @@
             // B-372: its plan as Study finds it (the plan named for it, else one ending in its last three weeks), else
             // the Today items tied to it (a plan task or a set on it); with neither the row is absent, never an empty bar
             const plan = examPlan(e);
-            const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+            const isDone = t => !!(plan.done && plan.done[t.id]) || planDone(plan, t);
             ((n = 0), (so = 0), (al = 0), (unit = 'plan tasks'));
             for (const d of (plan && plan.days) || []) {
               const ts = (d.tasks || []).map(t => ({ ...t, date: d.date })),

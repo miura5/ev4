@@ -141,7 +141,7 @@
     const taskList = p => planDays(p).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
     const planMinutes = ts => ts.reduce((a, t) => a + (Number.isInteger(t.minutes) ? t.minutes : 0), 0);
     function planCounts(p) {
-      const isDone = t => E.taskDone(p, t, today, S.sets, S.answers);
+      const isDone = t => planDone(p, t); // B-483: Today's tick and the plan's are one
       const ts = taskList(p);
       const done = ts.filter(isDone).length; // B-450: the count is the ticks: the same test paints each tick
       return {

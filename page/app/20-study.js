@@ -275,7 +275,7 @@
           // B-450: as the mock, the line names the missing plan; Make a plan is on its card, Quiz me in the toolbar
           text: `${ex} ${when}, and ${cur.course} has no plan for it yet.`,
         };
-      const isDone = t => !!(plan.done && plan.done[t.id]) || E.taskDone(plan, t, today, S.sets, S.answers);
+      const isDone = t => !!(plan.done && plan.done[t.id]) || planDone(plan, t);
       const ts = (plan.days || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
       const left = ts.filter(t => !isDone(t)).length;
       return {

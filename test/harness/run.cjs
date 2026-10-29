@@ -1785,6 +1785,66 @@ async function studyPlanChecks(page) {
       JSON.stringify([mid, after])
     );
   }
+  // B-483: one task, one tick. The day was saved before Approve, yet the approved plan's tasks for today are on Today's
+  // list without Plan the rest; a tick on Today shows in Study's plan and the reverse, each stored once in planedits/E4
+  {
+    const todayRows = async () => {
+      await page.click('#tab-today');
+      await page.waitForTimeout(250);
+      await page.$eval('#seg-today [data-v="list"]', b => b.click());
+      await page.waitForTimeout(200);
+      return page.evaluate(() =>
+        Object.fromEntries(
+          [...document.querySelectorAll('#today-list li.today-item')].map(li => [
+            li.dataset.id,
+            !!(li.querySelector('input.tick') || {}).checked,
+          ])
+        )
+      );
+    };
+    const studyTick = async () => {
+      await page.click('#tab-study');
+      await page.waitForTimeout(250);
+      return page.evaluate(() => {
+        const li = [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t')].find(
+          x => (x.querySelector('.title') || {}).textContent === 'Harness untagged task'
+        );
+        return li ? li.querySelector('input.tick').checked : null;
+      });
+    };
+    const nDayedits = () => page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
+    const w0 = await nDayedits();
+    const r0 = await todayRows();
+    const onToday = ['plan-h2', 'plan-h3', 'plan-h5'].every(id => id in r0);
+    ok(
+      'B-483: Approve puts the plan’s tasks for today on Today’s list, without Plan the rest',
+      onToday && !r0['plan-h5'],
+      JSON.stringify(r0)
+    );
+    await page.locator('#today-list li.today-item[data-id="plan-h5"] input.tick').click();
+    await page.waitForTimeout(300);
+    const s1 = await studyTick();
+    const t1 = ((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h5;
+    ok(
+      'B-483: a tick on Today shows in Study’s plan, stored once in the plan’s ticks',
+      s1 === true && !!t1 && (await nDayedits()) === w0,
+      JSON.stringify({ s1, t1, dayedits: (await nDayedits()) - w0 })
+    );
+    const box = page
+      .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t', { hasText: 'Harness untagged task' })
+      .locator('input.tick');
+    await box.click();
+    await page.waitForTimeout(300);
+    const r2 = await todayRows();
+    const t2 = ((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h5;
+    ok(
+      'B-483: an untick in Study’s plan shows on Today',
+      r2['plan-h5'] === false && !t2 && (await nDayedits()) === w0,
+      JSON.stringify({ r2, t2 })
+    );
+    await page.click('#tab-study');
+    await page.waitForTimeout(200);
+  }
   // Keep in the plan: a study plan's tasks leave Today's list and the week's days, and Study's line offers no Open
   // Today (B-450). The saved days carry one of its tasks each, as the morning writes them.
   {

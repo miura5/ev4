@@ -1690,3 +1690,85 @@ test('B-449: Ask for changes on a plan’s card that plainly asks for a new plan
   const edit = ask('move the drill to Friday');
   assert.deepEqual([edit.edit.revise, edit.offer], ['E4', null]);
 });
+
+test('B-483: an approved plan’s tasks reach the day saved before it, and a plan task on Today shares the plan’s one tick', () => {
+  const at = NOW.toISOString();
+  const draft = {
+    id: 'ATI-DOSE',
+    schema: 1,
+    writer: 'worker',
+    at,
+    source: 'Exam plan job',
+    exam: 'ATI-DOSE',
+    title: 'ATI dosage plan',
+    section: { course: 'NUR 112', from: TODAY, to: '2026-10-26' },
+    days: [
+      {
+        date: TODAY,
+        label: 'Dosage',
+        tasks: [{ id: 'd1', text: 'Dosage drill: IV rates', kind: 'drill', minutes: 20 }],
+      },
+      { date: '2026-10-26', label: 'More', tasks: [{ id: 'd2', text: 'Read: weight-based dosing', kind: 'reading' }] },
+    ],
+  };
+  // the morning saved today's list before the plan was approved: it lacks the plan's task
+  const saved = {
+    id: TODAY,
+    date: TODAY,
+    list: { items: [] },
+    plan: { budget: { available: 60, planned: 0, over: 0 } },
+  };
+  const dayFor = (plans, date) =>
+    EV.buildDayList(EV.planDay({ date, plans, exams: [], dates: [], weakspots: [] }), {}).items;
+  // a draft is not the plan: nothing reaches the day
+  assert.deepEqual(EV.planViews([draft], []), []);
+  // Approve: the plan in force, and its task for today joins the saved day (once, with the plan's ref and minutes)
+  const pe = { id: 'ATI-DOSE', ...EV.studyPlanApproveSet([], draft, { now: NOW }).data };
+  const plans = EV.planViews([draft], [pe]);
+  const day = EV.dayWithPlanTasks(saved, dayFor(plans, TODAY));
+  const v = EV.joinPlanCopies(EV.dayView(day, null), plans, TODAY);
+  assert.deepEqual(
+    v.items.map(it => [it.id, it.ref]),
+    [['plan-d1', 'plans/ATI-DOSE#d1']]
+  );
+  assert.equal(v.budget.planned, 20);
+  assert.equal(EV.dayWithPlanTasks(day, dayFor(plans, TODAY)), day, 'already there: never a second copy');
+  // a later day's task lands on that day
+  const later = EV.dayWithPlanTasks({ date: '2026-10-26' }, dayFor(plans, '2026-10-26'));
+  assert.deepEqual(
+    later.list.items.map(it => it.ref),
+    ['plans/ATI-DOSE#d2']
+  );
+  // one tick: Today's row and Study's row read the plan's planedits tick
+  const ticked = EV.planTick(pe, 'ATI-DOSE', 'd1', { done: true, now: NOW });
+  const plans2 = EV.planViews([draft], [{ id: 'ATI-DOSE', ...ticked.data }]);
+  const task = EV.planTasks(plans2[0]).find(t => t.id === 'd1');
+  assert.equal(EV.taskDone(plans2[0], task, TODAY), true);
+  assert.equal(EV.taskDone(plans[0], task, TODAY), false);
+  // a copy Plan the rest made before B-483 (an added item with the task's words) is the plan's task: hidden while the
+  // plan's own row is on the list, else the row itself with the plan's ref; its old tick is found by the task's words
+  const ed = {
+    added: {
+      'add-dosage-drill-iv-rates': { text: 'Dosage drill: IV rates', kind: 'practice', minutes: 20, at, by: 'E.V.' },
+      'add-mine': { text: 'Call clinical instructor', kind: 'todo', minutes: 5, at, by: 'Matt' },
+    },
+    checks: { 'add-dosage-drill-iv-rates': { at } },
+    skipped: {},
+  };
+  const both = EV.joinPlanCopies(EV.dayView(day, ed), plans, TODAY);
+  assert.deepEqual(
+    both.items.map(it => it.id),
+    ['plan-d1', 'add-mine']
+  );
+  assert.equal(both.budget.planned, 25, 'the copy’s minutes are not counted twice');
+  const alone = EV.joinPlanCopies(EV.dayView(saved, ed), plans, TODAY);
+  assert.deepEqual(
+    alone.items.map(it => [it.id, it.ref || null]),
+    [
+      ['add-dosage-drill-iv-rates', 'plans/ATI-DOSE#d1'],
+      ['add-mine', null],
+    ]
+  );
+  assert.deepEqual(EV.planCopyIds(ed, { ...task, date: TODAY }), ['add-dosage-drill-iv-rates']);
+  assert.equal(EV.planCopyRef(plans, '2026-10-26', 'Dosage drill: IV rates'), null, 'another day: not that task');
+});

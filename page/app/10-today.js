@@ -1,10 +1,10 @@
     // ------------------------------------------------------------ Today
     // the same plan the 4:25 am run builds, from the record as it stands now (liveDay, and B-293's Plan the rest)
-    function planNow() {
+    function planNow(date = today) {
       return E.planDay({
         // B-68: the scheduler the morning uses (spec.study.scheduler), so a live day agrees with it
         pickReviews: window.EVStudy.picker(E, window.EVStudy.schedulerOf(EV_SPEC), EV_SPEC),
-        date: today,
+        date,
         dates: S.dates,
         exams: S.exams,
         plans: S.plans,
@@ -42,17 +42,39 @@
       const pt = planTaskById(it.ref);
       return !!(pt && pt.plan.section);
     }
+    /**
+     * B-483: one task, one tick. A study plan approved after the morning saved the day puts its tasks for a day on that
+     * day's list (today and later; an earlier day stays as saved), as planDay builds them. An item added to a day with a
+     * plan task's own words on that task's day (Plan the rest's add, or a copy it made before B-483) is that plan task:
+     * shown once, ticked in the plan's planedits, and a tick the copy got on the day counts as the task's.
+     */
+    const copyIds = task => E.planCopyIds(task && task.date && dayEditDoc(task.date), task);
+    function planDone(plan, task, date = today) {
+      if (E.taskDone(plan, task, date, S.sets, S.answers)) return true;
+      const ed = task.date && dayEditDoc(task.date);
+      return copyIds(task).some(id => !!(ed && ed.checks && ed.checks[id]));
+    }
+    function withPlanTasks(date, day) {
+      if (date < today || !(S.plans || []).some(p => p.section && (p.days || []).some(d => d.date === date)))
+        return day;
+      const planned = E.buildDayList(planNow(date), { sets: S.sets }).items.filter(it => {
+        const pt = planTaskById(it.ref);
+        return pt && pt.plan.section;
+      });
+      return E.dayWithPlanTasks(day, planned);
+    }
     function dayState(date = today) {
       // the planned list (saved at 4:25am, else built live) plus what he or E.V. added or took off (D-078); B-448: an
       // earlier day is its saved plan and its own dayedits, as the week's day panel shows it
       const past = date !== today;
-      const day = past ? dayDoc(date) || { date } : M.day && M.day.list ? M.day : liveDay();
+      const day = withPlanTasks(date, past ? dayDoc(date) || { date } : M.day && M.day.list ? M.day : liveDay());
       const ed = past ? dayEditDoc(date) : M.dayedit;
-      const v = E.dayView(day, ed);
+      // B-483: an added item that is a plan task joins it: once on the list, with the plan's ref
+      const v = E.joinPlanCopies(E.dayView(day, ed), S.plans, date);
       const checks = (ed && ed.checks) || {};
       const isDone = it => {
         const pt = planTaskById(it.ref);
-        if (pt) return E.taskDone(pt.plan, { ...pt.task }, date, S.sets, S.answers);
+        if (pt) return planDone(pt.plan, { ...pt.task }, date);
         return !!checks[it.id];
       };
       return { day, items: v.items.filter(it => !keptInPlan(it)), isDone, budget: v.budget, skipped: v.skipped };
@@ -62,7 +84,7 @@
     const writeDayEdit = (date, data) => write({ op: 'set', collection: 'dayedits', id: date, data }); // an Edit: replaced whole
     async function editList(date, edit, by) {
       // one add / remove / restore through EVCore.listEdit; today's planned items may be live
-      const base = date === today ? dayState().day : dayDoc(date) || { date };
+      const base = date >= today ? dayState(date).day : dayDoc(date) || { date }; // B-483: a later day with its plan tasks
       const r = E.listEdit(base, dayEditDoc(date), edit, { now: now(), by, date });
       if (r.doc) await writeDayEdit(date, r.doc);
       return r;
@@ -77,12 +99,31 @@
       if (pt) return tickPlan(pt.plan, pt.task, on);
       return editList(date, { action: 'check', id: it.id, done: on }, 'Matt'); // B-448: on the day the row is on
     }
-    function tickPlan(plan, task, on) {
+    async function tickPlan(plan, task, on) {
       // planedits/<exam id>: the page's ticks, replaced whole
       const examId = plan.exam || plan.id;
       const pe = S.planedits.find(x => x.id === examId) || null;
       const r = E.planTick(pe, examId, task.id, { done: on, now: now(), by: 'Matt' });
-      return write({ op: 'set', collection: 'planedits', id: r.id, data: r.data });
+      await write({ op: 'set', collection: 'planedits', id: r.id, data: r.data });
+      // B-483: unticked, a copy's old tick on its day goes too, so the task reads not done in both places
+      const ed = !on && task.date && dayEditDoc(task.date);
+      const ticked = ed ? copyIds(task).filter(id => ed.checks && ed.checks[id]) : [];
+      if (!ticked.length) return;
+      let doc = ed;
+      for (const id of ticked) {
+        const x = E.listEdit(
+          dayDoc(task.date) || { date: task.date },
+          doc,
+          { action: 'check', id, done: false },
+          {
+            now: now(),
+            by: 'Matt',
+            date: task.date,
+          }
+        );
+        if (x.doc) doc = x.doc;
+      }
+      if (doc !== ed) await writeDayEdit(task.date, doc);
     }
     function openItem(it) {
       const toSet = it.set || (it.ref && it.ref.startsWith('sets/') ? it.ref.slice(5) : null);
@@ -864,6 +905,7 @@
       const adds = [];
       for (const b of fresh.blocks) {
         if (!b.taskId || b.required || b.deferred || b.done || onList.has(b.id) || planned.has(b.id)) continue;
+        if (keptInPlan({ ref: 'plans/' + b.plan + '#' + b.taskId })) continue; // B-483: never a copy of a kept task
         if (texts.has(E.norm(b.title || ''))) continue;
         if (b.minutes > room) continue;
         room -= b.minutes;
@@ -1291,6 +1333,11 @@
       if (date === today) {
         const s = dayState();
         return s.items.filter(it => !it.deferred).map(it => ({ ...it, done: s.isDone(it) }));
+      }
+      if (date > today) {
+        // B-483: a later day holds its approved plan tasks too, ticked as the plan is
+        const s = dayState(date);
+        return s.items.map(it => ({ ...it, done: s.isDone(it) }));
       }
       return E.dayView(dayDoc(date), dayEditDoc(date))
         .items.filter(it => !keptInPlan(it))
