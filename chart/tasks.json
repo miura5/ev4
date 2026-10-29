@@ -9947,9 +9947,9 @@
   "id": "B-532",
   "kind": "request",
   "title": "Request (reported Oct 29): An E.V. window on the phone, as a sheet from any view.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "On the phone every view has the E.V. window as a bottom sheet, built on Proprietary's Sheet; staging look at 390. Depends on B-508. (F-59)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9958,6 +9958,10 @@
   "reportedAt": "2026-10-29T16:01:19.969Z",
   "board": {
    "row": "v4 B-532: An E.V. window on the phone, as a sheet from any"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:01:24.277Z"
   }
  }
 ]
