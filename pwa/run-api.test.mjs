@@ -133,7 +133,11 @@ const held = async c => {
 test('list and get return what ArtifactData returns for the same documents: each id, its data and a version', async () => {
   for (const c of READ) {
     const want = await held(c);
-    assert.deepEqual(Object.keys(want).sort(), Object.keys(SEED[c]).sort(), `${c}: the seed's documents`);
+    // Locally the record is the seed exactly; on staging the app adds documents of its own (B-465: exams for every
+    // course), so there the seed's documents must all be held and the extras are paged through with them.
+    if (REMOTE)
+      for (const sid of Object.keys(SEED[c])) assert.ok(sid in want, `${c}/${sid}: the seed's document is held`);
+    else assert.deepEqual(Object.keys(want).sort(), Object.keys(SEED[c]).sort(), `${c}: the seed's documents`);
     const ids = Object.keys(want).sort();
     assert.ok(ids.length > 2, `${c} has documents to page through`);
     const docs = await listAll(c, 2); // pages of two: the cursor is followed to the end
