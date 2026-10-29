@@ -9280,9 +9280,9 @@
   "id": "B-495",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Flashcard asks are recognized too eagerly: a sentence like 'I need to study my cards for the exam tonight' starts a 20-card deck job.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A flashcards job starts only when the message asks to make cards (make/create/give me … flashcards/cards); 'study my cards' or 'review flashcards' opens due cards instead; tests for both.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9291,6 +9291,10 @@
   "reportedAt": "2026-10-29T14:51:39.417Z",
   "board": {
    "row": "v4 B-495: Flashcard asks are recognized too eagerly: a sentence like 'I need to…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T14:51:51.332Z"
   }
  }
 ]
