@@ -9491,12 +9491,12 @@
   "title": "Proprietary components, batch 1, at today's look (D-374, D-376): Button, Badge, Chip, Segmented, Line, Fold, Card, Notice and Toast in page/app/01-ui.js (DS) and page/ds/components.css; btn(), badge(), row() and empty() delegate to them",
   "dod": "Each shows in the Gallery in every state; npm test and smoke GREEN; pixel diff near zero at 390 and 1280; ship staging GREEN",
   "milestone": "Consolidation: Proprietary",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-506"
   ],
-  "notes": "Done in lane C1: nine components (3a1a7b6, 1aff5a1, a659c5b, 7889b5c, 89d387c, 1feb0d2, bf8d3cf) and the kit delegation alone (1ecfdc7); pixdiff 0 in 34 shots each time; markup identical except data-*; check --touched all green. A few commented !important rules beat legacy until B-515. For B-516: bad-tone chip 3.58:1 in light; 16 px ticks and fold-lines under 44 px on the phone. Staging with the pilot.",
-  "commit": null,
+  "notes": "All 9 components and the kit delegation; staging comes with the view moves.",
+  "commit": "1ecfdc7",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
