@@ -1,0 +1,7 @@
+/* B-515 strips the !important below (D-391): legacy outranks the views layer. */
+/* Today (B-510, D-376): the day list's rows are Proprietary's Line. Line's title-button rule resets the font with
+   !important, which takes the line height legacy's all:unset gave Today's title; the title's words keep it here. */
+#today-list [data-ui='line']:not(.ti-off) button.nm > .ti-t{display:block!important;line-height:1.3!important}
+/* a proposed take-off's title stays inline from 600 px (its whole name shows beside its mark); on the phone it wraps
+   as a block like the others */
+@media (max-width:599px){#today-list [data-ui='line'].ti-off button.nm > .ti-t{display:block!important;line-height:1.3!important}}

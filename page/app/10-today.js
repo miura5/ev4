@@ -219,11 +219,24 @@
         });
       return b;
     })();
+    // B-510 (D-391): a row's title is a part, not a component: data-part names it for the harnesses
+    function titlePart(text) {
+      const t = el('span', 'ti-t', text);
+      t.dataset.part = 'title';
+      return t;
+    }
     function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
       const text = E.rowText(it); // B-392: the row shows its day, so a heads-up drops its "(due tomorrow)"
       const sel = ui.taskSel === it.id && !ui.taskGone;
-      const li = el('li', 'li today-item' + (doneNow ? ' done' : '') + (sel ? ' sel' : '') + (o.off ? ' ti-off' : ''));
+      // B-510 (D-376): the row is Proprietary's Line; Today's tick label and its ellipsed title ride inside it as before
+      const li = DS.line({
+        tag: 'li',
+        key: it.id,
+        done: doneNow,
+        cls: 'li today-item' + (sel ? ' sel' : '') + (o.off ? ' ti-off' : ''),
+      });
+      li.replaceChildren(); // Line's own name cell gives way to Today's (a tick label, the ellipsed title)
       li.dataset.id = it.id;
       const tk = el('label', 'tk');
       const c = document.createElement('input');
@@ -238,7 +251,7 @@
       tk.append(c);
       const nm = el('button', 'nm ti-nm');
       nm.type = 'button';
-      nm.append(el('span', 'ti-t', text));
+      nm.append(titlePart(text));
       // B-448: an earlier day's row is checked off in place; its task view (Snooze, Start) is today's
       if (!o.date) {
         nm.setAttribute('aria-controls', 'today-task');
@@ -256,7 +269,7 @@
       // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
       // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
       const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
-      li.append(el('span', 'badge' + (bb[1] ? ' ' + bb[1] : ''), bb[0]));
+      li.append(DS.badge({ text: bb[0], cls: bb[1] }));
       // B-369 (D-312): a proposed take-off keeps its row struck through, with why, the tick and the cross, as the demo
       if (o.off)
         li.append(
@@ -866,7 +879,7 @@
       }
       status.lastChild.append(sw);
       const cat = prop('Category', '');
-      cat.lastChild.append(el('span', 'badge' + (f.badge ? ' ' + f.badge : ''), f.category));
+      cat.lastChild.append(DS.badge({ text: f.category, cls: f.badge }));
       props.append(status, cat);
       // B-373: Estimate, Due and Course on every task, as the board's ('—' when the record has none)
       props.append(prop('Estimate', f.estimate || '—'), prop('Due', f.due || '—'), prop('Course', f.course || '—'));
@@ -1070,16 +1083,17 @@
     function proposedAddRow(P, p) {
       // B-369 (D-312): the demo's proposed addition: a dashed card with a +, the name, its kind's badge, "Proposed",
       // the tick and the cross, and its minutes
-      const li = el('li', 'li today-item ti-prop ti-padd');
+      const li = DS.line({ tag: 'li', key: p.id, cls: 'li today-item ti-prop ti-padd' });
+      li.replaceChildren();
       li.dataset.id = p.id;
       li.append(svgIcon('M12 5v14M5 12h14'));
       const nm = el('span', 'nm ti-nm');
-      nm.append(el('span', 'ti-t', p.text));
+      nm.append(titlePart(p.text));
       const tag = { practice: 'PRACTICE', review: 'REVIEW', reading: 'READING', notes: 'NOTES' }[p.kind];
       const b = (tag && BADGE[tag]) || ['Study', 'x-violet'];
       li.append(
         nm,
-        el('span', 'badge' + (b[1] ? ' ' + b[1] : ''), b[0]),
+        DS.badge({ text: b[0], cls: b[1] }),
         el('span', 'sp'),
         el('span', 'pmark', 'Proposed'),
         ...restButtons(P, p, restEdit(p), 'add “' + p.text + '” to today')
@@ -1141,17 +1155,18 @@
         today
       ).length;
       if (!n) return null;
-      const li = el('li', 'li ti-cards'); // not a day item: no tick, not counted with them
+      const li = DS.line({ tag: 'li', key: 'cards', cls: 'li ti-cards' }); // not a day item: no tick, not counted
+      li.replaceChildren();
       const tk = el('span', 'tk');
       tk.append(svgIcon('M4 7h12v12H4zM8 4h12v12'));
       const nm = el('button', 'fc-nm'); // not a task's name: it opens the cards, never a task's view
       nm.type = 'button';
-      nm.append(el('span', 'ti-t', 'Cards · ' + n + ' due'));
+      nm.append(titlePart('Cards · ' + n + ' due'));
       nm.addEventListener('click', () => startDueCards());
       const st = btn('Start', () => startDueCards(), { cls: 'btn neutral sm ti-start hov' });
       st.prepend(svgIcon('M8 5l11 7-11 7z'));
       st.setAttribute('aria-label', 'Start: Cards · ' + n + ' due');
-      li.append(tk, nm, el('span', 'badge x-violet', 'Study'), st, el('span', 't', ''));
+      li.append(tk, nm, DS.badge({ text: 'Study', cls: 'x-violet' }), st, el('span', 't', ''));
       return li;
     }
     function renderToday() {
@@ -1431,6 +1446,7 @@
       const c = el('button', 'wchip' + (off ? ' off' : '') + (d.date < today ? ' past' : ''));
       c.type = 'button';
       c.dataset.id = d.id;
+      c.dataset.key = d.id; // B-510 (D-387): the date it shows, for the harnesses
       c.title = d.title || '';
       c.setAttribute('aria-pressed', String(sel));
       const sub = el('span', 'wc-s');
@@ -1501,6 +1517,7 @@
       const c = el('button', 'wchip wk-task' + (it.done ? ' done' : ''));
       c.type = 'button';
       c.dataset.task = it.id;
+      c.dataset.key = it.id;
       c.title = it.text || '';
       c.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
       const sub = el('span', 'wc-s');
@@ -1541,6 +1558,7 @@
       for (const it of tasks) {
         const r = el('div', 'wd-task' + (it.done ? ' done' : ''));
         r.dataset.task = it.id;
+        r.dataset.key = it.id;
         r.append(
           el('span', 'wd-tt', it.text || ''),
           el(
@@ -1554,7 +1572,7 @@
         list.append(r);
       }
       if (!tasks.length) list.append(el('span', 'mini', 'Nothing on this day’s list yet.'));
-      const out = [el('span', 'badge wd-badge x-quiet', 'Day'), title, props, el('span', 'lab', 'Tasks'), list];
+      const out = [DS.badge({ text: 'Day', cls: 'wd-badge x-quiet' }), title, props, el('span', 'lab', 'Tasks'), list];
       const dates = entries.filter(x => x.date === date);
       if (dates.length) {
         const cal = el('div', 'wd-cal');
@@ -1746,7 +1764,7 @@
         return p;
       };
       const graded = d.graded || d.kind === 'exam';
-      const badge = el('span', 'badge wd-badge x-quiet', graded ? 'Graded' : 'Class');
+      const badge = DS.badge({ text: graded ? 'Graded' : 'Class', cls: 'wd-badge x-quiet' });
       const title = el('div', 'wd-title', d.title || '');
       const clock = dateClock(d);
       const dw = new Date(d.date + 'T12:00:00Z');
