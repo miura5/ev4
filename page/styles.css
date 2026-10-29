@@ -2353,6 +2353,8 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
 .plan-sum .pm-wait{font-size:calc(12px * var(--ts));color:var(--faint);margin-top:-6px}
 .plan-sum .pm-rubfold{display:none}
 .pm-line,.pl-foot{display:none}
+.pl-foot{flex-wrap:wrap}
+.pl-putq{flex-basis:100%;font-size:calc(12.5px * var(--ts));color:var(--ink2);line-height:1.45}
 .pl-card.own-foot .pl-foot{display:flex;gap:8px;padding:10px 0 8px;border-top:1px solid var(--line)}
 .pl-head .pl-swap{flex:none;color:var(--quiet)}
 .pl-card.dr > .plan-sum{padding:4px 0 14px;margin-bottom:6px;border-bottom:1px solid var(--line)}

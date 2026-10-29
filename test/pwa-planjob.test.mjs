@@ -479,6 +479,28 @@ test('B-459: a streamed answer is put back together: text, tool_use input and us
   );
   assert.equal(broken.complete, true);
   assert.equal(broken.message.content[0].input, null);
+  // B-470: a thinking block joins its thinking and takes its signature, so it can be replayed whole
+  const thought = assembleStream(
+    ev('message_start', { message: { content: [], usage: { input_tokens: 5 } } }) +
+      ev('content_block_start', { index: 0, content_block: { type: 'thinking', thinking: '' } }) +
+      ev('content_block_delta', { index: 0, delta: { type: 'thinking_delta', thinking: 'Start from ' } }) +
+      ev('content_block_delta', { index: 0, delta: { type: 'thinking_delta', thinking: 'the exam.' } }) +
+      ev('content_block_delta', { index: 0, delta: { type: 'signature_delta', signature: 'sig1' } }) +
+      ev('content_block_stop', { index: 0 }) +
+      ev('content_block_start', { index: 1, content_block: { type: 'redacted_thinking', data: 'opaque' } }) +
+      ev('content_block_stop', { index: 1 }) +
+      ev('content_block_start', { index: 2, content_block: { type: 'text', text: '' } }) +
+      ev('content_block_delta', { index: 2, delta: { type: 'text_delta', text: 'Here.' } }) +
+      ev('content_block_stop', { index: 2 }) +
+      ev('message_delta', { delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 9 } }) +
+      ev('message_stop', {})
+  );
+  assert.equal(thought.complete, true);
+  assert.deepEqual(thought.message.content, [
+    { type: 'thinking', thinking: 'Start from the exam.', signature: 'sig1' },
+    { type: 'redacted_thinking', data: 'opaque' },
+    { type: 'text', text: 'Here.' },
+  ]);
 });
 
 test('B-459: a plan’s asks stream; a stream cut in transit fails the job, keeps the Sonnet claim and counts an estimate', async () => {

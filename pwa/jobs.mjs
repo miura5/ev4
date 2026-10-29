@@ -382,6 +382,10 @@ const tally = (u, reply) => {
   u.cacheWrite += Number(x.cache_creation_input_tokens) || 0;
 };
 const cutShort = reply => !!reply && reply.stop_reason === 'max_tokens';
+/** B-470: a reply's content as replayed into the next ask's messages: a thinking block with no thinking or no signature
+ * is dropped (the API refuses an empty one with a 400); whole thinking blocks and everything else stay. */
+export const replayed = reply =>
+  ((reply && reply.content) || []).filter(b => !(b && b.type === 'thinking' && (!b.thinking || !b.signature)));
 const toolUse = (reply, name) =>
   ((reply && reply.content) || []).filter(b => b && b.type === 'tool_use' && b.name === name);
 /** Why a made plan gets its one fix ask: it misses its shape, or its own rubric score is under the bar; else null. */
@@ -428,7 +432,11 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
         results.push({ type: 'text', text: 'No more lookups: answer now by calling the answer tool.' });
       body = {
         ...body,
-        messages: [...body.messages, { role: 'assistant', content: reply.content }, { role: 'user', content: results }],
+        messages: [
+          ...body.messages,
+          { role: 'assistant', content: replayed(reply) },
+          { role: 'user', content: results },
+        ],
         tool_choice: { type: 'auto' },
       };
       reply = await ask(body);
@@ -455,7 +463,7 @@ async function planAsks({ spec, prepared, ask, usage, db, timeLeft }) {
       ...body.messages,
       {
         role: 'assistant',
-        content: (reply && reply.content && reply.content.length && reply.content) || [{ type: 'text', text: '…' }],
+        content: (replayed(reply).length && replayed(reply)) || [{ type: 'text', text: '…' }],
       },
       {
         role: 'user',
@@ -561,7 +569,11 @@ export async function runJob({
     const why =
       e && (e.code === 'ceiling' || e.code === 'room' || e.code === 'refused') // B-418 (D-339): a token ceiling, in
         ? // the Worker's own words; B-449: a refused ask, in Claude's or the Worker's own words
-          String(e.message).slice(0, 300) + (e.code === 'refused' ? '. Try again.' : '')
+          e.code === 'refused'
+          ? String(e.message)
+              .slice(0, 300)
+              .replace(/[.\s]+$/, '') + '. Try again.'
+          : String(e.message).slice(0, 300)
         : 'Claude couldn’t be reached (' + String((e && e.message) || e).slice(0, 120) + '). Try again.';
     await save(status('failed', why));
     return { status: 'failed', said: why };

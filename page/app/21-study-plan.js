@@ -182,6 +182,36 @@
     function approvePlan(b, draft) {
       return guard(b, () => write(E.studyPlanApproveSet(S.planedits, draft, { now: now() })));
     }
+    /** B-469: Put away, beside Ask for changes: one short confirm in the same row, then planedits marks the exam's
+     *  plans put away (nothing deleted, B-11) and the card goes back to Make a plan. */
+    function putAwayBtn(ex) {
+      const b = btn(
+        'Put away',
+        ev => {
+          const row = ev.currentTarget.parentElement;
+          const was = [...row.childNodes];
+          row.replaceChildren(
+            el(
+              'span',
+              'mini pl-putq',
+              'Put this plan away? Its tasks leave Today and Make a plan comes back. The plan stays in your record.'
+            ),
+            btn(
+              'Put away',
+              e2 =>
+                guard(e2.currentTarget, () =>
+                  write(E.studyPlanPutAwaySet(S.plansRaw, S.planedits, ex.id, { now: now() }))
+                ),
+              { cls: 'btn neutral pl-putgo' }
+            ),
+            btn('Cancel', () => row.replaceChildren(...was), { cls: 'btn ghost' })
+          );
+        },
+        { cls: 'btn ghost pl-put' }
+      );
+      b.title = 'Take this plan off Study and Today; it stays in your record';
+      return b;
+    }
     // E.V.'s one question: kept as one element per job, so his answer and the focus outlast a repaint
     const askEls = new Map();
     function askBlock(j, course, ex) {
@@ -523,7 +553,8 @@
       act.append(
         btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }),
         ap,
-        remakeBtn(ex, course)
+        remakeBtn(ex, course),
+        putAwayBtn(ex)
       );
       d.append(act);
       if (ask) d.append(el('span', 'mini pm-wait', 'Answer or skip E.V.’s question to approve.'));
@@ -573,6 +604,7 @@
       const act = el('div', 'pm-act');
       act.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
       if (p.section) act.append(remakeBtn(ex, course));
+      if (!ex.own) act.append(putAwayBtn(ex));
       d.append(act);
       return d;
     }
@@ -631,6 +663,7 @@
       const foot = el('div', 'pl-foot');
       foot.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
       if (p.section) foot.append(remakeBtn(ex, course));
+      if (!ex.own) foot.append(putAwayBtn(ex));
       card.append(foot);
       return { card, panel: () => planSummary(p, ex, course, c) };
     }

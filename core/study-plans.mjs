@@ -21,6 +21,9 @@ export function makeStudyPlans(core) {
     taskDone,
     editBase,
   } = core;
+  /** B-469: a plan he put away (planedits/<exam id>.retired names it) is never in force, a draft or an edit's target. */
+  const planRetired = (planedits, p) =>
+    !!p && !!(((planedits || []).find(e => e && e.id === (p.exam || p.id)) || {}).retired || {})[p.id];
   /** D-357: a study plan task's one tag, from this set (the answer shapes and plans.schema hold it); planDay shows each on
    * Today upper-cased with its dash a space (GRADED ... CLINICAL PREP, SKILLS PREP). */
   const TAGS = ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
@@ -207,7 +210,8 @@ export function makeStudyPlans(core) {
     const R = rulesOf(spec);
     const plans = db.plans || [];
     if (job && job.revise) {
-      const draft = plans.find(p => p.id === job.revise) || null;
+      // B-469: a plan he put away is never what an edit changes
+      const draft = plans.find(p => p.id === job.revise && !planRetired(db.planedits, p)) || null;
       if (!draft) return { mode: 'edit', refused: `there's no plan ${job.revise} in your record to change` };
       return {
         mode: 'edit',
@@ -382,7 +386,7 @@ export function makeStudyPlans(core) {
   function studyPlanChatAsk({ said = '', brief = '', title = '', exams, plansRaw, planedits, date, revise = null }) {
     const his = chipBrief(said);
     // B-450: Ask for changes on a plan's card names that plan: the edit is of it, whatever exam is next
-    const shown = revise ? (plansRaw || []).find(p => p.id === revise) : null;
+    const shown = revise ? (plansRaw || []).find(p => p.id === revise && !planRetired(planedits, p)) : null;
     if (shown) {
       const c = (shown.section && shown.section.course) || studyPlanCourse({ title, brief: `${his} ${brief}` }, exams);
       const offer = c && his && studyPlanLooksNew(his) ? { type: 'newplan', course: c, brief: his } : null;
@@ -763,6 +767,21 @@ export function makeStudyPlans(core) {
     const data = { ...editBase(pe, now), schema: 2, ticks: { ...((pe && pe.ticks) || {}) }, plan: draft.id };
     return { op: 'set', collection: 'planedits', id: examId, data };
   }
+  /**
+   * B-469: Put away, from an exam's plan card: planedits/<examId>.retired marks the exam's plans (the one in force and
+   * its drafts) as put away, so Study shows Make a plan again and nothing reads them as the plan. Plans are Facts and
+   * stay in the record untouched; the Edit keeps its ticks and every other field (replaced whole).
+   */
+  function studyPlanPutAwaySet(plans, planedits, examId, { now } = {}) {
+    const pe = (planedits || []).find(e => e && e.id === examId) || null;
+    const base = editBase(pe, now);
+    const retired = { ...((pe && pe.retired) || {}) };
+    const mark = { at: base.updatedAt, by: 'page', why: 'put away' };
+    for (const p of plans || []) if ((p.exam || p.id) === examId && !retired[p.id]) retired[p.id] = mark;
+    if (!Object.keys(retired).length) throw new Error('no plan for ' + examId + ' to put away');
+    const data = { ...base, schema: 2, ticks: { ...((pe && pe.ticks) || {}) }, retired };
+    return { op: 'set', collection: 'planedits', id: examId, data };
+  }
   /** The draft a plan card shows for an exam: its newest draft, else the plan in force (planViews). */
   function latestPlanDraft(plans, planedits, examId) {
     return (planDrafts(plans, planedits, examId) || [])[0] || null;
@@ -796,5 +815,6 @@ export function makeStudyPlans(core) {
     latestPlanDraft,
     studyPlanSettingsSet,
     studyPlanApproveSet,
+    studyPlanPutAwaySet,
   };
 }

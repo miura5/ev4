@@ -1859,10 +1859,40 @@ async function studyPlanChecks(page) {
     await page.click('#tab-study');
     await page.waitForTimeout(200);
   }
+  // B-469: Put away, from the panel at 1280 and the card's foot at 390: one confirm, then the exam's plans are marked
+  // put away in planedits/E4 (nothing deleted) and the card is Make a plan again
+  {
+    const inPanel = await page.evaluate(() => !!document.querySelector('#study-side .plan-sum .pl-put'));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(250);
+    const nPlans = await page.evaluate(() => Object.keys(window.__db.plans || {}).length);
+    await page.locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-foot .pl-put').click();
+    await page.waitForTimeout(150);
+    const ask = await page.evaluate(() => (document.querySelector('#ov-plans .pl-foot .pl-putq') || {}).textContent);
+    await page.screenshot({ path: `${shots}/plan-putaway-390.png`, fullPage: true });
+    await page.locator('#ov-plans .pl-foot .pl-putgo').click();
+    await page.waitForTimeout(350);
+    const after = await page.evaluate(() => ({
+      retired: Object.keys((window.__db.planedits.E4 || {}).retired || {}),
+      plans: Object.keys(window.__db.plans || {}).length,
+      make: ((document.querySelector('#ov-plans .pl-none button') || {}).textContent || '').trim(),
+      cards: [...document.querySelectorAll('#ov-plans .pl-card[data-plan]')].map(c => c.dataset.plan),
+    }));
+    ok(
+      'Put away asks once, marks the plan put away in planedits (nothing deleted) and Make a plan comes back (B-469)',
+      inPanel &&
+        /^Put this plan away\?/.test(ask || '') &&
+        after.retired.includes('E4-H2') &&
+        after.plans === nPlans &&
+        after.make === 'Make a plan' &&
+        !after.cards.some(id => /^E4/.test(id)),
+      JSON.stringify({ inPanel, ask, after })
+    );
+  }
   // E4's earlier plan back in force for the checks after this one (nothing is deleted: the draft stays a Fact)
   await page.evaluate(async () => {
     const db = await window.claude.use('db');
-    const e = window.__db.planedits.E4;
+    const { retired, ...e } = window.__db.planedits.E4;
     await db
       .collection('planedits')
       .doc('E4')

@@ -1061,6 +1061,39 @@ test('B-449: an edit that keeps looking things up past the cap stops there: its 
   assert.equal(db.plans.length, before);
 });
 
+test('B-470: an edit replays an earlier turn without an empty thinking block; a whole one stays', async () => {
+  for (const think of [
+    { type: 'thinking', thinking: '' },
+    { type: 'thinking', thinking: 'Look up the quiz first.', signature: 'sig' },
+  ]) {
+    const db = await withDraft();
+    let n = 0;
+    const reply = body =>
+      n++
+        ? jobReply(body)
+        : {
+            content: [think, { type: 'tool_use', id: 'lk1', name: 'lookup', input: { ref: 'dates/demo-quiz' } }],
+            stop_reason: 'tool_use',
+            usage: { input_tokens: 10, output_tokens: 10 },
+          };
+    const { r, asks } = await run(db, { title: 'Plan changes', brief: 'start over', revise: 'E4-2' }, { reply });
+    assert.equal(r.status, 'done', r.said);
+    const turn = asks[1].messages.find(m => m.role === 'assistant').content;
+    assert.ok(!turn.some(b => b.type === 'thinking' && !b.thinking), 'no empty thinking block is sent');
+    assert.equal(turn.filter(b => b.type === 'thinking').length, think.signature ? 1 : 0);
+    assert.equal(turn.at(-1).type, 'tool_use');
+  }
+  assert.deepEqual(
+    J.replayed({
+      content: [
+        { type: 'thinking', thinking: 'x' },
+        { type: 'text', text: 'hi' },
+      ],
+    }),
+    [{ type: 'text', text: 'hi' }]
+  );
+});
+
 test('B-449: no plan ask forces tool_choice (the plan models refuse it); the answer is asked for in words', async () => {
   // the make ask and its fix ask
   const { asks } = await run(record(), { title: PLANTS.low + ' plan', brief: 'a plan', course: 'NUR 112' });
@@ -1439,6 +1472,74 @@ test('B-450: the page’s plan writes are core composers: his settings and Appro
   assert.ok(validate('planedits', a.data, { id: 'E5' }).ok);
   assert.equal(EV.planViews([draft], [{ id: 'E5', ...a.data }])[0].id, 'E5-2', 'the draft is the plan in force');
   assert.throws(() => EV.studyPlanApproveSet([], { ...draft, section: undefined }, { now: NOW }), /study plan draft/);
+});
+
+test('B-469: Put away marks the exam’s plans retired in planedits; no reader takes them as the plan; a new one can be made', () => {
+  const plan = (id, at, extra = {}) => ({
+    id,
+    exam: 'E5',
+    at,
+    section: { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' },
+    days: [{ date: '2026-10-28', tasks: [{ id: 't1', text: 'Read ch 3', kind: 'reading' }] }],
+    ...extra,
+  });
+  const other = { id: 'E6', exam: 'E6', at: NOW.toISOString(), days: [] };
+  const plans = [plan('E5', '2026-10-27T10:00:00Z'), plan('E5-2', '2026-10-28T10:00:00Z'), other];
+  const ticks = { t1: { at: NOW.toISOString(), by: 'Matt' } };
+  const pe = {
+    id: 'E5',
+    schema: 2,
+    writer: 'page',
+    at: NOW.toISOString(),
+    source: 'E.V. Home',
+    updatedAt: NOW.toISOString(),
+    ticks,
+    plan: 'E5',
+  };
+  assert.deepEqual(
+    EV.planViews(plans, [pe]).map(p => p.id),
+    ['E5', 'E6']
+  );
+  const w = EV.studyPlanPutAwaySet(plans, [pe], 'E5', { now: NOW });
+  assert.deepEqual([w.op, w.collection, w.id], ['set', 'planedits', 'E5']);
+  assert.ok(validate('planedits', w.data, { id: 'E5' }).ok, 'a valid planedits document');
+  assert.deepEqual(Object.keys(w.data.retired), ['E5', 'E5-2'], 'the plan in force and its draft, not E6');
+  assert.deepEqual(w.data.retired.E5, { at: NOW.toISOString(), by: 'page', why: 'put away' });
+  assert.deepEqual(w.data.ticks, ticks, 'his ticks are kept');
+  assert.equal(w.data.plan, 'E5', 'nothing else is overwritten');
+  const pe2 = { id: 'E5', ...w.data };
+  // no plan in force and no draft for E5: Study shows Make a plan; E6 is untouched
+  assert.deepEqual(
+    EV.planViews(plans, [pe2]).map(p => p.id),
+    ['E6']
+  );
+  assert.deepEqual(EV.planDrafts(plans, [pe2], 'E5'), []);
+  assert.equal(EV.studyPlanProgress({ plans, planedits: [pe2] }, { date: '2026-10-28', examId: 'E5' }), null);
+  // the day's list carries no task of a put-away plan
+  const dayOf = edits =>
+    EV.planDay({ date: '2026-10-28', plans, planedits: edits, exams: [], dates: [], weakspots: [] });
+  assert.ok(JSON.stringify(dayOf([pe])).includes('Read ch 3'), 'in force, its task is on the day');
+  assert.ok(!JSON.stringify(dayOf([pe2])).includes('Read ch 3'), 'put away, its tasks leave Today');
+  // a put-away plan is never an edit's target
+  const ctx = EV.studyPlanContext({ plans, planedits: [pe2] }, { date: '2026-10-28', job: { revise: 'E5-2' }, spec });
+  assert.match(ctx.refused, /no plan E5-2/);
+  // a new plan is made at the next id, and approved, it is the plan in force; the old ones stay out of sight
+  const id = EV.nextPlanId(plans, 'E5');
+  assert.equal(id, 'E5-3');
+  const fresh = plan(id, '2026-10-29T10:00:00Z');
+  const all = [...plans, fresh];
+  assert.deepEqual(
+    EV.planDrafts(all, [pe2], 'E5').map(p => p.id),
+    ['E5-3'],
+    'a draft'
+  );
+  const ok = EV.studyPlanApproveSet([pe2], fresh, { now: NOW });
+  assert.deepEqual(
+    EV.planViews(all, [{ id: 'E5', ...ok.data }]).map(p => p.id),
+    ['E6', 'E5-3']
+  );
+  assert.deepEqual(EV.planDrafts(all, [{ id: 'E5', ...ok.data }], 'E5'), []);
+  assert.throws(() => EV.studyPlanPutAwaySet([], [], 'E5', { now: NOW }), /no plan/);
 });
 
 test('B-450: Make a plan plans toward its card’s exam; an exam marked done is never the section’s, even on its day', () => {

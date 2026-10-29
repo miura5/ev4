@@ -1041,9 +1041,9 @@ const EVCore = (() => {
   // B-45 (D-102): an exam's plans are plans/<examId> and its drafts plans/<examId>-<n>, each a Fact never changed;
   // planedits/<examId>.plan names the one in force (unset: plans/<examId>). Readers see only the plan in force.
   const planExam = p => (p && (p.exam || p.id)) || null;
-  /** The id of the plan in force for an exam, among the plans the record holds. */
+  /** The id of the plan in force for an exam, among the plans the record holds; B-469: none he put away (.retired). */
   function planInForceId(plans, planedit, examId) {
-    const mine = (plans || []).filter(p => planExam(p) === examId);
+    const mine = (plans || []).filter(p => planExam(p) === examId && !((planedit && planedit.retired) || {})[p.id]);
     const want = planedit && planedit.plan;
     if (want && mine.find(p => p.id === want)) return want;
     const older = mine.filter(p => !p.section); // B-449: a study plan is a draft until he accepts it
@@ -1065,7 +1065,7 @@ const EVCore = (() => {
     const pe = (planedits || []).find(e => e && e.id === examId);
     const f = planInForceId(plans, pe, examId);
     return (plans || [])
-      .filter(p => planExam(p) === examId && p.id !== f)
+      .filter(p => planExam(p) === examId && p.id !== f && !((pe && pe.retired) || {})[p.id])
       .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
   }
   /** Where the worker saves a plan it drafts: plans/<examId> when the exam has none, else the next plans/<examId>-<n>. */

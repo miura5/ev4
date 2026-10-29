@@ -307,7 +307,8 @@ export async function claimRead(env, read, ms = Date.now()) {
 /**
  * B-459: a streamed Messages API answer (its server-sent events, as text) put back together as the one reply a plain
  * request returns: {complete: true, message} once message_stop came, else {complete: false, why, message} (what came).
- * Text blocks join their text deltas, tool_use blocks parse their joined input JSON, and usage is message_start's with
+ * Text blocks join their text deltas, thinking blocks their thinking deltas and signature (B-470; redacted_thinking
+ * blocks stay as given), tool_use blocks parse their joined input JSON, and usage is message_start's with
  * message_delta's counts laid over it (output_tokens is cumulative there).
  */
 export function assembleStream(sse) {
@@ -334,6 +335,9 @@ export function assembleStream(sse) {
       const b = message.content[ev.index];
       if (!b) continue;
       if (ev.delta.type === 'text_delta') b.text = (b.text || '') + ev.delta.text;
+      // B-470: a thinking block joins its thinking and takes its signature, so a replayed turn carries it whole
+      else if (ev.delta.type === 'thinking_delta') b.thinking = (b.thinking || '') + ev.delta.thinking;
+      else if (ev.delta.type === 'signature_delta') b.signature = ev.delta.signature;
       else if (ev.delta.type === 'input_json_delta') parts[ev.index] = (parts[ev.index] || '') + ev.delta.partial_json;
     } else if (ev.type === 'content_block_stop') {
       const b = message.content[ev.index];
