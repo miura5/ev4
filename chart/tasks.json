@@ -9098,9 +9098,9 @@
   "id": "B-487",
   "kind": "request",
   "title": "Request (reported Oct 29): Flashcard decks inside E.V. (D-368), part 1: per-course decks in Study beside Practice sets; E.V. makes a deck from a chat ask (topic and count) and cards can be added and edited by hand; study a deck in Flip (tap to reveal, Got it / Again) and Multiple choice (distractors from the deck's other cards); each card has its own spaced-repetition schedule (new cards due now; Got it pushes the next due out on a growing interval; Again brings it back this session and tomorrow); due cards appear on Today as one 'Cards · n due' item.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Study shows a 'Flashcards' card per course beside Practice sets listing its decks (title, card count, due today); asking E.V. for flashcards (chat or quick ask) makes a deck for that course (the flashcards job writes a deck, not a Quizlet block; B-485's routing: a flashcard ask starts the flashcards job by code); cards can be added, edited and retired by hand (nothing deleted); a deck studies in Flip (term, tap to reveal, Got it / Again) and Multiple choice (3 distractors from the deck's other cards); each card keeps its own schedule (new = due now; Got it moves due out 1, 3, 7, 16, 35 days...; Again = again this session and due tomorrow); Today shows one 'Cards · n due' item that opens a due-cards session; works at 390 and 1280 in the app. npm test covers scheduling and deck writes; proved in the staging app by one real E.V.-made deck studied in both modes.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9109,6 +9109,10 @@
   "reportedAt": "2026-10-29T12:34:02.871Z",
   "board": {
    "row": "v4 B-487: Flashcard decks inside E.V. (D-368), part 1: per-course decks in…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T12:34:22.941Z"
   }
  },
  {
