@@ -341,7 +341,75 @@
         );
       });
     }
+    // B-519 (F-39): a quiz left part-way survives a reopen. The open set (and its mini quiz or objective) is kept on this
+    // device; after a reopen Study's overview offers Resume quiz on it until he resumes it, opens another or leaves it
+    // from the quiz itself. Only a reopen offers it (resumeQuiz is read once, as the page loads). Every answer is in the
+    // record already (each is written as he checks it), so nothing is lost either way.
+    let resumeQuiz = (() => {
+      try {
+        return JSON.parse(store.get('quizOpen') || 'null');
+      } catch {
+        return null;
+      }
+    })();
+    function keepQuiz(q) {
+      store.set('quizOpen', q ? JSON.stringify(q) : '');
+      resumeQuiz = null; // a quiz open (or left) in this visit is offered again only after the next reopen
+    }
+    function quizLeft(q) {
+      const s = q && q.set && S.sets.find(x => x.id === q.set);
+      if (!s) return null;
+      const all = E.validItems(s);
+      const items = q.mini
+        ? (q.mini.ids || []).map(id => all.find(x => x.id === id)).filter(Boolean)
+        : q.obj
+          ? all.filter(x => x.objective === q.obj.obj)
+          : all;
+      const ans = answersOf(s),
+        done = items.filter(x => ans[x.id]).length;
+      return items.length && done < items.length ? { set: s, done, total: items.length } : null;
+    }
+    function renderResume() {
+      let bar = $('ov-resume');
+      const q = !ui.openSet && resumeQuiz,
+        left = q && quizLeft(q);
+      if (!left) {
+        if (bar) bar.hidden = true;
+        return;
+      }
+      if (!bar) {
+        bar = el('div', 'card qz-resume');
+        bar.id = 'ov-resume';
+        $('study-objectives').prepend(bar);
+      }
+      bar.hidden = false;
+      const t = el('span', 'qr-t');
+      t.append(
+        el('b', null, 'Quiz in progress'),
+        el(
+          'span',
+          'meta',
+          ((q.mini && q.mini.label) || (q.obj && q.obj.text) || left.set.title || 'Practice') +
+            ' · ' +
+            left.done +
+            ' of ' +
+            left.total +
+            ' answered'
+        )
+      );
+      bar.replaceChildren(
+        t,
+        btn('Resume quiz', () => {
+          ui.openSet = q.set;
+          ui.mini = q.mini ? { set: q.set, ids: q.mini.ids, label: q.mini.label, n: ++miniN } : null;
+          ui.openObj = q.obj || null;
+          setStudy('practice');
+          render();
+        })
+      );
+    }
     function renderObjectives() {
+      renderResume();
       const card = $('ov-card'),
         list = studyExams();
       const start = $('study-start');
@@ -1204,6 +1272,7 @@
       let fold = $('pr-fold');
       if (!fold) {
         fold = foldLine('', true, () => {
+          keepQuiz(null); // B-519: he left the quiz himself
           ui.openSet = null;
           ui.openObj = null;
           setStudy('objectives');
@@ -1216,6 +1285,12 @@
       fold.hidden = !d;
       $('pr-title').hidden = !!d;
       if (d) {
+        // B-519: kept on this device, so a reopen offers Resume quiz
+        keepQuiz({
+          set: d.id,
+          mini: mini ? { ids: mini.ids, label: mini.label } : null,
+          obj: of ? { set: of.set, obj: of.obj, text: of.text } : null,
+        });
         fold.dataset.set = d.id;
         const shortBy = E.practiceReply.setShortfall(d, E.validItems(d).length); // B-480
         fold.textContent = (d.title || 'Practice') + (shortBy ? ' · ' + shortBy : '');
@@ -1616,6 +1691,7 @@
     }
     $('more-btn').addEventListener('click', () => morePractice());
     $('study-back').addEventListener('click', () => {
+      keepQuiz(null); // B-519: he left the quiz himself
       ui.openSet = null;
       ui.openObj = null;
       ui.mini = null;

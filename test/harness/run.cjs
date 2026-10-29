@@ -5136,6 +5136,82 @@ async function tap(page, locator, name) {
     );
     await page.close();
     await v.close();
+    // B-519 (F-37, F-39): the quiz runner at 390 with a long set title and a long unbroken word fits the screen (no
+    // sideways scroll, Record's tab on screen); after a reopen mid-quiz Study offers Resume quiz, which reopens the set.
+    {
+      const qp = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      const qErr = [];
+      qp.on('pageerror', e => qErr.push(e.message));
+      await qp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      await openPage(qp, 'staging');
+      const longSet = () => {
+        const base = window.__db.sets['drill-E4-weak'];
+        const q0 = base.items[0];
+        window.__db.sets['b519-long'] = {
+          ...base,
+          title: 'Dosage calculation practice assessment 3.2: oral, parenteral and pediatric weight-based calculations',
+          items: [0, 1, 2].map(i => ({
+            ...q0,
+            id: 'b519-' + i,
+            stem:
+              'Question ' + i + ': hypokalemia-associated-dysrhythmia-risk-with-loop-diuretics-and-digoxin-toxicity?',
+          })),
+        };
+      };
+      await qp.evaluate(longSet);
+      await qp.addInitScript(longSet); // after the seed's script, so a reload has the set too
+      await qp.waitForTimeout(1200);
+      await openSetById(qp, 'b519-long');
+      await qp.waitForTimeout(300);
+      const fit = await qp.evaluate(() => {
+        const rec = document.getElementById('tab-record').getBoundingClientRect();
+        return {
+          sw: document.documentElement.scrollWidth,
+          w: innerWidth,
+          open: !document.getElementById('study-practice').hidden,
+          rec: [Math.round(rec.left), Math.round(rec.right)],
+        };
+      });
+      ok(
+        '[390] B-519: the quiz runner fits the screen with a long title and word; Record stays on screen',
+        fit.open && fit.sw <= fit.w && fit.rec[0] >= 0 && fit.rec[1] <= fit.w,
+        JSON.stringify(fit)
+      );
+      await qp.screenshot({ path: `${shots}/quiz-390-long.png` });
+      await qp.reload();
+      await qp.waitForTimeout(1500);
+      await qp.click('#tab-study');
+      await qp.waitForTimeout(300);
+      const offer = await qp.evaluate(() => {
+        const b = document.getElementById('ov-resume');
+        return b && !b.hidden ? b.textContent : '';
+      });
+      ok(
+        '[390] B-519: reopened mid-quiz, Study offers Resume quiz on that set',
+        /Quiz in progress/.test(offer) &&
+          /Dosage calculation practice assessment 3\.2/.test(offer) &&
+          /Resume quiz$/.test(offer),
+        offer
+      );
+      await qp.screenshot({ path: `${shots}/quiz-390-resume.png` });
+      if (offer) await qp.click('#ov-resume button');
+      await qp.waitForTimeout(300);
+      const back = await qp.evaluate(() => ({
+        open: !document.getElementById('study-practice').hidden,
+        fold: (document.getElementById('pr-fold') || {}).dataset?.set || '',
+        offer: !!document.getElementById('ov-resume') && !document.getElementById('ov-resume').hidden,
+      }));
+      ok('[390] B-519: Resume quiz reopens the set', back.open && back.fold === 'b519-long', JSON.stringify(back));
+      await closeSet(qp);
+      await qp.waitForTimeout(250);
+      const gone = await qp.evaluate(() => {
+        const b = document.getElementById('ov-resume');
+        return !b || b.hidden;
+      });
+      ok('[390] B-519: leaving the quiz from it ends the offer', gone);
+      ok('[390] B-519: no page errors', !qErr.length, qErr.join(' | '));
+      await qp.close();
+    }
     // Staging page: same page, staging worker only; filing is live-only
     const st = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await st.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
