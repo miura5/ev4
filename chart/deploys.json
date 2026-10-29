@@ -5917,5 +5917,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "452004b",
+  "time": "2026-10-29T06:45:28.020Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "aacddd6",
+  "tasks": [
+   "B-483"
+  ],
+  "summary": "On live, a study plan's tasks and Today's list are not one set of…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
