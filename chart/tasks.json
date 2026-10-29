@@ -9617,7 +9617,7 @@
  {
   "id": "B-516",
   "kind": "task",
-  "title": "First look pass on Proprietary: with every view on components, apply the polish's look decisions in page/ds/tokens.css and page/ds/components.css only (softer structure, card radius, the success pulse), inside the approved demo (D-327)",
+  "title": "The UI polish, through Proprietary (D-384): with every view on components, apply the UX map's look and layout fixes and the polish's look decisions in page/ds/tokens.css and page/ds/components.css (softer structure, card radius, the success pulse), inside the approved demo (D-327)",
   "dod": "Release card with side-by-side screenshots at 1280 and 390 and the Gallery's section shots; npm test and smoke GREEN; ship staging GREEN; anything outside the demo goes to Matt first; Matt's testing is the acceptance",
   "milestone": "Consolidation: Proprietary",
   "status": "open",
