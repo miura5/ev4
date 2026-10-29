@@ -10073,9 +10073,9 @@
   "id": "B-538",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Flashcard decks still get reworded repeats (e.g. 'Z disc' and 'Z disc: function'), a 100-card ask made 101, and the Add with E.V. card didn't show 'Working · …' (the plan card says 'Making a new plan · 0 s' instead).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A batch is told the deck's terms as concepts, not only exact words, and near-duplicates are cut cheaply; an ask gets exactly its count; deck and plan cards show the same Working · elapsed line; tests.",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10084,6 +10084,10 @@
   "reportedAt": "2026-10-29T21:16:53.174Z",
   "board": {
    "row": "v4 B-538: Flashcard decks still get reworded repeats (e.g. 'Z disc' and 'Z…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T21:16:55.681Z"
   }
  }
 ]
