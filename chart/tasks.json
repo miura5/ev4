@@ -9369,9 +9369,9 @@
   "title": "Bug (reported Oct 29): Proposed weak spots can't be accepted: Accept stays disabled until an objective is picked, and 'Pick an objective' does nothing, so new misses never become weak spots.",
   "dod": "A proposed weak spot can be accepted without picking an objective (filed under its course, objective optional and pickable later), the objective picker works when used, and every miss is proposed in the quiz's own course; tests; real run on staging.",
   "milestone": "Flashcards (D-368)",
-  "status": "blocked",
+  "status": "in progress",
   "depends": [],
-  "notes": "Page, core and harness built at 0028609; the spec's weakspot-accept action still requires an objective: spec.actions['weakspot-accept'].args.properties.items.items.required must become ['id'] (a guarded path, refused for builders). The page turns the new Accept on by itself once the spec allows it.",
+  "notes": "Matt OK'd the spec line in chat; 2964201 makes weakspot-accept require only id, and the two checks that pinned the old rule now hold the new one. Staging with tonight's release.",
   "commit": null,
   "source": "UX map probe F-41",
   "words": "Proposed weak spots can't be accepted: Accept stays disabled until an objective is picked, and 'Pick an objective' does nothing, so new misses never become weak spots.",
@@ -9382,8 +9382,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-29T15:31:52.712Z"
-  },
-  "waitingOn": "Matt"
+  }
  },
  {
   "id": "B-500",
