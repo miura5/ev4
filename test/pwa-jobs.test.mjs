@@ -502,3 +502,25 @@ test('B-462: a finished job is stamped when it finishes, and its done message si
   assert.equal(msg.at, END.toISOString(), 'the done note is placed when the job finished');
   assert.equal(key, 'm-20261025-150135000-job');
 });
+
+test('B-479: the chat’s start_job can start every kind it offers, flashcards included (the jobs schema takes them)', () => {
+  // start_job's kind enum is Object.keys(spec.jobs.kinds) (page/app/72-ev-talking-with-claude.js); the page's
+  // jobs/<id> write is held to the jobs schema, which refused flashcards on staging (Oct 29)
+  const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
+  assert.match(chat, /kind: \{ type: 'string', enum: Object\.keys\(KINDS\) \}/);
+  assert.ok(Object.keys(spec.jobs.kinds).includes('flashcards'));
+  for (const kind of Object.keys(spec.jobs.kinds)) {
+    const doc = {
+      schema: 2,
+      writer: 'page',
+      at: NOW.toISOString(),
+      source: 'E.V. Home',
+      kind,
+      title: 'Flashcards: nutrition and elimination terms',
+      brief: 'Make me 8 flashcards on nutrition and elimination terms for NUR 112',
+    };
+    const v = validate('jobs', doc, { id: 'job-20261029-120000-flashcards' });
+    assert.ok(v.ok, kind + ': ' + JSON.stringify(v.errors || v).slice(0, 300));
+  }
+  assert.match(spec.jobs.kinds.flashcards.guide, /never a reason for failed/);
+});

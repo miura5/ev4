@@ -4223,7 +4223,7 @@
    },
    "flashcards": {
     "label": "Flashcards",
-    "guide": "Write the number of flashcards the brief asks for (default 20, at most 40) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. They go to Quizlet: he pastes them there, so make no set and no doc, and leave links out. In text, one short line on what the cards cover."
+    "guide": "Write the number of flashcards the brief asks for (default 20, at most 40) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. When no passage covers the topic, still write every card from general knowledge, each with verify: true (its definition then ends “[verify]”); thin or missing materials are never a reason for failed. They go to Quizlet: he pastes them there, so make no set and no doc, and leave links out. In text, one short line on what the cards cover."
    },
    "general": {
     "label": "Background task",
