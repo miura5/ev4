@@ -9695,9 +9695,9 @@
   "id": "B-520",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Note tasks on Today don't open their note, and New note leaves empty Untitled notes and ignores the selected course.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A note task has Write, which opens or creates its note in the task's course; New note uses the selected course; an empty untitled note is not kept as a document when left (nothing deleted: it is never written until it has words); tests. (F-31, F-45, F-46)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9706,6 +9706,10 @@
   "reportedAt": "2026-10-29T15:59:22.609Z",
   "board": {
    "row": "v4 B-520: Note tasks on Today don't open their note, and New note leaves empty…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:59:27.283Z"
   }
  }
 ]
