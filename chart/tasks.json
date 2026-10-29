@@ -9341,5 +9341,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:15:04.930Z"
   }
+ },
+ {
+  "id": "B-498",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Items from one course show up in another course's exam plan (NUR 112 items in a BIO 201 plan on live, noticed Oct 29 morning, possibly added overnight by a scheduled run); the UX probe also saw BIO misses filed under NUR weak spots.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in chat, Oct 29; UX probe tester A",
+  "words": "Items from one course show up in another course's exam plan (NUR 112 items in a BIO 201 plan on live, noticed Oct 29 morning, possibly added overnight by a scheduled run); the UX probe also saw BIO misses filed under NUR weak spots.",
+  "reportedAt": "2026-10-29T15:26:58.665Z",
+  "board": {
+   "row": "v4 B-498: Items from one course show up in another course's exam plan (NUR 112…"
+  }
  }
 ]
