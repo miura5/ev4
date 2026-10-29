@@ -9259,7 +9259,7 @@
   "title": "Bug (reported Oct 29): On a phone, Today's Cards row hides its Start button until hover; tapping the row's name works.",
   "dod": null,
   "milestone": "Inbox",
-  "status": "inbox",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9268,6 +9268,12 @@
   "reportedAt": "2026-10-29T14:49:35.202Z",
   "board": {
    "row": "v4 B-494: On a phone, Today's Cards row hides its Start button until hover;…"
+  },
+  "triage": {
+   "outcome": "joined",
+   "into": "B-488",
+   "reason": "joins B-488",
+   "at": "2026-10-29T14:49:49.200Z"
   }
  }
 ]
