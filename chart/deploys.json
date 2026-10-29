@@ -5821,5 +5821,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "c83d9c4",
+  "time": "2026-10-29T03:26:37.290Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "afac42f",
+  "tasks": [
+   "B-448"
+  ],
+  "summary": "From Today's list, go back to earlier days (as the week view's arrows…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
