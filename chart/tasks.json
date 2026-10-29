@@ -9166,5 +9166,23 @@
    "outcome": "task",
    "at": "2026-10-29T12:34:29.158Z"
   }
+ },
+ {
+  "id": "B-490",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Replace the app's home-screen icon (the dark E.V. tile) with E.V.'s avatar in its idle state, centered and sized for the PWA icon.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Replace the app's home-screen icon (the dark E.V. tile) with E.V.'s avatar in its idle state, centered and sized for the PWA icon.",
+  "reworded": true,
+  "reportedAt": "2026-10-29T13:47:34.222Z",
+  "board": {
+   "row": "v4 B-490: Replace the app's home-screen icon (the dark E.V. tile) with E.V.'s…"
+  }
  }
 ]
