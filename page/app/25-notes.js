@@ -583,6 +583,7 @@
     }
     function loadNote(id, doc) {
       NOTE.open = id;
+      nEd.dataset.note = id; // B-520: the open note's id, written or not yet (an empty new note never is)
       NOTE.doc = doc;
       NOTE.blocks = E.noteBlocks(doc ? doc.blocks : []);
       NOTE.course = doc ? (doc.course === undefined ? null : doc.course) : defaultCourse();
@@ -614,20 +615,31 @@
       body.focus();
       setNoteSel({ a: { b: last, o: E.noteText(NOTE.blocks[last]).length } });
     }
-    async function newNote(from) {
+    /** B-520 (F-46): the course a new note takes: the one asked for, else the course Notes is filtered to. */
+    const newNoteCourse = course =>
+      course !== undefined ? course : NOTE_LIST.filter !== 'all' ? NOTE_LIST.filter : defaultCourse();
+    async function newNote(from, { course, title = '' } = {}) {
       const was = from && from.tab ? from : whereNow(); // B-406: where he was, for the session's Undo
       if (!(await flushNote())) return;
       const at = now();
       const id = E.newNoteId(at, noteRandom());
       loadNote(id, null);
-      // B-440: a new note opens on its title line, a heading 1 that reads a grey "Untitled" until he names it
-      NOTE.blocks = [{ type: 'h1', runs: [] }];
+      NOTE.course = newNoteCourse(course);
+      paintMeta();
+      // B-440: a new note opens on its title line, a heading 1 that reads a grey "Untitled" until he names it; B-520: a
+      // note task's Write opens it titled as the task
+      const t = String(title || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      NOTE.blocks = [{ type: 'h1', runs: t ? [{ text: t }] : [] }, ...(t ? [{ type: 'p', runs: [] }] : [])];
       notePaint({ a: { b: 0, o: 0 } }, false);
       updateBar();
       NOTE.doc = { createdAt: at }; // written once (noteProblem): every save of this note carries the same createdAt
-      NOTE.dirty = true; // a new note is written at once, so it is in the record before a word is typed
+      // B-520 (F-46): a new note is written once it has words (a task's title counts); an empty one never is, so leaving
+      // it leaves nothing behind (nothing deleted)
+      NOTE.dirty = !!t;
       body.focus();
-      setNoteSel({ a: { b: 0, o: 0 } });
+      setNoteSel(t ? { a: { b: 1, o: 0 } } : { a: { b: 0, o: 0 } });
       saveNote();
       await noteSession(id, true, was).catch(e =>
         toast('Couldn’t start the session: ' + ((e && (e.message || e.code)) || 'error'))
@@ -1589,6 +1601,13 @@
       clearTimeout(NOTE.timer);
       if (!NOTE.open || !NOTE.dirty) return NOTE.saving || NOTE.keeping || Promise.resolve();
       if (NOTE.keeping) return NOTE.keeping;
+      // B-520 (F-46): a new note with no words yet is not written; its first words write it
+      if (!(NOTE.doc && NOTE.doc.at) && !NOTE.saving && E.noteBlank(NOTE.blocks)) {
+        NOTE.dirty = false;
+        NOTE.state = 'saved';
+        syncHead();
+        return Promise.resolve();
+      }
       if (NOTE.saving) {
         NOTE.again = true;
         return NOTE.saving;

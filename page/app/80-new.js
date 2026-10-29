@@ -169,7 +169,9 @@
       if (opts && kind === 'task') taskOpts = { ...opts };
       if (opts && kind === 'note') Object.assign(noteDraft, opts);
       if (opts && kind === 'exam') examOpts = { ...examDefaults(), ...opts }; // B-465: Study's course comes with it
-      if (kind === 'note' && !opts && !drafts.note && !noteDraft.body) noteDraft.course = taskCourses()[0] || '';
+      // B-520 (F-46): a new note takes the course picked on Study, else the first
+      if (kind === 'note' && !opts && !drafts.note && !noteDraft.body)
+        noteDraft.course = taskCourses().includes(ui.studyCourse) ? ui.studyCourse : taskCourses()[0] || '';
       const k = NEW[kind];
       $('new-head').textContent = k.head;
       $('new-ico').setAttribute('d', ICON[kind]);

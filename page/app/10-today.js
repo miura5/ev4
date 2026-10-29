@@ -332,6 +332,17 @@
       tq.replaceChildren();
       CARDS.set(tq, q.card, 'task-' + it.id);
     }
+    /** B-520 (F-45): a note task's Write: in Notes (from 1024 px) the note it names opens, else a new one titled as the
+     *  task, in the task's course; on the phone the New note sheet, filled the same way. */
+    function writeTask(it, known) {
+      const title = E.rowText(it);
+      const course = E.taskCourse(it, { known }) || quizCourse('');
+      if (!notesOn()) return newOpen('note', title, { course, body: '' });
+      const n = E.noteForTask(S.notes, { text: title, course });
+      const from = whereNow();
+      showTab('notes');
+      guard(null, () => (n ? openNote(n.id) : newNote(from, { course, title })));
+    }
     // B-374 (D-312): what Start does, as the demo's: a set opens where it lives; any other item with an estimate starts a
     // study session with E.V.
     function startGo(it) {
@@ -862,9 +873,15 @@
       if (f.topic) props.append(prop('Topic', f.topic));
       const acts = el('div', 'wk-acts');
       const go = openItem(it);
-      if (startable(it, isDone)) {
+      if (it.tag === 'NOTES' && !isDone(it)) {
+        // B-520 (F-45): a note task's one primary is Write: its note opened, or started titled as the task, in its course
+        const wr = btn('Write', () => writeTask(it, f.course), { cls: 'btn primary wide tp-write' });
+        wr.prepend(svgIcon('M6 4h9l3 3v13H6zM9 10h6M9 14h6'));
+        wr.setAttribute('aria-label', 'Write: ' + text);
+        acts.append(wr);
+      } else if (startable(it, isDone)) {
         // a set of questions, as the board's topic tasks: "Start the quiz"; any other task a study session (B-374)
-        const st = btn(go ? 'Start the quiz' : 'Start study session', startGo(it), {
+        const st = btn(go || E.taskStart(it) === 'quiz' ? 'Start the quiz' : 'Start study session', startGo(it), {
           cls: 'btn primary wide tp-start',
         });
         st.prepend(svgIcon('M8 5l11 7-11 7z'));

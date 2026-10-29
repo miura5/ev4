@@ -118,6 +118,29 @@ export function makeNotes() {
     const h = (blocks || []).find(b => b.type === 'h1') || (blocks || []).find(b => /^h[23]$/.test(b.type));
     return h ? blockText(h).replace(/\s+/g, ' ').trim().slice(0, MAX.title) : '';
   }
+  /** B-520 (F-46): a note with no words in it (an empty title and empty lines); such a new note is never written. */
+  const noteBlank = blocks => !(blocks || []).some(b => /\S/.test(blockText(b)));
+  /**
+   * B-520 (F-45): the note a Today note task names: his note (not archived or discarded) titled as the task reads, in
+   * its course when it has one, the newest edited first; null when there is none, and Write starts one.
+   */
+  function noteForTask(notes, { text = '', course = null } = {}) {
+    const k = t =>
+      String(t || '')
+        .toLowerCase()
+        .replace(/[‘’“”"']/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const want = k(text);
+    if (!want) return null;
+    return (
+      (notes || [])
+        .filter(n => n && !n.archivedAt && !n.discardedAt && !n.earlierOf)
+        .filter(n => k(n.title || noteTitleOf(noteBlocks(n.blocks || []))) === want)
+        .filter(n => !course || !n.course || n.course === course)
+        .sort((a, b) => String(b.editedAt || b.at || '').localeCompare(String(a.editedAt || a.at || '')))[0] || null
+    );
+  }
   const EARLIER = ' (earlier)';
   /**
    * B-404 (D-326): the title of the second note a stale save becomes, '<title> (earlier)': his title (or Untitled), cut
@@ -829,6 +852,8 @@ export function makeNotes() {
     noteFits,
     noteText: blockText,
     noteTitleOf,
+    noteBlank,
+    noteForTask,
     noteEarlierTitle,
     noteMarksAt: marksAt,
     noteDelete,

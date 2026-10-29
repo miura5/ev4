@@ -164,8 +164,11 @@ const listState = page =>
       hscroll: document.documentElement.scrollWidth > innerWidth,
     };
   });
+// B-520: the editor names the note it has open; an empty new note is not written, so no write names it
 const openNoteId = page =>
   page.evaluate(() => {
+    const ed = document.getElementById('notes-editor');
+    if (ed && !ed.hidden && ed.dataset.note) return ed.dataset.note;
     const w = (window.__writes || []).filter(x => x[1] === 'notes');
     return w.length ? w[w.length - 1][2] : null;
   });
@@ -288,7 +291,8 @@ const openNoteId = page =>
     await page.click('.n-back');
     await until(page, () => !document.getElementById('notes-list').hidden);
 
-    // New note twice: two new notes, two ids
+    // New note twice: two new notes, two ids. B-520 (F-46): an empty one is never written, so leaving it leaves no
+    // empty Untitled behind; its first words write it
     await page.click('#notes-new');
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await settle(page);
@@ -300,14 +304,25 @@ const openNoteId = page =>
     const after = await notesIn(page);
     const fresh = after.filter(x => !before.includes(x));
     ok(
-      `${tag} New note twice writes two notes, each with its own id`,
-      fresh.length === 2 && id1 && id2 && id1 !== id2 && fresh.every(x => /^n-\d{8}-\d{6}-[A-Za-z0-9]{12,}$/.test(x)),
+      `${tag} New note twice opens two notes, each with its own id, and neither is written while it is empty (B-520)`,
+      fresh.length === 0 &&
+        id1 &&
+        id2 &&
+        id1 !== id2 &&
+        [id1, id2].every(x => /^n-\d{8}-\d{6}-[A-Za-z0-9]{12,}$/.test(x)),
       JSON.stringify({ fresh, id1, id2 })
     );
 
     // '# ' makes a heading
     await page.click('#note-body');
     await page.keyboard.type('# Fluids lecture');
+    await settle(page);
+    const wrote = (await notesIn(page)).filter(x => !before.includes(x));
+    ok(
+      `${tag} its first words write the new note, under the id it opened with (B-520)`,
+      wrote.length === 1 && wrote[0] === id2,
+      JSON.stringify({ wrote, id2 })
+    );
     const h1 = await page.evaluate(() => {
       const b = document.querySelector('#note-body').firstElementChild;
       return b && b.tagName + '|' + b.textContent;
@@ -1252,7 +1267,7 @@ const openNoteId = page =>
         back.endedAt === null &&
         evs.some(e => e.type === 'reopen') &&
         evs.some(e => e.type === 'end' && e.why === 'switched') &&
-        !!(await savedDoc(page, noteB)),
+        !(await savedDoc(page, noteB)), // B-520: the new note was left empty, so it was never written
       JSON.stringify({ gone: gone.status, back: back.status, endedAt: back.endedAt })
     );
     ok(
@@ -1275,7 +1290,12 @@ const openNoteId = page =>
     await page.keyboard.press('Escape'); // the chat floats over the preview; close it first
     await page.click('.n-back');
     await until(page, () => !document.getElementById('notes-list').hidden);
-    await page.click(`#notes-rows [data-note="${noteB}"] .nm`);
+    // B-520: the empty new note was never written, so the session goes on another of his notes
+    const noteC = await page.evaluate(
+      a => [...document.querySelectorAll('#notes-rows .n-row')].map(r => r.dataset.note).find(i => i && i !== a),
+      noteA
+    );
+    await page.click(`#notes-rows [data-note="${noteC}"] .nm`);
     // B-421: the page logs, by its own clock, each time the strip's Undo button comes or goes, from before the switch
     await page.evaluate(() => {
       const has = () => !!document.querySelector('#ev-sslot .s-undo');
@@ -1289,10 +1309,10 @@ const openNoteId = page =>
     await until(
       page,
       i => Object.values(window.__db.sessions).some(x => x.note === 'notes/' + i && x.status === 'active'),
-      noteB,
+      noteC,
       4000
     );
-    const c = (await sessions()).find(x => x.note === 'notes/' + noteB && x.status === 'active');
+    const c = (await sessions()).find(x => x.note === 'notes/' + noteC && x.status === 'active');
     // B-411: the end event names the view that switched; the Undo button lasts as long as the record's Undo
     const swEnd = await page.evaluate(i => {
       const evs = Object.values((window.__db.sessions[i] || {}).events || {});
@@ -3470,6 +3490,133 @@ const openNoteId = page =>
       JSON.stringify(seen)
     );
     await page.screenshot({ path: path.join(shots, `b474-list-selection-${scheme}-1280.png`) });
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
+  // ---- B-520 (F-45, F-46): New note takes the course Notes is filtered to, an empty one is never written, and a note
+  // task's Write opens its note in its course (a new one titled as the task, then the same one again), at 1280 and 390
+  const planNoteTask = page =>
+    page.evaluate(async () => {
+      const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+      const db = await window.claude.use('db');
+      const ref = db.collection('dayedits').doc(t);
+      const got = await ref.get();
+      const doc = got && got.exists ? got.data() : { schema: 1, writer: 'page', source: 'E.V. Home', date: t };
+      const at = new Date().toISOString();
+      doc.added = {
+        ...(doc.added || {}),
+        'add-harness-note': {
+          text: 'Finish the made-up bone remodeling line',
+          tag: 'NOTES',
+          kind: 'notes',
+          minutes: 10,
+          course: 'BIO 201',
+          at,
+          by: 'E.V.',
+        },
+      };
+      doc.at = doc.updatedAt = at;
+      await ref.set(doc);
+    });
+  const openNoteTask = async page => {
+    await page.click('#tab-today');
+    await page.waitForTimeout(250);
+    await page
+      .locator('#today-list .li', { hasText: 'Finish the made-up bone remodeling line' })
+      .locator('.nm')
+      .click();
+    await until(page, () => !!document.querySelector('#today-task .tp-write'), null, 2000);
+  };
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 900 });
+    const tag = '[B-520 1280]';
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    const n0 = await notesIn(page);
+    await page.click('#notes-filters [data-filter="BIO 201"]');
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    const course = (await page.textContent('#notes-editor .n-course')).trim();
+    await settle(page);
+    await page.click('.n-back');
+    await settle(page, 400);
+    const n1 = await notesIn(page);
+    ok(
+      `${tag} New note under the BIO 201 filter is a BIO 201 note, and left empty it is never written`,
+      course === 'BIO 201' && n1.length === n0.length,
+      JSON.stringify({ course, n0: n0.length, n1: n1.length })
+    );
+    await planNoteTask(page);
+    await openNoteTask(page);
+    const wr = await page.evaluate(() => {
+      const b = document.querySelector('#today-task .tp-write');
+      return { text: b ? b.textContent.trim() : '', primary: !!b && b.classList.contains('primary') };
+    });
+    await page.click('#today-task .tp-write');
+    await until(page, () => !document.getElementById('notes-editor').hidden, null, 3000);
+    await settle(page);
+    const w1 = await page.evaluate(() => ({
+      view: document.body.dataset.view,
+      h1: (document.querySelector('#note-body > [data-t="h1"]') || {}).textContent || '',
+      course: document.querySelector('#notes-editor .n-course').textContent.trim(),
+    }));
+    const made = (await notesIn(page)).filter(x => !n0.includes(x));
+    const doc = made.length === 1 ? await savedDoc(page, made[0]) : null;
+    await page.screenshot({ path: path.join(shots, 'b520-write-1280.png') });
+    ok(
+      `${tag} a note task's Write is its one primary; it opens Notes on a new note titled as the task, in the task's course, written at once`,
+      wr.text === 'Write' &&
+        wr.primary &&
+        w1.view === 'notes' &&
+        w1.h1 === 'Finish the made-up bone remodeling line' &&
+        w1.course === 'BIO 201' &&
+        !!doc &&
+        doc.course === 'BIO 201' &&
+        doc.title === 'Finish the made-up bone remodeling line',
+      JSON.stringify({ wr, w1, made, doc: doc && { title: doc.title, course: doc.course } })
+    );
+    await page.click('.n-back');
+    await settle(page, 400);
+    await openNoteTask(page);
+    await page.click('#today-task .tp-write');
+    await until(page, () => !document.getElementById('notes-editor').hidden, null, 3000);
+    await settle(page, 600);
+    const open2 = await page.evaluate(
+      () => (document.querySelector('#note-body > [data-t="h1"]') || {}).textContent || ''
+    );
+    const made2 = (await notesIn(page)).filter(x => !n0.includes(x));
+    ok(
+      `${tag} Write again opens that same note: no second note`,
+      made2.length === 1 && open2 === 'Finish the made-up bone remodeling line',
+      JSON.stringify({ made2, open2 })
+    );
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+  {
+    const { page, errors } = await open(browser, { width: 390, height: 844 });
+    const tag = '[B-520 390]';
+    await planNoteTask(page);
+    await openNoteTask(page);
+    await page.click('#today-task .tp-write');
+    await page.waitForTimeout(300);
+    const sheet = await page.evaluate(() => ({
+      open: document.getElementById('new-dlg').open,
+      head: document.getElementById('new-head').textContent,
+      title: document.getElementById('new-title').value,
+      course: (document.querySelector('#new-course [aria-pressed="true"]') || {}).textContent || '',
+    }));
+    await page.screenshot({ path: path.join(shots, 'b520-write-390.png') });
+    ok(
+      `${tag} on the phone a note task's Write opens New note titled as the task, in its course`,
+      sheet.open &&
+        sheet.head === 'New note' &&
+        sheet.title === 'Finish the made-up bone remodeling line' &&
+        sheet.course === 'BIO 201',
+      JSON.stringify(sheet)
+    );
+    await page.keyboard.press('Escape');
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

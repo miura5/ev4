@@ -1765,7 +1765,7 @@
         // B-408 (D-325): from 1024 px a session starts in Notes, on a new note
         const from = whereNow();
         showTab('notes');
-        guard(b, () => newNote(from));
+        guard(b, () => newNote(from, { course: quizCourse('') })); // B-520: in the course picked on Study
         return;
       }
       showTab('ev');
