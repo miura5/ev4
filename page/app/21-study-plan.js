@@ -676,13 +676,45 @@
       else if (js.failed) card.append(el('p', 'mini pl-failed', `Your new plan didn’t finish: ${js.why}`));
       const bf = badgeFilter(p, c.ts);
       if (bf) card.append(bf.seg);
-      card.append(planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone }));
+      const rows = planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone });
+      rows.append(...planNotes(p)); // B-525 (F-21): approving keeps the instructor questions and the scope map
+      card.append(rows);
       const foot = el('div', 'pl-foot');
       foot.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
       if (p.section) foot.append(remakeBtn(ex, course));
       if (!ex.own) foot.append(putAwayBtn(ex));
       card.append(foot);
       return { card, panel: () => planSummary(p, ex, course, c) };
+    }
+    /** The plan's Open questions for the instructor and its Scope map, each one folded line; B-525 (F-21): an approved
+     *  plan keeps both, as its draft showed them. */
+    function planNotes(p) {
+      const out = [];
+      const qs = (p.openQuestions || []).filter(Boolean);
+      if (qs.length)
+        out.push(
+          ...foldList(
+            p.id + '|q',
+            'Open questions for the instructor · ' + qs.length,
+            qs.map(q => el('li', null, String(q)))
+          )
+        );
+      const scope = (p.scope || []).filter(s => s && s.topic);
+      if (scope.length) {
+        const gaps = scope.filter(s => s.gap).length;
+        out.push(
+          ...foldList(
+            p.id + '|s',
+            'Scope map · ' + (gaps ? plural(gaps, 'objective') + ' not covered' : plural(scope.length, 'topic')),
+            scope.map(s => {
+              const li = el('li', s.gap ? 'gap' : null, s.topic + (s.chapters ? ' · ' + s.chapters : ''));
+              if (s.gap) li.append(el('span', 'badge x-yellow', 'Not covered'));
+              return li;
+            })
+          )
+        );
+      }
+      return out;
     }
     function draftCard(p, ex, course, js, { panelled = true, swap = null } = {}) {
       const ts = taskList(p);
@@ -705,30 +737,7 @@
       const bf = badgeFilter(p, ts);
       if (bf) card.append(bf.seg);
       const rows = planRowsFor(p, ex, { draft: true, f: bf ? bf.f : 'all', isDone: () => false });
-      const qs = (p.openQuestions || []).filter(Boolean);
-      if (qs.length)
-        rows.append(
-          ...foldList(
-            p.id + '|q',
-            'Open questions for the instructor · ' + qs.length,
-            qs.map(q => el('li', null, String(q)))
-          )
-        );
-      const scope = (p.scope || []).filter(s => s && s.topic);
-      if (scope.length) {
-        const gaps = scope.filter(s => s.gap).length;
-        rows.append(
-          ...foldList(
-            p.id + '|s',
-            'Scope map · ' + (gaps ? plural(gaps, 'objective') + ' not covered' : plural(scope.length, 'topic')),
-            scope.map(s => {
-              const li = el('li', s.gap ? 'gap' : null, s.topic + (s.chapters ? ' · ' + s.chapters : ''));
-              if (s.gap) li.append(el('span', 'badge x-yellow', 'Not covered'));
-              return li;
-            })
-          )
-        );
-      }
+      rows.append(...planNotes(p));
       card.append(rows);
       return {
         card,

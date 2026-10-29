@@ -1989,6 +1989,10 @@ async function studyPlanChecks(page) {
     section: { course: 'NUR 112', from: today, to: d(2) },
     score: { criteria: [5, 5, 5, 4, 5, 3, 4, 4], total: 88 },
     openQuestions: ['Is Ch 39 on the exam?'],
+    scope: [
+      { topic: 'Harness fluids', chapters: 'Ch 39' },
+      { topic: 'Harness acid-base', gap: true },
+    ], // B-525
     days: [
       {
         date: today,
@@ -2448,6 +2452,31 @@ async function studyPlanChecks(page) {
     pe.plan === 'E4-H2' && d0.today && d0.all === 7,
     JSON.stringify([pe.plan, d0])
   );
+  // B-525 (F-21): the approved plan still carries its Open questions and its Scope map, and they open
+  {
+    const folds = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .fold-line')].map(b =>
+          b.textContent.trim()
+        )
+      );
+    const f0 = await folds();
+    const q = page.locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .fold-line', { hasText: 'Open questions' });
+    if (await q.count()) await q.first().click();
+    await page.waitForTimeout(150);
+    const qs = await page.evaluate(() =>
+      [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-notes li')].map(l => l.textContent)
+    );
+    ok(
+      'an approved plan still shows its Open questions and Scope map, and the questions open to his list (B-525)',
+      f0.some(t => /^Open questions for the instructor · 1/.test(t)) &&
+        f0.some(t => /^Scope map · 1 objective not covered/.test(t)) &&
+        qs.includes('Is Ch 39 on the exam?'),
+      JSON.stringify({ f0, qs })
+    );
+    if (await q.count()) await q.first().click();
+    await page.waitForTimeout(100);
+  }
   const tick = page
     .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
     .first();
