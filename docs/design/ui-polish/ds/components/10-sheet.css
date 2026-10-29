@@ -1,0 +1,37 @@
+/* Proprietary 10 Sheet (B-508, D-375): .sheet, a native dialog at today's New dialog look; a bottom sheet under 600 px */
+:where(.sheet){
+  --sheet-w:560px; --sheet-top:110px; --sheet-r:var(--r-lg);
+  --sheet-scrim:color-mix(in srgb,var(--text) 22%,transparent);
+  width:min(var(--sheet-w),calc(100vw - 24px));max-width:none;max-height:calc(var(--vvh,100dvh) - var(--sheet-top) - 12px);
+  margin:var(--sheet-top) auto auto;padding:0;border:0;border-radius:var(--sheet-r);background:var(--surface);color:var(--text);
+  box-shadow:var(--elev-3);font:var(--fw-regular) var(--fs-3)/1.45 var(--sans);overflow:hidden;box-sizing:border-box;
+  translate:0 var(--sheet-dy,0);
+  transition:opacity var(--dur-3) var(--ease-in),scale var(--dur-3) var(--ease-in),translate var(--dur-3) var(--ease-in),
+    overlay var(--dur-3) allow-discrete,display var(--dur-3) allow-discrete}
+:where(.sheet)[open]{display:flex;flex-direction:column}
+:where(.sheet):not([open]){opacity:0;scale:.98}
+:where(.sheet)[open]{transition-duration:var(--dur-4);transition-timing-function:var(--ease-out)}
+@starting-style{:where(.sheet)[open]{opacity:0;scale:.98}}
+.sheet[data-kind=confirm]{--sheet-w:420px}
+:where(.sheet)::backdrop{background:var(--sheet-scrim)}
+:root[data-theme="dark"] :where(.sheet)::backdrop{background:rgba(0,0,0,.5)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) :where(.sheet)::backdrop{background:rgba(0,0,0,.5)}}
+:where(.sheet-h){flex:none;display:flex;align-items:center;gap:10px;padding:14px var(--sp-4);border-bottom:1px solid var(--line)}
+:where(.sheet-h) > svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:where(.sheet-h) > h2{flex:1;min-width:0;margin:0;font:var(--fw-semibold) var(--fs-3)/1.45 var(--sans)}
+:where(.sheet-b){flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:14px;
+  padding:var(--sp-4)}
+:where(.sheet-f){flex:none;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:var(--sp-2);
+  padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line);background:var(--surface)}
+/* opened with show(): a preview in the flow (the Gallery's), never over the page */
+.sheet[open]:not(:modal){position:relative;inset:auto;z-index:auto;margin:0;width:100%;max-height:none;box-shadow:var(--elev-1)}
+/* the phone: a bottom sheet, its foot above the home bar, its height the screen's less the keyboard */
+@media (max-width:599px){
+  :where(.sheet){--sheet-top:48px;--sheet-r:var(--r-lg) var(--r-lg) 0 0;width:100%;margin:auto 0 0;
+    max-height:calc(var(--vvh,100dvh) - max(48px,env(safe-area-inset-top,0px)))}
+  :where(.sheet):not([open]){scale:1;translate:0 100%}
+  :where(.sheet-h){touch-action:none}
+  :where(.sheet-f){padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
+  .sheet[open]:not(:modal){--sheet-r:var(--r-lg);margin:0}
+}
+@media (max-width:599px){@starting-style{:where(.sheet)[open]{opacity:1;scale:1;translate:0 100%}}}

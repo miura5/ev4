@@ -1,0 +1,46 @@
+/* Proprietary 01 Button (B-507, D-374): today's button.btn (B-303) in tokens, styled off ARIA and native state. While
+   page/styles.css sits in @layer legacy (D-373) its rules win on every property they set, so nothing here moves a
+   pixel today (D-376); these rules take over when B-515 drops legacy. The Gallery's forced states ([data-state], which
+   only the Gallery sets, D-383) say !important for that one reason and drop it at B-515. This file also holds the coded
+   tones every component reads as --x (D-269). */
+:where([data-tone='ok'],[data-tone='green']){--x:var(--ok)}
+:where([data-tone='warn'],[data-tone='yellow']){--x:var(--warn)}
+:where([data-tone='bad'],[data-tone='red']){--x:var(--bad)}
+:where([data-tone='info'],[data-tone='blue'],[data-tone='proposed']){--x:var(--info)}
+:where([data-tone='violet'],[data-tone='plum']){--x:var(--violet)}
+:where([data-tone='quiet']){--x:var(--quiet)}
+
+:where([data-ui='button']){display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);height:var(--sp-8);min-height:var(--sp-8);padding:0 var(--sp-3);border:0;border-radius:var(--r-md);background:none;box-shadow:none;color:var(--text);font:var(--fw-medium) var(--fs-2) var(--sans);white-space:nowrap;cursor:pointer;transition:background var(--dur-2) var(--ease-out),color var(--dur-2) var(--ease-out),transform var(--dur-1) var(--ease-out)}
+:where([data-ui='button']) svg{width:var(--sp-4);height:var(--sp-4);flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:where([data-ui='button']) .n{color:var(--quiet);font-variant-numeric:tabular-nums}
+:where([data-ui='button'][data-kind='primary']){background:var(--her);color:var(--on-her);font-weight:var(--fw-semibold)}
+:where([data-ui='button'][data-kind='neutral']){background:var(--surface);box-shadow:var(--edge)}
+:where([data-ui='button'][data-kind='tint']){background:color-mix(in srgb,var(--x,var(--faint)) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x,var(--faint)) 45%,var(--line2))}
+:where([data-ui='button'][data-kind='tint']) svg{color:var(--x)}
+:where([data-ui='button'][data-kind='ghost'],[data-ui='button'].icon:not([data-kind='primary'],[data-kind='neutral'],[data-kind='tint'])){color:var(--quiet)}
+:where([data-ui='button'].icon){width:var(--sp-8);padding:0}
+:where([data-ui='button'][data-size='sm']){height:calc(var(--sp-6) + var(--sp-1));min-height:calc(var(--sp-6) + var(--sp-1));padding:0 var(--sp-2);font-size:var(--fs-1)}
+:where([data-ui='button'][data-size='sm'].icon){width:calc(var(--sp-6) + var(--sp-1));padding:0}
+@media (max-width:599px){
+  :where([data-ui='button']){height:var(--tap);min-height:var(--tap)}
+  :where([data-ui='button'].icon){width:var(--tap)}
+}
+/* states: hover and pressed (a real press also shrinks, as today's buttons do; the Gallery's forced press keeps its 44 px
+   box, so it shows the press's fill only), focus, disabled, busy */
+:where([data-ui='button']:not(:disabled,[aria-busy='true'])):is(:hover,[data-state='hover'],[data-state='pressed']){background:var(--hover)}
+:where([data-ui='button'][data-kind='primary']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))}
+:where([data-ui='button'][data-kind='tint']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
+:where([data-ui='button'][data-kind='ghost']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){color:var(--text)}
+:where([data-ui='button']:not(:disabled)):active{transform:scale(.98)}
+:where([data-ui='button']):is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
+:where([data-ui='button']):disabled{opacity:.45;cursor:default}
+:where([data-ui='button'][aria-busy='true']){position:relative;pointer-events:none}
+:where([data-ui='button'][aria-busy='true']) .ds-label{visibility:hidden}
+:where([data-ui='button'][aria-busy='true'])::after{content:"";position:absolute;inset:0;margin:auto;width:var(--sp-3);height:var(--sp-3);box-sizing:border-box;border:2px solid currentColor;border-right-color:transparent;border-radius:var(--r-round);animation:ds-spin calc(var(--dur-5) * 2) linear infinite}
+@keyframes ds-spin{to{transform:rotate(1turn)}}
+@media (prefers-reduced-motion:reduce){:where([data-ui='button'][aria-busy='true'])::after{animation:none}}
+:root[data-motion='reduce'] :where([data-ui='button'][aria-busy='true'])::after{animation:none}
+/* the Gallery's forced states, over legacy's button.btn until B-515 */
+[data-ui='button']:is([data-state='hover'],[data-state='pressed']):is([data-kind='neutral'],[data-kind='ghost'],.icon){background:var(--hover)!important;color:var(--text)!important}
+[data-ui='button'][data-kind='primary']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))!important}
+[data-ui='button'][data-kind='tint']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))!important}

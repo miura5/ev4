@@ -107,6 +107,11 @@ test('B-309: build-pwa wraps each record’s built page byte for byte, titled E.
   // B-506: the Gallery's address, /gallery, is the staging app itself; live has none
   assert.equal(fs.readFileSync(path.join(dir, 'out-staging/gallery.html'), 'utf8'), a);
   assert.equal(fs.existsSync(path.join(dir, 'out-live/gallery.html')), false);
+  // D-392 to D-395: the UI polish reference at /reference, staging only
+  for (const f of ['index.html', 'r4.css', 'ds/tokens.css', 'after/prototype.html', 'after/today-1280-light.png'])
+    assert.ok(fs.existsSync(path.join(dir, 'out-staging/reference', f)), 'staging reference: ' + f);
+  assert.equal(fs.existsSync(path.join(dir, 'out-staging/reference/README.md')), false);
+  assert.equal(fs.existsSync(path.join(dir, 'out-live/reference')), false, 'live has no reference');
 });
 
 test('B-309: build-pwa refuses a record it does not know, or a page not built', () => {

@@ -24,6 +24,8 @@ npm test > /tmp/<name>-test.log 2>&1; grep -E "^# (tests|pass|fail)" /tmp/<name>
   missing control.
 - Type and spacing judged in a browser need the real font: the sandbox blocks Google Fonts, so route Inter locally with
   `.claude/skills/ev-ux-probe/fonts/inter-route.cjs`.
+- UI polish tasks (B-539 to B-572, D-396): build through Proprietary toward the reference in `docs/design/ui-polish/`;
+  a task is done when it looks right on staging at 1280; side-by-side matching and inaccuracy fixes come after release.
 
 ## pwa/
 

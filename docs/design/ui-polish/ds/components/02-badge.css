@@ -1,0 +1,6 @@
+/* Proprietary 02 Badge (B-507, D-374): today's badge (B-285, D-276) in tokens: words first, one per row; the dot carries
+   the coded colour (--x, 01-button.css), the words stay text. Legacy's .badge still wins until B-515 (D-373), so nothing
+   here moves a pixel today (D-376). */
+:where([data-ui='badge']){display:inline-flex;align-items:center;gap:var(--sp-1_5);height:calc(var(--sp-5) + var(--sp-0_5));padding:0 var(--sp-2);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--edge);color:var(--text);font:var(--fw-medium) var(--fs-1) var(--sans);white-space:nowrap;flex:none}
+:where([data-ui='badge'])::before{content:"";width:var(--sp-1_5);height:var(--sp-1_5);border-radius:var(--r-xs);background:var(--x,var(--faint));flex:none}
+:where([data-ui='badge'][data-tone]:not([data-tone='neutral'])){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}

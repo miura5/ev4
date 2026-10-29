@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SPEC_KEYS } from '../pwa/jobs.mjs';
+import { STAGING_REFERENCE } from './build.mjs';
 
 export const RECORDS = ['staging', 'live'];
 export const NAME = 'E.V.';
@@ -113,6 +114,12 @@ export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'pu
   // B-506 (D-371): the Gallery's own address on staging, /gallery: the same app (signed in as staging always is), which
   // opens the Gallery over itself there. Live has no such file, and its app.js has no Gallery.
   if (record === 'staging') fs.writeFileSync(path.join(out, GALLERY_PAGE), page);
+  // D-392 to D-395: the UI polish reference at /reference on staging only (README.md stays in the repository).
+  if (record === 'staging')
+    fs.cpSync(path.join(root, STAGING_REFERENCE.from), path.join(out, STAGING_REFERENCE.at), {
+      recursive: true,
+      filter: f => !f.endsWith('.md'),
+    });
   return { record, from, out, files: fs.readdirSync(out) };
 }
 

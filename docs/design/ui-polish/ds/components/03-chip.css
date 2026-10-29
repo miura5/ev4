@@ -1,0 +1,23 @@
+/* Proprietary 03 Chip (B-507, D-374): today's chip in tokens: a small pill, quiet on a faint wash, or one of its colours;
+   a toggle that is on takes the accent fill. Legacy's .chip still wins until B-515 (D-373), so these rules move nothing
+   today (D-376), with one exception the Gallery found (D-383): the warn chip's words were 3.6:1 in light, so in light
+   its ink is a component-local token on the darker text ink (D-380), and legacy's .chip.warn, which reads --warn,
+   reads it too. That is B-507's one listed pixel change. */
+:where([data-ui='chip']){display:inline-block;padding:var(--sp-0_5) var(--sp-2);border-radius:var(--r-pill);background:var(--wash-2);color:var(--quiet);font-size:var(--fs-1);font-weight:var(--fw-semibold);white-space:nowrap}
+:where([data-ui='chip'][data-tone='accent']),:where([data-ui='chip'][aria-pressed='true']){background:var(--text);color:var(--bg)}
+:where([data-ui='chip'][data-tone='ok']){background:var(--hover);color:var(--text)}
+:where([data-ui='chip'][data-tone='warn']){--chip-ink-warn:var(--att);--warn:var(--chip-ink-warn);background:var(--warn-wash);color:var(--chip-ink-warn)}
+:root[data-theme='light'] :where([data-ui='chip'][data-tone='warn']){--chip-ink-warn:var(--text)}
+@media (prefers-color-scheme:light){:root:not([data-theme='dark']) :where([data-ui='chip'][data-tone='warn']){--chip-ink-warn:var(--text)}}
+:where([data-ui='chip'][data-tone='bad']){background:var(--bad-wash);color:var(--bad)}
+:where([data-ui='chip'][data-tone='info'],[data-ui='chip'][data-tone='plum']){background:var(--wash-2);color:var(--quiet)}
+/* a chip you tap: a button, 44 px on the phone (D-383) */
+:where(button[data-ui='chip']){display:inline-flex;align-items:center;gap:var(--sp-1);min-height:var(--sp-8);cursor:pointer;transition:background var(--dur-2) var(--ease-out),transform var(--dur-1) var(--ease-out)}
+:where(button[data-ui='chip']) svg{width:var(--sp-3);height:var(--sp-3);flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:599px){:where(button[data-ui='chip']){height:var(--tap);min-width:var(--tap);justify-content:center}}
+:where(button[data-ui='chip']:not(:disabled,[aria-pressed='true'])):is(:hover,[data-state='hover'],[data-state='pressed']){background:var(--wash-3);color:var(--text)}
+:where(button[data-ui='chip']:not(:disabled)):active{transform:scale(.98)}
+:where(button[data-ui='chip']):is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
+:where(button[data-ui='chip']):disabled{opacity:.45;cursor:default}
+/* the Gallery's forced states, over legacy's .chip until B-515 */
+button[data-ui='chip']:not([aria-pressed='true']):is([data-state='hover'],[data-state='pressed']){background:var(--wash-3)!important;color:var(--text)!important}

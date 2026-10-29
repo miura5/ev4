@@ -34,6 +34,10 @@ const SYSTEM_DOCS = ['system/manifest', 'system/spec', 'system/environments'];
 // A rule, not a list: page/app/89-gallery.js and each component's page/app/89-gallery-NN-<name>.js, and gallery.css.
 export const STAGING_ONLY = [/^page\/app\/89-gallery[\w-]*\.js$/, /^page\/ds\/gallery\.css$/];
 export const stagingOnly = p => STAGING_ONLY.some(re => re.test(p));
+// D-392 to D-395: the passed UI polish design (docs/design/ui-polish/), copied into the staging app at /reference so Matt
+// and the builders can open it; live's app never carries it (tools/build-pwa.mjs). It stays inert (B-425): an edit of it
+// alone keeps the build commit and reaches staging with the next build.
+export const STAGING_REFERENCE = { from: 'docs/design/ui-polish', at: 'reference' };
 export function appSource(root = HERE, target = 'staging') {
   const dir = path.join(root, 'page', 'app');
   if (!fs.existsSync(dir)) throw new Error('no page/app/: the page logic lives there as parts (B-64)');

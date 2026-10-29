@@ -1,0 +1,14 @@
+/* Proprietary 06 Fold (B-507, D-374): today's fold-line (a quiet line with › closed and ⌄ open) over a body that opens
+   in 0.28 s and closes in 0.16 s, never moving what is above it (D-271). The state is the head's aria-expanded. Legacy's
+   .fold-line (all:unset) still wins on the head until B-515 (D-373); on the phone its tap reaches 44 px (D-383) by the
+   rule that says !important, which matches only this component's head. */
+:where([data-ui='fold']){display:flex;flex-direction:column;min-width:0}
+:where([data-ui='fold']) > .fold-line{display:flex;align-items:center;cursor:pointer;color:var(--quiet);font-size:var(--fs-3);padding:var(--sp-1) 0}
+:where([data-ui='fold']) > .fold-line::after{content:' ›';white-space:pre}
+:where([data-ui='fold']) > .fold-line[aria-expanded='true']::after{content:' ⌄'}
+:where([data-ui='fold']) > .fold-line:is(:hover,[data-state='hover']){color:var(--text)}
+:where([data-ui='fold']) > .fold-line:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+:where([data-ui='fold']) > .fold-body{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows var(--dur-3) var(--ease-in),visibility 0s linear var(--dur-3)}
+:where([data-ui='fold']) > .fold-line[aria-expanded='true'] + .fold-body{grid-template-rows:1fr;visibility:visible;transition:grid-template-rows var(--dur-4) var(--ease-out),visibility 0s}
+:where([data-ui='fold']) > .fold-body > .fold-in{min-height:0;overflow:hidden}
+@media (max-width:599px){[data-ui='fold'] > .fold-line{display:flex!important;align-items:center!important;min-height:var(--tap)!important;box-sizing:border-box!important}}

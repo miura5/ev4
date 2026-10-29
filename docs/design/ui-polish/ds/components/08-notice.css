@@ -1,0 +1,15 @@
+/* Proprietary 08 Notice (B-507, D-374): the calm line a list shows instead of rows. Empty is today's p.empty (legacy's
+   rule still wins on it until B-515, D-373, so it moves nothing, D-376); info, working and failed are new and draw from
+   here: working with a quiet sweep (still under reduced motion), failed in plain words with one Try again. */
+:where([data-ui='notice']){display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2) var(--sp-3);min-width:0}
+:where([data-ui='notice']) > .empty{margin:0;color:var(--faint);font-size:var(--fs-4)}
+:where([data-ui='notice']) > .notice-line{flex:1 1 12rem;min-width:0;margin:0;color:var(--quiet);font-size:var(--fs-2);line-height:var(--lh-ui)}
+:where([data-ui='notice'][data-kind='failed']) > .notice-line{color:var(--text)}
+:where([data-ui='notice'][data-kind='failed']){padding-left:var(--sp-3);box-shadow:inset 2px 0 0 var(--bad)}
+:where([data-ui='notice'][data-kind='info']){padding-left:var(--sp-3);box-shadow:inset 2px 0 0 var(--line2)}
+:where([data-ui='notice']) .notice-when{color:var(--faint);font-variant-numeric:tabular-nums}
+:where([data-ui='notice']) > .notice-bar{position:relative;flex:1 0 100%;height:var(--sp-0_5);border-radius:var(--r-xs);background:var(--wash-2);overflow:hidden}
+:where([data-ui='notice']) > .notice-bar::after{content:"";position:absolute;inset:0 auto 0 0;width:30%;border-radius:inherit;background:var(--quiet);animation:ds-sweep calc(var(--dur-5) * 4) var(--ease-std) infinite}
+@keyframes ds-sweep{from{transform:translateX(-100%)}to{transform:translateX(340%)}}
+@media (prefers-reduced-motion:reduce){:where([data-ui='notice']) > .notice-bar::after{animation:none;width:100%;opacity:.4}}
+:root[data-motion='reduce'] :where([data-ui='notice']) > .notice-bar::after{animation:none;width:100%;opacity:.4}
