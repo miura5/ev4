@@ -7,8 +7,19 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { check, recordDiffs, seededAt, keyOk, keyPattern, ROLES, RUNNING_MAX_MS } from '../tools/pwa-staging.mjs';
+import {
+  check,
+  recordDiffs,
+  seededAt,
+  keyOk,
+  keyPattern,
+  knownWriter,
+  ROLES,
+  RUNNING_MAX_MS,
+} from '../tools/pwa-staging.mjs';
 import { APP_SOURCE } from '../pwa/jobs.mjs';
+import EV from '../core/evcore.mjs';
+import './core-fixtures.mjs'; // EV configured with the spec's courses
 import { SUITE, SUITE_DOCS_PER_RUN } from '../pwa/runapi.js';
 import { seedCounts, seedRecord, seedSql, LEFT_OUT } from '../pwa/seed.mjs';
 import { scanFiles, listRepoFiles } from '../tools/personal-data.mjs';
@@ -159,11 +170,28 @@ test('B-389: a page save is held to the spec, not only its writer field: a page 
     ['sets', 'job-20261025-101010-practice-set', true],
     ['sets', 'job-anything', false],
     ['idchecks', 'abc-matt', true],
+    // B-465: an exam the calendar or his Add exam names (<course without spaces>.<yyyymmdd>)
+    ['exams', 'BIO201.20261028', true],
+    ['exams', 'NUR112.20261105', true],
+    ['exams', 'BIO201.2026-10-28', false],
+    ['exams', 'bio201.20261028', false],
     ['talk', 'memory', true],
     ['talk', 'notes', false],
   ])
     assert.equal(keyOk(c, id), ok, `${c}/${id}`);
   assert.equal(keyPattern('job sets'), null);
+});
+
+test('B-465: the exams the calendar names and his Add exam writes pass the staging check as page saves', () => {
+  const now = '2026-10-28T16:00:00Z',
+    today = '2026-10-28';
+  const dates = [{ id: 'd1', course: 'BIO 201', date: '2026-11-02', title: 'Exam 3' }];
+  const writes = [
+    ...EV.examsFromDates({ dates, exams: [], now, today }),
+    EV.examAdd([], { course: 'BIO 201', title: 'Chapter 10', date: '2026-11-12' }, { now, today }),
+  ];
+  assert.equal(writes.length, 2);
+  for (const w of writes) assert.equal(knownWriter({ c: w.collection, id: w.id, data: w.data }), 'page', w.id);
 });
 
 // A job's result as the app's job runner writes it (pwa/jobs.mjs statusWrite).

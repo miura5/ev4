@@ -1596,7 +1596,8 @@
    "key": [
     "E1…E6",
     "BIO-E3",
-    "ATI-*"
+    "ATI-*",
+    "<COURSE>.<YYYYMMDD>"
    ],
    "holds": "title, date, course, kind, status",
    "fromV3": "exams",

@@ -52,6 +52,8 @@ export function keyPattern(shape) {
     else if (tok === '<number>') out += '[1-9]\\d*';
     else if (tok === '<course key>')
       out += '[a-z0-9]+'; // a course name's letters and digits, as courseKey makes it
+    // B-465: an exam's course as its id carries it (the course name without spaces, e.g. BIO201.20261028)
+    else if (tok === '<COURSE>') out += '[A-Z0-9]+';
     else if (tok.startsWith('<')) out += /^<[^>]*date>$/i.test(tok) ? DATE : PART;
     else if (tok.startsWith('[')) out += '(?:' + keyPattern(tok.slice(1, -1)).source.slice(1, -1) + ')?';
     else if (tok === '*') out += PART;
