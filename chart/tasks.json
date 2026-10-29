@@ -9062,7 +9062,7 @@
   "title": "Bug (reported Oct 29): On staging after B-479, asking for flashcards still fails end to end: the chat, remembering earlier rejections in the conversation, sends the request as a general job instead of a flashcards job, and the general job then fails E.V.'s check because its text runs past 1,500 characters; a flashcard request should always become a flashcards job (routed by the page, as Ask for changes now is), and a general job's long answer should not fail on the text limit.",
   "dod": "A message that asks for flashcards (flashcard, flash cards, Quizlet cards) starts a flashcards job chosen by code, not by the chat model; a general job's answer longer than its text limit keeps the full content in its result and shortens only the line shown; proved by one real flashcard ask on staging in a conversation that already holds the earlier failures, with the Quizlet block and Copy button on the card.",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9073,8 +9073,10 @@
    "row": "v4 B-485: On staging after B-479, asking for flashcards still fails end to end:…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-29T08:29:35.942Z"
+   "outcome": "joined",
+   "into": "B-487",
+   "reason": "joins B-487",
+   "at": "2026-10-29T12:34:32.062Z"
   }
  },
  {
