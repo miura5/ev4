@@ -9636,7 +9636,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at aa177a1: 'quiz me' with no session shows the course's quiz as a card in the conversation (new quiz_me tool); Start on a practice task with no set opens the quiz inside the task on Today; no note, session or view switch. run.cjs 499/499.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "\"Quiz me\" and Start session open a blank note or switch views; they should start the quiz or session in place.",
