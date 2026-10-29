@@ -800,7 +800,7 @@
     function renderMiniQuiz(cur) {
       let card = $('ov-quiz');
       if (!card) {
-        card = el('div', 'ui-card ov-quiz');
+        card = DS.card({ cls: 'ov-quiz' });
         card.id = 'ov-quiz';
         $('ov-grid').append(card);
       }
@@ -849,7 +849,7 @@
     function renderStudySets(course) {
       let card = $('ov-sets');
       if (!card) {
-        card = el('div', 'ui-card ov-sets');
+        card = DS.card({ cls: 'ov-sets' });
         card.id = 'ov-sets';
         $('ov-grid').append(card);
       }
@@ -962,7 +962,7 @@
     function renderStudyUp(course) {
       let card = $('ov-up');
       if (!card) {
-        card = el('div', 'ui-card ov-up');
+        card = DS.card({ cls: 'ov-up' });
         card.id = 'ov-up';
         $('ov-grid').prepend(card);
       }
@@ -1783,4 +1783,3 @@
       setStudy('objectives');
       render();
     });
-

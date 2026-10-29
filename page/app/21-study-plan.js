@@ -641,7 +641,7 @@
     function approvedCard(p, ex, course, { panelled = true, swap = null, js = {} } = {}) {
       const c = planCounts(p);
       // a card whose summary is not in the right panel keeps its actions at its foot at every width
-      const card = el('div', 'ui-card pl-card ok' + (panelled ? '' : ' own-foot'));
+      const card = DS.card({ cls: 'pl-card ok' + (panelled ? '' : ' own-foot'), key: p.id });
       card.dataset.plan = p.id;
       const sec = p.section || {};
       const first = sec.from || (planDays(p)[0] || {}).date;
@@ -718,7 +718,7 @@
     }
     function draftCard(p, ex, course, js, { panelled = true, swap = null } = {}) {
       const ts = taskList(p);
-      const card = el('div', 'ui-card pl-card dr');
+      const card = DS.card({ cls: 'pl-card dr', key: p.id });
       card.dataset.plan = p.id;
       const bdg = el('span', 'badge proposed', 'Draft');
       card.append(
@@ -752,7 +752,7 @@
     }
     function noPlanCard(ex, course, js) {
       const making = js.working || E.studyPlanNewJobRunning(S.jobs, course); // D-362: one new plan per course
-      const card = el('div', 'ui-card pl-card pl-none' + (making ? ' working' : ''));
+      const card = DS.card({ cls: 'pl-card pl-none' + (making ? ' working' : '') });
       card.append(svgEl(PL_SPARK));
       const g = el('div', 'grow');
       const failed = !making && js.failed; // B-459: never a silent "No study plan yet" after a plan that failed
@@ -798,7 +798,7 @@
     }
     /** A later exam's card, shown because it has a plan: its name, date, objectives bar and count. */
     function laterExamCard(ex, course) {
-      const card = el('div', 'ui-card ov-card pm-ex');
+      const card = DS.card({ cls: 'ov-card pm-ex', key: ex.id });
       const nm = exShortOf(ex);
       const full = nm.includes(course) ? nm : course + ' ' + nm;
       const head = el('div', 'ov-head'),
@@ -1102,23 +1102,14 @@
       togglePlanPop(false);
       let d = $('plan-dlg');
       if (!d) {
-        d = el('dialog', 'new-dlg pm-dlg');
-        d.id = 'plan-dlg';
-        d.setAttribute('aria-labelledby', 'plan-dlg-h');
-        const f = el('form');
-        f.method = 'dialog';
-        const hd = el('div', 'new-hdr');
-        hd.innerHTML = PLAN_ICON;
-        const h3 = el('h3', 'new-head grow', 'Study plan instructions');
-        h3.id = 'plan-dlg-h';
-        hd.append(h3, el('span', 'mini pm-edited'));
-        const body = el('div', 'new-body');
+        // B-511: a Proprietary Sheet (a native dialog: Esc, a tap on the backdrop, focus back to the plan button); the
+        // old classes ride along so legacy's .new-dlg look still holds (D-376)
+        const ic = el('span');
+        ic.innerHTML = PLAN_ICON;
         const ta = el('textarea');
         ta.id = 'plan-text';
         ta.setAttribute('aria-label', 'Instructions');
         ta.spellcheck = true;
-        body.append(ta);
-        const ft = el('div', 'new-foot');
         const hint = el('span', 'pm-hint', 'Used for every new plan and change. Plans already made keep theirs.');
         const reset = btn('Reset to default', () => (ta.value = briefText()), { cls: 'btn ghost' });
         const cancel = btn('Cancel', () => d.close(), { cls: 'btn neutral' });
@@ -1132,11 +1123,20 @@
           },
           { primary: true }
         );
-        ft.append(hint, reset, cancel, save);
-        f.append(hd, body, ft);
-        d.append(f);
-        d.addEventListener('click', e => e.target === d && d.close()); // a tap outside closes it
-        d.addEventListener('close', () => $('study-planset').focus());
+        d = DS.sheet({
+          title: 'Study plan instructions',
+          icon: ic.firstElementChild || ic,
+          aside: el('span', 'mini pm-edited'),
+          body: ta,
+          foot: [hint, reset, cancel, save],
+          cls: 'new-dlg pm-dlg',
+          opener: $('study-planset'),
+        });
+        d.id = 'plan-dlg';
+        d.querySelector('.sheet-h').classList.add('new-hdr');
+        d.querySelector('.sheet-h > h2').classList.add('new-head', 'grow');
+        d.querySelector('.sheet-b').classList.add('new-body');
+        d.querySelector('.sheet-f').classList.add('new-foot');
         document.body.append(d);
       }
       d.querySelector('.pm-edited').textContent = editedWord();

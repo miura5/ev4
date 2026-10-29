@@ -31,7 +31,7 @@
       course = course || E.defaultCourse();
       let card = $('ov-decks');
       if (!card) {
-        card = el('div', 'ui-card ov-sets ov-decks');
+        card = DS.card({ cls: 'ov-sets ov-decks' });
         card.id = 'ov-decks';
         $('ov-grid').append(card);
       } else if (card.nextElementSibling) $('ov-grid').append(card); // after Practice sets
@@ -97,15 +97,15 @@
     function fcDialog() {
       let d = $('fc-dlg');
       if (d) return d;
-      d = el('dialog', 'new-dlg fc-dlg');
-      d.id = 'fc-dlg';
-      d.setAttribute('aria-label', 'Flashcards');
-      d.addEventListener('click', e => e.target === d && d.close()); // a tap outside closes it
-      d.addEventListener('close', () => {
-        FC.s = null;
-        FC.edit = null;
-        render();
+      // B-511: a Proprietary Sheet (a native dialog: Esc, a tap on the backdrop, focus back to what opened it); each
+      // view paints its own head and body into it, so its parts start empty; the old classes ride along (D-376)
+      d = DS.sheet({
+        label: 'Flashcards',
+        cls: 'new-dlg fc-dlg',
+        onClose: () => ((FC.s = null), (FC.edit = null), render()),
       });
+      d.replaceChildren();
+      d.id = 'fc-dlg';
       d.addEventListener('keydown', fcKey);
       document.body.append(d);
       return d;
