@@ -1,6 +1,7 @@
 # B-311: the app's staging pair on Matt's Cloudflare account: the ev-staging D1 (found, or created once) holding the
-# made-up record only (test/data/synthetic.cjs through pwa/seed.mjs, seeded only while the database is empty, so
-# nothing is ever deleted there), and the ev-staging Worker serving the staging page with its own token. Then the
+# made-up record only (test/data/synthetic.cjs through pwa/seed.mjs, seeded whole only while the database is empty,
+# and after that only the seed documents it lacks, B-487, so nothing is ever overwritten or deleted there), and the
+# ev-staging Worker serving the staging page with its own token. Then the
 # check: /api/db answers 401 without the token, and with it every seed document is there and the rest came from known
 # writers (the suite, the app's jobs, the staging page; B-389). B-312: the
 # version column is added once to a D1 made before it, and the run API suite (pwa/run-api.test.mjs) runs against the
@@ -124,7 +125,13 @@ jobs:
             npx wrangler d1 execute ev-staging --env staging --remote --file seed.sql >/dev/null
             echo "seeded with the made-up record"
           else
-            echo "not empty: left as it is"
+            # B-487: a seed document added since (a new collection's fixture) is inserted where none has its id, dated
+            # as the seed (its oldest at); nothing there is overwritten or deleted
+            first=$(npx wrangler d1 execute ev-staging --env staging --remote --json --command "SELECT MIN(at) AS t FROM docs" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].t)))')
+            node seed.mjs --fill "$first" > fill.sql
+            npx wrangler d1 execute ev-staging --env staging --remote --file fill.sql >/dev/null
+            after=$(npx wrangler d1 execute ev-staging --env staging --remote --json --command "SELECT COUNT(*) AS n FROM docs" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s)[0].results[0].n)))')
+            echo "not empty: kept as it is; seed documents it lacked added: $((after - n))"
           fi
       - name: the version column (B-312), added once to a D1 made before it
         working-directory: pwa

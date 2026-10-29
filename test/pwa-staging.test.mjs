@@ -501,6 +501,49 @@ test('B-389: the date-relative seed is matched by the instant its rows carry, wh
   assert.ok(other.some(p => /documents missing/.test(p)) && other.some(p => /from no known writer/.test(p)), other);
 });
 
+test('B-487: a seeded D1 gets only the seed documents it lacks (a new collection’s fixture), dated as its seed', async () => {
+  const { DatabaseSync } = await import('node:sqlite');
+  const T = Date.parse('2026-10-25T01:53:15.286Z');
+  const db = new DatabaseSync(':memory:');
+  db.exec(fs.readFileSync(path.join(ROOT, 'pwa/schema.sql'), 'utf8'));
+  // seeded on Oct 25 before decks existed: every seed document but the deck, and one the page has changed since
+  db.exec(seedSql({ append: true, at: T }));
+  const deck = Object.keys(seedRecord(new Date(T)).decks)[0];
+  db.prepare("UPDATE docs SET data = '{}', at = ?, v = 2 WHERE c = 'decks'").run(T + 5);
+  db.prepare("UPDATE docs SET c = 'gone' WHERE c = 'decks'").run();
+  db.prepare("UPDATE docs SET data = ?, at = ?, v = 3 WHERE c = 'exams' AND id = 'E4'").run('{"changed":true}', T + 9);
+  const rows = () => db.prepare('SELECT c, id, data, at, v FROM docs WHERE c != ?').all('gone');
+  const before = rows().length;
+  const fill = seedSql({ fill: true, at: T });
+  assert.ok(
+    fill
+      .trim()
+      .split('\n')
+      .every(l => l.startsWith('INSERT INTO docs ')),
+    'inserts only'
+  );
+  assert.ok(
+    fill
+      .trim()
+      .split('\n')
+      .every(l => / ON CONFLICT \(c, id\) DO NOTHING;$/.test(l))
+  );
+  db.exec(fill);
+  const after = rows();
+  assert.equal(after.length, before + 1, 'only the deck was added');
+  const d = after.find(r => r.c === 'decks');
+  assert.deepEqual([d.id, d.at, d.v], [deck, T, 1]);
+  assert.equal(after.find(r => r.c === 'exams' && r.id === 'E4').data, '{"changed":true}', 'nothing overwritten');
+  // the check holds the record to the seed as of its oldest write, and every seed document is there
+  const docs = after.map(r => ({ c: r.c, id: r.id, data: JSON.parse(r.data), at: r.at, v: r.v }));
+  assert.equal(seededAt({ docs }).getTime(), T);
+  const missing = recordDiffs({ docs }, seedRecord(new Date(T))).problems.filter(p => /missing/.test(p));
+  assert.deepEqual(missing, []);
+  const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
+  assert.match(wf, /SELECT MIN\(at\) AS t FROM docs/);
+  assert.match(wf, /node seed\.mjs --fill "\$first" > fill\.sql/);
+});
+
 test('B-311: the pwa-staging workflow is started by hand, names staging only and never echoes a secret', () => {
   const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/pwa-staging.yml'), 'utf8');
   const on = wf.slice(wf.indexOf('\non:'), wf.indexOf('\npermissions:'));
