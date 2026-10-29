@@ -1,0 +1,69 @@
+/* ---- Record and New's layout (B-513, D-376, D-380, D-391): the rules of page/styles.css scoped to Record and New (.rec-*, #rec-*,
+   #record-*, .new-*, #new-*) that no other legacy rule fights on the same element, moved as written. The views layer sits under legacy
+   (D-373), so every declaration here says !important until B-515 retires legacy; B-515 strips the !important. The Record
+   and New rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
+   synthetic record does not paint uses; B-515 moves them with the shared rules. Raw values left have no token. */
+.mh .new-wrap{position:relative!important;order:10!important;flex:0 0 auto!important}
+.new-wrap .menu button.btn.mi svg{color:var(--quiet)!important}
+.new-wrap .menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans)!important;color:var(--quiet)!important;padding:var(--sp-1_5) 9px var(--sp-1)!important}
+.new-dlg{width:min(560px,calc(100vw - 24px))!important;max-width:none!important;max-height:calc(100dvh - 122px)!important;margin:110px auto auto!important;padding:0!important;border:0!important;border-radius:var(--r-lg)!important;background:var(--surface)!important;color:var(--text)!important;box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)!important}
+.new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)!important}
+@media (prefers-color-scheme:dark){
+:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)!important}
+}
+@media (max-width:599px){
+.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto!important;max-height:calc(100dvh - 60px)!important}
+}
+.new-dlg{font:var(--fw-regular) var(--fs-3)/1.45 var(--sans)!important}
+.new-hdr{display:flex!important;align-items:center!important;gap:10px!important;padding:14px var(--sp-4)!important;border-bottom:1px solid var(--line)!important}
+.new-hdr svg{width:16px!important;height:16px!important;flex:none!important;fill:none!important;stroke:var(--quiet)!important;stroke-width:1.7!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.new-body{display:flex!important;flex-direction:column!important;gap:14px!important;padding:var(--sp-4)!important}
+.new-fields .lbl{color:var(--quiet)!important;font:var(--fw-regular) var(--fs-2) var(--sans)!important}
+.new-fields .seg{min-width:0!important}
+.new-fields .seg button{white-space:nowrap!important}
+.new-body #new-warn:empty{display:none!important}
+.new-foot{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;padding:var(--sp-3) var(--sp-4)!important;border-top:1px solid var(--line)!important;flex-wrap:wrap!important}
+.rec-fwrap{position:relative!important;flex:none!important}
+.rec-day{padding:14px var(--sp-3) var(--sp-1)!important;color:var(--faint)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important}
+.rec-day:first-child{padding-top:4px!important}
+.rec-li .badge{min-width:84px!important;justify-content:flex-start!important}
+.rec-detail .rec-title{margin:0!important;font:var(--fw-semibold) calc(15px * var(--ts))/1.35 var(--sans)!important;color:var(--text)!important;overflow-wrap:anywhere!important}
+.rec-props{align-self:stretch!important;display:flex!important;flex-direction:column!important}
+.rec-props .prop{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:var(--sp-3)!important;min-height:32px!important;border-bottom:1px solid var(--line)!important;font-size:var(--fs-2)!important}
+.rec-props .prop:last-child{border-bottom:0!important}
+.rec-props .prop-k{color:var(--quiet)!important}
+.rec-props .prop-v{text-align:right!important;min-width:0!important;overflow-wrap:anywhere!important}
+.rec-detail .rec-desc{margin:0!important;font-size:calc(13.5px * var(--ts))!important;line-height:1.5!important;color:var(--text)!important}
+@media (max-width:599px){
+.rec-li .badge{min-width:0!important}
+.rec-day{padding:14px var(--sp-1) var(--sp-1)!important}
+.rec-props .prop{min-height:44px!important}
+}
+.rec-day{padding:14px 18px var(--sp-1_5)!important;color:var(--quiet)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important}
+.rec-day:first-child{padding-top:14px!important}
+.rec-li .badge{min-width:74px!important}
+.rec-detail .rec-title{font:var(--fw-semibold) var(--fs-5)/1.3 var(--sans)!important;margin:0!important}
+.rec-props .prop{display:grid!important;grid-template-columns:92px 1fr!important;justify-content:stretch!important;gap:var(--sp-2)!important;min-height:34px!important;border-bottom:0!important}
+.rec-props .prop-v{text-align:left!important}
+.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts))!important;line-height:1.6!important;color:var(--quiet)!important}
+.rec-detail .rec-quiz{align-self:flex-start!important;max-width:100%!important}
+@media (max-width:599px){
+.rec-li .badge{min-width:0!important}
+.rec-day{padding:14px var(--sp-4) var(--sp-1_5)!important}
+.rec-props .prop{min-height:34px!important}
+}
+.rec-li .sp{flex:1 1 0!important;min-width:0!important}
+@media (max-width:599px){
+.rec-li .badge{min-width:74px!important}
+.rec-li .nm::after{content:""!important;position:absolute!important;inset:0!important}
+.rec-li .sp{flex:0 0 100%!important;height:0!important}
+}
+@media (min-width:1200px){
+section.panel > .panel > .cols > .col-side .rec-detail{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+}
+@media (max-width:599px){
+.mh #new-btn::after{content:""!important;position:absolute!important;inset:-5px 0!important}
+}
+/* D-391's lesson 2: an !important here outranks legacy's own [hidden]{display:none!important}, so a hidden element
+   stays hidden by this rule, written heavy enough (2,3,0, the :not(#_) adding an id each) to outrank every display rule above; B-515 drops it. */
+[hidden][hidden][hidden]:not(#_):not(#_){display:none!important}

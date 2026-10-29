@@ -66,22 +66,26 @@
     const EXAM_KIND_WORDS = { unit: 'Unit', lab: 'Lab', final: 'Final', dosage: 'Dosage', ati: 'ATI' };
     const examDefaults = () => ({ course: taskCourses()[0] || '', date: '', kind: null });
     let examOpts = examDefaults();
+    /** B-513 (D-376): one of the dialog's switches as Proprietary's Segmented, in the place (and with the id, class
+     *  and label) of the one the shell's markup or the last paint left; [value, words] pairs, on the picked value. */
+    function newSeg(id, opts, on, pick) {
+      const old = $(id);
+      const sg = DS.segmented({
+        cls: old.className,
+        value: on,
+        options: opts.map(([v, n]) => ({ value: v, label: n })),
+        onPick: pick,
+      });
+      for (const a of old.attributes) if (!sg.hasAttribute(a.name)) sg.setAttribute(a.name, a.value);
+      [...sg.children].forEach((b, i) => (b.dataset.v = String(opts[i][0])));
+      old.replaceWith(sg);
+      return sg;
+    }
     function segPaint(id, opts, key, into = taskOpts, then) {
-      $(id).replaceChildren(
-        ...opts.map(([v, n]) => {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.textContent = n;
-          b.dataset.v = String(v);
-          b.setAttribute('aria-pressed', String(into[key] === v));
-          b.addEventListener('click', () => {
-            into[key] = v;
-            for (const x of $(id).children) x.setAttribute('aria-pressed', String(x.dataset.v === String(v)));
-            if (then) then();
-          });
-          return b;
-        })
-      );
+      newSeg(id, opts, into[key], v => {
+        into[key] = v;
+        if (then) then();
+      });
     }
     /** B-465: the exam's Kind switch: the course's exam kinds, the one the title says pressed until he picks one. */
     function examKindPaint() {
@@ -89,19 +93,11 @@
       if (examOpts.kind && !kinds.includes(examOpts.kind)) examOpts.kind = null;
       const auto = E.examKindFor(newField().value, examOpts.course);
       const on = examOpts.kind || auto;
-      $('new-ekind').replaceChildren(
-        ...kinds.map(k => {
-          const b = document.createElement('button');
-          b.type = 'button';
-          b.textContent = EXAM_KIND_WORDS[k] || k;
-          b.dataset.v = k;
-          b.setAttribute('aria-pressed', String(on === k));
-          b.addEventListener('click', () => {
-            examOpts.kind = k;
-            for (const x of $('new-ekind').children) x.setAttribute('aria-pressed', String(x.dataset.v === k));
-          });
-          return b;
-        })
+      newSeg(
+        'new-ekind',
+        kinds.map(k => [k, EXAM_KIND_WORDS[k] || k]),
+        on,
+        k => (examOpts.kind = k)
       );
     }
     // B-373 (as the demo's NewItem): a note has a Title, its words, and a Course switch with None; the task rows hide.
@@ -113,20 +109,7 @@
       if (kind === 'note') {
         if (noteDraft.course && !taskCourses().includes(noteDraft.course)) noteDraft.course = '';
         const opts = [...taskCourses().map(c => [c, c]), ['', 'None']];
-        $('new-course').replaceChildren(
-          ...opts.map(([v, n]) => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.textContent = n;
-            b.dataset.v = v;
-            b.setAttribute('aria-pressed', String(noteDraft.course === v));
-            b.addEventListener('click', () => {
-              noteDraft.course = v;
-              for (const x of $('new-course').children) x.setAttribute('aria-pressed', String(x.dataset.v === v));
-            });
-            return b;
-          })
-        );
+        newSeg('new-course', opts, noteDraft.course, v => (noteDraft.course = v));
         return;
       }
       if (kind === 'exam') {

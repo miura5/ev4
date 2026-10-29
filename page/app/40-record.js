@@ -140,14 +140,11 @@
       const host = $('record-sessions'),
         bar = el('div', 'toolbar rec-bar'),
         fw = el('div', 'rec-fwrap'),
-        fb = el('button', 'btn neutral sm rec-fbtn'),
+        fb = DS.button({ cls: 'btn neutral sm rec-fbtn', icon: recIco('M4 6h16M7 12h10M10 18h4') }),
         pop = el('div', 'rec-pop'),
-        types = el('div', 'seg');
-      fb.type = 'button';
+        types = DS.segmented({ label: 'Types' });
       fb.id = 'rec-filter-btn';
       // B-339: the demo's Filter button, its three-line icon and its label (with the count of filters on)
-      fb.innerHTML =
-        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>';
       fb.append(el('span', 'rec-flab', 'Filter'));
       fb.setAttribute('aria-expanded', 'false');
       fb.setAttribute('aria-controls', 'rec-filter');
@@ -156,16 +153,14 @@
       pop.setAttribute('role', 'group');
       pop.setAttribute('aria-label', 'Filter');
       types.id = 'rec-types';
-      types.setAttribute('role', 'group');
-      types.setAttribute('aria-label', 'Types');
       fw.append(fb, pop);
       // B-367: the board's Log something, at the toolbar's right on every size; it opens New's note
-      const log = el('button', 'btn primary sm rec-log');
-      log.type = 'button';
-      log.innerHTML =
-        '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>';
-      log.append(document.createTextNode('Log something'));
-      log.addEventListener('click', () => newOpen('note'));
+      const log = DS.button({
+        cls: 'btn primary sm rec-log',
+        icon: recIco('M12 5v14M5 12h14'),
+        label: 'Log something',
+        onClick: () => newOpen('note'),
+      });
       bar.append(fw, types, el('span', 'sp'), log);
       const cols = el('div', 'cols'),
         main = el('div', 'col-main'),
@@ -199,24 +194,25 @@
         if (!pop.hidden && !e.composedPath().includes(fw)) close(); // its own parts re-render under the tap
       });
     }
-    // a segmented switch of [value, label] pairs; the picked one is pressed (C-15)
+    // B-339's icons, drawn as the demo's (B-513: inside Proprietary's Button)
+    function recIco(d) {
+      const t = document.createElement('template');
+      t.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"></path></svg>';
+      return t.content.firstChild;
+    }
+    // a segmented switch of [value, label] pairs; the picked one is pressed (C-15); B-513: Proprietary's Segmented
     function recSeg(label, pairs, on, pick) {
-      const sg = el('div', 'seg');
-      sg.setAttribute('role', 'group');
-      sg.setAttribute('aria-label', label);
-      for (const [v, t, n] of pairs) {
-        const b = el('button', null, t);
-        b.type = 'button';
-        b.dataset.v = v;
-        b.setAttribute('aria-pressed', String(v === on));
-        if (n != null) b.append(el('span', 'n', String(n)));
-        b.addEventListener('click', () => {
+      const sg = DS.segmented({
+        label,
+        value: on,
+        options: pairs.map(([v, t, n]) => ({ value: v, label: t, count: n })),
+        onPick: v => {
           pick(v);
           saveRecF();
           renderLog();
-        });
-        sg.append(b);
-      }
+        },
+      });
+      [...sg.children].forEach((b, i) => (b.dataset.v = pairs[i][0]));
       return sg;
     }
     function renderFilter() {
@@ -304,7 +300,7 @@
         props.append(r);
       }
       const parts = [
-        el('span', 'badge' + (cls ? ' ' + cls : ''), word),
+        DS.badge({ text: word, cls }),
         el('h3', 'rec-title', x.kind === 'note' ? ideaName(x.idea) : x.name),
         props,
       ];
@@ -414,7 +410,10 @@
         }
         const [word, cls] = REC_BADGE[x.kind];
         const on = x.id === rec.sel;
+        // B-513: the row keeps today's markup (Line's own rules would move it, D-376); data-key names the entry (D-387)
         const li = el('div', 'li rec-li' + (on ? ' sel' : ''));
+        li.dataset.key = x.id;
+        li.dataset.part = 'row';
         li.dataset.kind = x.kind;
         li.dataset.id = x.id;
         const nm = el('button', 'nm', x.name);
@@ -429,7 +428,7 @@
             ?.focus();
         });
         li.append(
-          el('span', 'badge' + (cls ? ' ' + cls : ''), word),
+          DS.badge({ text: word, cls }),
           nm,
           el('span', 'sp'),
           el('span', 'r', x.result || ''),

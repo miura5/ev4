@@ -1066,7 +1066,6 @@ button.btn:disabled{opacity:.45;cursor:default}
    The pane's 48 px header names the view ("E.V." on hers) and ends with New, the page's one way to create: a menu of
    Task for Today and Note, each a modal dialog. The way out is Esc or a tap outside (D-160). */
 
-.mh .new-wrap{position:relative;order:10;flex:0 0 auto}
 .mh .seg{flex-shrink:1;min-width:0} /* a view's switch scrolls inside itself before New leaves the header */
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
 .mh::after{content:"";order:8;flex:1 1 0;min-width:0}
@@ -1074,22 +1073,12 @@ button.btn:disabled{opacity:.45;cursor:default}
 .new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:0;box-sizing:border-box}
 .new-wrap .menu[hidden]{display:none}
 .new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
-.new-wrap .menu button.btn.mi svg{color:var(--quiet)}
 /* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
    header an icon and the kind, the page dimmed behind it, Cancel beside Add */
-.new-wrap .menu .mhd{font:500 calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:6px 9px 4px}
-.new-dlg{width:min(560px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:12px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
-.new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)}
 :root[data-theme="dark"] .new-dlg::backdrop{background:rgba(0,0,0,.5)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}}
-@media (max-width:599px){.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}}
 .new-dlg form{display:flex;flex-direction:column;gap:0;margin:0}
 /* B-380: the demo's modal type: 14 px text, its header line at 1.45, the footer hint at 13 px */
-.new-dlg{font:400 calc(14px * var(--ts))/1.45 var(--sans)}
-.new-hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
-.new-hdr svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .new-head{margin:0;font:600 calc(14px * var(--ts))/1.45 var(--sans)}
-.new-body{display:flex;flex-direction:column;gap:14px;padding:16px}
 .new-body #new-title{height:44px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:500 calc(17px * var(--ts)) var(--sans);color:var(--text)}
 .new-body #new-title:focus,.new-body #new-title:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
 .new-body :is(input,textarea){width:100%;box-sizing:border-box}
@@ -1103,18 +1092,13 @@ button.btn:disabled{opacity:.45;cursor:default}
 .new-fields{display:flex;flex-direction:column;gap:14px}
 .new-fields[hidden]{display:none}
 .new-fields .frow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;min-width:0}
-.new-fields .lbl{color:var(--quiet);font:400 calc(13px * var(--ts)) var(--sans)}
 .new-fields .seg{justify-self:start;align-self:center;width:max-content;max-width:100%}
 .new-fields .seg button{min-height:24px;height:24px;padding:0 9px;font-size:calc(12px * var(--ts))}
-.new-fields .seg{min-width:0}
-.new-fields .seg button{white-space:nowrap}
 @media (max-width:599px){.new-fields .seg button{flex:none;height:44px;min-height:44px;min-width:44px;padding:0 12px;font-size:calc(12px * var(--ts))}}
-.new-body #new-warn:empty{display:none}
 /* B-465: an exam's Date, a field in the row's rhythm (the title's look at the switch buttons' height) */
 .new-fields #new-date{justify-self:start;width:auto;min-width:168px;height:28px;border-radius:7px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 10px;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);color-scheme:light dark}
 .new-fields #new-date:focus,.new-fields #new-date:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
 @media (max-width:599px){.new-fields #new-date{height:44px;font-size:max(16px,calc(14px * var(--ts)))}}
-.new-foot{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap}
 .new-foot #new-hint{flex:1;min-width:0;font-size:calc(13px * var(--ts));color:var(--faint)}
 @media (max-width:599px){
   .new-wrap .menu{width:min(240px,calc(100vw - 32px));top:calc(100% - 2px);right:4px}
@@ -1605,7 +1589,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 #record-sessions .rec-bar{padding:0 0 8px;border-bottom:0;min-height:0;gap:8px}
 #record-sessions .rec-bar > .seg{align-self:center}
 #rec-types button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
-.rec-fwrap{position:relative;flex:none}
 .rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16)}
 .rec-pop[hidden]{display:none}
 .rec-pop .lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
@@ -1615,9 +1598,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .rec-ck input{width:16px;height:16px;margin:0;accent-color:var(--text)}
 .rec-pop-foot{display:flex;justify-content:space-between;gap:8px}
 .rec-list{display:flex;flex-direction:column;gap:0}
-.rec-day{padding:14px 12px 4px;color:var(--faint);font:500 calc(12px * var(--ts)) var(--sans)}
-.rec-day:first-child{padding-top:4px}
-.rec-li .badge{min-width:84px;justify-content:flex-start}
 .rec-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
 .rec-li .r{flex:0 1 auto;min-width:0;max-width:40%;color:var(--quiet);font-size:calc(12.5px * var(--ts));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-li .t{min-width:62px;text-align:right}
@@ -1625,13 +1605,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .rec-list .rec-detail{padding:10px 12px 14px 108px;border-bottom:1px solid var(--line)}
 .rec-detail{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .rec-detail[hidden]{display:none}
-.rec-detail .rec-title{margin:0;font:600 calc(15px * var(--ts))/1.35 var(--sans);color:var(--text);overflow-wrap:anywhere}
-.rec-props{align-self:stretch;display:flex;flex-direction:column}
-.rec-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
-.rec-props .prop:last-child{border-bottom:0}
-.rec-props .prop-k{color:var(--quiet)}
-.rec-props .prop-v{text-align:right;min-width:0;overflow-wrap:anywhere}
-.rec-detail .rec-desc{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
 .rec-detail .meta{margin:0}
 .rec-detail .idea-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:8px;font:500 calc(12.5px * var(--ts)) var(--sans)}
@@ -1642,12 +1615,9 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
   .rec-pop .seg button{min-height:44px}
   .rec-ck{min-height:44px}
   .rec-li{padding:0 4px}
-  .rec-li .badge{min-width:0}
   .rec-li .r{display:none}
   .rec-li .t{min-width:0}
-  .rec-day{padding:14px 4px 4px}
   .rec-list .rec-detail{padding:10px 4px 14px}
-  .rec-props .prop{min-height:44px}
   .rec-detail select.idea-kind{height:44px;min-height:44px}
 }
 /* B-339 (D-312): Record as the demo draws it. The toolbar spans the pane under a hairline, the rows run edge to edge
@@ -1662,20 +1632,12 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .rec-pop .seg button{flex:none}
 #record-sessions .cols > .col-main{gap:0}
 #record-sessions .rec-list{gap:0}
-.rec-day{padding:14px 18px 6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans)}
-.rec-day:first-child{padding-top:14px}
 .rec-li{padding:0 18px}
-.rec-li .badge{min-width:74px}
 .rec-li.sel{background:var(--chrome)}
 .rec-li:hover{background:var(--chrome)}
 .rec-li .r{color:var(--faint)}
 .rec-detail{gap:14px}
-.rec-detail .rec-title{font:600 calc(18px * var(--ts))/1.3 var(--sans);margin:0}
 .rec-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
-.rec-props .prop{display:grid;grid-template-columns:92px 1fr;justify-content:stretch;gap:8px;min-height:34px;border-bottom:0}
-.rec-props .prop-v{text-align:left}
-.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts));line-height:1.6;color:var(--quiet)}
-.rec-detail .rec-quiz{align-self:flex-start;max-width:100%}
 .rec-list .rec-detail{padding:14px 18px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
 @media (min-width:1200px){
   section.panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
@@ -1684,21 +1646,16 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
   #record-sessions .rec-bar{padding:10px 12px}
   #record-sessions .rec-bar > .seg{flex:none;width:auto}
   .rec-li{padding:0 16px}
-  .rec-li .badge{min-width:0}
-  .rec-day{padding:14px 16px 6px}
   .rec-list .rec-detail{padding:14px 16px 18px}
-  .rec-props .prop{min-height:34px}
 }
 /* B-356 (D-314): the demo's rows. 44 px at every size; the result sits before the time; on the phone a row wraps as
    the demo's does (badge and name on the first line, the result and time after them or on a second line), and a
    long name wraps in full rather than losing its result. */
 .rec-li{height:auto;min-height:44px;box-sizing:content-box}
 .rec-li .nm{flex:0 1 auto}
-.rec-li .sp{flex:1 1 0;min-width:0}
 .rec-li .r{flex:none;max-width:none}
 @media (max-width:599px){
   .rec-li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px;min-height:44px;box-sizing:border-box}
-  .rec-li .badge{min-width:74px}
   .rec-li .nm{flex:0 1 auto;min-height:44px;white-space:normal;overflow:visible;display:flex;align-items:center;line-height:1.35;overflow-wrap:anywhere}
   .rec-li .r{display:inline;max-width:none;white-space:nowrap}
   .rec-li .t{min-width:0;white-space:nowrap}
@@ -1708,8 +1665,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 @media (max-width:599px){
   .rec-li{position:relative;row-gap:2px;padding:8px 16px}
   .rec-li .nm{min-height:24px;position:static}
-  .rec-li .nm::after{content:"";position:absolute;inset:0}
-  .rec-li .sp{flex:0 0 100%;height:0}
   .rec-li .r,.rec-li .t{text-align:left;font-size:calc(12.5px * var(--ts));line-height:1.35}
   .rec-li .r:empty{display:none}
 }
@@ -1740,9 +1695,6 @@ body.has-line #today-week .wk-her{display:none}
 #p-record > .panel .seg button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
 #p-record > .panel .cols > .col-main{gap:0}
 #p-record .rec-list > .empty{margin:0;padding:14px 18px;color:var(--quiet);font-size:calc(13.5px * var(--ts))}
-@media (min-width:1200px){
-  section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
-}
 @media (max-width:599px){
   #p-record > .panel .rec-bar{padding:10px 12px}
   #p-record > .panel .rec-bar > .seg{flex:none;width:auto}
@@ -2012,7 +1964,6 @@ body.has-line #today-week .wk-her{display:none}
 .mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
 @media (max-width:599px){
   .mh #new-btn{height:34px;min-height:34px;position:relative}
-  .mh #new-btn::after{content:"";position:absolute;inset:-5px 0}
   .side{box-sizing:border-box}
 }
 
