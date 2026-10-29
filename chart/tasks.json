@@ -9737,9 +9737,9 @@
   "id": "B-522",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Counts disagree across views (weak spots 20/24, readiness), and Progress doesn't count today's ticked work or notes.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "One source per measure used by every view; Progress counts ticked task minutes and session time per course for today; tests; staging look. (F-30, F-44, F-52, F-53, F-63)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9748,6 +9748,10 @@
   "reportedAt": "2026-10-29T15:59:42.089Z",
   "board": {
    "row": "v4 B-522: Counts disagree across views (weak spots 20/24, readiness), and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:59:46.219Z"
   }
  }
 ]
