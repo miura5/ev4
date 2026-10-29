@@ -8929,5 +8929,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:30:13.630Z"
   }
+ },
+ {
+  "id": "B-479",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live, asking E.V. for flashcards (NUR 112 dosage terms, units and abbreviations) ran a background flash-card job whose cards are visible nowhere: the in-app flash card view was removed because Matt studies flashcards in Quizlet, and E.V. then said it couldn't tell whether the set was saved in the app or as copy-paste. A flashcard request should return the cards as a Quizlet-ready copy-paste block (term, tab, definition, one per line) with a Copy button on the job card, and E.V. should say that is where they are.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "On live, asking E.V. for flashcards (NUR 112 dosage terms, units and abbreviations) ran a background flash-card job whose cards are visible nowhere: the in-app flash card view was removed because Matt studies flashcards in Quizlet, and E.V. then said it couldn't tell whether the set was saved in the app or as copy-paste. A flashcard request should return the cards as a Quizlet-ready copy-paste block (term, tab, definition, one per line) with a Copy button on the job card, and E.V. should say that is where they are.",
+  "reportedAt": "2026-10-29T03:35:58.223Z",
+  "board": {
+   "row": "v4 B-479: On live, asking E.V. for flashcards (NUR 112 dosage terms, units and…"
+  }
  }
 ]
