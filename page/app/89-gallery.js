@@ -2,9 +2,10 @@
     // Proprietary's reference page, built from this same app.js and styles.css: the tuner and its recipe, every colour
     // token in both modes at the three contrasts with its ratio, the type ramp at text size 1 and 1.25, the space, radius,
     // elevation and motion scales, a slot for each of the 16 components (B-504) with today's kit helpers in their states
-    // until B-507 and B-508 fill them, and the patterns on made-up data. Its address is /gallery on staging (the app's own
-    // page, signed in as staging always is; tools/build-pwa.mjs writes it), or ?gallery and #gallery on the app; it opens
-    // over the app. The build leaves this file and page/ds/gallery.css out of live's app.js and styles.css, and live has
+    // until B-507 and B-508 fill them (each component's own cells in page/app/89-gallery-NN-<name>.js, D-388), and the
+    // patterns on made-up data. Its address is /gallery on staging (the app's own page, signed in as staging always is;
+    // tools/build-pwa.mjs writes it), or ?gallery and #gallery on the app; it opens over the app. The build leaves every
+    // page/app/89-gallery*.js and page/ds/gallery.css out of live's app.js and styles.css (STAGING_ONLY), and live has
     // no /gallery, so live has no Gallery at all. test/harness/components.cjs is its harness. Nothing here reads or
     // writes the record: every row it shows is made up below.
     const GALLERY = { open: false, root: null, recipe: null, contrast: 60, mode: null, was: null, inert: null };
@@ -124,6 +125,26 @@
         'One line in the conversation, hers or yours.',
       ],
     ];
+    // D-388: each component's own state cells, galDs<Name>() in page/app/89-gallery-NN-<name>.js, filled by the lane that
+    // builds the component; a slot shows them once DS has that component, and today's kit helpers until then.
+    const GAL_DS = {
+      button: typeof galDsButton === 'function' ? galDsButton : undefined,
+      badge: typeof galDsBadge === 'function' ? galDsBadge : undefined,
+      chip: typeof galDsChip === 'function' ? galDsChip : undefined,
+      segmented: typeof galDsSegmented === 'function' ? galDsSegmented : undefined,
+      line: typeof galDsLine === 'function' ? galDsLine : undefined,
+      fold: typeof galDsFold === 'function' ? galDsFold : undefined,
+      card: typeof galDsCard === 'function' ? galDsCard : undefined,
+      notice: typeof galDsNotice === 'function' ? galDsNotice : undefined,
+      toast: typeof galDsToast === 'function' ? galDsToast : undefined,
+      sheet: typeof galDsSheet === 'function' ? galDsSheet : undefined,
+      popover: typeof galDsPopover === 'function' ? galDsPopover : undefined,
+      field: typeof galDsField === 'function' ? galDsField : undefined,
+      choice: typeof galDsChoice === 'function' ? galDsChoice : undefined,
+      meter: typeof galDsMeter === 'function' ? galDsMeter : undefined,
+      presence: typeof galDsPresence === 'function' ? galDsPresence : undefined,
+      message: typeof galDsMessage === 'function' ? galDsMessage : undefined,
+    };
     const GAL_ICO = 'M5 12l5 5 9-10';
     function galIcon(d = GAL_ICO) {
       const ns = 'http://www.w3.org/2000/svg';
@@ -584,8 +605,8 @@
           el('span', 'gal-cnote', batch + ' · ' + states)
         );
         c.append(h);
-        const ds = typeof DS !== 'undefined' && DS && typeof DS[ui] === 'function';
-        const cells = galToday(ui);
+        const ds = typeof DS !== 'undefined' && DS && typeof DS[ui] === 'function' && typeof GAL_DS[ui] === 'function';
+        const cells = ds ? GAL_DS[ui]() : galToday(ui);
         const body = el('div', 'gal-cells');
         if (cells.length) body.append(...cells);
         else body.append(el('p', 'gal-cnote', ds ? '' : 'Arrives with ' + batch + '; nothing like it today.'));

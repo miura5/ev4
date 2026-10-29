@@ -279,3 +279,63 @@ test('B-434: the app asks for its stylesheet and scripts under the release, so a
   assert.ok(real.includes('<link rel="stylesheet" href="styles.css">'));
   assert.ok(real.includes("await script('core.js'); await script('app.js');"));
 });
+
+// D-386, D-388: Proprietary's budget holds over the split, summed: one file per component (page/app/01-ui-NN-<name>.js
+// with page/app/01-ui.js, page/ds/components/NN-<name>.css, the Gallery's page/app/89-gallery-NN-<name>.js), the
+// patterns one file each under page/ds/patterns/. Sixteen files would hide a total, so the test adds them up.
+const PROPRIETARY = [
+  'button',
+  'badge',
+  'chip',
+  'segmented',
+  'line',
+  'fold',
+  'card',
+  'notice',
+  'toast',
+  'sheet',
+  'popover',
+  'field',
+  'choice',
+  'meter',
+  'presence',
+  'message',
+];
+const linesOf = f => {
+  const t = fs.readFileSync(f, 'utf8');
+  return t.split('\n').length - (t.endsWith('\n') ? 1 : 0);
+};
+const inDir = (dir, re) =>
+  fs.existsSync(path.join(ROOT, dir))
+    ? fs
+        .readdirSync(path.join(ROOT, dir))
+        .filter(f => re.test(f))
+        .sort()
+    : [];
+
+test('D-388: one file per component in each of its three homes, in B-504’s order', () => {
+  const want = PROPRIETARY.map((n, i) => String(i + 1).padStart(2, '0') + '-' + n);
+  assert.deepEqual(
+    inDir('page/app', /^01-ui-.+\.js$/).map(f => f.slice(6, -3)),
+    want
+  );
+  assert.deepEqual(
+    inDir('page/ds/components', /\.css$/).map(f => f.slice(0, -4)),
+    want
+  );
+  assert.deepEqual(
+    inDir('page/app', /^89-gallery-.+\.js$/).map(f => f.slice(11, -3)),
+    want
+  );
+  assert.ok(fs.existsSync(path.join(ROOT, 'page/app/01-ui.js')), 'DS and dsRoot');
+});
+
+test('D-386, D-388: the budget, summed over the split files: about 900 lines of JS, 900 of CSS, 500 of patterns', () => {
+  const sum = (dir, re) => inDir(dir, re).reduce((n, f) => n + linesOf(path.join(ROOT, dir, f)), 0);
+  const js = sum('page/app', /^01-ui[\w-]*\.js$/),
+    css = sum('page/ds/components', /\.css$/),
+    patterns = sum('page/ds/patterns', /\.css$/);
+  assert.ok(js <= 900, `page/app/01-ui*.js: ${js} lines (budget 900; going over needs a superseding decision)`);
+  assert.ok(css <= 900, `page/ds/components/*.css: ${css} lines (budget 900)`);
+  assert.ok(patterns <= 500, `page/ds/patterns/*.css: ${patterns} lines (budget 500)`);
+});

@@ -30,44 +30,61 @@ const SYSTEM_DOCS = ['system/manifest', 'system/spec', 'system/environments'];
 
 /** The page's app.js as published: page/app/*.js in name order, joined as they are (B-64). Each part is one section of
  *  the one closure EVApp.boot runs, split by tab for the reader; only the joined file is JavaScript on its own. */
-// B-506 (D-371): the Gallery's parts, published on staging only: live's app.js and styles.css never carry them.
-export const STAGING_ONLY = ['page/app/89-gallery.js', 'page/ds/gallery.css'];
+// B-506 (D-371), D-388: the Gallery's parts, published on staging only: live's app.js and styles.css never carry them.
+// A rule, not a list: page/app/89-gallery.js and each component's page/app/89-gallery-NN-<name>.js, and gallery.css.
+export const STAGING_ONLY = [/^page\/app\/89-gallery[\w-]*\.js$/, /^page\/ds\/gallery\.css$/];
+export const stagingOnly = p => STAGING_ONLY.some(re => re.test(p));
 export function appSource(root = HERE, target = 'staging') {
   const dir = path.join(root, 'page', 'app');
   if (!fs.existsSync(dir)) throw new Error('no page/app/: the page logic lives there as parts (B-64)');
   return fs
     .readdirSync(dir)
     .filter(f => f.endsWith('.js'))
-    .filter(f => target === 'staging' || !STAGING_ONLY.includes('page/app/' + f))
+    .filter(f => target === 'staging' || !stagingOnly('page/app/' + f))
     .sort()
     .map(f => fs.readFileSync(path.join(dir, f), 'utf8'))
     .join('');
 }
 /**
- * B-505 (D-373): the published styles.css. The layer order first, then each of Proprietary's files wrapped in its own
- * layer (tokens, and components and patterns once they exist, D-386), and today's page/styles.css wrapped whole in
- * legacy, so its rules still win wherever they apply and nothing on screen moves while views move out of it. No file
- * declares its own layer; the files stay as written, so a change to page/styles.css never touches the wrapping.
+ * B-505 (D-373), D-388: the published styles.css. The layer order first, then each of Proprietary's files wrapped in
+ * its own layer block under its `/* ---- path *\/` header: tokens, then the components, patterns and views layers, each
+ * read from its folder (page/ds/components/, page/ds/patterns/, page/ds/views/) in name order, the Gallery's
+ * stylesheet last in views; and today's page/styles.css wrapped whole in legacy, so its rules still win wherever they
+ * apply and nothing on screen moves while views move out of it. No file declares its own layer; the files stay as
+ * written, so a change to page/styles.css never touches the wrapping. A folder not there yet adds nothing.
  */
 export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, views, legacy;';
+// [layer, file or folder/]: a folder is read in name order, its *.css files each one block of that layer.
 export const STYLE_LAYERS = [
   ['tokens', 'page/ds/tokens.css'],
-  ['components', 'page/ds/components.css'],
-  ['patterns', 'page/ds/patterns.css'],
+  ['components', 'page/ds/components/'],
+  ['patterns', 'page/ds/patterns/'],
+  ['views', 'page/ds/views/'],
   ['views', 'page/ds/gallery.css'],
   ['legacy', 'page/styles.css'],
 ];
+/** The stylesheet's parts in order, [layer, path], for a target: folders expanded, missing ones and live's skips out. */
+export function styleParts(root = HERE, target = 'staging') {
+  const out = [];
+  for (const [layer, f] of STYLE_LAYERS) {
+    if (f.endsWith('/')) {
+      const dir = path.join(root, f);
+      if (!fs.existsSync(dir)) continue;
+      for (const n of fs
+        .readdirSync(dir)
+        .filter(x => x.endsWith('.css'))
+        .sort())
+        out.push([layer, f + n]);
+    } else if (layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))) out.push([layer, f]);
+  }
+  return out.filter(([, f]) => target === 'staging' || !stagingOnly(f));
+}
 export function stylesheet(root = HERE, target = 'staging') {
-  const parts = STYLE_LAYERS.filter(
-    ([layer, f]) =>
-      (layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))) &&
-      (target === 'staging' || !STAGING_ONLY.includes(f))
-  );
   return (
     [
       "/* E.V.'s stylesheet, built by tools/build.mjs (B-505, D-373): Proprietary's layers, then today's sheet in legacy. */",
       LAYER_ORDER,
-      ...parts.map(
+      ...styleParts(root, target).map(
         ([layer, f]) => `@layer ${layer}{\n/* ---- ${f} */\n${fs.readFileSync(path.join(root, f), 'utf8')}\n}`
       ),
     ].join('\n') + '\n'
