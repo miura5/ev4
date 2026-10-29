@@ -343,6 +343,21 @@
         { tier: 'local', replyTo: mid }
       );
     }
+    async function cardsStudySend(text) {
+      const mid = await mattSay(text);
+      const n = E.cardsDue(
+        S.decks.filter(d => d && !d.retired),
+        today
+      ).length;
+      await evSay(
+        n
+          ? `Opening your ${n} due ${n === 1 ? 'card' : 'cards'}.`
+          : 'No cards are due right now. Your decks are in Study under Flashcards.',
+        [],
+        { tier: 'local', replyTo: mid }
+      );
+      if (n) startDueCards();
+    }
     async function sendText(text) {
       try {
         await sendTextNow(text);
@@ -381,6 +396,12 @@
       if (fa) {
         input.placeholder = placeholder();
         await flashcardSend(text, fa);
+        return;
+      }
+      // B-495: a line about studying his cards ("study my cards", "review flashcards") opens the due ones, no job
+      if (E.cardsStudyAsk(text)) {
+        input.placeholder = placeholder();
+        await cardsStudySend(text);
         return;
       }
       // B-357: with the demo's five chips (B-358) a finished job's Open the … is asked in words, as Your turn is

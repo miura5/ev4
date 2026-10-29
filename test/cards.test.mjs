@@ -418,3 +418,33 @@ test('B-489: an import makes a new deck (past 40 cards) or adds only new terms t
   assert.ok(validate('decks', doc, { id: w.id }).ok);
   assert.equal(merged.cards['c-001'].ivl, 3, 'the cards already there keep their schedules');
 });
+
+test('B-495: only an ask to make cards starts a job; a line about studying his cards opens the due ones', () => {
+  for (const yes of [
+    'Make me 15 flashcards on cardiac meds',
+    'create flashcards for the cranial nerves',
+    'give me 10 cards on electrolytes',
+    'Can you generate some flash cards about insulin types',
+    'I want 20 flashcards on fluids',
+    '12 flashcards on dosage abbreviations',
+    'flashcards on the renal system',
+  ])
+    assert.ok(EV.flashcardAsk(yes), yes);
+  for (const no of [
+    'I need to study my cards for the exam tonight',
+    'review flashcards',
+    'study my cards',
+    'let me go over my flashcards before class',
+    'I need to study for the exam tonight',
+    'what do my cards say about heparin',
+  ])
+    assert.equal(EV.flashcardAsk(no), null, no);
+  for (const s of ['I need to study my cards for the exam tonight', 'review flashcards', 'Quiz me on my deck'])
+    assert.ok(EV.cardsStudyAsk(s), s);
+  for (const s of ['Start a study session', 'review the chapter 8 lecture', 'what is due this week'])
+    assert.equal(EV.cardsStudyAsk(s), false, s);
+  const comp = fs.readFileSync(path.join(ROOT, 'page/app/74-ev-render-and-composer.js'), 'utf8');
+  const send = comp.slice(comp.indexOf('async function sendTextNow'));
+  assert.ok(send.indexOf('E.cardsStudyAsk(text)') > send.indexOf('E.flashcardAsk(text)'));
+  assert.ok(send.indexOf('E.cardsStudyAsk(text)') < send.indexOf('await chat('), 'routed before the chat model');
+});

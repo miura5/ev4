@@ -129,16 +129,24 @@ export function makeCards(core) {
    */
   function flashcardAsk(text) {
     const line = clean(text, 1500);
-    const flash = /\bflash[\s-]*cards?\b/i.test(line);
-    const on = /\b(\d{1,2}\s+)?cards?\s+(on|about|for|covering)\s+\S/i.test(line);
-    if (!flash && !on) return null;
+    const cards = /\b(flash[\s-]*)?cards?\b/i;
+    if (!cards.test(line)) return null;
     if (/\bquizlet\b/i.test(line) && /\bweak[\s-]*spots?\b/i.test(line)) return null; // the weak spots' Quizlet ask
     // an ask to make some, not a line about a flashcards item on his list ("take the flashcards off today")
     if (/\b(take|remove|delete|skip|move|tick|check off|off today|done with|finished)\b/i.test(line)) return null;
+    // B-495: only an ask to make cards starts a job: make / create / give me … cards, a line that leads with its cards
+    // ("15 flashcards on …", "flashcards on …"), or "I want/need 20 cards"; studying cards he has never does
+    const make = new RegExp(
+      '\\b(make|create|generate|build|write|draft|produce|whip up|put together|give me|get me|send me|' +
+        "(?:i'd like|i want|i need|can i have|could i have)\\s+(?:\\d{1,2}|some|a (?:set|deck) of|a few))\\b" +
+        '[^.?!]{0,40}?\\b(?:flash[\\s-]*)?cards?\\b',
+      'i'
+    );
+    const lead =
+      /^(please\s+)?(\d{1,2}\s+)?(flash[\s-]*cards?\b(\s+(on|about|for|covering)\b|\s*(please)?\s*$)|cards?\s+(on|about|covering)\s)/i;
+    if (cardsStudyAsk(line) && !/\b(make|create|generate|build|write)\b/i.test(line)) return null;
+    if (!make.test(line) && !lead.test(line)) return null;
     const m = /\b(\d{1,2})\s+(?:flash[\s-]*)?cards?\b/i.exec(line);
-    const lead = /^(please\s+)?(\d{1,2}\s+)?(flash[\s-]*)?cards?\b/i.test(line);
-    const verb = /\b(make|create|give|generate|build|write|want|need|get|send|please|can i have|could i have)\b/i;
-    if (!m && !lead && !verb.test(line)) return null;
     const count = Math.min(MAX_CARDS, Math.max(1, m ? Number(m[1]) : 20));
     const t = /\b(?:on|about|for|covering)\s+(.+)$/i.exec(line);
     const topic = clean((t ? t[1] : line).replace(/[?.!]+$/, ''), 70) || 'your course';
@@ -150,6 +158,13 @@ export function makeCards(core) {
       course,
       count,
     };
+  }
+  /** B-495: a line about studying the cards he has ("study my cards", "review flashcards"): it opens his due cards. */
+  function cardsStudyAsk(text) {
+    const line = clean(text, 400);
+    return /\b(study|review|go over|practi[cs]e|drill|run through|quiz me on)\b[^.?!]{0,30}?\b(flash[\s-]*cards?|cards?|decks?)\b/i.test(
+      line
+    );
   }
   /** A new deck's id: deck-<UTC time>-<slug>; a job's deck has its job's id (deck-<the job id's rest>). */
   const slugOf = t =>
@@ -429,6 +444,7 @@ export function makeCards(core) {
     cardsDue,
     cardChoices,
     flashcardAsk,
+    cardsStudyAsk,
     deckNew,
     deckCardAdd,
     deckCardEdit,

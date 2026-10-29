@@ -1005,6 +1005,28 @@ async function flashcardsChecks(page, scheme) {
     );
     await page.evaluate(() => document.getElementById('fc-dlg').close());
   }
+  // B-495: a line about studying his cards opens the due ones; it starts no flashcards job
+  if (row) {
+    const jobs0 = await page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
+    await page.click('#tab-ev');
+    await page.waitForTimeout(150);
+    await send(page, 'I need to study my cards for the exam tonight');
+    await page.waitForTimeout(400);
+    const st = await page.evaluate(() => {
+      const d = document.getElementById('fc-dlg');
+      return {
+        open: !!d && d.open,
+        head: d ? (d.querySelector('.fc-ht h2') || {}).textContent : '',
+        jobs: Object.keys(window.__db.jobs || {}).length,
+      };
+    });
+    ok(
+      `[${scheme}] "study my cards" opens the due cards and starts no flashcards job (B-495)`,
+      st.open && st.head === 'Flip' && st.jobs === jobs0,
+      JSON.stringify({ jobs0, ...st })
+    );
+    await page.evaluate(() => document.getElementById('fc-dlg') && document.getElementById('fc-dlg').close());
+  }
   await importChecks(page, scheme);
 }
 // B-489: Import from Quizlet takes pasted export text, previews the first cards and makes a deck of them (no model call,
