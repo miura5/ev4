@@ -47,6 +47,8 @@
       node.className =
         'msg ' + (m.role === 'matt' ? 'matt' : 'ev') + (m.greeting ? ' greet' : '') + (rise ? ' rise' : '');
       node.dataset.id = m.id;
+      node.dataset.key = m.id; // B-514 (D-387): the message's record id, for the harnesses
+      node.dataset.kind = m.role === 'matt' ? 'his' : 'hers';
       const kids = [];
       if (m.role !== 'matt') {
         if (showAv) {

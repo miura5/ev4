@@ -745,7 +745,8 @@
     // the fold while he reads back); tapping her there is tapping her.
     if ($('mh-her')) {
       $('mh-her').append(
-        CORE.make(24, { follow: true, when: () => document.body.classList.contains('her-folded') }).el
+        // B-514 (D-376): she is Proprietary's Presence here, at its small size
+        DS.presence({ size: 'sm', follow: true, when: () => document.body.classList.contains('her-folded') })
       );
       $('mh-her').addEventListener('click', () => (ui.tab === 'ev' ? backToNow() : showTab('ev')));
     }
@@ -753,8 +754,7 @@
     $('ev-input').addEventListener('input', () => $('ev-send').classList.toggle('on', !!$('ev-input').value.trim()));
     // B-361: her mark beside her name in the sidebar stays, during a reply too, as in the demo; on the phone the
     // sidebar is the tab bar and the mark does not draw.
-    const topOrb = CORE.make(24, { follow: true, when: () => innerWidth >= 600 });
-    $('top-av').append(topOrb.el);
+    $('top-av').append(DS.presence({ size: 'sm', follow: true, when: () => innerWidth >= 600 })); // B-514 (D-376)
     // A resize keeps the newest line in view when he was reading it (the layout steps at 1024 px move everything).
     addEventListener('resize', () => {
       heroOrb.resize(coreStage().px);
