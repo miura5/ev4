@@ -9711,5 +9711,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:27.283Z"
   }
+ },
+ {
+  "id": "B-521",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): A long plan job shows no sign it is working, and a failed one is reported as \"something's ready\".",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "A long plan job shows no sign it is working, and a failed one is reported as \"something's ready\".",
+  "reportedAt": "2026-10-29T15:59:31.975Z",
+  "board": {
+   "row": "v4 B-521: A long plan job shows no sign it is working, and a failed one is…"
+  }
  }
 ]
