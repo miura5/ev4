@@ -408,12 +408,19 @@
         })
       );
     }
+    let courseKept = false; // B-526: the kept course is applied once, then whatever he opens is kept
     function renderObjectives() {
       renderResume();
       const card = $('ov-card'),
         list = studyExams();
       const start = $('study-start');
       start.dataset.off = activeSession() ? '1' : '';
+      // B-526 (F-09): Study reopens on the course he last had open (kept on this device), once that course is listed
+      const kept = !courseKept && store.get('studyCourse');
+      if (kept && list.some(x => x.course === kept)) {
+        ui.studyCourse = kept;
+        courseKept = true;
+      }
       if (!list.some(x => x.course === ui.studyCourse))
         ui.studyCourse =
           ((M.target && list.find(x => x.exam && x.exam.id === M.target.id)) || list.find(x => x.exam) || list[0] || {})
@@ -431,6 +438,7 @@
             b.setAttribute('aria-label', x.course);
             b.addEventListener('click', () => {
               ui.studyCourse = x.course;
+              courseKept = true;
               render();
             });
             return b;
@@ -438,6 +446,8 @@
         );
       }
       syncStudyBar();
+      if (courseKept && ui.studyCourse && store.get('studyCourse') !== ui.studyCourse)
+        store.set('studyCourse', ui.studyCourse); // B-526: the course open now is the one a reopen shows
       const cur = list.find(x => x.course === ui.studyCourse);
       ui.objPanel = null;
       if (!cur || !cur.exam) {

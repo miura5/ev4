@@ -5212,6 +5212,72 @@ async function tap(page, locator, name) {
       ok('[390] B-519: no page errors', !qErr.length, qErr.join(' | '));
       await qp.close();
     }
+    // B-526 (F-09, F-57): Study reopens on the course he last picked; what to do now weighs every course's next exam,
+    // so the chat's context lists each course's next exam together, soonest first, with the rule to weigh them all.
+    {
+      const cp = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+      const cErr = [];
+      cp.on('pageerror', e => cErr.push(e.message));
+      await cp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      await openPage(cp, 'staging');
+      await cp.waitForTimeout(1200);
+      await cp.click('#tab-study');
+      await cp.waitForTimeout(300);
+      await cp.click('#study-course button[aria-label="BIO 201"]');
+      await cp.waitForTimeout(250);
+      await cp.reload();
+      await cp.waitForTimeout(1500);
+      await cp.click('#tab-study');
+      await cp.waitForTimeout(300);
+      const pressed = await cp.evaluate(() =>
+        [...document.querySelectorAll('#study-course button[aria-pressed="true"]')].map(b =>
+          b.getAttribute('aria-label')
+        )
+      );
+      ok(
+        'B-526: Study reopens on the course he last picked (BIO 201)',
+        pressed.join() === 'BIO 201',
+        JSON.stringify(pressed)
+      );
+      await cp.evaluate(async () => {
+        const E = window.EVCore,
+          db = await window.claude.use('db');
+        await db
+          .collection('exams')
+          .doc('BIO-L3')
+          .set({
+            schema: 2,
+            writer: 'page',
+            at: new Date().toISOString(),
+            source: 'Told E.V.',
+            course: 'BIO 201',
+            kind: 'unit',
+            date: E.addDays(E.chicagoDate(new Date()), 1),
+            title: 'Lecture Exam 3: muscles',
+            status: 'upcoming',
+          });
+        window.__chatScript = [];
+        window.__chatReply = 'Start with BIO.';
+      });
+      await cp.click('#tab-ev');
+      await cp.waitForTimeout(300);
+      await send(cp, 'I have 40 minutes, what should I do?');
+      await cp.waitForTimeout(400);
+      const ctxText = await cp.evaluate(() => {
+        const c = [...window.__chatCalls].reverse().find(x => Array.isArray(x.input));
+        return c ? c.input[0].content : '';
+      });
+      const line = (/^Next exams across his courses, soonest first: .*$/m.exec(ctxText) || [''])[0];
+      ok(
+        'B-526: the chat context lists every course’s next exam together, soonest first, and says to weigh them all',
+        /^Next exams across his courses, soonest first: BIO 201: BIO-L3 "Lecture Exam 3: muscles" .*objectives not in the record.*; NUR 112: /.test(
+          line
+        ) && /weigh every course's next exam/.test(ctxText),
+        line
+      );
+      ok('B-526: no page errors', !cErr.length, cErr.join(' | '));
+      await cp.close();
+    }
     // Staging page: same page, staging worker only; filing is live-only
     const st = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await st.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));

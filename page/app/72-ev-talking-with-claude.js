@@ -17,6 +17,7 @@
 - No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
 - Which objectives aren't solid, or how ready he is: answer about the course's next exam (the Next exam lines below), never a past exam. When its objectives are not in the record, say so in one line and answer from its open weak spots and plan. Name a past exam as past if you mention it.
+- What to do now, or with the time he has: weigh every course's next exam (the "Next exams across his courses" line below), soonest and least ready first, not only the target exam's course. Name each step's course and order the steps by that.
 - Don't invent record data. If it isn't below or in a lookup, say you don't have it.
 - At most one unprompted suggestion per reply, and only when clearly useful.
 - With tools: call them first without writing, then write your reply once, after the last tool result. Never repeat yourself.
@@ -138,6 +139,9 @@
       }
       // B-478: which objectives aren't solid, and readiness, are about each course's next exam, never a past one
       const acc = E.answerStats(M.attempts.all).byObjective;
+      // B-526 (F-57): what to do now weighs every course's next exam, so they are listed together, soonest first
+      const nextAt = L.length,
+        across = [];
       for (const c of E.activeCourses()) {
         const sc = E.examScope({
           exams: S.exams,
@@ -152,6 +156,16 @@
           continue;
         }
         const ex = `${sc.exam.id} "${sc.exam.title}" ${short(sc.exam.date)}`;
+        const solid = sc.objectives.filter(o => objState(o, acc[o.id]).state === 'solid').length;
+        across.push({
+          date: sc.exam.date,
+          text:
+            `${c}: ${ex}, in ${plural(E.diffDays(today, sc.exam.date), 'day')}, ` +
+            (sc.noObjectives
+              ? 'objectives not in the record'
+              : `${solid} of ${sc.objectives.length} objectives solid`) +
+            `, ${sc.weakspots.length} open weak spots`,
+        });
         const ws = sc.weakspots.length
           ? sc.weakspots
               .slice(0, 8)
@@ -179,6 +193,17 @@
             `Open weak spots for it: ${ws}; ${plan}.`
         );
       }
+      if (across.length)
+        L.splice(
+          nextAt,
+          0,
+          'Next exams across his courses, soonest first: ' +
+            across
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map(x => x.text)
+              .join('; ') +
+            '.'
+        );
       const ci = M.dayedit && M.dayedit.checkin;
       if (ci)
         L.push(
