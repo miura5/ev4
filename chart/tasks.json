@@ -9423,10 +9423,10 @@
   "title": "Token audit script: tools/token-audit.mjs prints distinct counts per family (colour expressions, alpha washes, font sizes, weights, line heights, spacing, radii, durations, easings, shadows, z, media queries, !important) for page/styles.css; a report, never a gate",
   "dod": "Run at main it prints today's baseline (21 font sizes, 33 spacings, 21 radii, 13 durations); npm test GREEN",
   "milestone": "Polish prep",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "",
-  "commit": null,
+  "notes": "tools/token-audit.mjs (+ --json), a report never a gate; baseline font sizes 21, spacing 33, radii 21, durations 13, colours 91, washes 17, shadows 25, z 14, media 16, !important 14.",
+  "commit": "8100f4f",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
