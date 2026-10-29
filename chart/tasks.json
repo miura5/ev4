@@ -9034,5 +9034,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:57:01.126Z"
   }
+ },
+ {
+  "id": "B-484",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): After B-481, dosage practice sets come back correct but short: on staging a 6-problem oral liquid set kept 2 (both correct, no answer in the stem) and a 10-problem weight-based set kept 8; most drops are items the writer sent without usable calc numbers or with the answer in the stem, and the one top-up ask did not fill the gap. A dosage set should reach the asked count with checked items.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, staging run Oct 29 early",
+  "words": "After B-481, dosage practice sets come back correct but short: on staging a 6-problem oral liquid set kept 2 (both correct, no answer in the stem) and a 10-problem weight-based set kept 8; most drops are items the writer sent without usable calc numbers or with the answer in the stem, and the one top-up ask did not fill the gap. A dosage set should reach the asked count with checked items.",
+  "reportedAt": "2026-10-29T06:09:43.297Z",
+  "board": {
+   "row": "v4 B-484: After B-481, dosage practice sets come back correct but short: on…"
+  }
  }
 ]
