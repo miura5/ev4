@@ -9127,12 +9127,12 @@
   "title": "Request (reported Oct 29): Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
   "dod": "Written mode (case and small-typo tolerant; a near answer judged once by Haiku and cached on the card) and Learn mode (mixes new and due cards; each card moves Flip -> Multiple choice -> Written as it is answered right; ends when every card has stuck once) on any deck; same schedule as B-487; npm test covers the typo match and Learn's progression; proved in the staging app.",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-487"
   ],
-  "notes": "Built at 44c867e (with B-494): Written with typo allowance (0/1/2 by length) and 'I was right'; Learn in rounds of 7, MC then Written, one rating per card, Learned/Still shaky end; mode picker remembered per deck. Tests green. Haiku near-answer judging and a Flip step in Learn left out by design. Ships to staging with tonight's release.",
-  "commit": null,
+  "notes": "Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps.",
+  "commit": "44c867e",
   "source": "chat, Oct 29 (Matt)",
   "words": "Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
   "reportedAt": "2026-10-29T12:34:05.986Z",
