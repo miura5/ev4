@@ -799,14 +799,12 @@
       );
       if (fromThis.length) {
         const line = el('div', 'endline');
-        const ok = fromThis.filter(w => w.objective && S.objectives.some(o => o.id === w.objective)); // B-407 review
+        // B-407 review; B-499: with Accept open to a spot with no objective (its course), every one is accepted here
+        const ok = acceptBare ? fromThis : fromThis.filter(w => objKnown(w));
         // B-409: only the misses with an objective can be accepted here; the label says how many when not all
         const all = btn(
           ok.length && ok.length < fromThis.length ? 'Accept ' + ok.length : 'Accept all',
-          ev =>
-            guard(ev.currentTarget, () =>
-              weakAct('weakspot-accept', { items: ok.map(w => ({ id: w.id, objective: w.objective })) })
-            ),
+          ev => guard(ev.currentTarget, () => weakAct('weakspot-accept', { items: ok.map(acceptItem) })),
           { cls: 'btn primary sm' }
         );
         all.disabled = !ok.length;

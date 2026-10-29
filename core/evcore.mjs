@@ -759,7 +759,9 @@ const EVCore = (() => {
         Object.assign(st, { status: 'open', streak: 0, nextDue: date, reopenedAt: at });
         break;
       case 'accept': // B-232 (D-236): his accept counts it from tomorrow, under the objective he confirmed
-        Object.assign(st, { status: 'open', streak: 0, nextDue: addDays(date, 1), snoozedUntil: null });
+        // B-499: the objective is optional; one picked later on an open spot only names it, its schedule kept
+        if (st.status !== 'open')
+          Object.assign(st, { status: 'open', streak: 0, nextDue: addDays(date, 1), snoozedUntil: null });
         if (e.objective) st.objective = e.objective;
         break;
       case 'snooze':

@@ -277,7 +277,8 @@ export function makeActions(validateAgainst, evcore) {
   const COMPOSERS = {
     'weakspot-log': newSpot(false),
     'weakspot-propose': newSpot(true),
-    'weakspot-accept': spotEvent('accept', (a, it) => ({ objective: it.objective })),
+    // B-499: an Accept with no objective files the spot under its course; the objective can be picked later
+    'weakspot-accept': spotEvent('accept', (a, it) => (it.objective ? { objective: it.objective } : {})),
     'weakspot-join': join,
     'weakspot-snooze': spotEvent('snooze', a => ({ until: a.until })),
     'weakspot-decline': spotEvent('decline', a => (a.note ? { note: a.note } : {})),

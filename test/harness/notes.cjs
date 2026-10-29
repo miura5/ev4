@@ -22,6 +22,16 @@ const dbDir = require('../data/synthetic.cjs').recordDir(args[0] || 'synthetic')
 const shots = args[1] || '/tmp/ev4-notes';
 fs.mkdirSync(shots, { recursive: true });
 const pageDir = path.join(root, 'dist/page/staging');
+// B-499: whether the built actions table takes an Accept with no objective (the spot files under its course); the
+// B-455 checks below hold the page to whichever rule the build carries
+const ACCEPT_BARE = (() => {
+  try {
+    const spec = JSON.parse(fs.readFileSync(path.join(pageDir, 'spec.json'), 'utf8'));
+    return !spec.actions['weakspot-accept'].args.properties.items.items.required.includes('objective');
+  } catch {
+    return false;
+  }
+})();
 const ORIGIN = 'https://ev.local';
 const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
 
@@ -2096,14 +2106,26 @@ const openNoteId = page =>
         side: document.body.innerText,
       };
     });
-    ok(
-      `${tag} a proposed spot with no objective in the record has Pick an objective in place of the greyed Accept`,
-      /Pick an objective first/.test(r.row) &&
-        JSON.stringify(r.btns) === '[["Pick an objective",false],["Join",true],["Not now",false],["Decline",false]]' &&
-        r.btns2[0] &&
-        r.btns2[0][0] === 'Pick an objective',
-      JSON.stringify(r)
-    );
+    if (ACCEPT_BARE)
+      ok(
+        `${tag} B-499: a proposed spot with no objective in the record has Accept (under its course) and Pick an objective`,
+        /Under NUR 112/.test(r.row) &&
+          JSON.stringify(r.btns) ===
+            '[["Accept",false],["Pick an objective",false],["Join",true],["Not now",false],["Decline",false]]' &&
+          r.btns2[1] &&
+          r.btns2[1][0] === 'Pick an objective',
+        JSON.stringify(r)
+      );
+    else
+      ok(
+        `${tag} a proposed spot with no objective in the record has Pick an objective in place of the greyed Accept`,
+        /Pick an objective first/.test(r.row) &&
+          JSON.stringify(r.btns) ===
+            '[["Pick an objective",false],["Join",true],["Not now",false],["Decline",false]]' &&
+          r.btns2[0] &&
+          r.btns2[0][0] === 'Pick an objective',
+        JSON.stringify(r)
+      );
     ok(
       `${tag} How triage works says "Nothing proposed counts until you decide." and keeps "Not now: back tomorrow"`,
       /Nothing proposed counts until you decide\./.test(r.side) && /Not now: back tomorrow/.test(r.side),
@@ -2230,6 +2252,39 @@ const openNoteId = page =>
         btns: [...l.querySelectorAll('button')].map(b => [b.textContent, b.classList.contains('primary')]),
       };
     });
+    if (ACCEPT_BARE) {
+      ok(
+        `${tag} B-499: the end card's Accept all takes the miss with no objective, under its course`,
+        made.length === 1 &&
+          made[0].proposed &&
+          !made[0].objective &&
+          end.text === '1 miss is proposed as a weak spot.' &&
+          JSON.stringify(end.btns) === '[["Accept all",true],["Review",false]]',
+        JSON.stringify({ made, end })
+      );
+      await page.screenshot({ path: path.join(shots, `b455-end-card-${width}.png`) });
+      await page.locator('#pr-body .endline button', { hasText: 'Accept all' }).click();
+      const took = await until(
+        page,
+        id =>
+          Object.values((window.__db.weakspots[id] || {}).events || {}).some(
+            e => e.type === 'accept' && !('objective' in e) && e.by === 'owner'
+          ),
+        made[0] && made[0].id,
+        4000
+      );
+      await page.click('#study-qweak'); // the end line goes once nothing waits for his triage
+      const later = await until(
+        page,
+        id => !!document.querySelector(`#weak-list .wl[data-id="${id}"] .pick-btn`),
+        made[0] && made[0].id,
+        4000
+      );
+      ok(`${tag} B-499: accepted, it is open in the Open list with Pick an objective for later`, took && later, '');
+      ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+      await page.context().close();
+      continue;
+    }
     ok(
       `${tag} the end card says the miss needs an objective picked, hides Accept all and makes Review the primary`,
       made.length === 1 &&
@@ -2284,14 +2339,33 @@ const openNoteId = page =>
       const b = row.querySelector('.acts > button');
       return { acc: [b.textContent, b.disabled, b.title], pick: !!row.querySelector('.pick-btn') };
     });
-    ok(
-      `${tag} Accept is greyed with "No objectives in the record for its course yet", and no menu`,
-      r.acc[0] === 'Accept' &&
-        r.acc[1] === true &&
-        r.acc[2] === 'No objectives in the record for its course yet' &&
-        !r.pick,
-      JSON.stringify(r)
-    );
+    if (ACCEPT_BARE) {
+      // B-499: Accept files it under its course with no objective; it opens from tomorrow in the Open list
+      await page.click('#weak-list .trow[data-id="ws-harness-none"] .acts > button');
+      const took = await until(
+        page,
+        () =>
+          Object.values((window.__db.weakspots['ws-harness-none'] || {}).events || {}).some(
+            e => e.type === 'accept' && !('objective' in e)
+          ),
+        null,
+        4000
+      );
+      const listed = await until(page, () => !!document.querySelector('#weak-list .wl[data-id="ws-harness-none"]'));
+      ok(
+        `${tag} B-499: Accept works with no objectives in the record: the spot is open under its course`,
+        r.acc[0] === 'Accept' && r.acc[1] === false && !r.pick && took && listed,
+        JSON.stringify(r)
+      );
+    } else
+      ok(
+        `${tag} Accept is greyed with "No objectives in the record for its course yet", and no menu`,
+        r.acc[0] === 'Accept' &&
+          r.acc[1] === true &&
+          r.acc[2] === 'No objectives in the record for its course yet' &&
+          !r.pick,
+        JSON.stringify(r)
+      );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();
   }

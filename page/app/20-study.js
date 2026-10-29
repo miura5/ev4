@@ -952,6 +952,15 @@
         });
         ms.setAttribute('aria-label', 'Mark ' + (w.topic || 'this weak spot') + ' solid');
         row.append(ms);
+        // B-499: accepted with no objective, it can take one later: the same menu, which names it and keeps its schedule
+        const later =
+          (w.kind || 'concept') === 'concept' && !objKnown(w)
+            ? candidateObjectives(
+                S.exams.find(e => e.id === E.examOf(w)),
+                wsCourse(w)
+              )
+            : [];
+        if (later.length) row.append(pickMenu(w, w.topic || 'this weak spot', later));
       }
       return row;
     }
@@ -960,6 +969,18 @@
      *  least 0.5 similar; off when none, the target named in its title); Not now hides it until tomorrow; Decline keeps
      *  it, uncounted. */
     const objKnown = w => !!w.objective && S.objectives.some(o => o.id === w.objective);
+    /** B-499: whether the actions table takes an Accept with no objective (the spot files under its course, its
+     *  objective picked later); until it does, a spot with none waits for a pick, as before. */
+    const acceptBare = (() => {
+      try {
+        const row = EV_SPEC.actions['weakspot-accept'].args.properties.items.items;
+        return !(row.required || []).includes('objective');
+      } catch {
+        return false;
+      }
+    })();
+    /** B-499: one Accept's item: the spot's objective when the record has it, else none (its course). */
+    const acceptItem = w => ({ id: w.id, ...(objKnown(w) ? { objective: w.objective } : {}) });
     /** B-455: a To review row's Pick an objective: a small menu (the New menu's) of its candidates; a pick sends
      *  weakspot-accept with that objective, so it opens from tomorrow under it. Escape or a tap outside closes it. */
     function pickMenu(w, name, cands) {
@@ -971,7 +992,13 @@
       const open = on => {
         menu.hidden = !on;
         b.setAttribute('aria-expanded', String(on));
-        if (on) menu.querySelector('button').focus();
+        if (!on) return;
+        // B-499: beside Accept the button sits further right; the menu shifts left to stay on the screen
+        menu.style.left = '';
+        const r = menu.getBoundingClientRect();
+        const over = r.right - (document.documentElement.clientWidth - 8);
+        if (over > 0) menu.style.left = -Math.min(over, r.left - 8) + 'px';
+        menu.querySelector('button').focus();
       };
       const b = btn('Pick an objective', () => open(menu.hidden), { cls: 'btn neutral sm pick-btn' });
       b.setAttribute('aria-haspopup', 'menu');
@@ -1029,8 +1056,14 @@
           'span',
           'mini',
           [
-            // B-409: a greyed Accept says why, in sight
-            !objKnown(w) ? 'Pick an objective first' : obj ? 'Under “' + obj + '”' : '',
+            // B-409: a greyed Accept says why, in sight; B-499: with no objective, Accept files it under its course
+            !objKnown(w)
+              ? acceptBare
+                ? 'Under ' + wsCourse(w)
+                : 'Pick an objective first'
+              : obj
+                ? 'Under “' + obj + '”'
+                : '',
             w.source,
             to ? 'Repeats “' + (to.topic || to.id) + '”?' : '', // what Join would join it to, in sight before the tap
           ]
@@ -1047,13 +1080,13 @@
       const acc = tap(
         'Accept',
         'Accept ' + name + (obj ? ' under ' + obj : ''),
-        () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: w.objective }] }),
+        () => weakAct('weakspot-accept', { items: [acceptItem(w)] }),
         'btn neutral sm'
       );
-      acc.disabled = !objKnown(w); // with no objective in the record there is nothing to count it under
+      acc.disabled = !objKnown(w) && !acceptBare; // B-499: with no objective it counts under its course, when allowed
       // B-455: in its place, Pick an objective: the spot's exam's objectives, else its course's; a pick accepts it
       // under that one. With none in the record, Accept stays greyed and says why.
-      const cands = acc.disabled
+      const cands = !objKnown(w)
         ? candidateObjectives(
             S.exams.find(e => e.id === E.examOf(w)),
             wsCourse(w)
@@ -1074,7 +1107,9 @@
       join.title = to ? 'Join to “' + (to.topic || to.id) + '”' : 'Nothing under this objective repeats it';
       const acts = el('div', 'acts');
       acts.append(
-        cands.length ? pickMenu(w, name, cands) : acc,
+        ...(acceptBare
+          ? [acc, ...(cands.length ? [pickMenu(w, name, cands)] : [])]
+          : [cands.length ? pickMenu(w, name, cands) : acc]),
         join,
         tap('Not now', 'Not now: ' + name + ' comes back tomorrow', () =>
           weakAct('weakspot-snooze', { items: [{ id: w.id }], until: E.addDays(today, 1) })
