@@ -10068,5 +10068,22 @@
    "outcome": "task",
    "at": "2026-10-29T20:05:23.686Z"
   }
+ },
+ {
+  "id": "B-538",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Flashcard decks still get reworded repeats (e.g. 'Z disc' and 'Z disc: function'), a 100-card ask made 101, and the Add with E.V. card didn't show 'Working · …' (the plan card says 'Making a new plan · 0 s' instead).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging re-run of ceba846",
+  "words": "Flashcard decks still get reworded repeats (e.g. 'Z disc' and 'Z disc: function'), a 100-card ask made 101, and the Add with E.V. card didn't show 'Working · …' (the plan card says 'Making a new plan · 0 s' instead).",
+  "reportedAt": "2026-10-29T21:16:53.174Z",
+  "board": {
+   "row": "v4 B-538: Flashcard decks still get reworded repeats (e.g. 'Z disc' and 'Z…"
+  }
  }
 ]
