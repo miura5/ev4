@@ -16,6 +16,7 @@
 - Teaching: the rule, why it works, one memory hook, and when it shows up on the NCLEX. Mark anything not from his course materials "(check your materials)".
 - No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
+- Which objectives aren't solid, or how ready he is: answer about the course's next exam (the Next exam lines below), never a past exam. When its objectives are not in the record, say so in one line and answer from its open weak spots and plan. Name a past exam as past if you mention it.
 - Don't invent record data. If it isn't below or in a lookup, say you don't have it.
 - At most one unprompted suggestion per reply, and only when clearly useful.
 - With tools: call them first without writing, then write your reply once, after the last tool result. Never repeat yourself.
@@ -99,7 +100,11 @@
         `Weak spots: ${act.length} active, ${due.length} due. Most due: ` +
           (due.length ? due : act)
             .slice(0, 8)
-            .map(w => `${w.id} "${w.topic}" (${w.objective || w.exam || ''}, ${w.derived.streak || 0}/2 right)`)
+            .map(w => {
+              const ex = S.exams.find(e => e.id === E.examOf(w));
+              const past = ex && ex.date && ex.date < today ? ', past exam' : ''; // B-478
+              return `${w.id} "${w.topic}" (${w.objective || w.exam || ''}${past}, ${w.derived.streak || 0}/2 right)`;
+            })
             .join('; ')
       );
       const wk = S.dates
@@ -130,6 +135,44 @@
               ': ' +
               objs.map(o => `${o.id} ${String(o.text || '').slice(0, 70)}`).join('; ')
           );
+      }
+      // B-478: which objectives aren't solid, and readiness, are about each course's next exam, never a past one
+      const acc = E.answerStats(M.attempts.all).byObjective;
+      for (const c of E.activeCourses()) {
+        const sc = E.examScope({
+          exams: S.exams,
+          objectives: S.objectives,
+          weakspots: M.models,
+          plans: S.plans,
+          date: today,
+          course: c,
+        });
+        if (!sc.exam) {
+          L.push(`Next exam for ${c}: none in the record.`);
+          continue;
+        }
+        const ex = `${sc.exam.id} "${sc.exam.title}" ${short(sc.exam.date)}`;
+        const ws = sc.weakspots.length
+          ? sc.weakspots
+              .slice(0, 8)
+              .map(w => `${w.id} "${w.topic}"`)
+              .join('; ')
+          : 'none';
+        const plan = sc.plan
+          ? `its plan has ${sc.tasksLeft} task${sc.tasksLeft === 1 ? '' : 's'} left`
+          : 'no plan for it yet';
+        L.push(
+          `Next exam for ${c}: ${ex}. ` +
+            (sc.noObjectives
+              ? 'Its objectives are not in the record. '
+              : 'Objectives not yet solid: ' +
+                (sc.objectives
+                  .filter(o => objState(o, acc[o.id]).state !== 'solid')
+                  .map(o => `${o.id} ${String(o.text || '').slice(0, 70).replace(/\.$/, '')}`)
+                  .join('; ') || 'none, all solid') +
+                '. ') +
+            `Open weak spots for it: ${ws}; ${plan}.`
+        );
       }
       const ci = M.dayedit && M.dayedit.checkin;
       if (ci)
@@ -740,7 +783,13 @@
               case 'objectives':
                 out = S.objectives
                   .filter(o => (!M.target || o.exam === M.target.id) && has(o.text || ''))
-                  .map(o => ({ id: o.id, text: o.text }));
+                  .map(o => {
+                    const ex = S.exams.find(e => e.id === o.exam);
+                    // B-478: a past exam's objective says so
+                    return ex && ex.date && ex.date < today
+                      ? { id: o.id, text: o.text, pastExam: o.exam }
+                      : { id: o.id, text: o.text };
+                  });
                 break;
               case 'dates':
                 out = S.datesAll

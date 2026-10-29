@@ -226,3 +226,40 @@ test('B-406: study vs next day leaves out a discarded session', async () => {
   const r = weekInsights({ sets: [], answers: [], models: [] }, db, '2026-10-18');
   assert.equal(r.studyVsNextDay.find(x => x.date === '2026-10-15').minutes, 45);
 });
+
+test("B-478: examScope answers a course's objectives ask from its next exam, never a past one", () => {
+  const open = (id, exam, objective = '') => ({ id, exam, objective, course: 'NUR 112', derived: { status: 'open' } });
+  const exams = [
+    { id: 'E4', title: 'Exam 4', date: '2026-10-20', course: 'NUR 112', kind: 'unit' },
+    { id: 'ATI-D', title: 'ATI Proctored Dosage Assessment', date: '2026-11-02', course: 'NUR 112', kind: 'ati' },
+    { id: 'E5', title: 'Exam 5', date: '2026-11-20', course: 'NUR 112', kind: 'unit' },
+  ];
+  const objectives = [
+    { id: 'E4-1', exam: 'E4', text: 'Fluid balance' },
+    { id: 'E5-1', exam: 'E5', text: 'Bowel elimination' },
+  ];
+  const weakspots = [open('w1', 'E4', 'E4-1'), open('w2', 'ATI-D'), open('w3', 'E5', 'E5-1')];
+  const plans = [
+    { id: 'ATI-D', exam: 'ATI-D', days: [{ date: '2026-10-30', tasks: [{ id: 't1', kind: 'practice' }] }] },
+  ];
+  const s = EV.examScope({ exams, objectives, weakspots, plans, date: '2026-10-29', course: 'NUR 112' });
+  assert.equal(s.exam.id, 'ATI-D'); // the next exam, not Exam 4 (past) and not the one after it with objectives
+  assert.equal(s.noObjectives, true);
+  assert.deepEqual(s.objectives, []);
+  assert.deepEqual(
+    s.weakspots.map(w => w.id),
+    ['w2']
+  );
+  assert.equal(s.plan.id, 'ATI-D');
+  assert.equal(s.tasksLeft, 1);
+  // with objectives, they are the next exam's
+  const t = EV.examScope({ exams, objectives, weakspots, plans, date: '2026-11-03', course: 'NUR 112' });
+  assert.equal(t.exam.id, 'E5');
+  assert.equal(t.noObjectives, false);
+  assert.deepEqual(
+    t.objectives.map(o => o.id),
+    ['E5-1']
+  );
+  // no exam ahead
+  assert.equal(EV.examScope({ exams, date: '2026-12-01', course: 'NUR 112' }).exam, null);
+});

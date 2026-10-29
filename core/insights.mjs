@@ -9,6 +9,7 @@ export function makeInsights(core) {
     addDays,
     citeMaterial,
     collectAttempts,
+    courseOf,
     diffDays,
     examOf,
     isActive,
@@ -68,6 +69,34 @@ export function makeInsights(core) {
       notYet: active.length - one - preRead,
       pctSolid: total ? Math.round((100 * solid) / total) : null,
     };
+  }
+  /**
+   * B-478: what "which objectives aren't solid yet" and the readiness ask are answered from for a course: its next exam
+   * (today or later, not done), never a past one. Its objectives; its open weak spots (tied to that exam, or to no exam
+   * in the course); its plan (by exam, else the newest plan with days in the 21 days before it) and the plan tasks left.
+   * {course, exam: null} when the course has no exam ahead.
+   */
+  function examScope({ exams = [], objectives = [], weakspots = [], plans = [], date, course }) {
+    const exam =
+      exams
+        .filter(e => e.date && e.date >= date && e.status !== 'done' && courseOf(e) === course)
+        .sort((a, b) => a.date.localeCompare(b.date))[0] || null;
+    if (!exam) return { course, exam: null };
+    const objs = objectives.filter(o => o.exam === exam.id);
+    const ids = new Set(objs.map(o => o.id));
+    const open = weakspots.filter(
+      w =>
+        isActive(w) &&
+        (examOf(w) === exam.id || ids.has(w.objective) || (!examOf(w) && (!w.course || courseOf(w) === course)))
+    );
+    const plan =
+      plans.find(p => (p.exam || p.id) === exam.id) ||
+      plans
+        .filter(p => !p.exam && (p.days || []).some(d => d.date <= exam.date && d.date >= addDays(exam.date, -21)))
+        .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0] ||
+      null;
+    const left = plan ? planTasks(plan).filter(t => !taskDone(plan, t, date)).length : 0;
+    return { course, exam, objectives: objs, noObjectives: !objs.length, weakspots: open, plan, tasksLeft: left };
   }
   /**
    * The readiness audit (Features: "Readiness audit"): per objective of an exam, its weak spots solid, right once and
@@ -271,5 +300,15 @@ export function makeInsights(core) {
     return n > 0 ? 'in ' + n + ' days' : -n + ' days ago';
   }
 
-  return { answerStats, readiness, readinessAudit, predictReadiness, examViews, calibrate, examRetro, relDay };
+  return {
+    answerStats,
+    readiness,
+    examScope,
+    readinessAudit,
+    predictReadiness,
+    examViews,
+    calibrate,
+    examRetro,
+    relDay,
+  };
 }

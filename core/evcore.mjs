@@ -2170,12 +2170,12 @@ const EVCore = (() => {
         .map(w => ({ objective: w.objective, topic: w.topic })),
     };
   }
-
   // ---------------------------------------------------------------- insights · core/insights.mjs (B-159)
   const INSIGHTS = makeInsights({
     addDays,
     citeMaterial,
     collectAttempts,
+    courseOf,
     diffDays,
     examOf,
     isActive,
