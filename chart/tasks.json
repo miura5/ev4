@@ -9325,9 +9325,9 @@
   "id": "B-497",
   "kind": "bug",
   "title": "Bug (reported Oct 29): A long note sent through the chat ('note: …') was saved with its whole text as the title and cut off, losing the last third without warning, and got no course.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A note made through the chat keeps its whole text in the body (a short title from its first line), takes the course from the conversation or the next exam, and nothing is cut; test with a long note; real run on staging.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9336,6 +9336,10 @@
   "reportedAt": "2026-10-29T15:14:56.930Z",
   "board": {
    "row": "v4 B-497: A long note sent through the chat ('note: …') was saved with its…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:15:04.930Z"
   }
  }
 ]
