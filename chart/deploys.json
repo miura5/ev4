@@ -6035,5 +6035,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "db90509",
+  "time": "2026-10-29T15:06:12.150Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "d7a55f5",
+  "tasks": [
+   "B-493"
+  ],
+  "summary": "A flashcards job left the words '; verify: true' inside two card…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
