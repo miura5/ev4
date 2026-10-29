@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-392",
+  "date": "Oct 29",
+  "title": "E.V.'s look moves toward Linear (Matt, Oct 29): neutral light and dark themes replace the warm tint (generated from theme.js inputs), structure from solid surface steps and spacing instead of lines and outlines, no press-scale recoil (folds open by height and opacity), a calmer type scale with no giant display numbers, one-line rows that never become paragraphs, consistent colour-coded fixed-width badges, symmetric button groups",
+  "why": "Matt's own UI feedback after comparing E.V. with Linear side by side: the tinted themes feel dated, lines and outlines feel harsh, the recoil motion lacks grace, and dense rows and uneven buttons look messy; it widens the look pass beyond the D-327 demo on his word",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-327"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-391",
   "date": "Oct 29",
   "title": "Harnesses may also select by data-part (a named part of a view that is no component, e.g. a day total or a row's title); view lanes moving rules out of legacy put !important on each moved declaration until B-515 strips them, and drop an old class wherever a legacy rule on it would fight the component",
