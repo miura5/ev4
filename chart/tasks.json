@@ -10031,9 +10031,9 @@
   "id": "B-536",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Release review of aa177a1 backlog: 'give me the drug card for X' starts a flashcards job; quiz_me's course enum is empty once no course is active, which could fail the whole chat call; two add-to-deck folds in the same second could reuse card ids; a deck past 256 KiB is refused with a plain error.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "quiz_me omits the tool or the enum when no course is active; card asks need a cards/flashcards noun with a make verb; new card ids can't collide within a second; a deck near its size limit says so plainly; tests.",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10042,6 +10042,10 @@
   "reportedAt": "2026-10-29T19:26:43.134Z",
   "board": {
    "row": "v4 B-536: Release review of aa177a1 backlog: 'give me the drug card for X'…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T19:26:46.471Z"
   }
  }
 ]
