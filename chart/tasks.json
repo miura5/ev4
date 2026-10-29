@@ -9110,5 +9110,22 @@
   "board": {
    "row": "v4 B-487: Flashcard decks inside E.V. (D-368), part 1: per-course decks in…"
   }
+ },
+ {
+  "id": "B-488",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 29 (Matt)",
+  "words": "Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
+  "reportedAt": "2026-10-29T12:34:05.986Z",
+  "board": {
+   "row": "v4 B-488: Flashcard decks, part 2 (D-368): Written mode (type the answer; small…"
+  }
  }
 ]
