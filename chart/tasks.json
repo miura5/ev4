@@ -9984,5 +9984,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:31.826Z"
   }
+ },
+ {
+  "id": "B-534",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Start buttons on the tasks E.V. names in its answers.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Start buttons on the tasks E.V. names in its answers.",
+  "reportedAt": "2026-10-29T16:01:35.659Z",
+  "board": {
+   "row": "v4 B-534: Start buttons on the tasks E.V. names in its"
+  }
  }
 ]
