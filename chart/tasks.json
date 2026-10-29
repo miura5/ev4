@@ -10010,9 +10010,9 @@
   "id": "B-535",
   "kind": "request",
   "title": "Request (reported Oct 29): A web address per view and arrow keys between views, so Back works.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each view has its own address and Back moves between views; Up/Down move between sidebar tabs; test. (F-04, F-66)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10021,6 +10021,10 @@
   "reportedAt": "2026-10-29T16:01:43.267Z",
   "board": {
    "row": "v4 B-535: A web address per view and arrow keys between views, so Back"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:01:48.154Z"
   }
  }
 ]
