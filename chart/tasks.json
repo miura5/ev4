@@ -9236,9 +9236,9 @@
   "id": "B-493",
   "kind": "bug",
   "title": "Bug (reported Oct 29): A flashcards job left the words '; verify: true' inside two card definitions as well as setting the Verify badge.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A deck's card text never carries the verify marker as words; the flag alone drives the badge; test.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9247,6 +9247,10 @@
   "reportedAt": "2026-10-29T14:49:30.961Z",
   "board": {
    "row": "v4 B-493: A flashcards job left the words '; verify: true' inside two card…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T14:49:45.275Z"
   }
  },
  {
