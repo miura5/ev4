@@ -1817,3 +1817,32 @@ test('B-463: a plan edit is told each day with its weekday (Wed 28 Oct for 2026-
   assert.match(text, /never work out a weekday yourself/);
   assert.match(text, /"day":"Wed 28 Oct"/);
 });
+
+test('B-483: a legacy plan-<task id> day tick counts for its own plan only, never another plan’s task of that id', () => {
+  const at = NOW.toISOString();
+  const P = (id, exam, course, text) => ({
+    id,
+    exam,
+    schema: 1,
+    writer: 'worker',
+    at,
+    section: { course, from: TODAY, to: TODAY },
+    days: [{ date: TODAY, label: 'Day', tasks: [{ id: 't12', text, tag: 'graded', kind: 'graded', minutes: 30 }] }],
+  });
+  const nur = P('E5-2', 'E5', 'NUR 112', 'Mobility + Tissue Integrity (due 11/4)');
+  const bio = P('BIO-LAB', 'BIO-LAB', 'BIO 201', 'Lab practical review');
+  const plans = [nur, bio];
+  const ed = { added: {}, skipped: {}, checks: { 'plan-t12': { at } } };
+  const task = p => ({ ...EV.planTasks(p)[0], date: TODAY });
+  const ticks = (day, p) => EV.planDayTickIds(ed, day, plans, p, task(p));
+  // the saved day's item of that id (written for NUR 112: its words, no ref, as before the graded ref fix)
+  const saved = { list: { items: [{ id: 'plan-t12', text: nur.days[0].tasks[0].text, tag: 'GRADED', ref: null }] } };
+  assert.deepEqual(ticks(saved, nur), ['plan-t12']);
+  assert.deepEqual(ticks(saved, bio), [], 'another plan’s task t12 is not ticked by it');
+  // a saved item with a plan ref: only the plan it names
+  const byRef = { list: { items: [{ id: 'plan-t12', text: 'x', ref: 'plans/BIO-LAB#t12' }] } };
+  assert.deepEqual([ticks(byRef, nur), ticks(byRef, bio)], [[], ['plan-t12']]);
+  // no saved item and two plans with t12 that day: ambiguous, so it counts for neither; with one plan, for it
+  assert.deepEqual([ticks(null, nur), ticks(null, bio)], [[], []]);
+  assert.deepEqual(EV.planDayTickIds(ed, null, [nur], nur, task(nur)), ['plan-t12']);
+});

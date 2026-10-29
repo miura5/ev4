@@ -48,15 +48,13 @@
      * plan task's own words on that task's day (Plan the rest's add, or a copy it made before B-483) is that plan task:
      * shown once, ticked in the plan's planedits, and a tick the copy got on the day counts as the task's.
      */
-    // B-483: and the plan item's own id, ticked on the day before a graded plan task carried its plan ref
-    const copyIds = task => [
-      ...E.planCopyIds(task && task.date && dayEditDoc(task.date), task),
-      ...(task && task.id ? ['plan-' + task.id] : []),
-    ];
+    // B-483: and the plan item's own id ticked on the day, when it was this plan's (EVCore.planDayTickIds)
+    const copyIds = (plan, task) =>
+      task && task.date ? E.planDayTickIds(dayEditDoc(task.date), dayDoc(task.date), S.plans, plan, task) : [];
     function planDone(plan, task, date = today) {
       if (E.taskDone(plan, task, date, S.sets, S.answers)) return true;
       const ed = task.date && dayEditDoc(task.date);
-      return copyIds(task).some(id => !!(ed && ed.checks && ed.checks[id]));
+      return copyIds(plan, task).some(id => !!(ed && ed.checks && ed.checks[id]));
     }
     function withPlanTasks(date, day) {
       if (date < today || !(S.plans || []).some(p => p.section && (p.days || []).some(d => d.date === date)))
@@ -111,7 +109,7 @@
       await write({ op: 'set', collection: 'planedits', id: r.id, data: r.data });
       // B-483: unticked, a copy's old tick on its day goes too, so the task reads not done in both places
       const ed = !on && task.date && dayEditDoc(task.date);
-      const ticked = ed ? copyIds(task).filter(id => ed.checks && ed.checks[id]) : [];
+      const ticked = ed ? copyIds(plan, task).filter(id => ed.checks && ed.checks[id]) : [];
       if (!ticked.length) return;
       const rest = { ...ed };
       delete rest.id; // readers carry the id beside the fields; a write never does

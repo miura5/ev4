@@ -885,6 +885,24 @@ export function makeStudyPlans(core) {
     const added = (dayedit && dayedit.added) || {};
     return k ? Object.keys(added).filter(id => planCopyKey((added[id] || {}).text) === k) : [];
   }
+  /**
+   * B-483: the day ticks that count for one plan's task: its copies (planCopyIds), and plan-<task id> ticked on the day
+   * before a graded plan task carried its ref, only when that id was this plan's: the day's saved item of that id names
+   * this plan and task (or carries its words), or, with no saved item, no other plan has a task of that id that day.
+   */
+  function planDayTickIds(dayedit, day, plans, plan, task) {
+    const ids = planCopyIds(dayedit, task);
+    if (!task || !task.id) return ids;
+    const id = 'plan-' + task.id;
+    const item = ((day && day.list && day.list.items) || []).find(it => it.id === id);
+    const mine = /^plans\/([^#]+)#(.+)$/.exec((item && item.ref) || '');
+    const own = item
+      ? mine
+        ? mine[2] === task.id && [plan.id, plan.exam].includes(mine[1])
+        : planCopyKey(item.text) === planCopyKey(task.text)
+      : !(plans || []).some(p => p.id !== plan.id && planTasks(p).some(t => t.id === task.id && t.date === task.date));
+    return own ? [...ids, id] : ids;
+  }
   function dayWithPlanTasks(day, planned) {
     const d = day || {};
     const base = (d.list && d.list.items) || [];
@@ -922,6 +940,7 @@ export function makeStudyPlans(core) {
   }
   return {
     dayWithPlanTasks,
+    planDayTickIds,
     joinPlanCopies,
     planCopyIds,
     planCopyRef,
