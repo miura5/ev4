@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "",
+  "notes": "Also rename the leftover 'flower' wording to the Dial Arc (D-265, D-266): comments in 01-ui-15-presence.js, 02-navigation.js, 60, 61, and spec.ui.look.flower (key rename with its readers). What is drawn is already the Arc; only the names are stale (Matt, Oct 29).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
