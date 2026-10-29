@@ -565,7 +565,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       // words in its detail, with its kind menu (B-303, D-290: and no Make it a weak spot).
       await page.click('#tab-record'); // B-359: Record is its log alone
       await page.waitForTimeout(400);
-      const sel = '#rec-list .rec-li[data-id="look-long-idea"]';
+      const sel = '#rec-list [data-part=row][data-key="look-long-idea"]';
       const idea = await page.evaluate(s => {
         const li = document.querySelector(s);
         if (!li) return null;

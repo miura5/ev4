@@ -907,7 +907,7 @@ async function flashcardsChecks(page, scheme) {
   await page.waitForTimeout(200);
   const card = await page.evaluate(() => {
     const c = document.getElementById('ov-decks');
-    const rows = c ? [...c.querySelectorAll('.st-row')] : [];
+    const rows = c ? [...c.querySelectorAll('.st-row[data-key]')] : [];
     return {
       shown: !!c && !c.hidden && c.getBoundingClientRect().height > 0,
       lab: c ? (c.querySelector('.lab') || {}).textContent : '',
@@ -1961,7 +1961,9 @@ async function studyPlanChecks(page) {
   await pickCourse('BIO 201');
   const bio = await page.evaluate(() => ({
     exam: !!document.querySelector('#ov-card .ov-ex') && /No exam/.test(document.getElementById('ov-card').textContent),
-    cards: [...document.querySelectorAll('#ov-plans:not([hidden]) .pl-card')].map(c => c.dataset.plan),
+    cards: [
+      ...document.querySelectorAll('#ov-plans:not([hidden]) [data-ui=card]:is([data-plan], :not([data-key]))'),
+    ].map(c => c.dataset.plan),
   }));
   ok(
     'a plan for no exam shows on a course tab with no exam ahead (B-450)',
@@ -2079,9 +2081,9 @@ async function studyPlanChecks(page) {
     await page.waitForTimeout(250);
     const m = await page.evaluate(() => {
       const vis = e => !!e && e.getClientRects().length > 0 && !e.closest('[hidden]');
-      const card = document.querySelector('#ov-plans .pl-card.dr[data-plan="E4-H2"]');
+      const card = document.querySelector('#ov-plans [data-ui=card][data-key="E4-H2"]');
       const sum = [
-        ...document.querySelectorAll('#study-side .plan-sum, #ov-plans .pl-card.dr[data-plan="E4-H2"] > .plan-sum'),
+        ...document.querySelectorAll('#study-side .plan-sum, #ov-plans [data-ui=card][data-key="E4-H2"] > .plan-sum'),
       ].find(vis);
       const open = card && card.querySelector('.pl-day.open');
       return {
@@ -2098,18 +2100,20 @@ async function studyPlanChecks(page) {
         ticksOff: open ? [...open.querySelectorAll('.pl-t input.tick')].every(t => t.disabled) : false,
         counts: card ? [...card.querySelectorAll('.pl-filter button')].map(b => b.textContent) : [],
         ask: [...document.querySelectorAll('#ov-plans .pm-ask .q')].map(q => q.textContent),
-        later: [...document.querySelectorAll('#ov-plans .ov-card .ov-ex')].map(e => e.textContent),
-        e5: !!document.querySelector('#ov-plans .pl-card.dr[data-plan="E5"]'),
+        later: [...document.querySelectorAll('#ov-plans [data-ui=card][data-key]:not([data-plan]) .ov-ex')].map(
+          e => e.textContent
+        ),
+        e5: !!document.querySelector('#ov-plans [data-ui=card][data-key="E5"]'),
         sideways: document.documentElement.scrollWidth > innerWidth,
         labels: card ? [...card.querySelectorAll('.pl-dr')].map(b => b.querySelector('.lb').textContent) : [],
         weight: card ? getComputedStyle(card.querySelector('.pl-t .title')).fontWeight : '',
-        e4cards: [...document.querySelectorAll('#ov-plans .pl-card')]
+        e4cards: [...document.querySelectorAll('#ov-plans [data-ui=card]:is([data-plan], :not([data-key]))')]
           .filter(c => /^E4/.test(c.dataset.plan))
           .map(c => c.dataset.plan),
         swap: card ? (card.querySelector('.pl-swap') || {}).textContent : '',
-        e5sum: vis(document.querySelector('#ov-plans .pl-card.dr[data-plan="E5"] > .plan-sum .pm-act')),
+        e5sum: vis(document.querySelector('#ov-plans [data-ui=card][data-key="E5"] > .plan-sum .pm-act')),
         dosefoot: vis(
-          [...document.querySelectorAll('#ov-plans .pl-card[data-plan="ATI-DOSE"] .pl-foot button')].find(b =>
+          [...document.querySelectorAll('#ov-plans [data-ui=card][data-key="ATI-DOSE"] .pl-foot button')].find(b =>
             /Ask for changes/.test(b.textContent)
           )
         ),
@@ -2187,14 +2191,14 @@ async function studyPlanChecks(page) {
     ok(`[${w}] the overview has no sideways scroll`, !m.sideways);
     if (w === 1280) {
       // the switch shows the version in force in the same place, and back (B-450)
-      await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-swap').click();
+      await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-swap').click();
       await page.waitForTimeout(150);
       const sw = await page.evaluate(() =>
-        [...document.querySelectorAll('#ov-plans .pl-card')]
+        [...document.querySelectorAll('#ov-plans [data-ui=card]:is([data-plan], :not([data-key]))')]
           .filter(c => /^E4/.test(c.dataset.plan))
           .map(c => [c.dataset.plan, (c.querySelector('.pl-swap') || {}).textContent])
       );
-      await page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-swap').click();
+      await page.locator('#ov-plans [data-ui=card][data-key="E4"] .pl-swap').click();
       await page.waitForTimeout(150);
       ok(
         'the approved version shows in the draft’s place and switches back',
@@ -2205,7 +2209,7 @@ async function studyPlanChecks(page) {
       await page.locator('#ov-card .fold-line.pm-more').click();
       await page.waitForTimeout(200);
       const acts = await page.evaluate(() =>
-        [...document.querySelectorAll('#ov-plans .pl-card[data-plan="E4-H2"] > .plan-sum .pm-act button')]
+        [...document.querySelectorAll('#ov-plans [data-ui=card][data-key="E4-H2"] > .plan-sum .pm-act button')]
           .filter(b => b.getClientRects().length)
           .map(b => b.textContent.trim())
       );
@@ -2218,10 +2222,10 @@ async function studyPlanChecks(page) {
       await page.waitForTimeout(200);
     }
     // a badge's count filters the rows; All brings them back
-    await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-filter button[data-f="practice"]').click();
+    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-filter button[data-f="practice"]').click();
     await page.waitForTimeout(120);
     const shown = await page.evaluate(() =>
-      [...document.querySelectorAll('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day.open .pl-t .title')].map(
+      [...document.querySelectorAll('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.open .pl-t .title')].map(
         t => t.textContent
       )
     );
@@ -2230,17 +2234,21 @@ async function studyPlanChecks(page) {
       JSON.stringify(shown) === JSON.stringify(['Harness drill']),
       JSON.stringify(shown)
     );
-    await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-filter button[data-f="all"]').click();
+    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-filter button[data-f="all"]').click();
     await page.waitForTimeout(120);
     // a day folds on a second tap and opens on a third
-    const row = page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-dr').first();
+    const row = page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-dr').first();
     await row.click();
     await page.waitForTimeout(120);
-    const folded = await page.locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day').first().locator('.pl-t').count();
+    const folded = await page
+      .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day')
+      .first()
+      .locator('.pl-t')
+      .count();
     await row.click();
     await page.waitForTimeout(120);
     const reopened = await page
-      .locator('#ov-plans .pl-card[data-plan="E4-H2"] .pl-day')
+      .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day')
       .first()
       .locator('.pl-t')
       .count();
@@ -2303,7 +2311,9 @@ async function studyPlanChecks(page) {
   // Ask for changes on a later exam's card edits that plan (E5's draft), not the next exam's (B-450). B-459: plan edits
   // are made in the E.V. app too (its host is ev-app), as new plans are (below)
   await page.evaluate(() => (window.claude.host = 'ev-app'));
-  await page.locator('#ov-plans .pl-card.dr[data-plan="E5"] .plan-sum button', { hasText: 'Ask for changes' }).click();
+  await page
+    .locator('#ov-plans [data-ui=card][data-key="E5"] .plan-sum button', { hasText: 'Ask for changes' })
+    .click();
   await page.waitForTimeout(250);
   const typed = await page.$eval('#ev-input', i => i.value);
   // B-461: the send starts the edit of that plan by its id, with no chat model routing it
@@ -2346,15 +2356,15 @@ async function studyPlanChecks(page) {
   await pickCourse('BIO 201');
   // B-456: in the E.V. app (its host is ev-app); the claude.ai page doesn't make plans (below)
   await page.evaluate(() => (window.claude.host = 'ev-app'));
-  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
+  await page.locator('#ov-plans [data-ui=card]:not([data-key]) button', { hasText: 'Make a plan' }).click();
   await page.waitForTimeout(400);
   const made = await page.evaluate(() => ({
     briefs: Object.values(window.__db.jobs || {})
       .filter(j => j.kind === 'exam-plan' && j.course === 'BIO 201')
       .map(j => j.brief),
-    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
-    held: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
-    line: (document.querySelector('#ov-plans .pl-none .pl-working') || {}).textContent,
+    button: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).textContent,
+    held: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).disabled,
+    line: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) .pl-working') || {}).textContent,
     readout: document.getElementById('readout').textContent,
   }));
   // B-521 (F-13): Make a plan stays named so, held, and the card says it is working with how long so far; her status
@@ -2371,7 +2381,7 @@ async function studyPlanChecks(page) {
   await page.clock.setSystemTime((await page.evaluate(() => Date.now())) + 65000);
   await page.waitForTimeout(1300);
   const ticked = await page.evaluate(
-    () => (document.querySelector('#ov-plans .pl-none .pl-working') || {}).textContent
+    () => (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) .pl-working') || {}).textContent
   );
   ok(
     'its working line keeps time as it goes, with no repaint (B-521)',
@@ -2389,9 +2399,9 @@ async function studyPlanChecks(page) {
     jobs: Object.entries(window.__db.jobs || {})
       .filter(([, j]) => j.kind === 'exam-plan' && j.course === 'BIO 201')
       .map(([id, j]) => [id, j.at, j.fired]),
-    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
-    disabled: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
-    mini: (document.querySelector('#ov-plans .pl-none .mini') || {}).textContent,
+    button: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).textContent,
+    disabled: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).disabled,
+    mini: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) .mini') || {}).textContent,
     readout: document.getElementById('readout').textContent,
   }));
   // B-459: and the card says the last plan didn't finish, why, and offers Make a plan again (never a silent "No plan
@@ -2409,11 +2419,11 @@ async function studyPlanChecks(page) {
   await page.evaluate(() => delete window.claude.host);
   const nJobs = () => page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
   const n0 = await nJobs();
-  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
+  await page.locator('#ov-plans [data-ui=card]:not([data-key]) button', { hasText: 'Make a plan' }).click();
   await page.waitForTimeout(400);
   const said = await page.evaluate(() => ({
     toast: document.getElementById('toast').textContent,
-    button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
+    button: (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).textContent,
   }));
   ok(
     'On the claude.ai page Make a plan writes no job and points to the E.V. app',
@@ -2435,7 +2445,7 @@ async function studyPlanChecks(page) {
   const pe = await page.evaluate(() => (window.__db.planedits || {}).E4 || {});
   const done = () =>
     page.evaluate(() => {
-      const c = document.querySelector('#ov-plans .pl-card.ok[data-plan="E4-H2"]');
+      const c = document.querySelector('#ov-plans [data-ui=card][data-key="E4-H2"]');
       // B-464: the count shows once: on the card's head, or in the panel's summary when the card owns the panel
       const at = (c && c.querySelector('.pl-done')) || document.querySelector('#study-side .plan-sum .plan-lead');
       const n = c && /^(\d+) of (\d+) done/.exec((at || {}).textContent || '');
@@ -2456,16 +2466,16 @@ async function studyPlanChecks(page) {
   {
     const folds = () =>
       page.evaluate(() =>
-        [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .fold-line')].map(b =>
+        [...document.querySelectorAll('#ov-plans [data-ui=card][data-key="E4-H2"] .fold-line')].map(b =>
           b.textContent.trim()
         )
       );
     const f0 = await folds();
-    const q = page.locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .fold-line', { hasText: 'Open questions' });
+    const q = page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .fold-line', { hasText: 'Open questions' });
     if (await q.count()) await q.first().click();
     await page.waitForTimeout(150);
     const qs = await page.evaluate(() =>
-      [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-notes li')].map(l => l.textContent)
+      [...document.querySelectorAll('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-notes li')].map(l => l.textContent)
     );
     ok(
       'an approved plan still shows its Open questions and Scope map, and the questions open to his list (B-525)',
@@ -2478,7 +2488,7 @@ async function studyPlanChecks(page) {
     await page.waitForTimeout(100);
   }
   const tick = page
-    .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
+    .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
     .first();
   await (await tick.elementHandle()).click();
   await page.waitForTimeout(250);
@@ -2496,7 +2506,7 @@ async function studyPlanChecks(page) {
       window.__writeFail = 'permission_denied';
     });
     const box = await page
-      .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
+      .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
       .first()
       .elementHandle();
     await box.click();
@@ -2535,9 +2545,9 @@ async function studyPlanChecks(page) {
       await page.click('#tab-study');
       await page.waitForTimeout(250);
       return page.evaluate(() => {
-        const li = [...document.querySelectorAll('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t')].find(
-          x => (x.querySelector('.title') || {}).textContent === 'Harness untagged task'
-        );
+        const li = [
+          ...document.querySelectorAll('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t'),
+        ].find(x => (x.querySelector('.title') || {}).textContent === 'Harness untagged task');
         return li ? li.querySelector('input.tick').checked : null;
       });
     };
@@ -2560,7 +2570,7 @@ async function studyPlanChecks(page) {
       JSON.stringify({ s1, t1, dayedits: (await nDayedits()) - w0 })
     );
     const box = page
-      .locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-day.today .pl-t', { hasText: 'Harness untagged task' })
+      .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t', { hasText: 'Harness untagged task' })
       .locator('input.tick');
     await box.click();
     await page.waitForTimeout(300);
@@ -2696,7 +2706,7 @@ async function studyPlanChecks(page) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(250);
     const nPlans = await page.evaluate(() => Object.keys(window.__db.plans || {}).length);
-    await page.locator('#ov-plans .pl-card.ok[data-plan="E4-H2"] .pl-foot .pl-put').click();
+    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-foot .pl-put').click();
     await page.waitForTimeout(150);
     const ask = await page.evaluate(() => (document.querySelector('#ov-plans .pl-foot .pl-putq') || {}).textContent);
     await page.screenshot({ path: `${shots}/plan-putaway-390.png`, fullPage: true });
@@ -2705,8 +2715,10 @@ async function studyPlanChecks(page) {
     const after = await page.evaluate(() => ({
       retired: Object.keys((window.__db.planedits.E4 || {}).retired || {}),
       plans: Object.keys(window.__db.plans || {}).length,
-      make: ((document.querySelector('#ov-plans .pl-none button') || {}).textContent || '').trim(),
-      cards: [...document.querySelectorAll('#ov-plans .pl-card[data-plan]')].map(c => c.dataset.plan),
+      make: (
+        (document.querySelector('#ov-plans [data-ui=card]:not([data-key]) button') || {}).textContent || ''
+      ).trim(),
+      cards: [...document.querySelectorAll('#ov-plans [data-ui=card][data-plan]')].map(c => c.dataset.plan),
     }));
     ok(
       'Put away asks once, marks the plan put away in planedits (nothing deleted) and Make a plan comes back (B-469)',
@@ -2973,7 +2985,7 @@ async function tap(page, locator, name) {
       await page.click('#tab-record');
       await page.waitForTimeout(150);
       {
-        const row = t => page.locator('#rec-list .rec-li[data-kind="note"]', { hasText: t }).first();
+        const row = t => page.locator('#rec-list [data-part=row][data-kind="note"]', { hasText: t }).first();
         const act = async t => {
           await row(t).locator('.nm').click();
           await page.waitForTimeout(60);
@@ -3367,7 +3379,7 @@ async function tap(page, locator, name) {
       // B-450: the Plan screen is retired; the plan opens in Study's overview, with the exam's own plan beside it
       const t = await page.evaluate(() => ({
         tab: document.body.dataset.view,
-        cards: [...document.querySelectorAll('#ov-plans .pl-card')].map(c => [
+        cards: [...document.querySelectorAll('#ov-plans [data-ui=card]:is([data-plan], :not([data-key]))')].map(c => [
           c.dataset.plan,
           c.textContent.slice(0, 80),
         ]),
@@ -4582,10 +4594,10 @@ async function tap(page, locator, name) {
     );
     {
       // the old exam plan's day (no tags: no badge) opens on a tap; its tick saves to planedits/E4, the plan untouched
-      const day = page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-day:not(.open) .pl-dr').first();
+      const day = page.locator('#ov-plans [data-ui=card][data-key="E4"] .pl-day:not(.open) .pl-dr').first();
       await day.click();
       await page.waitForTimeout(150);
-      const open = page.locator('#ov-plans .pl-card[data-plan="E4"] .pl-day.open').first();
+      const open = page.locator('#ov-plans [data-ui=card][data-key="E4"] .pl-day.open').first();
       ok('a plan day opens to its tasks on a tap', (await open.locator('.pl-t input.tick').count()) > 0);
       // B-450: an older plan's tags show as the nearest of the six (DRILL is Practice), for display only
       const legacy = await open.locator('.pl-t .badge').allTextContents();
@@ -4907,10 +4919,10 @@ async function tap(page, locator, name) {
     // B-302: the log's helpers. A note's detail opens from its row (the right panel from 1200 px, under the row below).
     const recRow = (kind, text) =>
       page
-        .locator(`#rec-list .rec-li[data-kind="${kind}"]`)
+        .locator(`#rec-list [data-part=row][data-kind="${kind}"]`)
         .filter({ has: page.locator('.nm', { hasText: text }) })
         .first();
-    const recById = id => page.locator(`#rec-list .rec-li[data-id="${id}"]`);
+    const recById = id => page.locator(`#rec-list [data-part=row][data-key="${id}"]`);
     const recOpen = async (kind, text) => {
       const r = recRow(kind, text);
       if ((await r.locator('.nm').getAttribute('aria-expanded')) !== 'true') await r.locator('.nm').click();
@@ -4921,7 +4933,7 @@ async function tap(page, locator, name) {
       const want = await page.evaluate(
         () => Object.values(window.__db.sessions || {}).filter(x => x.status !== 'active').length
       );
-      const got = await page.locator('#rec-list .rec-li[data-kind="session"]').count();
+      const got = await page.locator('#rec-list [data-part=row][data-kind="session"]').count();
       ok(
         'sessions listed in the log (every session the record holds that is not running)',
         got >= 2 && got === want,
@@ -4929,7 +4941,7 @@ async function tap(page, locator, name) {
       );
     }
     {
-      const ids = await page.$$eval('#rec-list .rec-li[data-kind="note"]', ls => ls.map(l => l.dataset.id));
+      const ids = await page.$$eval('#rec-list [data-part=row][data-kind="note"]', ls => ls.map(l => l.dataset.id));
       let linked = false;
       for (const id of ids) {
         const nm = recById(id).locator('.nm');
@@ -4958,7 +4970,7 @@ async function tap(page, locator, name) {
       // B-111: the kind menu is the detail's, never the row's.
       ok(
         "a note's kind menu waits until its row is opened",
-        (await page.locator('#rec-list .rec-li select').count()) === 0
+        (await page.locator('#rec-list [data-part=row] select').count()) === 0
       );
       // B-531 (F-50): the Kind menu offers Matt's kinds only; a feature note shows its kind greyed until he picks one
       const opts = s => [...s.options].map(o => (o.disabled ? '(' + o.textContent + ')' : o.textContent)).join(',');
@@ -4987,7 +4999,7 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(150);
       const m = await page.evaluate(() => {
         const box = e => e.getBoundingClientRect();
-        const rows = [...document.querySelectorAll('#rec-list .rec-li')].map(li => {
+        const rows = [...document.querySelectorAll('#rec-list [data-part=row]')].map(li => {
           const r = box(li),
             t = box(li.querySelector('.t')),
             nm = box(li.querySelector('.nm'));
@@ -5008,7 +5020,7 @@ async function tap(page, locator, name) {
           rows,
           creates: creates.map(b => b.textContent.trim()),
           sideways: document.documentElement.scrollWidth > innerWidth,
-          kinds: [...new Set([...view.querySelectorAll('.rec-li')].map(li => li.dataset.kind))],
+          kinds: [...new Set([...view.querySelectorAll('[data-part=row]')].map(li => li.dataset.kind))],
         };
       });
       ok(
@@ -5047,7 +5059,7 @@ async function tap(page, locator, name) {
       }
       await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
       // the filter narrows: Show workouts off hides them; Today keeps only today's; Reset brings all back
-      const count = k => page.locator(`#rec-list .rec-li${k ? `[data-kind="${k}"]` : ''}`).count();
+      const count = k => page.locator(`#rec-list [data-part=row]${k ? `[data-kind="${k}"]` : ''}`).count();
       const all = await count();
       await page.click('#rec-workouts');
       await page.waitForTimeout(60);
@@ -5071,7 +5083,7 @@ async function tap(page, locator, name) {
       await page.click('#rec-types [data-v="quiz"]');
       await page.waitForTimeout(60);
       const qs = await page.evaluate(() =>
-        [...document.querySelectorAll('#rec-list .rec-li')].map(li => li.dataset.kind)
+        [...document.querySelectorAll('#rec-list [data-part=row]')].map(li => li.dataset.kind)
       );
       await page.click('#rec-types [data-v="all"]');
       ok(`[${w}] Record: Quizzes shows only quizzes`, qs.length >= 1 && qs.every(k => k === 'quiz'), qs.join(','));

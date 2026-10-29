@@ -195,7 +195,7 @@ const SIZES = [
       await page.screenshot({ path: `${shots}/frame-note-open-${w}.png` });
       await page.keyboard.press('Escape');
       await page.waitForTimeout(150);
-      await page.click('#mh .n-back');
+      await page.click('#mh button[aria-label="Back to Notes"]');
     }
 
     // 2. One chat on Today: send, minimize, reopen, close, history, reopen from history.
@@ -649,7 +649,7 @@ const SIZES = [
     await page.click('#tab-record');
     await page.waitForTimeout(300);
     const wide = await page.evaluate(() => {
-      const r = document.querySelector('.rec-li .r');
+      const r = document.querySelector('#rec-list [data-part=row] .r');
       if (!r) return { row: false };
       r.textContent =
         'stopped in round 4 after 6:53 (90 reps) · energy 5/5 · ' + '“' + 'a long quoted line '.repeat(12) + '”';

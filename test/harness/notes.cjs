@@ -138,7 +138,7 @@ const listState = page =>
           (b.getAttribute('aria-pressed') === 'true' ? '*' : '')
       ),
       groups: [...document.querySelectorAll('#notes-rows .n-grp')].map(txt),
-      rows: [...document.querySelectorAll('#notes-rows .n-row')].map(r => ({
+      rows: [...document.querySelectorAll('#notes-rows [data-part=row]')].map(r => ({
         id: r.dataset.note,
         name: txt(r.querySelector('.nm')),
         sel: r.classList.contains('sel'),
@@ -267,7 +267,7 @@ const openNoteId = page =>
     const noPaneInEditor = await page.evaluate(
       () => document.getElementById('notes-preview').getClientRects().length === 0
     );
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     ok(
       `${tag} a row's Open shows on hover and opens the note; the preview is gone in the editor; Back returns to the list`,
@@ -288,7 +288,7 @@ const openNoteId = page =>
       JSON.stringify(asked) === JSON.stringify([L0.rows[0].id]),
       JSON.stringify(asked)
     );
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
 
     // New note twice: two new notes, two ids. B-520 (F-46): an empty one is never written, so leaving it leaves no
@@ -297,7 +297,7 @@ const openNoteId = page =>
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await settle(page);
     const id1 = await openNoteId(page);
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await page.click('#notes-new');
     await settle(page);
     const id2 = await openNoteId(page);
@@ -464,11 +464,11 @@ const openNoteId = page =>
       sync: (document.querySelector('.mh .n-sync') || {}).textContent || '',
       text: document.getElementById('note-body').lastElementChild.textContent,
     }));
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await page.waitForTimeout(400);
     const stayed = await page.evaluate(() => !document.getElementById('notes-editor').hidden);
     await page.evaluate(() => (window.__writeFail = null));
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     const landed = await savedDoc(page, id2);
     ok(
@@ -721,7 +721,7 @@ const openNoteId = page =>
         ].every(w => after3.all.includes(w)),
       JSON.stringify({ undoBefore, pick: after3.pick, body: after3.body.slice(-120) })
     );
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     const closed409 = await until(page, () => document.getElementById('notes-editor').hidden, null, 3000);
     const listed = await until(
       page,
@@ -752,7 +752,7 @@ const openNoteId = page =>
     await openFromList(page, kept.eid);
     await until(page, () => !document.getElementById('notes-editor').hidden);
     const head410 = await page.evaluate(() => document.querySelector('.mh .n-sync').textContent);
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden, null, 3000);
     await tell([]);
     const gone410 = await page.evaluate(
@@ -1226,7 +1226,7 @@ const openNoteId = page =>
 
     // a second New note ends and logs the running session first, and offers Undo
     const leftBefore = secsLeft((await slot()).left);
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     await page.click('#notes-new');
     await until(page, () => !!document.querySelector('#ev-sslot .s-undo'), null, 4000);
@@ -1288,11 +1288,12 @@ const openNoteId = page =>
     // Study with E.V. in the list's preview starts one on that note; with no Undo
     // the ended session is filed once Undo is no longer offered
     await page.keyboard.press('Escape'); // the chat floats over the preview; close it first
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     // B-520: the empty new note was never written, so the session goes on another of his notes
     const noteC = await page.evaluate(
-      a => [...document.querySelectorAll('#notes-rows .n-row')].map(r => r.dataset.note).find(i => i && i !== a),
+      a =>
+        [...document.querySelectorAll('#notes-rows [data-part=row]')].map(r => r.dataset.note).find(i => i && i !== a),
       noteA
     );
     await page.click(`#notes-rows [data-note="${noteC}"] .nm`);
@@ -2023,7 +2024,8 @@ const openNoteId = page =>
     );
     await page.click('#tab-record');
     await page.waitForTimeout(200);
-    const shown = async () => page.evaluate(i => !!document.querySelector(`.rec-li[data-id="${i}"]`), SID);
+    const shown = async () =>
+      page.evaluate(i => !!document.querySelector(`#rec-list [data-part=row][data-key="${i}"]`), SID);
     const pick = async v => {
       await page.click('#rec-filter-btn');
       await page.click(`#rec-filter [aria-label="Course"] [data-v="${v}"]`);
@@ -2036,7 +2038,7 @@ const openNoteId = page =>
     const inNur = await shown();
     await pick('any');
     const name = await page.evaluate(
-      i => (document.querySelector(`.rec-li[data-id="${i}"] .nm`) || {}).textContent || '',
+      i => (document.querySelector(`#rec-list [data-part=row][data-key="${i}"] .nm`) || {}).textContent || '',
       SID
     );
     ok(
@@ -2427,7 +2429,7 @@ const openNoteId = page =>
     await page.click('#tab-notes');
     await until(page, () => !document.getElementById('p-notes').hidden);
     const [n1, n2] = await page.evaluate(() =>
-      [...document.querySelectorAll('#notes-rows .n-row')].map(r => r.dataset.note)
+      [...document.querySelectorAll('#notes-rows [data-part=row]')].map(r => r.dataset.note)
     );
     const sessionsBefore = await page.evaluate(() => Object.keys(window.__db.sessions || {}).length);
 
@@ -2511,7 +2513,7 @@ const openNoteId = page =>
     await openFromList(page, n1);
     await until(page, () => !document.getElementById('notes-editor').hidden);
     const t3 = await toggle();
-    await page.click('.mh .n-back');
+    await page.click('.mh button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     await openFromList(page, n2);
     await until(page, () => !document.getElementById('notes-editor').hidden);
@@ -2572,7 +2574,7 @@ const openNoteId = page =>
     await page.evaluate(() => {
       window.__jsonCalls = [];
     });
-    await page.click('.mh .n-back');
+    await page.click('.mh button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     await page.click('#notes-new');
     await until(page, () => !document.getElementById('notes-editor').hidden);
@@ -2836,7 +2838,7 @@ const openNoteId = page =>
     await page.click('#tab-record');
     await page.waitForTimeout(300);
     const row = await page.evaluate(
-      i => (document.querySelector(`.rec-li[data-id="${i}"] .r`) || {}).textContent || '',
+      i => (document.querySelector(`#rec-list [data-part=row][data-key="${i}"] .r`) || {}).textContent || '',
       SID
     );
     ok(
@@ -2945,7 +2947,7 @@ const openNoteId = page =>
     // End it, leave for the list, and reopen the note: reading starts nothing, writing starts a new session
     if (s1.id) await page.click('#ev-sslot .s-end');
     const filed = !!s1.id && (await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, s1.id, 30000));
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await page.click('#tab-today');
     await page.waitForTimeout(300);
@@ -3008,7 +3010,7 @@ const openNoteId = page =>
     const slow = await allActive();
     const e3 = slow.length === 1 && (await endIt(slow[0].id));
     // a new note on the slow link: its own start is on its way while he writes on, so no second start
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     const before = await notesIn(page);
     await page.click('#notes-new');
@@ -3048,7 +3050,7 @@ const openNoteId = page =>
         new CustomEvent('ev-sync', { detail: { online: false, pending: 0, syncing: false, refused: [] } })
       );
     });
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await openFromList(page, NID);
     await write(' Offline words, kept on this device.');
@@ -3154,7 +3156,7 @@ const openNoteId = page =>
     const qToasts = await page.evaluate(() => window.__toasts.slice());
     await page.screenshot({ path: path.join(shots, 'notes-uncounted-1280.png') });
     // the line is that note's only: another note keeps its Study control and shows no line
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await openFromList(page, NID2);
     await page.waitForTimeout(1200);
@@ -3173,7 +3175,7 @@ const openNoteId = page =>
       window.__realNow = null;
     });
     // a start through New note lands: the quiet line goes, and the backoff with it
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await page.click('#notes-new');
     const viaNew = await until(
@@ -3184,7 +3186,7 @@ const openNoteId = page =>
     );
     const nw = await allActive();
     if (nw.length) await endIt(nw[0].id);
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await until(page, () => document.getElementById('notes-editor').hidden);
     await openFromList(page, NID);
     const sugAfter = await page.evaluate(() =>
@@ -3260,7 +3262,7 @@ const openNoteId = page =>
     const tag = '[1280 list back]';
     await page.click('#tab-notes');
     await until(page, () => !document.getElementById('p-notes').hidden);
-    const first = await page.evaluate(() => document.querySelector('#notes-rows .n-row').dataset.note);
+    const first = await page.evaluate(() => document.querySelector('#notes-rows [data-part=row]').dataset.note);
     await openFromList(page, first);
     await until(page, () => !document.getElementById('notes-editor').hidden);
     await page.click('#note-body');
@@ -3276,11 +3278,11 @@ const openNoteId = page =>
         if (e.scrollHeight > e.clientHeight + 4) e.scrollTop = 1e6;
     });
     for (let round = 0; round < 2; round++) {
-      await page.click('.mh .n-back');
+      await page.click('.mh button[aria-label="Back to Notes"]');
       await until(page, () => !document.getElementById('notes-list').hidden);
       await page.waitForTimeout(300);
       const seen = await page.evaluate(() => {
-        const r = document.querySelector('#notes-rows .n-row');
+        const r = document.querySelector('#notes-rows [data-part=row]');
         const b = r && r.getBoundingClientRect();
         return { y: b ? Math.round(b.top) : null, h: innerHeight, sy: Math.round(scrollY) };
       });
@@ -3293,7 +3295,7 @@ const openNoteId = page =>
       await until(page, () => !document.getElementById('notes-editor').hidden);
       await page.evaluate(() => window.scrollTo(0, 1e6));
     }
-    await page.click('.mh .n-back');
+    await page.click('.mh button[aria-label="Back to Notes"]');
     await until(page, () => !document.getElementById('notes-list').hidden);
     await page.click('#notes-new');
     await until(page, () => !document.getElementById('notes-editor').hidden);
@@ -3329,7 +3331,7 @@ const openNoteId = page =>
     const tag = '[1280 B-442]';
     await page.click('#tab-notes');
     await until(page, () => !document.getElementById('p-notes').hidden);
-    const id = await page.evaluate(() => document.querySelector('#notes-rows .n-row').dataset.note);
+    const id = await page.evaluate(() => document.querySelector('#notes-rows [data-part=row]').dataset.note);
     await openFromList(page, id);
     await until(page, () => !document.getElementById('notes-editor').hidden);
     const chipOff = await page.evaluate(() => document.getElementById('note-ask').hidden);
@@ -3539,7 +3541,7 @@ const openNoteId = page =>
     await until(page, () => !document.getElementById('notes-editor').hidden);
     const course = (await page.textContent('#notes-editor .n-course')).trim();
     await settle(page);
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await settle(page, 400);
     const n1 = await notesIn(page);
     ok(
@@ -3576,7 +3578,7 @@ const openNoteId = page =>
         doc.title === 'Finish the made-up bone remodeling line',
       JSON.stringify({ wr, w1, made, doc: doc && { title: doc.title, course: doc.course } })
     );
-    await page.click('.n-back');
+    await page.click('button[aria-label="Back to Notes"]');
     await settle(page, 400);
     await openNoteTask(page);
     await page.click('#today-task .tp-write');

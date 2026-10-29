@@ -62,9 +62,11 @@ function collect() {
   const has = {
     ev: !!document.querySelector('#ev-dates, #ev-sess') || document.body.classList.contains('side-on'),
     // a question beside its set, or (B-337) the overview's picked objective, or (B-464) a plan whose summary it holds
-    study: [...document.querySelectorAll('#rv-body .q-stem, #pr-body .q-stem, #ov-card .ov, #ov-plans .pl-card')].some(
-      vis
-    ),
+    study: [
+      ...document.querySelectorAll(
+        '#rv-body .q-stem, #pr-body .q-stem, #ov-card .ov, #ov-plans [data-ui=card]:is([data-plan], :not([data-key]))'
+      ),
+    ].some(vis),
   };
   const v = document.body.dataset.view || 'ev';
   const detail =
