@@ -9210,5 +9210,22 @@
    "outcome": "task",
    "at": "2026-10-29T14:01:39.880Z"
   }
+ },
+ {
+  "id": "B-492",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): The staging deploy's read-back of served page files ran seconds after deploy and saw stale edge copies (app.js, icons, spec.json), failing a good deploy; a re-run passed.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "pwa-staging run 40892976707",
+  "words": "The staging deploy's read-back of served page files ran seconds after deploy and saw stale edge copies (app.js, icons, spec.json), failing a good deploy; a re-run passed.",
+  "reportedAt": "2026-10-29T14:38:47.352Z",
+  "board": {
+   "row": "v4 B-492: The staging deploy's read-back of served page files ran seconds after…"
+  }
  }
 ]
