@@ -1,1 +1,6 @@
-/* Proprietary 09 Toast: the toast component's rules, components layer (D-373, D-388); lane C1 (B-507) fills this file */
+/* Proprietary 09 Toast (B-507, D-374): today's toast in tokens: the text colour's pill over the page, above the tab bar
+   and inside the safe area, rising in. Legacy's .toast still wins until B-515 (D-373), so it moves nothing (D-376). Its
+   Undo is a ghost button in the toast's own ink: the component-local --quiet is the toast's ground's opposite. */
+:where([data-ui='toast']){position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-h) + var(--sp-4) + env(safe-area-inset-bottom,0px));z-index:var(--z-toast);max-width:calc(100% - var(--sp-8));padding:var(--sp-2) var(--sp-4);border-radius:var(--r-pill);background:var(--text);color:var(--bg);font-weight:var(--fw-semibold);font-size:var(--fs-3);box-shadow:var(--shadow-toast);animation:rise var(--dur-5) var(--ease-out) both}
+:where([data-ui='toast']:has(.toast-act)){display:flex;align-items:center;gap:var(--sp-2);padding-right:var(--sp-1)}
+:where([data-ui='toast']) .toast-act{--quiet:var(--bg);color:var(--bg);text-decoration:underline;text-underline-offset:3px}
