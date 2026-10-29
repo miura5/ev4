@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-390",
+  "date": "Oct 29",
+  "title": "Development is sequenced by completion, never time-gated: no holds around exams or calendar dates; each step starts when the one it depends on is done, and staging releases go out as they're ready; live still goes only on Matt's word, one bundled release at a time, with rollback as the safety net",
+  "why": "Matt (Oct 29): the rollback exists for this, and his study plans already taper around exams, so slowing development for an exam is redundant; supersedes the 'nothing on live around the Sunday exam' scheduling in the roadmap and lane plan",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-389",
   "date": "Oct 29",
   "title": "Builders load the ev-builder skill first; the build manager's brief shrinks to tasks, track and owned files, context and attribution. UX probes are briefed from the ev-ux-probe skill. Anthropic's claude-api skill is vendored (Apache 2.0) for model-path tasks",
