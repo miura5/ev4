@@ -9215,9 +9215,9 @@
   "id": "B-492",
   "kind": "bug",
   "title": "Bug (reported Oct 29): The staging deploy's read-back of served page files ran seconds after deploy and saw stale edge copies (app.js, icons, spec.json), failing a good deploy; a re-run passed.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The read-back of served files retries for up to about 2 minutes before calling a file different; test for a file that matches on the second try.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9226,6 +9226,10 @@
   "reportedAt": "2026-10-29T14:38:47.352Z",
   "board": {
    "row": "v4 B-492: The staging deploy's read-back of served page files ran seconds after…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T14:38:54.173Z"
   }
  }
 ]
