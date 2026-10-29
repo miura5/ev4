@@ -9296,5 +9296,23 @@
    "outcome": "task",
    "at": "2026-10-29T14:51:51.332Z"
   }
+ },
+ {
+  "id": "B-496",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Let E.V. make large flashcard sets (around 100 cards) and add newly made cards to an existing deck instead of always starting a new one.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 29",
+  "words": "Let E.V. make large flashcard sets (around 100 cards) and add newly made cards to an existing deck instead of always starting a new one.",
+  "reworded": true,
+  "reportedAt": "2026-10-29T15:07:29.780Z",
+  "board": {
+   "row": "v4 B-496: Let E.V. make large flashcard sets (around 100 cards) and add newly…"
+  }
  }
 ]
