@@ -9197,7 +9197,7 @@
   "milestone": "Flashcards (D-368)",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 57be861 (stringified object fields in a job answer are parsed once in answerOf; tests green). Put-away of another exam's plan can't touch a running job. Ships to staging with the flashcards release; real BIO 201 Make a plan there is the proof.",
   "commit": null,
   "source": "build chat",
   "words": "Make a plan for the BIO 201 Chapter 9 lecture exam failed with 'the reply didn't pass E.V.'s checks (answer: /plan: expected object, got string)'. The Chapter 9 lab exam's plan had been put away while the job ran.",
