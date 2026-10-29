@@ -9488,7 +9488,7 @@
  {
   "id": "B-507",
   "kind": "task",
-  "title": "Proprietary components, batch 1, at today's look (D-374, D-376): Button, Badge, Chip, Segmented, Line, Fold, Card, Empty and Toast in page/app/02-ui.js and page/ds/components.css; btn(), badge(), row() and empty() delegate to them",
+  "title": "Proprietary components, batch 1, at today's look (D-374, D-376): Button, Badge, Chip, Segmented, Line, Fold, Card, Notice and Toast in page/app/01-ui.js (DS) and page/ds/components.css; btn(), badge(), row() and empty() delegate to them",
   "dod": "Each shows in the Gallery in every state; npm test and smoke GREEN; pixel diff near zero at 390 and 1280; ship staging GREEN",
   "milestone": "Consolidation: Proprietary",
   "status": "open",
