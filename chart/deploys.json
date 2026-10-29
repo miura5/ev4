@@ -5952,5 +5952,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "26ae113",
+  "time": "2026-10-29T08:21:35.878Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "2eb1ee5",
+  "tasks": [
+   "B-479",
+   "B-474",
+   "B-467"
+  ],
+  "summary": "On live, asking E.V. for flashcards (NUR 112 dosage terms, units and…; In the notes editor, selecting text across a bulleted, numbered or…; The nightly full check at 5c4e68a (run 40766119523) went red in its…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
