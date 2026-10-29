@@ -9477,12 +9477,12 @@
   "title": "Build the Gallery, the Proprietary reference page: a staging-only route built from the same bundle with the tuner and recipe export, colour at 3 contrasts and 2 modes, type at --ts 1 and 1.25, space, radii, elevation, motion, the component state matrix and patterns on synthetic data; test/harness/components.cjs grows into its harness",
   "dod": "The harness renders the Gallery at 390 and 1280 in light and dark and asserts tap 44 px or more, text contrast 4.5:1 or more, row heights and a visible focus ring; one screenshot per section; the Gallery is absent on live; ship staging GREEN",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-505"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps.",
+  "commit": "0329cec",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
