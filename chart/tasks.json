@@ -9826,7 +9826,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 408b5ad: Study reopens on the last course (kept on the device); E.V.'s context lists every course's next exam with readiness and weak spots, and its now-advice weighs them soonest and least ready first. run.cjs 496/496.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Study forgets the selected course on reopen, and E.V.'s \"what should I do now\" advice ignores the other course's near exam.",
