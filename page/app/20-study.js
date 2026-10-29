@@ -406,6 +406,7 @@
         renderStudyPlans(cur || null); // B-450: plans for no exam still show
         renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(cur || null);
+        renderStudySets(cur ? cur.course : null);
         return;
       }
       card.hidden = false;
@@ -482,6 +483,7 @@
       paintPlanPop();
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
+      renderStudySets(cur.course);
     }
     /** B-375: the panel for an exam with no objectives and no plan, laid out as an objective's pane. */
     function examDetail(ex, fullName) {
@@ -680,6 +682,104 @@
       const r = el('div', 'mq-row');
       r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
       card.append(r);
+    }
+    /** B-482: the course a set belongs to: its exam's, the course Quiz me wrote it for, its questions' objectives'
+     *  exam's, else the default course. */
+    function setCourse(s) {
+      const exCourse = id => {
+        const ex = id && S.exams.find(e => e.id === id);
+        return ex ? E.courseOf(ex) : null;
+      };
+      if (s.exam && exCourse(s.exam)) return exCourse(s.exam);
+      if (typeof s.focus === 'string' && studyExams().some(x => x.course === s.focus)) return s.focus;
+      for (const q of E.validItems(s)) {
+        const o = q.objective && S.objectives.find(x => x.id === q.objective);
+        if (o && exCourse(o.exam)) return exCourse(o.exam);
+      }
+      return E.defaultCourse();
+    }
+    const setMade = s => String(s.createdAt || s.at || '');
+    /** B-482: open a set where he left off (the job card's Open the set), or start it over when again is set. */
+    function openPracticeSet(s, again) {
+      ui.mini = null;
+      ui.openObj = null;
+      ui.openSet = s.id;
+      showTab('study');
+      setStudy('practice');
+      if (again) retake(s, 'pr-' + s.id);
+      else render();
+    }
+    /** B-482: Practice sets in this course, beside Coming up and the mini quiz: newest first, the last 14 days shown
+     *  and older ones folded; a row opens the set where he left off, or Retake when it is finished. */
+    function renderStudySets(course) {
+      let card = $('ov-sets');
+      if (!card) {
+        card = el('div', 'ui-card ov-sets');
+        card.id = 'ov-sets';
+        $('ov-grid').append(card);
+      }
+      const sets = course
+        ? S.sets
+            .filter(s => s.kind !== 'review' && E.validItems(s).length && setCourse(s) === course)
+            .sort((a, b) => setMade(b).localeCompare(setMade(a)))
+        : [];
+      card.hidden = !sets.length;
+      if (!sets.length) return card.replaceChildren();
+      const cut = E.chicagoDate(new Date(Date.now() - 14 * 864e5));
+      const day = s => (setMade(s) ? E.chicagoDate(new Date(setMade(s))) : '');
+      const recent = sets.filter(s => day(s) >= cut),
+        older = sets.filter(s => !(day(s) >= cut));
+      const rowOf = s => {
+        const qs = E.validItems(s),
+          ans = answersOf(s),
+          done = qs.filter(q => ans[q.id]).length,
+          right = qs.filter(q => ans[q.id] && ans[q.id].correct).length,
+          finished = done === qs.length;
+        const r = el('div', 'st-row');
+        const b = el('button', 'st');
+        b.type = 'button';
+        const nm = el('span', 'sn');
+        nm.append(el('span', 'stt', s.title || s.id), el('span', 'sm', plural(qs.length, 'question')));
+        const d = day(s);
+        b.append(
+          nm,
+          el(
+            'span',
+            'ss' + (finished ? ' fin' : ''),
+            finished
+              ? right + ' of ' + qs.length + ' right'
+              : done
+                ? done + ' of ' + qs.length + ' done'
+                : 'Not started'
+          ),
+          el('span', 'sd', d ? (d === today ? 'Today' : dayMonth(d)) : '')
+        );
+        b.setAttribute('aria-label', 'Open ' + (s.title || s.id));
+        b.addEventListener('click', () => openPracticeSet(s, false));
+        const slot = el('span', 'sx'); // the same place on every row, so the scores and dates line up
+        if (finished) {
+          const again = btn('Retake', () => openPracticeSet(s, true), { cls: 'btn ghost sm' });
+          again.setAttribute('aria-label', 'Retake ' + (s.title || s.id));
+          slot.append(again);
+        }
+        r.append(b, slot);
+        return r;
+      };
+      const hd = el('div', 'up-head');
+      hd.append(el('span', 'lab', 'Practice sets'), el('span', 'mini', plural(sets.length, 'set')));
+      const list = el('div', 'st-list');
+      list.append(...recent.map(rowOf));
+      if (older.length) {
+        const o = !!ui.setsOlder;
+        list.append(
+          foldLine('Older · ' + older.length, o, () => {
+            ui.setsOlder = !o;
+            render();
+          })
+        );
+        if (o) list.append(...older.map(rowOf));
+      }
+      card.replaceChildren(hd, list);
     }
     const OV_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const OV_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

@@ -1580,6 +1580,26 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .ov-card .ov-none-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .ov-card .ov-none-row .ov-none{flex:1;min-width:200px;margin:0}
 .ov-detail .od-add{align-self:flex-start;margin-top:-6px}
+/* B-482: Practice sets in this course, a full row under Coming up and the mini quiz */
+.ov-grid > .ov-sets{grid-column:1 / -1;gap:4px}
+.ov-sets[hidden]{display:none}
+.ov-sets .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
+.ov-sets .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.ov-sets .up-head .mini{font-size:calc(12px * var(--ts));color:var(--faint)}
+.ov-sets .st-list{display:flex;flex-direction:column}
+.ov-sets .st-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+.ov-sets .st-row:last-child{border-bottom:0}
+.ov-sets .st{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto 76px;align-items:center;gap:12px;padding:8px 6px;border:0;background:none;text-align:left;cursor:pointer;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);border-radius:6px;min-height:0}
+.ov-sets .st:hover{background:var(--hover)}
+.ov-sets .sn{display:flex;align-items:baseline;gap:8px;min-width:0}
+.ov-sets .stt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ov-sets .sm,.ov-sets .sd{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap}
+.ov-sets .sd{text-align:right}
+.ov-sets .ss{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.ov-sets .ss.fin{color:var(--text)}
+.ov-sets .fold-line{padding:8px 6px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
+.ov-sets .sx{flex:none;width:64px;display:flex;justify-content:flex-end}
+.pl-t .pl-set{flex:none}
 .ov-up{gap:4px}
 .ov-up[hidden]{display:none}
 .ov-up .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
@@ -1708,6 +1728,10 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
   .obj .nm{min-height:44px;padding:6px 0}
   .ov-up .up{min-height:48px}
   .ov-grid{grid-template-columns:1fr}
+  .ov-sets .st{grid-template-columns:minmax(0,1fr) auto;min-height:48px;row-gap:2px}
+  .ov-sets .sn{flex-direction:column;align-items:stretch;gap:1px}
+  .ov-sets .sn{grid-row:1 / span 2}
+  .ov-sets .ss,.ov-sets .sd{grid-column:2;text-align:right}
 }
 /* B-365 (D-316): below 1200 px the side pane follows the pane, as the demo's right column under a hairline (a quiz's
    questions, Weak spots' triage card) */

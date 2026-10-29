@@ -690,6 +690,105 @@ async function quizMeChecks(page, scheme) {
       'every objective has questions'
     );
 }
+// B-482: Study's Practice sets card for the course: its sets newest first, each with its question count, its score or
+// Not started, and its made date; a row opens the set, a finished one offers Retake; a plan task that made a set opens it
+async function practiceSetsChecks(page, scheme) {
+  await studyView(page, 'objectives');
+  await page.waitForTimeout(200);
+  const card = await page.evaluate(() => {
+    const c = document.getElementById('ov-sets');
+    const rows = c ? [...c.querySelectorAll('.st-row')] : [];
+    return {
+      shown: !!c && !c.hidden && c.getBoundingClientRect().height > 0,
+      lab: c ? (c.querySelector('.lab') || {}).textContent : '',
+      rows: rows.map(r => ({
+        title: r.querySelector('.stt').textContent,
+        n: r.querySelector('.sm').textContent,
+        s: r.querySelector('.ss').textContent,
+        d: r.querySelector('.sd').textContent,
+        retake: !!r.querySelector('button.btn'),
+      })),
+      spill: rows.some(r => r.scrollWidth > r.clientWidth + 1 || r.getBoundingClientRect().right > innerWidth),
+      planLinks: document.querySelectorAll('#p-study .pl-set').length,
+    };
+  });
+  ok(
+    `[${scheme}] Study shows the course's Practice sets: title, question count, score or Not started, made date; finished ones offer Retake (B-482)`,
+    card.shown &&
+      card.lab === 'Practice sets' &&
+      card.rows.length > 0 &&
+      card.rows.every(r => r.title && /^\d+ questions?$/.test(r.n) && /right|done|Not started/.test(r.s) && r.d) &&
+      card.rows.every(r => r.retake === / right$/.test(r.s)) &&
+      !card.spill,
+    JSON.stringify(card)
+  );
+  await page.locator('#ov-sets').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${shots}/study-sets-${scheme}.png` });
+  const first = card.rows[0];
+  if (first) {
+    await page.locator('#ov-sets .st').first().click();
+    await page.waitForTimeout(250);
+    const opened = await page.evaluate(() => ({
+      shown: !document.getElementById('study-practice').hidden,
+      title: (document.getElementById('pr-fold') || {}).dataset ? document.getElementById('pr-fold').dataset.set : '',
+      count: (document.getElementById('pr-qcount') || {}).textContent,
+    }));
+    ok(
+      `[${scheme}] a Practice sets row opens its set in Study (B-482)`,
+      opened.shown && !!opened.count,
+      JSON.stringify({ first, opened })
+    );
+    await closeSet(page);
+    await page.waitForTimeout(150);
+  }
+  if (card.rows.some(r => r.retake)) {
+    await page.locator('#ov-sets .st-row button.btn', { hasText: 'Retake' }).first().click();
+    await page.waitForTimeout(250);
+    const again = await page.evaluate(() => ({
+      shown: !document.getElementById('study-practice').hidden,
+      count: (document.getElementById('pr-qcount') || {}).textContent,
+      answered: document.querySelectorAll('#pr-body .verdict').length,
+    }));
+    ok(
+      `[${scheme}] Retake opens a finished set fresh (B-482)`,
+      again.shown && again.answered === 0,
+      JSON.stringify(again)
+    );
+    await closeSet(page);
+    await page.waitForTimeout(150);
+  }
+  // the plan's days open, a drill task that made a set carries Open set, which opens it
+  const shut = await page.evaluate(() =>
+    [...document.querySelectorAll('#p-study .pl-day')]
+      .map((d, i) => (d.classList.contains('open') ? -1 : i))
+      .filter(i => i >= 0)
+  );
+  const toggle = async () => {
+    for (const i of shut) {
+      await page.locator('#p-study .pl-day .pl-dr').nth(i).click();
+      await page.waitForTimeout(100);
+    }
+  };
+  await toggle();
+  const link = page.locator('#p-study .pl-t .pl-set').first();
+  const linked = (await link.count()) > 0;
+  if (linked) {
+    await link.click();
+    await page.waitForTimeout(250);
+  }
+  const fromPlan = await page.evaluate(() => ({
+    shown: !document.getElementById('study-practice').hidden,
+    count: (document.getElementById('pr-qcount') || {}).textContent,
+  }));
+  ok(
+    `[${scheme}] a plan task that made a set opens it from its row (B-482)`,
+    linked && fromPlan.shown && !!fromPlan.count,
+    JSON.stringify({ linked, ...fromPlan })
+  );
+  await closeSet(page);
+  await page.waitForTimeout(150);
+  await toggle(); // the days as they were, for the checks after
+}
 async function workLineChecks(page, scheme) {
   const tag = `[${scheme}] `;
   await page.click('#tab-ev');
@@ -2310,6 +2409,7 @@ async function tap(page, locator, name) {
       await buildAskChecks(page, scheme); // B-180
       await workLineChecks(page, scheme); // B-227
       await quizMeChecks(page, scheme); // B-297
+      await practiceSetsChecks(page, scheme); // B-482
       await page.close();
       continue;
     }
@@ -3571,6 +3671,7 @@ async function tap(page, locator, name) {
     });
     // Study > Review: the migrated set, all answered
     await quizMeChecks(page, scheme); // B-297
+    await practiceSetsChecks(page, scheme); // B-482
     await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');

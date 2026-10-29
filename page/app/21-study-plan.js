@@ -288,6 +288,13 @@
       g.append(el('div', 'title', t.text || t.id));
       if (t.doneWhen) g.append(el('div', 'ds', t.doneWhen));
       li.append(c, g);
+      // B-482: a task that made a practice set opens it from its row
+      const made = !draft && S.sets.find(s => s.planTaskId === t.id && E.validItems(s).length);
+      if (made) {
+        const o = btn('Open set', () => openPracticeSet(made, false), { cls: 'btn ghost sm pl-set' });
+        o.setAttribute('aria-label', 'Open the set for ' + (t.text || t.id));
+        li.append(o);
+      }
       const b = tagBadge(t.tag);
       if (b) li.append(b);
       li.append(el('span', 't', Number.isInteger(t.minutes) ? mShort(t.minutes) : ''));
