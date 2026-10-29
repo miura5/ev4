@@ -30,11 +30,8 @@
       const b = (chips || []).filter(Boolean)[0];
       return DS.line({ kind: 'stack', lead, title, meta: detail, badge: b && [b[0], b[1]], action, check, cls });
     }
-    function stat(value, label) {
-      const s = el('div', 'stat');
-      s.append(el('b', null, value), el('span', null, label));
-      return s;
-    }
+    // B-508: no old class rides along, so the stat's label takes Meter's darker ink (4.5:1 in dark)
+    const stat = (value, label) => DS.meter({ kind: 'stat', value, label });
     function table(head, rows, numFrom = 1) {
       const t = el('table', 'tbl');
       const tr = el('tr');
