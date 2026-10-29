@@ -9462,13 +9462,13 @@
   "title": "Proprietary foundations: page/ds/tokens.css complete; page/theme.js emits --wash-1..4, --shadow-1..3, --ring, --focus and the coded -wash tokens per mode; the build wraps page/styles.css in @layer legacy (D-373) with its 14 !important audited; the alias map written",
   "dod": "npm test and smoke GREEN; png.cjs pixel diff near zero at 390 and 1280 in light and dark; test/harness/components.cjs GREEN; ship staging GREEN; a look on staging with real data for every course",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-501",
    "B-504"
   ],
-  "notes": "Built at 5312088: build emits the layer order, tokens.css in @layer tokens, styles.css whole in @layer legacy (file untouched); theme.js generates washes, shadows, ring, focus and coded tokens in tokens (color-scheme unlayered on purpose); 14 !important audited, none moved; pixel diff = baseline noise at 390/1280 light/dark; components 38/38. Staging and real-data look with tonight's release.",
-  "commit": null,
+  "notes": "Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps.",
+  "commit": "5312088",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
