@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-393",
+  "date": "Oct 29",
+  "title": "Matt approves four polish changes beyond the demo: E.V. as a phone sheet from the ✦ line; Record opens on Notes with a Notes / Sessions / Quizzes / Everything switch; an empty conversation shows a greeting with Next up; Today's phone controls on one row (filter popover, no 'Classes 0', Add as the header +, day arrows kept)",
+  "why": "Matt's OK in chat, Oct 29",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-392",
   "date": "Oct 29",
   "title": "E.V.'s look moves toward Linear (Matt, Oct 29): neutral light and dark themes replace the warm tint (generated from theme.js inputs), structure from solid surface steps and spacing instead of lines and outlines, no press-scale recoil (folds open by height and opacity), a calmer type scale with no giant display numbers, one-line rows that never become paragraphs, consistent colour-coded fixed-width badges, symmetric button groups",
