@@ -159,7 +159,17 @@ jobs:
         run: |
           msg=$(node ../tools/pwa-app.mjs message staging)
           echo "the version's build hash: $msg"
-          npx wrangler deploy --env staging --message "$msg" > deploy.log 2>&1 || { cat deploy.log; exit 1; }
+          # B-467: wrangler's last lines as annotations (the build chat reads those, not the log), secrets redacted
+          npx wrangler deploy --env staging --message "$msg" > deploy.log 2>&1 || {
+            cat deploy.log
+            tail -n 15 deploy.log | while IFS= read -r l; do
+              [ -n "$CLOUDFLARE_API_TOKEN" ] && l=${l//"$CLOUDFLARE_API_TOKEN"/[token]}
+              [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && l=${l//"$CLOUDFLARE_ACCOUNT_ID"/[account]}
+              l=${l//%/%25}; l=${l//$'\r'/}
+              [ -n "${l// /}" ] && echo "::error::wrangler: $l"
+            done
+            exit 1
+          }
           url=$(grep -o 'https://ev-staging\.[a-z0-9.-]*\.workers\.dev' deploy.log | head -1)
           [ -n "$url" ] || { cat deploy.log; echo "no workers.dev address in the deploy output"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
