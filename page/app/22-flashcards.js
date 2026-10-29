@@ -270,16 +270,19 @@
           await write(E.deckCardsAdd(r.deck, r.items, now()).write);
           id = r.deck.id;
         } else {
-          const w = E.deckNew({
-            title: m.title,
-            course: m.course,
-            items: r.items,
-            source: 'Quizlet paste',
-            now: now(),
-            max: E.IMPORT_MAX,
-          });
-          await write(w);
-          id = w.id;
+          const at = now();
+          id = E.deckNew({ title: m.title, course: m.course, now: at }).id;
+          await write(
+            E.deckNew({
+              title: m.title,
+              course: m.course,
+              items: r.items,
+              source: 'Quizlet paste',
+              now: at,
+              id,
+              max: E.IMPORT_MAX,
+            })
+          );
         }
         toast(plural(r.add, 'card') + ' imported');
         openDeck(id);
