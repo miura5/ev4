@@ -5853,5 +5853,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "6426001",
+  "time": "2026-10-29T05:39:15.292Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "c3f92d2",
+  "tasks": [
+   "B-481"
+  ],
+  "summary": "On live, a generated dosage practice question had the wrong answer…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
