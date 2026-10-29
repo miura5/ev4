@@ -6,6 +6,20 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 28, ~9 pm Central): v4.5.16 live
+
+- **Live: v4.5.16 at f39d054**, recorded GREEN (record, page, ev-live app). It carries B-465 (exams for every course,
+  Add exam; derivation waits for date edits, skips past, courseless and non-exam titles), B-469 (Put away a plan) and
+  B-470 (thinking blocks, 16k plan edits, no "[cards: …]"). Live dry-run of exam derivation before ship: 0 writes.
+- Matt's next steps on live: NUR 112 Put away then Make a plan; BIO 201 Add exam for Sunday's Ch 9 exam (his Ch 9
+  dates were only entered on staging) then Make a plan.
+- **Next, in order:** B-472 (stop publishing the claude.ai page, D-367), then B-461, B-448, B-464, B-462, B-463, B-474,
+  B-475 (retire the staging duplicate exam). B-473 waits for a Mac sitting. Ops: B-467 (red nightly), B-468 (brief
+  reads stale health).
+- Ship gotcha seen tonight: after a dispatched app deploy fails, re-running ship prints "reads to make" for calls it
+  thinks were made; `rm dist/ship-<target>.json` resets the checklist. tool-result.mjs saves the newest ArtifactData
+  result, so save each read right after making it.
+
 ## Update (Oct 28, ~8 pm Central): plan-fix release on staging, waiting on Matt's test
 
 - **Live:** v4.5.15 at f0bd996, recorded GREEN (record, page and the ev-live app).
