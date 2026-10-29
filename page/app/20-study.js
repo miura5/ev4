@@ -11,9 +11,9 @@
     // (D-095), so each shows fresh; every answer is written as always.
     const oneAnswer = s => E.validItems(s).filter(q => E.itemType(q) === 'single');
     let miniN = 0;
-    function startMini(set, label, lead) {
+    function startMini(set, label, lead, only = null) {
       const ans = answersOf(set),
-        all = oneAnswer(set),
+        all = oneAnswer(set).filter(q => !only || only(q)), // B-498: a course's mini quiz holds its course's only
         mine = lead ? all.filter(lead) : [],
         rest = all.filter(q => !mine.includes(q)),
         fresh = qs => qs.filter(q => !ans[q.id]),
@@ -95,11 +95,8 @@
     let objSel = null;
     /** B-371 (D-316): a weak spot's course (its own, else its exam's) and the open ones in a course, as the demo's
      *  "Open · N in NUR 112"; a spot with no course counts in every course, so none is hidden. */
-    function wsCourse(w) {
-      if (w.course) return w.course;
-      const ex = S.exams.find(e => e.id === w.exam);
-      return ex ? E.courseOf(ex) : null;
-    }
+    // B-498: a spot's course is its objective's exam's, else its exam's, else the one it was filed under (core's rule)
+    const wsCourse = w => E.courseOf({ course: E.spotCourse(w, { exams: S.exams, objectives: S.objectives }) });
     function openInCourse(course) {
       return M.models
         .filter(w => E.isActive(w) && !w.derived.preRead && (!course || !wsCourse(w) || wsCourse(w) === course))
@@ -632,15 +629,24 @@
         .filter(s => mine(s) && oneAnswer(s).length)
         .sort((a, b) => left(b) - left(a));
       if (sets[0] && left(sets[0])) return { set: sets[0], review: false };
+      // B-498: today's review holds every course's spots: a course's quiz takes only its own course's questions
       const rs = S.sets.find(s => s.id === 'review-' + today);
-      if (rs && oneAnswer(rs).length) return { set: rs, review: true };
+      const only = q => itemCourse(q, rs) === cur.course;
+      if (rs && oneAnswer(rs).some(only)) return { set: rs, review: true, only };
       return sets[0] ? { set: sets[0], review: false } : null;
+    }
+    /** B-498: the course a question counts toward: its weak spot's, else its objective's exam's or its set's. */
+    function itemCourse(q, set) {
+      const w = q.weakspotId && M.models.find(x => x.id === q.weakspotId);
+      if (w) return wsCourse(w);
+      const c = E.crossCourse(q, { exams: S.exams, objectives: S.objectives, set }).course;
+      return c ? E.courseOf({ course: c }) : setCourse(set);
     }
     /** B-385: how many questions a course's mini quiz holds: up to five one-answer questions from its set, else the
      *  five E.V. writes when there is none. */
     function miniCount(cur) {
       const c = cur && courseSet(cur);
-      return c ? Math.min(5, oneAnswer(c.set).length) : 5;
+      return c ? Math.min(5, oneAnswer(c.set).filter(q => !c.only || c.only(q)).length) : 5;
     }
     function miniWords(cur) {
       const n = miniCount(cur);
@@ -650,7 +656,7 @@
       // B-370 (D-316): Quiz me, Take the quiz and New quiz start the demo's mini quiz for the course
       const cur = studyExams().find(x => x.course === ui.studyCourse);
       const c = cur && courseSet(cur);
-      if (c && startMini(c.set, 'Mini quiz · ' + (cur.course || ui.studyCourse))) return;
+      if (c && startMini(c.set, 'Mini quiz · ' + (cur.course || ui.studyCourse), null, c.only)) return;
       return weakQuizAll(b, cur ? cur.course : ui.studyCourse);
     }
     /** B-375: Quiz me with nothing to quiz on: E.V. writes five questions for the course (Give me 5 more's path, from
@@ -672,7 +678,7 @@
         $('ov-grid').append(card);
       }
       const c = cur && courseSet(cur);
-      const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id]);
+      const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id] && (!c.only || c.only(x)));
       const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
       card.replaceChildren(
         // B-371 (D-316): the demo's words

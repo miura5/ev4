@@ -114,7 +114,7 @@ export function makeSessions(core) {
    */
   function sessionFindings(
     { id, label, by, at, weakSpots, connections, noteTodos, writer = 'filing' },
-    { weakspots = [], objectives = [], decisions = {}, ideas = [] } = {}
+    { weakspots = [], objectives = [], decisions = {}, ideas = [], exams = [] } = {}
   ) {
     const writes = [],
       questions = [];
@@ -141,6 +141,11 @@ export function makeSessions(core) {
     };
     const env = () => envelope(writer, label, at);
     const objIds = new Set(objectives.map(o => o.id));
+    const objectiveCourse = oid => {
+      const o = objectives.find(x => x && x.id === oid);
+      const ex = (exams || []).find(e => e && e.id === ((o && o.exam) || String(oid).split('-')[0]));
+      return (ex && ex.course) || null;
+    };
     const date = chicagoDate(at);
     const seenIn = [{ to: 'sessions/' + id, type: 'seen-in' }];
     (weakSpots || []).forEach((raw, i) => {
@@ -208,7 +213,7 @@ export function makeSessions(core) {
             topic,
             objective: w.objective,
             exam: w.objective.split('-')[0],
-            course: defaultCourse(),
+            course: objectiveCourse(w.objective) || defaultCourse(), // B-498: its objective's exam's course
             kind: 'concept',
             addedBy: by,
             origin: { session: id, at },
@@ -848,7 +853,11 @@ export function makeSessions(core) {
   }
 
   /** Ends a session run in E.V. Home: the session update plus the findings writes; near-repeats wait in session.pending. */
-  function closeSession(s, wrap, { weakspots = [], objectives = [], ideas: known = [], now, endedBy = 'ended' } = {}) {
+  function closeSession(
+    s,
+    wrap,
+    { weakspots = [], objectives = [], ideas: known = [], exams = [], now, endedBy = 'ended' } = {}
+  ) {
     // B-411: a session whose filing began (its filing mark) is filed again with that mark's time and summary, so a
     // reload mid-filing writes the same findings, and those already in the record are left out
     const mark = filingOf(s);
@@ -872,9 +881,10 @@ export function makeSessions(core) {
         ? {
             weakspots: weakspots.filter(x => !(x && x.origin && x.origin.session === s.id)),
             objectives,
+            exams,
             ideas: (known || []).filter(x => !(x && typeof x === 'object' && x.sessionId === s.id)),
           }
-        : { weakspots, objectives, ideas: known }
+        : { weakspots, objectives, ideas: known, exams }
     );
     const pending = {};
     for (const q of f.questions) pending[q.key] = { topic: q.topic, objective: q.objective, candidate: q.candidate };
@@ -1061,7 +1071,12 @@ export function makeSessions(core) {
     return out;
   }
   /** Matt's same-or-different answer for one pending near-repeat. */
-  function decideSessionQuestion(s, key, decision, { weakspots = [], objectives = [], ideas = [], now } = {}) {
+  function decideSessionQuestion(
+    s,
+    key,
+    decision,
+    { weakspots = [], objectives = [], ideas = [], exams = [], now } = {}
+  ) {
     const q = s && s.pending && s.pending[key];
     if (!q) return [];
     const at = isoOf(now);
@@ -1071,7 +1086,7 @@ export function makeSessions(core) {
     list[i] = { objective: q.objective, topic: q.topic };
     const f = sessionFindings(
       { id: s.id, label, by: SESSION_SOURCE, at, weakSpots: list, writer: 'page' },
-      { weakspots, objectives, ideas, decisions: { [key]: decision === 'same' ? 'same' : 'different' } }
+      { weakspots, objectives, ideas, exams, decisions: { [key]: decision === 'same' ? 'same' : 'different' } }
     );
     return [...f.writes, { op: 'update', collection: 'sessions', id: s.id, data: { pending: { [key]: null } } }];
   }

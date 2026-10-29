@@ -20,6 +20,7 @@ export function makeStudyPlans(core) {
     planViews,
     taskDone,
     editBase,
+    spotCourse,
   } = core;
   /** B-469: a plan he put away (planedits/<exam id>.retired names it) is never in force, a draft or an edit's target. */
   const planRetired = (planedits, p) =>
@@ -212,9 +213,48 @@ export function makeStudyPlans(core) {
   });
 
   /**
+   * B-498: the course a plan task's work belongs to: the course of the dated item, exam, objective, material or note
+   * its ref names, else the one course its words name (any spacing or case); null when it names none. scope: the
+   * record's {dates, exams, objectives, materials, notes}, as arrays.
+   */
+  function planTaskCourse(task, scope = {}) {
+    const m = /^(dates|exams|objectives|materials|notes)\/(.+)$/.exec(String((task && task.ref) || ''));
+    const byId = (list, id) => (list || []).find(x => x && x.id === id) || null;
+    const examCourse = id => (byId(scope.exams, id) || {}).course || null;
+    if (m) {
+      const [, c, id] = m;
+      const doc = c === 'objectives' ? null : byId(scope[c], id);
+      const own = c === 'objectives' ? examCourse((byId(scope.objectives, id) || {}).exam) : doc && doc.course;
+      if (own) return own;
+    }
+    const names = [
+      ...new Set([...(scope.exams || []), ...(scope.dates || [])].map(x => x && x.course).filter(Boolean)),
+    ];
+    const words = courseKey(`${(task && task.text) || ''} ${(task && task.title) || ''}`);
+    const named = names.filter(n => courseKey(n) && words.includes(courseKey(n)));
+    return named.length === 1 ? named[0] : null;
+  }
+  /** B-498: whether a plan task is another course's work (planTaskCourse names a course other than `course`). */
+  const offCourse = (task, course, scope) => {
+    const c = planTaskCourse(task, scope);
+    return !!c && !sameCourse(c, course);
+  };
+  /** B-498: a plan's days without the tasks that are another course's work: {days, dropped}. */
+  function ownCourseDays(days, course, scope) {
+    let dropped = 0;
+    const out = (days || []).map(d => {
+      const tasks = (d.tasks || []).filter(t => !offCourse(t, course, scope));
+      dropped += (d.tasks || []).length - tasks.length;
+      return { ...d, tasks };
+    });
+    return { days: out, dropped };
+  }
+
+  /**
    * The context of one exam-plan job (B-449, D-356) over the record (the run's db, arrays of documents):
-   *   make: the section, the window's dated items of both courses with ids (and pastDays past the exam), the exams in
-   *         it, the exam's objectives, the course's materials index and passages, short note excerpts, active weak
+   *   make: the section, the window's dated items of its course with ids (and pastDays past the exam), the exams in
+   *         it (B-498: other courses' dated items and exams only as otherCourses, for his load, with no ids: never a
+   *         task of this plan), the exam's objectives, the course's materials index and passages, short note excerpts, active weak
    *         spots, past scores and the day budget;
    *   edit (job.revise names a plan): the draft, the section and his request only; materials and dates are read by id
    *         through the lookup when the request needs one.
@@ -250,14 +290,27 @@ export function makeStudyPlans(core) {
       return { mode: 'make', course, refused: `there’s no ${course} exam ahead on your calendar to plan toward` };
     const end = addDays(section.to, R.pastDays);
     const inWindow = d => d >= section.from && d <= end;
-    const dates = liveDates(db.dates, db.dateedits)
+    const mine = x => !x.course || sameCourse(x.course, course); // B-498: its course's work, or no course's
+    const windowDates = liveDates(db.dates, db.dateedits)
       .filter(d => DAY.test(String(d.date || '')) && inWindow(d.date))
-      .sort(byDate)
-      .map(datesRow);
-    const exams = (db.exams || [])
-      .filter(e => DAY.test(String(e.date || '')) && inWindow(e.date))
-      .sort(byDate)
+      .sort(byDate);
+    const dates = windowDates.filter(mine).map(datesRow);
+    const windowExams = (db.exams || []).filter(e => DAY.test(String(e.date || '')) && inWindow(e.date)).sort(byDate);
+    const exams = windowExams
+      .filter(mine)
       .map(e => ({ id: e.id, course: e.course || null, title: e.title || e.id, date: e.date, kind: e.kind || null }));
+    // B-498: the other courses' dated items and exams in the window, for his load only (no ids, so no task names one)
+    const others = [...windowDates, ...windowExams]
+      .filter(x => !mine(x))
+      .sort(byDate)
+      .map(x => ({
+        date: x.date,
+        course: x.course,
+        kind: x.kind || null,
+        title: x.title || x.id,
+        graded: !!x.graded,
+        ...(x.notes ? { notes: String(x.notes).slice(0, 200) } : {}),
+      }));
     const objectives = (db.objectives || [])
       .filter(o => o.exam === section.exam.id)
       .map(o => ({ id: o.id, text: o.text, ...(o.chapters ? { chapters: o.chapters } : {}) }));
@@ -298,7 +351,7 @@ export function makeStudyPlans(core) {
         excerpt: noteWords(n).slice(0, R.noteChars),
       }));
     const weakSpots = (models || [])
-      .filter(w => isActive(w) && (sameCourse(w.course, course) || w.exam === section.exam.id))
+      .filter(w => isActive(w) && sameCourse(spotCourse(w, { exams: db.exams, objectives: db.objectives }), course))
       .slice(0, 25)
       .map(w => ({ id: w.id, topic: w.topic, objective: w.objective || null }));
     const scores = examViews(db.exams || [], db.examedits || [], db.predictions || [])
@@ -312,6 +365,11 @@ export function makeStudyPlans(core) {
       ...(progress ? { progress } : {}),
       dates,
       exams,
+      ...(others.length
+        ? {
+            otherCourses: { note: 'Other courses’ dates, for his load only: never a task of this plan', items: others },
+          }
+        : {}),
       objectives,
       materials,
       passages,
@@ -338,7 +396,18 @@ export function makeStudyPlans(core) {
       null;
     if (!plan) return null;
     const row = t => ({ id: t.id, date: t.date, text: t.text });
-    const tasks = (plan.days || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
+    const course = (plan.section && plan.section.course) || ((db.exams || []).find(e => e.id === examId) || {}).course;
+    const scope = {
+      dates: liveDates(db.dates, db.dateedits),
+      exams: db.exams,
+      objectives: db.objectives,
+      materials: db.materials,
+      notes: db.notes,
+    };
+    // B-498: another course's task already in the plan is never carried into the new one
+    const tasks = (plan.days || [])
+      .flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })))
+      .filter(t => !course || !offCourse(t, course, scope));
     const isDone = t => taskDone(plan, t, date, db.sets || [], db.answers || []);
     const since = String(plan.at || '');
     return {
@@ -351,6 +420,7 @@ export function makeStudyPlans(core) {
       left: tasks.filter(t => t.date >= date && !isDone(t)).length,
       newWeakSpots: (models || [])
         .filter(w => isActive(w) && since && String(w.addedAt || w.at || '') > since)
+        .filter(w => !course || sameCourse(spotCourse(w, scope), course)) // B-498: this course's only
         .slice(0, 20)
         .map(w => ({ id: w.id, topic: w.topic })),
     };
@@ -578,6 +648,7 @@ export function makeStudyPlans(core) {
       if (!section) return { error: 'the draft names no section: read a date by its id' };
       return liveDates(db.dates, db.dateedits)
         .filter(d => DAY.test(String(d.date || '')) && d.date >= section.from && d.date <= addDays(section.to, 3))
+        .filter(d => !d.course || sameCourse(d.course, section.course)) // B-498: the section's course only
         .sort(byDate)
         .map(datesRow);
     }
@@ -685,16 +756,19 @@ export function makeStudyPlans(core) {
   }
   /**
    * The plans/<id> fields from a plan the model made (B-449): the section and exam are code's, days outside the window
-   * and refs to dated items the record lacks are left out, task ids made unique, the tags settled (D-357).
-   * {plan, dropped, retagged}.
+   * and refs to dated items the record lacks are left out, task ids made unique, the tags settled (D-357). B-498: with
+   * `scope` (the record's dates, exams, objectives, materials and notes), a task that is another course's work is left
+   * out too. {plan, dropped, offCourse, retagged}.
    */
-  function studyPlanDoc(plan, { section, dates, spec, openQuestions, score, instructions }) {
+  function studyPlanDoc(plan, { section, dates, spec, openQuestions, score, instructions, scope = null }) {
     const R = rulesOf(spec);
     const end = addDays(section.to, R.pastDays);
     const known = new Set((dates || []).map(d => 'dates/' + d.id));
     let dropped = 0;
     const days = [];
-    for (const d of (plan && plan.days) || []) {
+    // B-498: another course's work is left out first, while its ref still names it
+    const own = scope ? ownCourseDays((plan && plan.days) || [], section.course, scope) : { days: [], dropped: 0 };
+    for (const d of scope ? own.days : (plan && plan.days) || []) {
       if (!(d.date >= section.from && d.date <= end)) {
         dropped += (d.tasks || []).length;
         continue;
@@ -726,6 +800,7 @@ export function makeStudyPlans(core) {
         ...(instructions ? { instructions } : {}),
       },
       dropped,
+      offCourse: own.dropped,
       retagged,
     };
   }
@@ -735,9 +810,10 @@ export function makeStudyPlans(core) {
    * task}, edit {id, set}, move {id, date}, remove {id}); keyDates and openQuestions replaced when the patch gives them.
    * Every task the patch does not name stays exactly as it was. The baseline score is kept, marked edited since
    * scoring. An op naming no task of the draft is left out and counted. The tags are settled over `dates` (D-357).
-   * {plan, applied, skipped, retagged}.
+   * B-498: with `scope` (as studyPlanDoc's), a task the patch adds or changes into another course's work is left out
+   * and counted. {plan, applied, skipped, offCourse, retagged}.
    */
-  function applyPlanPatch(draft, patch, { dates = [] } = {}) {
+  function applyPlanPatch(draft, patch, { dates = [], scope = null } = {}) {
     const clone = v => JSON.parse(JSON.stringify(v));
     const days = clone(draft.days || []).map(d => ({ ...d, tasks: d.tasks || [] }));
     const find = id => {
@@ -754,9 +830,12 @@ export function makeStudyPlans(core) {
     };
     let applied = 0,
       skipped = 0;
+    const touched = new Set();
     for (const op of (patch && patch.ops) || []) {
       if (op.op === 'add' && op.task && DAY.test(String(op.date || ''))) {
-        dayOf(op.date).tasks.push(clone(op.task));
+        const t = clone(op.task);
+        touched.add(t);
+        dayOf(op.date).tasks.push(t);
         applied++;
         continue;
       }
@@ -772,12 +851,23 @@ export function makeStudyPlans(core) {
       } else if (op.op === 'edit' && op.set) {
         const t = at.d.tasks[at.i];
         for (const [k, v] of Object.entries(op.set)) if (k !== 'id') t[k] = v;
+        touched.add(t);
       } else {
         skipped++;
         continue;
       }
       applied++;
     }
+    // B-498: only the tasks the patch touched are held to the course; a task it left alone stays exactly as it was
+    const course = draft.section && draft.section.course;
+    let offCourseN = 0;
+    if (scope && course)
+      for (const d of days)
+        d.tasks = d.tasks.filter(t => {
+          const off = touched.has(t) && offCourse(t, course, scope);
+          if (off) offCourseN++;
+          return !off;
+        });
     const retagged = settlePlanTags(days, dates);
     const { id, writer, at, source, schema, revises, ...keep } = clone(draft);
     return {
@@ -791,6 +881,7 @@ export function makeStudyPlans(core) {
       },
       applied,
       skipped,
+      offCourse: offCourseN,
       retagged,
     };
   }
@@ -872,12 +963,14 @@ export function makeStudyPlans(core) {
       .replace(/[^a-z0-9]+/g, ' ')
       .trim();
   const planTasks = p => ((p && p.days) || []).flatMap(d => (d.tasks || []).map(t => ({ ...t, date: d.date })));
-  function planCopyRef(plans, date, text) {
+  function planCopyRef(plans, date, text, course = null) {
     const k = planCopyKey(text);
     if (!k) return null;
     for (const p of plans || [])
-      for (const t of planTasks(p))
-        if (t.date === date && planCopyKey(t.text) === k) return 'plans/' + (p.exam || p.id) + '#' + t.id;
+      if (!course || !p.section || sameCourse(p.section.course, course))
+        // B-498: an item of one course is never another course's plan task
+        for (const t of planTasks(p))
+          if (t.date === date && planCopyKey(t.text) === k) return 'plans/' + (p.exam || p.id) + '#' + t.id;
     return null;
   }
   function planCopyIds(dayedit, task) {
@@ -923,7 +1016,7 @@ export function makeStudyPlans(core) {
     let less = 0;
     const items = [];
     for (const it of view.items) {
-      const ref = it.added && planCopyRef(plans, date, it.text);
+      const ref = it.added && planCopyRef(plans, date, it.text, it.course || null);
       if (!ref) items.push(it);
       else if (refs.has(ref)) less += Number(it.minutes) || 0;
       else {
@@ -939,6 +1032,7 @@ export function makeStudyPlans(core) {
     return { ...view, items, budget };
   }
   return {
+    planTaskCourse, // B-498
     dayWithPlanTasks,
     planDayTickIds,
     joinPlanCopies,

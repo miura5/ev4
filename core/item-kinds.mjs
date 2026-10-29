@@ -192,7 +192,10 @@ export function makeItemKinds(core) {
     const obj = q && q.objective ? (ctx.objectives || []).find(o => o && o.id === q.objective) : null;
     const examId = (obj && obj.exam) || (q && q.objective ? String(q.objective).split('-')[0] : '') || '';
     const exam = exams.find(e => e && e.id === examId) || exams.find(e => e && ctx.set && e.id === ctx.set.exam);
-    const course = (exam && exam.course) || null;
+    // B-498: with no exam, the course its set was written for (Quiz me's focus, B-375), never the default course
+    const focus = ctx.set && typeof ctx.set.focus === 'string' ? ctx.set.focus : '';
+    const named = Object.keys((core.SPEC && core.SPEC.courses) || {}).find(c => !/^_/.test(c) && sameCourse(c, focus));
+    const course = (exam && exam.course) || (focus && named) || null;
     const ref = /^materials\/(.+)$/.exec(String((q && q.sourceRef) || ''));
     const m = ref ? (ctx.materials || []).find(x => x && x.id === ref[1]) : null;
     if (!m || !m.course || !course || sameCourse(m.course, course))

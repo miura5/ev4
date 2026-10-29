@@ -503,6 +503,7 @@
               now: Date.now(),
               weakspots: M.models,
               exams: S.exams,
+              objectives: S.objectives, // B-498: a miss files under its objective's course
               plans: S.plansRaw,
               planedits: S.planedits,
               answers: S.answers,

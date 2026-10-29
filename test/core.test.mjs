@@ -1431,6 +1431,7 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'canvas-rules',
     'cards',
     'conversation',
+    'course-scope',
     'insights',
     'item-kinds',
     'library',

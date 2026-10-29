@@ -24,6 +24,7 @@ import { makeItemKinds } from './item-kinds.mjs';
 import { makeNotes } from './notes.mjs';
 import { makeStudyPlans } from './study-plans.mjs';
 import { makeCards } from './cards.mjs';
+import { makeCourseScope } from './course-scope.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -789,10 +790,7 @@ const EVCore = (() => {
       for (const [k, e] of Object.entries(w.events || {}))
         if (e && e.type === 'seen') credited[to] = { ...credited[to], [k]: e };
     }
-    const examDate = id => {
-      const e = (exams || []).find(x => x.id === id);
-      return e && e.date ? e.date : null;
-    };
+    const examDate = id => ((exams || []).find(x => x.id === id) || {}).date || null;
     return (weakspots || []).map(doc => {
       const f = weakspotFacts(doc);
       if (credited[f.id]) f.creditedEvents = credited[f.id];
@@ -851,10 +849,7 @@ const EVCore = (() => {
     const writes = [];
     const models = ctx.weakspots || [];
     const byWeakspot = ctx.byWeakspot || collectAttempts(ctx.sets || [], ctx.answers || [], models).byWeakspot;
-    const examDateOf = id => {
-      const e = (ctx.exams || []).find(x => x.id === id);
-      return e && e.date ? e.date : null;
-    };
+    const examDateOf = id => ((ctx.exams || []).find(x => x.id === id) || {}).date || null;
     const recompute = (w, extra) => {
       const atts = [
         ...(byWeakspot[w.id] || []),
@@ -906,7 +901,7 @@ const EVCore = (() => {
           topic,
           objective: q.objective || '',
           exam: String(q.objective || '').split('-')[0] || (set && set.exam) || '',
-          course: crossCourse(q, { exams: ctx.exams, set }).course || (set && set.course) || defaultCourse(), // B-193
+          course: crossCourse(q, { exams: ctx.exams, objectives: ctx.objectives, set }).course || defaultCourse(), // B-498
           kind: 'concept',
           addedBy: 'page',
           origin: { set: set && set.id, item: q.id, at },
@@ -1790,6 +1785,7 @@ const EVCore = (() => {
     safeId,
     slug,
   });
+  Object.assign(LIB, makeCourseScope({ defaultCourse })); // B-498: spotCourse, read by study plans and the page
   const {
     MATERIAL_KINDS,
     citeMaterial,

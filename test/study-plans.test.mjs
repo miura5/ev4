@@ -119,7 +119,7 @@ test('B-449: a course’s current section runs from the later of today and the d
   assert.equal(EV.studyPlanCourse({ title: 'x', brief: 'something' }, db.exams), null);
 });
 
-test('B-449: the make ask’s context: both courses’ dated items with ids and 3 days past the exam, objectives, materials, passages, notes, weak spots, scores, budget, progress', () => {
+test('B-449: the make ask’s context: its course’s dated items with ids (B-498: the other’s as load) and 3 days past the exam, objectives, materials, passages, notes, weak spots, scores, budget, progress', () => {
   const db = record();
   db.plans
     .find(p => p.id === 'E4')
@@ -134,8 +134,10 @@ test('B-449: the make ask’s context: both courses’ dated items with ids and 
   assert.equal(ctx.mode, 'make');
   assert.equal(ctx.section.exam.id, 'E4');
   assert.ok(ctx.dates.every(d => d.id && d.date >= '2026-10-25' && d.date <= '2026-10-30'));
+  // B-498: the other course's lab is load only: in otherCourses with its notes and no id, never in dates
+  assert.ok(!ctx.dates.some(d => d.id === 'bio-lab-oct26'));
   assert.ok(
-    ctx.dates.some(d => d.id === 'bio-lab-oct26' && d.notes),
+    ctx.otherCourses.items.some(d => d.course === 'BIO 201' && d.notes && !d.id),
     'the other course’s lab, with its notes'
   );
   assert.ok(
@@ -1390,6 +1392,8 @@ test('D-357: a task’s tag is one of graded, learn, practice, review, clinical-
 
 test('D-357: code sets graded on a task whose ref is a dated graded item, whatever the model said; a reading tagged practice is learn', async () => {
   const db = record();
+  // B-498: an ungraded dated item of the plan's own course (another course's is left out of the plan)
+  db.dates.push({ ...db.dates.find(d => d.id === 'bio-lab-oct26'), id: 'nur-lab-oct26', course: 'NUR 112' });
   const reply = body => {
     const rep = jobReply(body);
     const plan = rep.content[0].input.plan;
@@ -1397,7 +1401,7 @@ test('D-357: code sets graded on a task whose ref is a dated graded item, whatev
       answerTask({ id: 'pre', tag: 'practice' }), // a preview the model called practice
       answerTask({ id: 'ati', text: 'ATI module', tag: 'review', kind: 'other', ref: 'dates/synthetic-ati' }),
       answerTask({ id: 'q', text: 'Quiz early', tag: 'learn', kind: 'other', ref: 'dates/demo-quiz' }),
-      answerTask({ id: 'lab', text: 'Pre-lab', tag: 'skills-prep', kind: 'other', ref: 'dates/bio-lab-oct26' }),
+      answerTask({ id: 'lab', text: 'Pre-lab', tag: 'skills-prep', kind: 'other', ref: 'dates/nur-lab-oct26' }),
       answerTask({ id: 'drill', text: '15 questions', tag: 'practice', kind: 'drill' }),
     ];
     return rep;

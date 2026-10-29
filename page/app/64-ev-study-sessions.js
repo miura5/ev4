@@ -725,6 +725,7 @@
         weakspots: M.models,
         objectives: S.objectives,
         ideas: S.ideas || [],
+        exams: S.exams, // B-498: a finding files under its objective's course
         now: now(),
         endedBy: reason,
       });
@@ -853,6 +854,7 @@
             weakspots: M.models,
             objectives: S.objectives,
             ideas: S.ideas || [],
+            exams: S.exams, // B-498: a finding files under its objective's course
             now: now(),
           })
         )

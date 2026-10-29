@@ -210,6 +210,16 @@ export const AGENT_MATERIAL = {
   },
 };
 
+/** B-498: what a study plan's tasks are held to their course over: the record's dated items, exams, objectives,
+ * materials and notes. */
+const planScope = (db, dates) => ({
+  dates,
+  exams: db.exams || [],
+  objectives: db.objectives || [],
+  materials: db.materials || [],
+  notes: db.notes || [],
+});
+
 /** B-480: how many questions a practice set's job asks for: the count its title or brief names ("10 weight-based dose
  * problems"), else the count the answer wrote. */
 export function askedCount(job, wrote = 0) {
@@ -365,9 +375,11 @@ export const AGENT_FOLDS = {
     } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
       // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
       const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);
-      const r = EV.applyPlanPatch(draft, answer, { dates: EV.liveDates(db.dates || [], db.dateedits || []) });
+      const dates = EV.liveDates(db.dates || [], db.dateedits || []);
+      const r = EV.applyPlanPatch(draft, answer, { dates, scope: planScope(db, dates) });
       const planId = EV.nextPlanId(db.plans || [], draft.exam || draft.id);
       if (r.skipped) result.text += ` (${r.skipped} of the changes named no task in the plan, so I left them out.)`;
+      if (r.offCourse) result.text += ` (${r.offCourse} were another course’s work, so I left them out of this plan.)`;
       saved(planId, r.plan, r.plan.days.length);
     } else if (
       !failed &&
@@ -385,9 +397,11 @@ export const AGENT_FOLDS = {
         openQuestions: answer.openQuestions,
         score: answer.score,
         instructions: ctx.jobBrief.instructions && ctx.jobBrief.instructions.from,
+        scope: planScope(db, EV.liveDates(db.dates || [], db.dateedits || [])), // B-498
       });
       if (r.plan.days.length) {
         if (r.dropped) say.push(`${r.dropped} tasks outside the section were left out.`);
+        if (r.offCourse) say.push(`${r.offCourse} tasks for another course were left out.`); // B-498
         const inForce = EV.planViews(db.plans || [], db.planedits || []).some(x => x.exam === r.plan.exam);
         saved(EV.nextPlanId(db.plans || [], r.plan.exam), r.plan, r.plan.days.length);
         result.text += inForce
