@@ -9350,7 +9350,7 @@
   "milestone": "Flashcards (D-368)",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 99dba4c: seven paths fixed (plan job saw every course's items; progress listed every course's spots; plan edits looked up any course; course-less misses fell back to NUR; session findings filed under the default course; page grouped spots by stored course; Mini quiz fell back to mixed review). Evening/morning runs never write plans. Read-only listing on live (tools/mixed-courses.mjs): 3 mixed plan tasks (BIO reading in ATI-DOSE-2 Oct 29; NUR dosage upload and fallback in BIO201.20261101 Oct 31 and Nov 1); 0 weak spots. Nothing changed.",
   "commit": null,
   "source": "Matt in chat, Oct 29; UX probe tester A",
   "words": "Items from one course show up in another course's exam plan (NUR 112 items in a BIO 201 plan on live, noticed Oct 29 morning, possibly added overnight by a scheduled run); the UX probe also saw BIO misses filed under NUR weak spots.",
