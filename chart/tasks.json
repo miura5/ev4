@@ -9716,9 +9716,9 @@
   "id": "B-521",
   "kind": "bug",
   "title": "Bug (reported Oct 29): A long plan job shows no sign it is working, and a failed one is reported as \"something's ready\".",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Plan and other long jobs show they are working (elapsed and a working state) and a failure shows as failed everywhere, in plain words, with Make a plan named as such; tests; staging run. (F-12, F-13)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9727,6 +9727,10 @@
   "reportedAt": "2026-10-29T15:59:31.975Z",
   "board": {
    "row": "v4 B-521: A long plan job shows no sign it is working, and a failed one is…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:59:37.286Z"
   }
  }
 ]
