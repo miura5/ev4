@@ -10026,5 +10026,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:48.154Z"
   }
+ },
+ {
+  "id": "B-536",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Release review of aa177a1 backlog: 'give me the drug card for X' starts a flashcards job; quiz_me's course enum is empty once no course is active, which could fail the whole chat call; two add-to-deck folds in the same second could reuse card ids; a deck past 256 KiB is refused with a plain error.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review of aa177a1",
+  "words": "Release review of aa177a1 backlog: 'give me the drug card for X' starts a flashcards job; quiz_me's course enum is empty once no course is active, which could fail the whole chat call; two add-to-deck folds in the same second could reuse card ids; a deck past 256 KiB is refused with a plain error.",
+  "reportedAt": "2026-10-29T19:26:43.134Z",
+  "board": {
+   "row": "v4 B-536: Release review of aa177a1 backlog: 'give me the drug card for X'…"
+  }
  }
 ]
