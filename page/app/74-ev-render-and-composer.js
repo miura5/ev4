@@ -237,6 +237,8 @@
     input.addEventListener('input', () => {
       grow();
       typing(!!input.value.trim());
+      // B-461: clearing or changing Ask for changes' words drops its plan target
+      if (ui.planTarget && !input.value.trim().startsWith(ui.planTarget.prefix.trim())) ui.planTarget = null;
     });
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(pointer: fine)').matches) {
@@ -308,6 +310,28 @@
     };
     // B-394: a send whose line the record refused stops there (mattSay rejected with e.refused; postMsg already put
     // his words back and said why): no model call, no answer to a line that was never saved.
+    async function planTargetSend(text, pa) {
+      const mid = await mattSay(text);
+      T.planInView = null;
+      if (pa.offer) {
+        await evSay(
+          `That reads as a whole new plan: one tap on Make a new ${pa.offer.course} plan starts one from today, and the plan you have stays until you use the new one.`,
+          [pa.offer],
+          { tier: 'local', replyTo: mid }
+        );
+        return;
+      }
+      const r = await startJob(pa.job);
+      await evSay(
+        r.fired.ok
+          ? 'Changing that plan now. The new draft lands on its Study card for you to approve.'
+          : r.fired.error === 'app_only'
+            ? fireCopy('app_only')
+            : 'Couldn’t start the change: ' + fireCopy(r.fired.error),
+        r.id ? [{ type: 'job', id: r.id }] : [],
+        { tier: 'local', replyTo: mid }
+      );
+    }
     async function sendText(text) {
       try {
         await sendTextNow(text);
@@ -316,10 +340,26 @@
       }
     }
     async function sendTextNow(text) {
+      const ask = ui.planTarget;
+      ui.planTarget = null;
       input.value = '';
       grow();
       typing(false);
       T.bigCore = false;
+      // B-461: a line sent from Ask for changes is that plan's edit, started here with its id: no model routes it
+      const pe = E.studyPlanTargetSend({
+        text,
+        ask,
+        exams: S.exams,
+        plansRaw: S.plansRaw,
+        planedits: S.planedits,
+        date: today,
+      });
+      if (pe) {
+        input.placeholder = placeholder();
+        await planTargetSend(text, pe);
+        return;
+      }
       const nt = NOTE_ASK.exec(text);
       if (nt) {
         await noteSave(text, nt[1]);

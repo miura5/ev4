@@ -1581,6 +1581,7 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .ov-up{gap:4px}
 .ov-up[hidden]{display:none}
 .ov-up .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
+.ov-up .up-acts{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .ov-up .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
 .ov-up .up-list{display:flex;flex-direction:column}
 .ov-up .up{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;padding:8px 6px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);width:100%;border-radius:6px;box-sizing:border-box;min-height:0}

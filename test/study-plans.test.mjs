@@ -831,6 +831,40 @@ test('D-362: the Haiku edit may answer “this needs a whole new plan” with th
   assert.match(words(asks[0]), /say why in newPlan/);
 });
 
+test('B-477: an edit that can’t apply says why in plain words, never a bare “Not applicable”; another exam gets the chip', async () => {
+  const failing = failed => () => ({
+    content: [{ type: 'tool_use', id: 'tu', name: 'answer', input: { text: 'No.', failed } }],
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 10, output_tokens: 10 },
+  });
+  const db = await withDraft();
+  const other = db.exams.find(e => e.id !== 'E4' && e.course !== 'NUR 112') || db.exams.find(e => e.id !== 'E4');
+  const said = `add ${other.title} to this plan`;
+  const one = await run(
+    db,
+    { title: 'Plan changes', brief: said, said, revise: 'E4-2' },
+    { reply: failing('Not applicable') }
+  );
+  const msg = Object.values(one.writes.find(w => w.collection === 'talk').data.messages)[0];
+  assert.doesNotMatch(msg.text, /Not applicable|couldn’t finish this one/);
+  assert.match(msg.text, /^I couldn’t make that change to this plan\. A plan covers one exam/);
+  assert.deepEqual(msg.cards[1], { type: 'newplan', course: other.course, brief: said });
+  assert.ok(!one.writes.some(w => w.collection === 'plans'), 'nothing changed');
+  // no other exam named: ask another way, no chip; a real reason is kept
+  const db2 = await withDraft();
+  const two = await run(
+    db2,
+    { title: 'Plan changes', brief: 'x', said: 'make it better', revise: 'E4-2', id: 'job-two' },
+    { reply: failing('the request names no task or day in the plan') }
+  );
+  const msg2 = Object.values(two.writes.find(w => w.collection === 'talk').data.messages)[0];
+  assert.equal(
+    msg2.text,
+    'I couldn’t make that change to this plan: the request names no task or day in the plan. Try asking another way, naming the task or day to change. Your plan is as it was.'
+  );
+  assert.deepEqual(msg2.cards, [{ type: 'job', id: 'job-two' }]);
+});
+
 // ---------------------------------------------------------------- the Worker (D-355, D-356)
 function fakeD1() {
   const sql = new DatabaseSync(':memory:');
@@ -1599,6 +1633,43 @@ test('B-450: Ask for changes on a plan’s card edits that plan, whatever exam i
   assert.equal(EV.studyPlanChatAsk({ ...base, revise: 'ATI-DOSE' }).edit.revise, 'ATI-DOSE', 'a plan for no exam');
   const job = EV.studyPlanJob({ revise: 'ATI-DOSE', changes: base.brief });
   assert.equal(job.revise, 'ATI-DOSE');
+});
+
+test('B-461: a send after Ask for changes is the edit of that exact plan or draft, with no model call', () => {
+  const at = NOW.toISOString();
+  const plan = (id, exam, section) => ({ id, schema: 1, writer: 'worker', at, source: 'x', exam, section, days: [] });
+  const exams = [
+    { id: 'E5', course: 'NUR 112', date: '2026-11-17', title: 'Exam 5' },
+    { id: 'E6', course: 'NUR 112', date: '2026-12-08', title: 'Exam 6' },
+  ];
+  const plansRaw = [
+    plan('E5', 'E5', { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' }),
+    plan('E5-draft-2', 'E5', { course: 'NUR 112', from: '2026-10-28', to: '2026-11-17' }),
+  ];
+  const ask = { id: 'E5-draft-2', prefix: 'Change my Exam 5 plan: ' };
+  const send = (text, a = ask, extra = {}) =>
+    EV.studyPlanTargetSend({ text, ask: a, exams, plansRaw, planedits: [], date: '2026-10-28', ...extra });
+  const line = 'Change my Exam 5 plan: move the Ch 42 drill to Thursday';
+  assert.deepEqual(send(line).job, {
+    kind: 'exam-plan',
+    title: 'Plan changes',
+    brief: line,
+    course: 'NUR 112',
+    revise: 'E5-draft-2',
+    said: line,
+  });
+  assert.equal(send(line, null), null, 'no target: the chat answers as before');
+  assert.equal(send('move the drill'), null, 'the words were changed: the target is dropped');
+  assert.equal(send('Change my Exam 5 plan:'), null, 'nothing added');
+  assert.equal(send(line, ask, { planedits: [{ id: 'E5', retired: { 'E5-draft-2': at } }] }), null, 'put away');
+  assert.equal(send(line, ask, { plansRaw: [plansRaw[0]] }), null, 'a plan that is gone is not edited');
+  assert.equal(send('Change my Exam 5 plan: start over from scratch').offer.type, 'newplan', 'a whole new plan: chip');
+  // the page: the button sets the target, the composer consumes it on send, another view drops it
+  const page = f => fs.readFileSync(path.join(ROOT, 'page/app', f), 'utf8');
+  assert.match(page('21-study-plan.js'), /ui\.planTarget = p \? \{ id: p\.id, prefix: i\.value \} : null;/);
+  assert.match(page('74-ev-render-and-composer.js'), /const ask = ui\.planTarget;\s+ui\.planTarget = null;/);
+  assert.match(page('74-ev-render-and-composer.js'), /const r = await startJob\(pa\.job\);/);
+  assert.match(page('02-navigation.js'), /if \(t !== 'ev'\) ui\.planTarget = null;/);
 });
 
 test('B-449: Ask for changes on a plan’s card that plainly asks for a new plan gets the chip alone, no edit beside it', () => {

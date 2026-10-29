@@ -1614,17 +1614,12 @@ async function studyPlanChecks(page) {
   await page.locator('#ov-plans .pl-card.dr[data-plan="E5"] .plan-sum button', { hasText: 'Ask for changes' }).click();
   await page.waitForTimeout(250);
   const typed = await page.$eval('#ev-input', i => i.value);
-  await page.evaluate(() => {
-    window.__chatScript = [
-      { tool: 'start_job', input: { kind: 'exam-plan', title: 'Plan changes', brief: 'lighter weekends' } },
-    ];
-    window.__chatReply = 'Changing it.';
-  });
+  // B-461: the send starts the edit of that plan by its id, with no chat model routing it
   await send(page, typed + 'lighter weekends');
   await page.waitForTimeout(600);
   const edits = await page.evaluate(() =>
     Object.values(window.__db.jobs || {})
-      .filter(j => j.kind === 'exam-plan' && j.brief === 'lighter weekends')
+      .filter(j => j.kind === 'exam-plan' && j.brief === 'Change my Exam 5 plan: lighter weekends')
       .map(j => j.revise)
   );
   ok(

@@ -293,6 +293,13 @@ export const AGENT_FOLDS = {
       say.push(`Plan ${planId}: ${days} days.`);
     };
     if (job.kind === 'exam-plan' && ctx.planUsage) result.usage = ctx.planUsage;
+    const editing = job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft;
+    if (failed && editing) {
+      // B-477: an edit that can't apply says so in plain words, and offers Make a new plan when another exam is named
+      const f = EV.studyPlanEditFailed({ failed, said: job.said, draft: planCtx.draft, exams: db.exams });
+      result.text = f.text;
+      if (f.offer) draftCard = f.offer;
+    }
     if (!failed && job.kind === 'exam-plan' && answer.ask && !answer.plan && !(answer.ops || []).length) {
       // B-449: one question for Matt instead of a plan: only E.V.'s question is written, as her message
       result.text = String(answer.ask);
@@ -308,9 +315,13 @@ export const AGENT_FOLDS = {
       // D-362: the edit found his ask needs a whole new plan: no patch; E.V. offers the Make a new plan chip with his
       // words as its brief (one tap starts the exam-plan job; nothing starts here)
       result.offerNewPlan = true;
-      // the chip's brief is his own line, carried on the job (jobs/<id>.said), never the chat model's brief
-      const course = (planCtx.draft.section && planCtx.draft.section.course) || job.course || null;
-      if (course && job.said) draftCard = { type: 'newplan', course, brief: String(job.said).slice(0, 1500) };
+      // the chip's brief is his own line, carried on the job (jobs/<id>.said), never the chat model's brief; B-477: the
+      // course of another exam his line names
+      const said = job.said;
+      const f = EV.studyPlanEditFailed({ newPlan: answer.newPlan, said, draft: planCtx.draft, exams: db.exams });
+      const course =
+        (f.offer && f.offer.course) || (planCtx.draft.section && planCtx.draft.section.course) || job.course;
+      if (course && said) draftCard = { type: 'newplan', course, brief: String(said).slice(0, 1500) };
     } else if (!failed && job.kind === 'exam-plan' && planCtx.mode === 'edit' && planCtx.draft) {
       // D-356: an edit's patch applied to the draft makes the next draft; every task it does not name stays as it was
       const draft = (db.plans || []).find(x => x.id === planCtx.draft.id);

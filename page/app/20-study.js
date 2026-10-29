@@ -764,7 +764,13 @@
         render();
       };
       const hd = el('div', 'up-head');
-      hd.append(el('span', 'lab', 'Coming up in ' + course), btn('Week view', openWeek, { cls: 'btn ghost sm' }));
+      // B-477: Add exam stays here for a course that already has one (a second exam beside it)
+      const add = btn('Add exam', () => newOpen('exam', drafts.exam, { course }), { cls: 'btn ghost sm' });
+      add.setAttribute('aria-label', 'Add an exam for ' + course);
+      const acts = el('span', 'up-acts');
+      if (all.some(d => d.kind === 'exam')) acts.append(add); // with no exam, the exam card carries it (B-465)
+      acts.append(btn('Week view', openWeek, { cls: 'btn ghost sm' }));
+      hd.append(el('span', 'lab', 'Coming up in ' + course), acts);
       const list = el('div', 'up-list');
       for (const d of all) {
         const b = el('button', 'up');

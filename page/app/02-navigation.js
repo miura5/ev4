@@ -22,6 +22,7 @@
     function showTab(t) {
       const was = ui.tab;
       ui.tab = t;
+      if (t !== 'ev') ui.planTarget = null; // B-461: Ask for changes' target is dropped when he switches away
       tabs.forEach(b =>
         b.getAttribute('role') === 'tab'
           ? b.setAttribute('aria-selected', String(b.dataset.tab === t))

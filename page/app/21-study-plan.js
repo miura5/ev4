@@ -176,6 +176,9 @@
       showTab('ev');
       const i = $('ev-input');
       i.value = `Change my ${exShortOf(ex)} plan: `;
+      // B-461: the send carries this plan's id (the composer starts its edit, no chat routing); cleared words or
+      // another view drop it
+      ui.planTarget = p ? { id: p.id, prefix: i.value } : null;
       i.focus();
       i.dispatchEvent(new Event('input'));
     }

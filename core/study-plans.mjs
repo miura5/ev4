@@ -414,6 +414,55 @@ export function makeStudyPlans(core) {
       offer,
     };
   }
+  /**
+   * B-461: a line he sends after Ask for changes on a plan's card. `ask` is that card's target ({ id, prefix }: the
+   * plan or draft's id and the words the button put in the box). When his line still starts with those words and adds
+   * his change, it is the plan edit of that exact plan with no chat model routing it: { job } (the exam-plan edit, his
+   * line as its brief and said) or { offer } (his words plainly ask for a whole new plan: the Make a new plan chip, as
+   * in chat). Null when there is no target, the words were cleared or changed, nothing was added, or that plan is gone.
+   */
+  function studyPlanTargetSend({ text, ask, exams, plansRaw, planedits, date }) {
+    const line = String(text || '').trim();
+    const pre = String((ask && ask.prefix) || '').trim();
+    if (!ask || !ask.id || !pre || !line.startsWith(pre) || !line.slice(pre.length).trim()) return null;
+    if (!(plansRaw || []).some(p => p.id === ask.id && !planRetired(planedits, p))) return null;
+    const go = studyPlanChatAsk({ said: line, brief: line, exams, plansRaw, planedits, date, revise: ask.id });
+    if (go.offer) return { offer: go.offer };
+    if (!go.edit || go.edit.revise !== ask.id) return null;
+    return { job: { kind: 'exam-plan', title: 'Plan changes', brief: chipBrief(line), ...go.edit } };
+  }
+  /**
+   * B-477: E.V.'s line when an edit of a plan can't be made (the edit's failed, or its newPlan with no ops), never a
+   * bare reason like "Not applicable". A plan is for one exam, so when his line names another exam, or the edit says
+   * it needs a new plan, the line says so and `offer` is the Make a new plan chip (his line as its brief, the named
+   * exam's course); else the line asks him to put the change another way. { text, offer }.
+   */
+  function studyPlanEditFailed({ failed = '', newPlan = '', said = '', draft = null, exams = [] }) {
+    const why = String(failed || newPlan || '')
+      .trim()
+      .replace(/[.!\s]+$/, '');
+    const bare = !why || why.split(/\s+/).length < 4 || /^(not applicable|n\/?a|none|no|unknown|error)$/i.test(why);
+    const his = chipBrief(said);
+    // another exam his line names (not this plan's own, which Ask for changes' words name): the longest title wins,
+    // so "Dosage Exam 1" is never read as "Exam 1"
+    const elsewhere =
+      (draft &&
+        (exams || [])
+          .filter(e => e.id !== draft.exam && namedExam(his, [e]))
+          .sort((a, b) => String(b.title || '').length - String(a.title || '').length)[0]) ||
+      null;
+    const course = (elsewhere && elsewhere.course) || (draft && draft.section && draft.section.course) || null;
+    const offer = his && course && (elsewhere || newPlan) ? { type: 'newplan', course, brief: his } : null;
+    const lead =
+      'I couldn’t make that change to this plan' +
+      (bare ? '' : ': ' + (/^[A-Z]{2}|^E\.V\./.test(why) ? why : why.charAt(0).toLowerCase() + why.slice(1)));
+    const next = elsewhere
+      ? ` A plan covers one exam, so ${elsewhere.title || elsewhere.id} gets its own: tap Make a new ${course} plan for it.`
+      : offer
+        ? ` It needs a new plan rather than changes: tap Make a new ${course} plan.`
+        : ' Try asking another way, naming the task or day to change. Your plan is as it was.';
+    return { text: lead + '.' + next, offer };
+  }
   const chipBrief = b =>
     String(b || '')
       .trim()
@@ -802,6 +851,8 @@ export function makeStudyPlans(core) {
     studyPlanProgress,
     studyPlanLooksNew,
     studyPlanChatAsk,
+    studyPlanTargetSend,
+    studyPlanEditFailed,
     studyPlanChipJob,
     studyPlanChipStarted,
     studyPlanNewJobRunning,
