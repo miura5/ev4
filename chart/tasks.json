@@ -9657,7 +9657,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 8ab2ec4: each week day shows a load card (tasks and minutes, plan tasks included) that opens the day; tapping a day scrolls its panel into view on the phone. Tests green. Staging with tonight's release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "The week grid shows one card for a day that holds ten plan tasks, hiding how busy days are.",
