@@ -9804,7 +9804,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 9b58bf6: an approved plan keeps Open questions and Scope map as folded lines under its days. Next release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Approving a plan hides its Open questions and Scope map.",
