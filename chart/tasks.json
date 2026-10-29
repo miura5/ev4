@@ -9307,7 +9307,7 @@
   "depends": [
    "B-488"
   ],
-  "notes": "Built at 6765ac2: asks up to 150 cards in batches of 40 with no repeated terms; 'add N cards to <deck>' and Add with E.V. add only new terms, schedules untouched. Data shape: jobs schema gains deck; decks cards mark adds worker. Staging proof (a real 100-card run) in tonight's release; flag the shape change to the release review.",
+  "notes": "Staging e2e at aa177a1 found blockers: 'add 10 cards to <deck>' added 0 while E.V. said it added them (every card came back as a duplicate); Add with E.V. job 193035 ran 20.5 min then failed 'stopped before it finished'; a 100-card ask made 70 with no word about the missing 30 (3 reworded near-duplicates). Fix once and re-ship (D-366).",
   "commit": null,
   "source": "chat, Oct 29",
   "words": "Let E.V. make large flashcard sets (around 100 cards) and add newly made cards to an existing deck instead of always starting a new one.",
