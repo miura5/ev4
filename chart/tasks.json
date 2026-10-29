@@ -9579,7 +9579,7 @@
   "depends": [
    "B-509"
   ],
-  "notes": "",
+  "notes": "Lane V3 pushed c1a972e: Record and New on DS (Button, Badge, Segmented); 47 rules in record.css; 93 lines left styles.css; pixdiff 0. Rules fought by shared legacy rules left for B-515.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
