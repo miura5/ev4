@@ -1,1 +1,14 @@
-/* Proprietary 04 Segmented: the segmented component's rules, components layer (D-373, D-388); lane C1 (B-507) fills this file */
+/* Proprietary 04 Segmented (B-507, D-374): today's seg (B-285, B-380, the demo's): a flat grey fill with no outline, the
+   picked option on the surface with a hairline, said by aria-pressed (C-15); it stretches on the phone, each option a
+   44 px target, and scrolls inside itself on overflow. Legacy's .seg still wins until B-515 (D-373), so nothing here
+   moves a pixel today (D-376). */
+:where([data-ui='segmented']){display:inline-flex;gap:var(--sp-0_5);padding:var(--sp-0_5);border:0;border-radius:var(--r-md);background:var(--hover);box-shadow:none;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
+:where([data-ui='segmented']) > button{flex:0 0 auto;display:inline-flex;align-items:center;gap:var(--sp-1_5);height:var(--sp-6);min-height:var(--sp-6);padding:0 var(--sp-2);border:0;border-radius:var(--r-sm);background:none;color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);white-space:nowrap;cursor:pointer;box-sizing:border-box}
+:where([data-ui='segmented']) > button .n{color:var(--quiet);font-variant-numeric:tabular-nums}
+:where([data-ui='segmented']) > button:is(:hover,[data-state='hover']){background:var(--bg);color:var(--text)}
+:where([data-ui='segmented']) > button[aria-pressed='true']{background:var(--surface);color:var(--text);box-shadow:var(--ring-quiet)}
+:where([data-ui='segmented']) > button:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:-2px}
+@media (max-width:599px){
+  :where([data-ui='segmented']){align-self:stretch;width:100%}
+  :where([data-ui='segmented']) > button{flex:1;justify-content:center;height:var(--tap);min-height:var(--tap);min-width:var(--tap);padding:0 var(--sp-3)}
+}
