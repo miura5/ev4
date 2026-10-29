@@ -6,22 +6,12 @@
       if (text != null) e.textContent = text;
       return e;
     };
-    const chip = (text, v = '') => el('span', 'chip ' + v, text);
-    // the component set's badge (B-285); the old chip colours map onto its coded ones (D-269), her accent onto none
-    const BADGE_X = {
-      ok: 'x-green',
-      warn: 'x-yellow',
-      bad: 'x-red',
-      info: 'x-blue',
-      plum: 'x-violet',
-      quiet: 'x-quiet',
-    };
-    const badge = (text, v = '') => el('span', 'badge row-badge' + (BADGE_X[v] ? ' ' + BADGE_X[v] : ''), text);
-    const empty = t => {
-      const li = el('li', 'row');
-      li.append(el('p', 'empty', t));
-      return li;
-    };
+    // B-507 (D-374, D-376): btn(), badge(), chip(), row(), empty() and toast() are one-line calls into Proprietary (DS,
+    // page/app/01-ui*.js), so every view not yet moved gets its components with no change; B-515 removes them once no
+    // view calls them. Each makes exactly the markup it made before (the pixel diff of every view says so).
+    const chip = (text, v = '') => DS.chip({ label: text, tone: v });
+    const badge = (text, v = '') => DS.badge({ text, tone: v, cls: 'row-badge' });
+    const empty = t => DS.notice({ line: t, tag: 'li', cls: 'row' });
     // B-303 (D-278): every button the kit makes is one of the component set's five kinds: primary, a kind the caller
     // names (btn ...), the old quiet as ghost, the violet act as its coded tint, and neutral when none is named.
     const KIND_OF = { quiet: 'btn ghost sm', tlink: 'btn ghost sm', violet: 'btn tint x-violet' };
@@ -33,35 +23,12 @@
       return [KIND_OF[first] || 'btn neutral', ...(KIND_OF[first] ? rest : first ? [first, ...rest] : [])].join(' ');
     };
     function btn(label, onClick, o = {}) {
-      const b = el('button', btnClass(o), label);
-      b.type = 'button';
-      if (o.disabled) b.disabled = true;
-      if (onClick) b.addEventListener('click', onClick);
-      return b;
+      return DS.button({ label, onClick, disabled: o.disabled, cls: btnClass(o) });
     }
+    // B-303 (D-276): a row that names its type or state carries one badge, never two; the first given leads
     function row({ lead, title, detail, chips, action, check, cls }) {
-      const li = el('li', 'row' + (cls ? ' ' + cls : ''));
-      if (check) {
-        const c = document.createElement('input');
-        c.type = 'checkbox';
-        c.className = 'tick';
-        c.checked = c.defaultChecked = !!check.checked;
-        c.setAttribute('aria-label', check.label || title);
-        c.addEventListener('change', () => check.onChange(c.checked, c));
-        li.append(c);
-      }
-      if (lead) li.append(el('span', 'when', lead));
-      const g = el('div', 'grow');
-      const t = el('div', 'title');
-      t.append(document.createTextNode(title || ''));
-      // B-303 (D-276): a row that names its type or state carries one badge, never two; the first given leads
       const b = (chips || []).filter(Boolean)[0];
-      if (b) t.append(badge(b[0], b[1]));
-      g.append(t);
-      if (detail) g.append(el('div', 'meta', detail));
-      li.append(g);
-      if (action) li.append(action);
-      return li;
+      return DS.line({ kind: 'stack', lead, title, meta: detail, badge: b && [b[0], b[1]], action, check, cls });
     }
     function stat(value, label) {
       const s = el('div', 'stat');
@@ -84,14 +51,8 @@
       t.append(tb);
       return t;
     }
-    let toastTimer;
     function toast(t) {
-      const x = $('toast');
-      x.textContent = t;
-      x.hidden = false;
-      x.dataset.at = String(Date.now());
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => (x.hidden = true), 2600);
+      return DS.toast({ text: t, root: $('toast') });
     }
     const pct = (r, n) => (n ? Math.round((100 * r) / n) + '%' : '–');
     const store = {
