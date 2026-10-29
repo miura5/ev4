@@ -9753,5 +9753,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:46.219Z"
   }
+ },
+ {
+  "id": "B-523",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): A weak-spot drill asks about a different topic than the spot it was started from.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "A weak-spot drill asks about a different topic than the spot it was started from.",
+  "reportedAt": "2026-10-29T15:59:50.497Z",
+  "board": {
+   "row": "v4 B-523: A weak-spot drill asks about a different topic than the spot it was…"
+  }
  }
 ]
