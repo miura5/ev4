@@ -361,6 +361,85 @@ if (require.main === module) {
       );
       await ctx.close();
     }
+    // B-508 (D-375): the Sheet, live. Its Gallery button opens it modal; Esc closes it and so does a tap on the backdrop,
+    // focus back on that button each time; under 600 px it is a bottom sheet, its foot padded by the safe area (34 px
+    // emulated when the browser can) and inside the screen; from 600 px it centres.
+    for (const [w, h] of [
+      [390, 844],
+      [1280, 900],
+    ]) {
+      const tag = `[${w} sheet]`;
+      const { ctx, page } = await open(browser, dir, w, h, 'light');
+      const inset = w < 600 ? 34 : 0;
+      if (inset)
+        await ctx
+          .newCDPSession(page)
+          .then(s => s.send('Emulation.setSafeAreaInsetsOverride', { insets: { bottom: inset } }))
+          .catch(() => notes.push(`${tag} no safe-area emulation in this browser; the foot read at 0`));
+      const opener = page.locator('#gallery [data-slot="sheet"] button', { hasText: 'Open sheet' });
+      if (!(await opener.count())) {
+        ok(`${tag} the Gallery's Sheet has its Open sheet button`, false);
+        await ctx.close();
+        continue;
+      }
+      const state = () =>
+        page.evaluate(() => {
+          const d = [...document.querySelectorAll('dialog.sheet')].find(x => x.matches(':modal'));
+          const a = document.activeElement;
+          if (!d) return { open: false, focus: a ? a.textContent.trim() : '' };
+          const r = d.getBoundingClientRect(),
+            f = d.querySelector('.sheet-f');
+          return {
+            open: true,
+            top: r.top,
+            bottom: r.bottom,
+            left: r.left,
+            right: r.right,
+            pad: f ? parseFloat(getComputedStyle(f).paddingBottom) : -1,
+            footIn: f ? f.getBoundingClientRect().bottom <= innerHeight + 0.5 : false,
+          };
+        });
+      await opener.click();
+      await page.waitForTimeout(400);
+      const s1 = await state();
+      ok(`${tag} Open sheet opens it modal`, s1.open);
+      if (w < 600) {
+        ok(
+          `${tag} under 600 px it is a bottom sheet`,
+          s1.open && Math.abs(s1.bottom - h) < 1 && s1.left < 1 && s1.right > w - 1,
+          JSON.stringify(s1)
+        );
+        ok(
+          `${tag} its foot clears the safe area (${inset} px) and stays on screen`,
+          s1.pad >= 12 + inset - 0.5 && s1.footIn,
+          `padding-bottom ${s1.pad}`
+        );
+      } else
+        ok(
+          `${tag} from 600 px it centres, 110 px from the top`,
+          s1.open && Math.abs(s1.top - 110) < 1 && Math.abs(s1.left + s1.right - w) < 2,
+          JSON.stringify(s1)
+        );
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(400);
+      const s2 = await state();
+      ok(
+        `${tag} Esc closes it and focus returns to Open sheet`,
+        !s2.open && s2.focus === 'Open sheet',
+        JSON.stringify(s2)
+      );
+      await opener.click();
+      await page.waitForTimeout(400);
+      await page.mouse.click(w - 4, 4); // the backdrop, above the sheet at either width
+      await page.waitForTimeout(400);
+      const s3 = await state();
+      ok(
+        `${tag} a tap on the backdrop closes it and focus returns`,
+        !s3.open && s3.focus === 'Open sheet',
+        JSON.stringify(s3)
+      );
+      await ctx.close();
+    }
     await browser.close();
     for (const [s, n, d] of results) console.log(`${s}  ${n}${s === 'FAIL' && d ? ' :: ' + d : ''}`);
     for (const n of notes) console.log('NOTE  ' + n);
