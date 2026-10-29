@@ -1040,7 +1040,7 @@
         today
       ).length;
       if (!n) return null;
-      const li = el('li', 'li today-item ti-cards');
+      const li = el('li', 'li ti-cards'); // not a day item: no tick, not counted with them
       const tk = el('span', 'tk');
       tk.append(svgIcon('M4 7h12v12H4zM8 4h12v12'));
       const nm = el('button', 'nm ti-nm');
