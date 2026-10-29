@@ -9404,5 +9404,228 @@
    "outcome": "task",
    "at": "2026-10-29T15:31:56.336Z"
   }
+ },
+ {
+  "id": "B-501",
+  "kind": "task",
+  "title": "Proprietary token freeze: a :root block in page/styles.css (or page/ds/tokens.css) declares the type, space, radius, duration, easing, z and wash scales at today's most-used values, with the alias-retirement map in a comment (D-372, D-379)",
+  "dod": "No view rule changed; npm test and npm run smoke GREEN; npm run check -- --touched shows the look-pass screenshots at 390 and 1280 unchanged; ship staging GREEN",
+  "milestone": "Polish prep",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-502",
+  "kind": "task",
+  "title": "Token audit script: tools/token-audit.mjs prints distinct counts per family (colour expressions, alpha washes, font sizes, weights, line heights, spacing, radii, durations, easings, shadows, z, media queries, !important) for page/styles.css; a report, never a gate",
+  "dod": "Run at main it prints today's baseline (21 font sizes, 33 spacings, 21 radii, 13 durations); npm test GREEN",
+  "milestone": "Polish prep",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-503",
+  "kind": "task",
+  "title": "Tag the UX map probe's findings by Proprietary component: each finding maps to one of the 14 components or \"pattern\", plus a token family, so polish and the review use the same names (page/ views)",
+  "dod": "A table mapping every probe finding to a component and a token family, added to the UX map doc's hand-off; no code change",
+  "milestone": "Polish prep",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv",
+  "dependsText": "UX map probe (D-369)"
+ },
+ {
+  "id": "B-504",
+  "kind": "task",
+  "title": "Proprietary chapter in the Phase 3 review (B-415): fix the component list, the page/ds file layout, the @layer order, the harness selector policy, the budget and whether page/app/01-kit.js splits",
+  "dod": "The chapter is in the review's plan; any change to D-372 to D-379 is recorded as a superseding decision; the component list is final",
+  "milestone": "Phase 3 review",
+  "status": "open",
+  "depends": [
+   "B-503"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-505",
+  "kind": "task",
+  "title": "Proprietary foundations: page/ds/tokens.css complete; page/theme.js emits --wash-1..4, --shadow-1..3, --ring, --focus and the coded -wash tokens per mode; the build wraps page/styles.css in @layer legacy (D-373) with its 14 !important audited; the alias map written",
+  "dod": "npm test and smoke GREEN; png.cjs pixel diff near zero at 390 and 1280 in light and dark; test/harness/components.cjs GREEN; ship staging GREEN; a look on staging with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-501",
+   "B-504"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-506",
+  "kind": "task",
+  "title": "Build the Gallery, the Proprietary reference page: a staging-only route built from the same bundle with the tuner and recipe export, colour at 3 contrasts and 2 modes, type at --ts 1 and 1.25, space, radii, elevation, motion, the component state matrix and patterns on synthetic data; test/harness/components.cjs grows into its harness",
+  "dod": "The harness renders the Gallery at 390 and 1280 in light and dark and asserts tap 44 px or more, text contrast 4.5:1 or more, row heights and a visible focus ring; one screenshot per section; the Gallery is absent on live; ship staging GREEN",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-505"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-507",
+  "kind": "task",
+  "title": "Proprietary components, batch 1, at today's look (D-374, D-376): Button, Badge, Chip, Segmented, Line, Fold, Card, Empty and Toast in page/app/02-ui.js and page/ds/components.css; btn(), badge(), row() and empty() delegate to them",
+  "dod": "Each shows in the Gallery in every state; npm test and smoke GREEN; pixel diff near zero at 390 and 1280; ship staging GREEN",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-506"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-508",
+  "kind": "task",
+  "title": "Proprietary components, batch 2, at today's look (D-375): Sheet (native dialog, bottom sheet under 600 px), Popover, Field, Choice, Meter, Presence and Message in page/app/02-ui.js",
+  "dod": "Each in the Gallery in every state; Sheet's focus return and safe-area foot proved at 390; ship staging GREEN; one check on Matt's phone, noted on the release card",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-507"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-509",
+  "kind": "task",
+  "title": "Move System and Progress onto Proprietary, invisibly (D-376): views use components, their old rules leave page/styles.css, old classes ride along for one release, and their test/harness selectors move to role and name or data-ui (D-377)",
+  "dod": "npm test, smoke and the touched harnesses GREEN; before and after screenshots at 390 and 1280 in light and dark match; ship staging GREEN; a look on staging with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-508"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-510",
+  "kind": "task",
+  "title": "Move Today onto Proprietary, invisibly, as the System and Progress move does (page/app Today, its test/harness selectors to role or data-ui)",
+  "dod": "npm test, smoke and the touched harnesses GREEN; before and after screenshots at 390 and 1280 match; ship staging GREEN; a look with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-509"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-511",
+  "kind": "task",
+  "title": "Move Study onto Proprietary, invisibly: plan, flashcards and the quiz runner; its three hand-built dialogs become Sheet (page/app Study, its test/harness selectors to role or data-ui)",
+  "dod": "npm test, smoke and the touched harnesses GREEN; before and after screenshots at 390 and 1280 match; each former dialog opens, closes by Esc and backdrop and returns focus; ship staging GREEN; a look with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-509"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-512",
+  "kind": "task",
+  "title": "Move Notes onto Proprietary, invisibly (page/app Notes; test/harness/notes.cjs selectors to role or data-ui)",
+  "dod": "npm test, smoke and test/harness/notes.cjs GREEN; before and after screenshots at 390 and 1280 match; ship staging GREEN; a look with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-509"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-513",
+  "kind": "task",
+  "title": "Move Record, New and the forms onto Proprietary, invisibly (page/app Record, New and 91-forms; their test/harness selectors to role or data-ui)",
+  "dod": "npm test, smoke and the touched harnesses GREEN; before and after screenshots at 390 and 1280 match; ship staging GREEN",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-509"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-514",
+  "kind": "task",
+  "title": "Move the E.V. window onto Proprietary, invisibly: Presence, Message, Chip, Field and Sheet in the conversation, captions, cards and composer (page/app E.V. window; test/harness/captions.cjs, test/harness/prep.cjs and test/harness/run.cjs selectors to role or data-ui)",
+  "dod": "npm test, smoke and those harnesses GREEN; before and after screenshots at 390 and 1280 match; the composer stays in view with the keyboard open at 390; ship staging GREEN; a look with real data for every course",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-510",
+   "B-511",
+   "B-512",
+   "B-513"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-515",
+  "kind": "task",
+  "title": "Proprietary cleanup and token lint: delete the retired aliases and dead legacy rules, drop the legacy layer from page/styles.css, and add the npm test check that view CSS holds no raw colour, font size, radius or duration outside page/ds/tokens.css",
+  "dod": "tools/token-audit.mjs shows at most 7 font sizes, 12 spacings, 7 radii and 5 durations; npm test and smoke GREEN; screenshots at 390 and 1280 unchanged; ship staging GREEN",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-514"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-516",
+  "kind": "task",
+  "title": "First look pass on Proprietary: with every view on components, apply the polish's look decisions in page/ds/tokens.css and page/ds/components.css only (softer structure, card radius, the success pulse), inside the approved demo (D-327)",
+  "dod": "Release card with side-by-side screenshots at 1280 and 390 and the Gallery's section shots; npm test and smoke GREEN; ship staging GREEN; anything outside the demo goes to Matt first; Matt's testing is the acceptance",
+  "milestone": "Consolidation: Proprietary",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
+  "notes": "",
+  "commit": null,
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  }
 ]
