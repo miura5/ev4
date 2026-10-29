@@ -9699,7 +9699,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at be396b0: an opened note task has Write (opens the note named as the task or starts one in its course; phone opens New note prefilled); New note uses the filtered course; an empty new note is never written. Known: leaving an empty note still logs a short session (unchanged). notes 195/195. Next release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Note tasks on Today don't open their note, and New note leaves empty Untitled notes and ignores the selected course.",
