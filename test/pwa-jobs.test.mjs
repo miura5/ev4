@@ -55,7 +55,8 @@ test('B-324: each worker kind runs on the record and writes what the worker run 
   };
   for (const kind of Object.keys(spec.jobs.kinds)) {
     const { r, asks, writes, id } = await run(kind, { brief: briefs[kind] || 'fluid volume deficit' });
-    assert.equal(asks.length, 1, kind + ': one ask');
+    // B-496: a flashcards job of 20 whose first answer brings 3 asks once more, for the 17 missing
+    assert.equal(asks.length, kind === 'flashcards' ? 2 : 1, kind + ': its asks');
     const all = flat(writes);
     // the running status first, on its own; then the fold's writes in one batch
     assert.equal(writes[0].length, 1);
@@ -455,8 +456,9 @@ test('B-487: a flashcards job makes a deck in E.V. (B-479’s Quizlet block reti
   assert.equal(done.data.result.quizlet, undefined);
   const deck = all.find(w => w.collection === 'decks');
   assert.equal(done.data.result.deckId, deck.id);
-  assert.equal(Object.keys(deck.data.cards).length, 3);
-  assert.match(done.data.result.text, /^Deck ready: 3 cards/);
+  // B-496: 20 asked; the stub's first answer brings 3, and the one top-up the other 17, on new terms
+  assert.equal(Object.keys(deck.data.cards).length, 20);
+  assert.match(done.data.result.text, /^Deck ready: 20 cards/);
   assert.ok(!all.some(w => w.collection === 'sets'), 'no practice set');
   const talk = all.find(w => w.collection === 'talk');
   const msg = Object.values(talk.data.messages)[0];

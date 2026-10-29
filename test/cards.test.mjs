@@ -500,7 +500,7 @@ test('B-496: an ask counts up to 150 cards, in batches of at most 40; "add N car
   assert.equal(EV.flashcardAsk('add 10 cards to my nonexistent deck', decks), null);
 });
 
-test('B-496: a 100-card job is asked in 3 batches, each told the terms made, and makes one deck with no term twice', async () => {
+test('B-496: a 100-card job is asked in 3 batches, each told the terms made, then one top-up; one deck, no term twice', async () => {
   const NOW = new Date('2026-10-25T15:00:00Z');
   const db = J.asRunDb(seedRecord(NOW));
   const id = 'job-20261025-150000-flashcards-cardiac';
@@ -518,16 +518,20 @@ test('B-496: a 100-card job is asked in 3 batches, each told the terms made, and
     write: async w => writes.push(w),
   });
   assert.equal(r.status, 'done', JSON.stringify(r));
-  assert.equal(asks.length, 3);
-  assert.match(asks[0], /batch 1 of 3: write exactly 34 cards\./);
-  assert.match(asks[1], /batch 2 of 3: write exactly 33 cards, none with a term already made .*"Term 1-34"/);
+  // B-496 (Oct 29): two repeats left 98 new terms of 100, so one top-up asks for the 2 missing, and only once
+  assert.equal(asks.length, 4);
+  assert.match(asks[0], /batch 1 of 3: write exactly 34 cards\. No two of your cards/);
+  assert.match(asks[1], /batch 2 of 3: write exactly 33 cards\. He already has cards on these terms\..*"Term 1-34"/);
+  assert.match(asks[1], /never a reworded, abbreviated or reordered form of one/);
+  assert.match(asks[3], /batch 4 of 4: write exactly 2 cards\./);
   const dk = writes.flat().find(w => w.collection === 'decks');
   const terms = Object.values(dk.data.cards).map(c => c.term);
-  assert.equal(terms.length, 98, 'the two repeats are left out');
+  assert.equal(terms.length, 99, 'the three repeats are left out');
   assert.equal(new Set(terms.map(t => t.toLowerCase())).size, terms.length);
   assert.ok(validate('decks', dk.data, { id: dk.id }).ok);
   const done = writes.flat().find(w => w.collection === 'jobresults' && w.data.status === 'done');
-  assert.equal(done.data.result.deckCards, 98);
+  assert.equal(done.data.result.deckCards, 99);
+  assert.match(done.data.result.text, /^Deck ready: 99 cards on .* Made 99 of the 100 asked; ask again to add more\.$/);
 });
 
 test('B-496: a job that names a deck adds only new terms to it; the cards it has keep their schedules', async () => {
@@ -569,8 +573,13 @@ test('B-496: a job that names a deck adds only new terms to it; the cards it has
     write: async w => writes.push(w),
   });
   assert.equal(r.status, 'done', JSON.stringify(r));
-  assert.equal(asks.length, 1);
-  assert.match(asks[0], /write exactly 5 cards, none with a term already made .*"Digoxin"/);
+  // B-496 (Oct 29): one repeat left 4 new of 5, so one top-up asks for the last one
+  assert.equal(asks.length, 2);
+  assert.match(asks[0], /write exactly 5 cards\. He already has cards on these terms\..*"Digoxin"/);
+  // the deck's terms are named only as terms to avoid, never in the job's material
+  const material = asks[0].slice(asks[0].indexOf('```json'));
+  assert.doesNotMatch(material, /Digoxin/);
+  assert.match(material, /"deck":\{"title":"Cardiac meds","cards":2\}/);
   const up = writes.flat().find(w => w.collection === 'decks');
   assert.equal(up.op, 'update');
   assert.equal(up.id, deckId);
@@ -585,5 +594,118 @@ test('B-496: a job that names a deck adds only new terms to it; the cards it has
     'new cards are new'
   );
   const done = writes.flat().find(w => w.collection === 'jobresults' && w.data.status === 'done');
-  assert.match(done.data.result.text, /^Added 4 cards to Cardiac meds/);
+  assert.match(
+    done.data.result.text,
+    /^Added 4 cards to Cardiac meds.* Made 4 of the 5 asked; ask again to add more\.$/
+  );
+});
+
+/** B-496: a job adding to a deck that has these terms, run with `ask`. Returns { r, writes, asks, done }. */
+async function addRun(ask, { brief = '10 more flashcards for the deck Cardiac meds.', timeLeft = null } = {}) {
+  const NOW = new Date('2026-10-25T15:00:00Z');
+  const db = J.asRunDb(seedRecord(NOW));
+  const deckId = 'deck-20261024-150000-cardiac';
+  const deck = EV.deckNew({
+    title: 'Cardiac meds',
+    course: 'NUR 112',
+    items: [
+      { term: 'Digoxin', definition: 'a cardiac glycoside' },
+      { term: 'Atropine', definition: 'raises the heart rate' },
+    ],
+    now: '2026-10-24T15:00:00Z',
+    id: deckId,
+  });
+  db.decks = [...(db.decks || []), { id: deckId, ...deck.data }];
+  const id = 'job-20261025-150000-flashcards-add';
+  db.jobs = [...(db.jobs || []), flashJob(id, brief, { deck: deckId })];
+  const writes = [];
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas: loadSchemas(),
+    jobId: id,
+    now: NOW,
+    release: 'v4.5.5+1',
+    ask,
+    write: async w => writes.push(w),
+    ...(timeLeft ? { timeLeft } : {}),
+  });
+  const done = writes.flat().find(w => w.collection === 'jobresults' && w.data.status !== 'running');
+  return { r, writes: writes.flat(), done };
+}
+const answering =
+  (asks, items, text = 'Here are 10 more cards on cardiac meds.') =>
+  async body => {
+    asks.push(body.messages[0].content);
+    return { stop_reason: 'tool_use', content: [{ type: 'tool_use', name: 'answer', input: { text, items } }] };
+  };
+
+test('B-496 (Oct 29): an add whose cards all repeat the deck adds none and says so; it never claims cards it did not add', async () => {
+  const asks = [];
+  const repeats = [
+    { term: 'Digoxin', definition: 'again' },
+    { term: 'atropine ', definition: 'again' },
+  ];
+  const { r, writes, done } = await addRun(answering(asks, repeats));
+  assert.equal(r.status, 'done', JSON.stringify(r));
+  assert.equal(asks.length, 2, 'the batch, then one top-up, never more');
+  assert.equal(writes.filter(w => w.collection === 'decks').length, 0, 'nothing written to the deck');
+  assert.equal(
+    done.data.result.text,
+    'No cards were added to Cardiac meds: every card that came back was one it already has. Ask again, naming other points to cover.'
+  );
+  assert.doesNotMatch(done.data.result.text, /Here are/);
+});
+
+test('B-496 (Oct 29): the top-up is bounded: one ask at most, and none when the run has no time left', async () => {
+  const short = [{ term: 'Amiodarone', definition: 'an antiarrhythmic' }];
+  const asks = [];
+  const one = await addRun(answering(asks, short));
+  assert.equal(asks.length, 2);
+  assert.match(asks[1], /batch 2 of 2: write exactly 9 cards\./);
+  assert.match(
+    one.done.data.result.text,
+    /^Added 1 card to Cardiac meds.* Made 1 of the 10 asked; ask again to add more\.$/
+  );
+  const late = [];
+  const none = await addRun(answering(late, short), { timeLeft: () => 60000 });
+  assert.equal(late.length, 1, 'no top-up with under one ask’s time left');
+  assert.match(none.done.data.result.text, /Made 1 of the 10 asked/);
+});
+
+test('B-496 (Oct 29): a job always ends: a first ask that never answers fails the job; a later one keeps the cards made', async () => {
+  const stuck = async () => {
+    throw new Error('Claude didn’t answer within 3 minutes, so E.V. stopped asking');
+  };
+  const failed = await addRun(stuck);
+  assert.equal(failed.r.status, 'failed');
+  assert.equal(failed.done.data.status, 'failed');
+  assert.match(failed.done.data.error || failed.done.data.result.text, /didn’t answer within 3 minutes/);
+  // a 60-card add: the first batch answers, the second never does: the run ends done with the cards made, said honestly
+  const asks = [];
+  const later = await addRun(
+    async body => {
+      asks.push(1);
+      if (asks.length > 1) throw new Error('no answer');
+      const items = Array.from({ length: 30 }, (_, i) => ({ term: 'New ' + i, definition: 'd' + i }));
+      return {
+        stop_reason: 'tool_use',
+        content: [{ type: 'tool_use', name: 'answer', input: { text: 'Cards.', items } }],
+      };
+    },
+    { brief: '60 more flashcards for the deck Cardiac meds.' }
+  );
+  assert.equal(later.r.status, 'done');
+  assert.ok(asks.length <= 3, 'two batches and at most one top-up');
+  assert.match(later.done.data.result.text, /^Added 30 cards to Cardiac meds.* Made 30 of the 60 asked/);
+  // the page's ask is stopped after askTimeoutMs: about 3 minutes for a job's 8,192-token answer
+  assert.equal(Math.round(J.askTimeoutMs({ max_tokens: 8192 }) / 60000), 3);
+  assert.ok(
+    J.PAGE_RUN_MS + J.askTimeoutMs({ max_tokens: 8192 }) < J.STALE_MS,
+    'a page run ends before it is called stale'
+  );
+  const bridge = fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8');
+  assert.match(bridge, /const timer = setTimeout\(\(\) => stop\.abort\(\), ms\);/);
+  assert.match(bridge, /signal: stop\.signal,/);
+  assert.match(bridge, /timeLeft: \(\) => J\.PAGE_RUN_MS - \(Date\.now\(\) - began\),/);
 });

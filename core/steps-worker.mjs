@@ -335,19 +335,24 @@ export const AGENT_FOLDS = {
       const deck = job.deck ? (db.decks || []).find(d => d.id === job.deck && !d.retired) || null : null;
       const r = EV.deckFromJob({ job, items: answer.items || [], now: ctx.now, source: ctx.source, deck });
       const cards = r.n === 1 ? '1 card' : r.n + ' cards';
-      if (job.deck && !deck) result.text += ' (Its deck isn’t in the record any more, so nothing was added.)';
+      // B-496: the result says what was made, never more: the count asked, how many new cards landed, and the rest
+      // named as missing; with none added, no line of the model's ("Here are 10 more cards…") stands
+      const asked = ctx.askedCards || EV.jobCardCount(job);
+      const short = r.n < asked ? ` Made ${r.n} of the ${asked} asked; ask again to add more.` : '';
+      if (job.deck && !deck) result.text = 'Its deck isn’t in the record any more, so no cards were added.';
       else if (r.n) {
         writes.push(r.write);
         result.deckId = r.write.id;
         result.deckCards = r.n;
-        result.text = r.added
-          ? `Added ${cards} to ${r.title}, in Study under ${r.course} Flashcards.`
-          : `Deck ready: ${cards} on ${r.title}, in Study under ${r.course} Flashcards.`;
-        say.push(`Deck ${r.write.id}: ${r.added ? '+' : ''}${cards}.`);
+        result.text =
+          (r.added
+            ? `Added ${cards} to ${r.title}, in Study under ${r.course} Flashcards.`
+            : `Deck ready: ${cards} on ${r.title}, in Study under ${r.course} Flashcards.`) + short;
+        say.push(`Deck ${r.write.id}: ${r.added ? '+' : ''}${cards} of ${asked}.`);
       } else
-        result.text += r.added
-          ? ' (Every card that came back was already in the deck, so nothing was added.)'
-          : ' (No cards came back, so no deck was made.)';
+        result.text = r.added
+          ? `No cards were added to ${r.title}: every card that came back was one it already has. Ask again, naming other points to cover.`
+          : 'No cards came back, so no deck was made. Try again.';
     }
     const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
     const saved = (planId, data, days) => {

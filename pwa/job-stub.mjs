@@ -139,7 +139,26 @@ function planEditAnswer(brief) {
 }
 
 /** The answer tool's input for one brief. */
-export function answerFor(brief, later = false) {
+/** B-496: a flashcards ask's cards. With no batch line, the three dosage cards; with one ("write exactly N cards",
+ * then the terms he has), N cards on terms not in that list, as a model told so would write them. */
+const BASE_CARDS = [
+  { term: 'mcg', definition: 'microgram, 1/1000 of a milligram' },
+  { term: 'gtt', definition: 'drops' },
+  { term: 'Drop factor', definition: 'drops per mL of the tubing', verify: true },
+];
+function cardsAnswer(tail) {
+  const m = /write exactly (\d+) cards\.(?: He already has cards on these terms\.[^[]*?(\[[^\]]*\]))?/.exec(tail || '');
+  if (!m) return { text: 'Stub flashcards on dosage terms.', items: BASE_CARDS };
+  const have = new Set((m[2] ? JSON.parse(m[2]) : []).map(t => String(t).toLowerCase()));
+  const items = [];
+  for (let k = 1; items.length < Number(m[1]); k++) {
+    const term = k <= BASE_CARDS.length ? BASE_CARDS[k - 1].term : 'Stub card ' + k;
+    if (!have.has(term.toLowerCase()))
+      items.push({ term, definition: k <= BASE_CARDS.length ? BASE_CARDS[k - 1].definition : 'stub meaning ' + k });
+  }
+  return { text: 'Stub flashcards on dosage terms.', items };
+}
+export function answerFor(brief, later = false, tail = '') {
   const kind = brief.job.kind;
   const title = brief.job.title || '';
   if (title.includes(PLANTS.shape)) return { links: [] };
@@ -158,15 +177,7 @@ export function answerFor(brief, later = false) {
     });
     return { text: 'Stub practice set: two questions.', items: [q(1), q(2)] };
   }
-  if (kind === 'flashcards')
-    return {
-      text: 'Stub flashcards on dosage terms.',
-      items: [
-        { term: 'mcg', definition: 'microgram, 1/1000 of a milligram' },
-        { term: 'gtt', definition: 'drops' },
-        { term: 'Drop factor', definition: 'drops per mL of the tubing', verify: true },
-      ],
-    };
+  if (kind === 'flashcards') return cardsAnswer(tail);
   if (kind === 'exam-plan' && ctx.mode === 'make' && ctx.section) return studyPlanAnswer(brief, later);
   if (kind === 'exam-plan' && ctx.mode === 'edit' && ctx.draft) return planEditAnswer(brief);
   if (kind === 'exam-plan' && ctx.mode && ctx.refused) return { text: 'Stub: nothing to plan.', failed: ctx.refused };
@@ -201,7 +212,7 @@ export function jobReply(body) {
     content: [
       look
         ? { type: 'tool_use', id: 'toolu_stub_look', name: 'lookup', input: { ref: 'dates' } }
-        : { type: 'tool_use', id: 'toolu_stub', name: 'answer', input: answerFor(brief, later) },
+        : { type: 'tool_use', id: 'toolu_stub', name: 'answer', input: answerFor(brief, later, tail) },
     ],
     stop_reason: 'tool_use',
     usage: { input_tokens: 0, output_tokens: 0 },

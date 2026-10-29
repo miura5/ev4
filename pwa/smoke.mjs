@@ -134,7 +134,7 @@ const SMOKE_JOBS = {
   'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
   'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
-  flashcards: { kind: 'flashcards', brief: '3 flashcards on dosage terms.' }, // B-487: routed by code; the stub's 3 cards
+  flashcards: { kind: 'flashcards', brief: '3 flashcards on dosage terms.' }, // B-487: routed by code (20 asked: the stub's 3, then B-496's one top-up of 17)
   general: { kind: 'general', brief: 'List the major electrolytes and their normal ranges.' },
   'plant-shape': { kind: 'general', title: PLANTS.shape, brief: 'Anything.' },
   'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A new study plan for E4.' },
@@ -1042,7 +1042,8 @@ async function main() {
           if (!r || r.status !== want) bad.push(`${name}: jobresults ${r ? r.status : 'missing'}, expected ${want}`);
           if (!(job.data.fired && job.data.fired.ok === true))
             bad.push(name + ': the hand-off is not recorded as made');
-          if (asked !== 1) bad.push(`${name}: ${asked} asks to Claude, expected 1`);
+          const asks = name === 'flashcards' ? 2 : 1; // B-496: 3 of 20 came back, so one top-up asks for the 17 missing
+          if (asked !== asks) bad.push(`${name}: ${asked} asks to Claude, expected ${asks}`);
           if (talkOf(job.id).length !== 1) bad.push(`${name}: ${talkOf(job.id).length} messages in talk, expected 1`);
           const result = (r && r.result) || {};
           if (name === 'study-guide' && (!String(result.text).includes(STUB_TEXT['study-guide']) || result.docUrl))
@@ -1054,8 +1055,8 @@ async function main() {
           if (name === 'flashcards') {
             // B-487: the cards are a deck in E.V. for the course, and the job's result names it
             const dk = docs.find(d => d.c === 'decks' && d.id === result.deckId);
-            if (!dk || Object.keys(dk.data.cards || {}).length !== 3 || result.deckCards !== 3)
-              bad.push('flashcards: no deck of 3 cards in D1');
+            if (!dk || Object.keys(dk.data.cards || {}).length !== 20 || result.deckCards !== 20)
+              bad.push('flashcards: no deck of 20 cards in D1');
           }
           if (
             name === 'exam-plan' &&
@@ -1070,6 +1071,38 @@ async function main() {
           bad.length === 0,
           bad.join(' | ') || kinds.join(', ')
         );
+        // B-496: "add 3 cards to <deck>" in the chat: a flashcards job naming the deck, whose 3 new terms join it (the
+        // stub, told the 20 terms it has, avoids them) and whose result counts exactly what was added
+        {
+          const made = (ran.flashcards.res && ran.flashcards.res.data.result) || {};
+          const dk0 = docs.find(d => d.c === 'decks' && d.id === made.deckId);
+          let addJob = null,
+            addRes = null;
+          if (dk0) {
+            await idle();
+            await say('add 3 cards to ' + dk0.data.title);
+            for (let i = 0; i < 40 && !(addRes && addRes.data.status !== 'running'); i++) {
+              await page.waitForTimeout(250);
+              const d2 = await got();
+              addJob = d2.find(d => d.c === 'jobs' && d.data.deck === dk0.id) || null;
+              addRes = addJob ? d2.find(d => d.c === 'jobresults' && d.id === addJob.id) || null : null;
+            }
+          }
+          const dk1 = dk0 && (await got()).find(d => d.c === 'decks' && d.id === dk0.id);
+          const before = dk0 ? Object.keys(dk0.data.cards || {}).length : 0,
+            after = dk1 ? Object.keys(dk1.data.cards || {}).length : 0;
+          const r = addRes && addRes.data;
+          const terms = dk1 ? Object.values(dk1.data.cards).map(c => String(c.term).toLowerCase()) : [];
+          ok(
+            `${tag} "add 3 cards to <deck>" adds 3 new terms to that deck and says exactly that (B-496)`,
+            !!r &&
+              r.status === 'done' &&
+              after === before + 3 &&
+              new Set(terms).size === terms.length &&
+              /^Added 3 cards to /.test((r.result || {}).text || ''),
+            JSON.stringify({ status: r && r.status, before, after, text: r && r.result && r.result.text })
+          );
+        }
         const held = [];
         for (const name of ['plant-shape', 'plant-plan']) {
           const { job, res, asked } = ran[name];

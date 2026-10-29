@@ -781,8 +781,12 @@
         return J.asRunDb(db);
       };
       const meta = document.querySelector('meta[name="ev-release"]');
+      // B-496: a page run always ends: each ask that gets no answer in askTimeoutMs is stopped, and no flashcards batch
+      // starts past the run's window, well inside the 20 minutes after which a run left running is marked failed
+      const began = Date.now();
       await J.runJob({
         db: await fresh(),
+        timeLeft: () => J.PAGE_RUN_MS - (Date.now() - began),
         spec,
         schemas,
         jobId: id,
@@ -794,11 +798,24 @@
           return r.ok ? r.json() : null;
         },
         ask: async body => {
-          const r = await api('claude', {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(body),
-          });
+          const stop = new AbortController();
+          const ms = J.askTimeoutMs(body);
+          const timer = setTimeout(() => stop.abort(), ms);
+          let r;
+          try {
+            r = await api('claude', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(body),
+              signal: stop.signal,
+            });
+          } catch (e) {
+            if (stop.signal.aborted)
+              throw new Error(`Claude didn’t answer within ${Math.round(ms / 60000)} minutes, so E.V. stopped asking`);
+            throw e;
+          } finally {
+            clearTimeout(timer);
+          }
           if (!r.ok) {
             // B-418 (D-339): a token ceiling's refusal keeps the Worker's plain sentence for the job's result
             const own = await r.json().catch(() => null);
