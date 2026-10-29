@@ -9275,5 +9275,22 @@
    "reason": "joins B-488",
    "at": "2026-10-29T14:49:49.200Z"
   }
+ },
+ {
+  "id": "B-495",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Flashcard asks are recognized too eagerly: a sentence like 'I need to study my cards for the exam tonight' starts a 20-card deck job.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review of d7a55f5",
+  "words": "Flashcard asks are recognized too eagerly: a sentence like 'I need to study my cards for the exam tonight' starts a 20-card deck job.",
+  "reportedAt": "2026-10-29T14:51:39.417Z",
+  "board": {
+   "row": "v4 B-495: Flashcard asks are recognized too eagerly: a sentence like 'I need to…"
+  }
  }
 ]
