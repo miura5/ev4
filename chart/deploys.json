@@ -5789,5 +5789,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.16"
+ },
+ {
+  "target": "staging",
+  "commit": "958c9dc",
+  "time": "2026-10-29T02:13:18.635Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "f39d054",
+  "tasks": [
+   "B-472"
+  ],
+  "summary": "Retire the claude.ai page as a view, step 1 (D-367): ship staging and…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
