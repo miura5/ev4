@@ -600,8 +600,11 @@ export function makeItemKinds(core) {
     const o = Array.isArray(q.options) ? q.options : [];
     return o.length >= 2 && o.filter(x => optionNumber(x)).length >= Math.ceil(o.length / 2);
   }
-  const SELF_CORRECTS = /\b(?:wait|actually|hmm+|oops|re-?calculat\w*|let me (?:re-?)?check)\b/i;
-  const SAYS_WRONG = /\b(?:is|are|would be)\s+(?:wrong|incorrect|not correct|not right)\b/i;
+  // only what a model writes when it catches itself, at a sentence's start: "Wait, ...", "Hmm", "Oops", "Let me recheck"
+  // (never "Wait 30 minutes", "may actually be" or "recalculate the dose")
+  const SELF_CORRECTS = /(?:^|[.!?;:]\s+|\(\s*)(?:wait\s*[,—–-]|hmm+\b|oops\b|let me (?:re-?)?check\b)/i;
+  // the key's own rationale calling itself wrong ("this answer is incorrect"), never "the other options are incorrect"
+  const SAYS_WRONG = /\bthis (?:answer|option|choice)\s+(?:is|would be)\s+(?:wrong|incorrect|not correct|not right)\b/i;
   const NAMES_ANSWER =
     /\b(?:correct|right)\s+(?:answer|dose|choice|option|amount)\s+(?:is|would be|should be|=)\s*:?\s*/gi;
   const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -624,7 +627,7 @@ export function makeItemKinds(core) {
     if (!opts.length || !key.length) return null;
     for (const k of key) {
       const own = Array.isArray(q.rationales) ? flat(q.rationales[k]) : '';
-      if (SAYS_WRONG.test(own) && !/^(?:correct|right)\b/.test(own)) return 'the key’s own rationale calls it wrong';
+      if (SAYS_WRONG.test(own)) return 'the key’s own rationale calls it wrong';
       const t = opts[k];
       if (
         t &&

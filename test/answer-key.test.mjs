@@ -65,7 +65,7 @@ test('B-481: a rationale that contradicts its key drops the item', () => {
   ];
   // no calc to work, yet its own rationale says the key is wrong
   const { calc, ...plain } = q12(0, said);
-  assert.match(EV.practiceReply.answerKeyProblem(plain), /the key’s own rationale calls it wrong/);
+  assert.equal(EV.practiceReply.answerKeyProblem(plain), 'a rationale says the key is wrong');
   // the same words under a distractor still name the key wrong
   assert.equal(
     EV.practiceReply.answerKeyProblem({ ...plain, rationales: ['Yes.', said[0], said[2], said[3]] }),
@@ -263,5 +263,29 @@ test('B-481: a stem that gives its answer away, or asks nothing, is dropped; a c
   assert.equal(
     P({ ...clean, stem: clean.stem.replace('What', 'The dose is 37.5 mg. What') }),
     'its stem gives its answer away'
+  );
+});
+
+test('B-481: ordinary rationale wording is kept; only a real self-correction or a key calling itself wrong drops', () => {
+  const P = EV.practiceReply.answerKeyProblem;
+  const q = (rationales, correct = 0) => ({
+    ...base,
+    stem: 'A client received IV morphine for pain. What should the nurse do next?',
+    options: ['Reassess pain', 'Give a second dose', 'Ambulate the client', 'Discharge the client'],
+    correct: [correct],
+    rationales,
+  });
+  const kept = [
+    'Wait 30 minutes after IV morphine, then reassess pain.',
+    'A client this drowsy may actually be oversedated.',
+    'With a new weight the nurse would need to recalculate the dose.',
+    'Reassessing is the priority; the other options are incorrect because they skip the check.',
+  ];
+  for (const r of kept) assert.equal(P(q([r, 'No.', 'No.', 'No.'])), null, r);
+  assert.equal(P(q(['Wait, the dose is wrong here.', 'No.', 'No.', 'No.'])), 'a rationale corrects itself');
+  assert.equal(P(q(['Hmm, let me recheck that.', 'No.', 'No.', 'No.'])), 'a rationale corrects itself');
+  assert.equal(
+    P(q(['This answer is incorrect: reassess first.', 'No.', 'No.', 'No.'])),
+    'the key’s own rationale calls it wrong'
   );
 });
