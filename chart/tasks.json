@@ -9842,9 +9842,9 @@
   "id": "B-527",
   "kind": "bug",
   "title": "Bug (reported Oct 29): The Mini quiz promises five new questions but repeats the same three.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The Mini quiz writes new questions each run, or is labelled Practice again when it reuses a set; test. (F-36)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9853,6 +9853,10 @@
   "reportedAt": "2026-10-29T16:00:32.264Z",
   "board": {
    "row": "v4 B-527: The Mini quiz promises five new questions but repeats the same"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:00:37.295Z"
   }
  }
 ]
