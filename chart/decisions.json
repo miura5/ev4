@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-370",
+  "date": "Oct 29",
+  "title": "No UI framework: E.V. keeps plain JS and gets its own small design system (tokens + ~10 shared components + a reference page) at consolidation",
+  "why": "A framework would be a rewrite against every view and ~1,000 tests for one user and one device, adds dependencies, and doesn't fix the real gap, which is consistency (about 15 shared CSS values, per-view styles). Polish fixes use shared tokens where they touch; the Phase 3 review fixes the component list; consolidation moves views onto it one at a time.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-369",
   "date": "Oct 29",
   "title": "A one-time UX map probe is the baseline for the final UI/UX polish; later changes get delta probes",
