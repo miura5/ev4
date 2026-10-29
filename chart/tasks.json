@@ -9491,11 +9491,11 @@
   "title": "Proprietary components, batch 1, at today's look (D-374, D-376): Button, Badge, Chip, Segmented, Line, Fold, Card, Notice and Toast in page/app/01-ui.js (DS) and page/ds/components.css; btn(), badge(), row() and empty() delegate to them",
   "dod": "Each shows in the Gallery in every state; npm test and smoke GREEN; pixel diff near zero at 390 and 1280; ship staging GREEN",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "in progress",
   "depends": [
    "B-506"
   ],
-  "notes": "",
+  "notes": "Scaffold at d2a979f (one file per component, DS gathering, build layers by folder, tools/pixdiff.cjs; 0 changed pixels in 34 shots). Lanes C1 (B-507) and C2 (B-508) starting now.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
