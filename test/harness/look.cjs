@@ -413,8 +413,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             e.getBoundingClientRect().height > 0,
           panel = document.getElementById('p-system');
         return {
-          lead: (document.querySelector('#health .sys-lead') || {}).textContent,
-          okPill: [...panel.querySelectorAll('.chip, .sys-mark')]
+          lead: (document.querySelector('#health-top > p') || {}).textContent,
+          okPill: [...panel.querySelectorAll('.chip, li[data-key] button > span + span')]
             .filter(vis)
             .some(c => /^ok$/i.test(c.textContent.trim())),
           empty: [...panel.querySelectorAll('.empty')].filter(vis).length,
@@ -436,9 +436,9 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       await page.click('#runs-fold');
       await page.waitForTimeout(150);
       const s1 = await page.evaluate(() =>
-        [...document.querySelectorAll('#runs li.sys-item')].map(li => ({
-          t: li.querySelector('.sys-t').textContent,
-          mark: (li.querySelector('.sys-mark') || {}).textContent || '',
+        [...document.querySelectorAll('#runs li[data-key]')].map(li => ({
+          t: li.querySelector('button > span').textContent,
+          mark: (li.querySelector('button > span + span') || {}).textContent || '',
           h: Math.round(li.getBoundingClientRect().height),
         }))
       );

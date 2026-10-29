@@ -1,0 +1,22 @@
+/* ---- System's layout (B-509, D-376, D-380): moved whole from page/styles.css. The views layer sits under legacy
+   (D-373), so every declaration here says !important until B-515 retires legacy, which then strips it (nothing moves).
+   Raw values left are those with no token. */
+/* B-119: System. One lead line; pipelines, runs and each card's list fold under one line; only exceptions are marked (yellow). B-214: the Preferences card and its switches. */
+#health .fold-line{display:block!important;margin-top:var(--sp-1_5)!important}
+.sys-lead{font-size:var(--fs-5)!important;line-height:1.35!important;margin:var(--sp-1) 0 var(--sp-0_5)!important;text-wrap:pretty!important}
+.sys-item{flex-direction:column!important;align-items:stretch!important;gap:var(--sp-0_5)!important;padding:var(--sp-0_5) 0!important}
+.sys-line{all:unset!important;box-sizing:border-box!important;display:flex!important;align-items:baseline!important;gap:var(--sp-2)!important;width:100%!important;min-width:0!important;cursor:pointer!important;padding:var(--sp-1_5) 0!important;line-height:var(--lh-ui)!important}
+.sys-line:focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px!important;border-radius:var(--r-sm)!important}
+.sys-t{flex:1!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.sys-mark{flex:none!important;color:var(--warn)!important;font-size:var(--fs-2)!important}
+.sys-more{display:none!important;padding:0 0 var(--sp-1_5)!important}.sys-item.open .sys-more{display:block!important}.sys-more .meta{margin:0!important}
+.sys-foot{margin:10px var(--sp-1) 0!important}
+@media (min-width:1024px){
+  .col-side .sys-foot{margin:var(--sp-0_5) var(--sp-1) 0!important}
+}
+#theme-card .seg{align-self:flex-start!important}
+#theme-card .meta{margin:var(--sp-1) 0 0!important;font-size:var(--fs-1)!important;color:var(--faint)!important}
+@media (max-width:599px){#theme-card .seg{align-self:stretch!important}}
+#theme-card .pref{display:flex!important;flex-direction:column!important;gap:var(--sp-1_5)!important;margin:0!important}
+#theme-card .pref+.pref{margin-top:10px!important}
+#theme-card .pref>.lbl{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--faint)!important}

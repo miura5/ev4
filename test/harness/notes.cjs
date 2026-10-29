@@ -2005,7 +2005,7 @@ const openNoteId = page =>
       await page.click('#prog-period [data-p="week"]');
       await page.waitForTimeout(200);
       const rows = await page.evaluate(() =>
-        [...document.querySelectorAll('.prog-hb .prog-hb-top')].map(r => [
+        [...document.querySelectorAll('#prog-course > div > :first-child')].map(r => [
           r.firstChild.textContent,
           r.querySelector('.meta').textContent,
         ])

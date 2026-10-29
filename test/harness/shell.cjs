@@ -555,7 +555,7 @@ const statusShown = page =>
     await page.evaluate(() => (location.hash = '#system'));
     await page.waitForTimeout(300);
     const v = await page.evaluate(() => {
-      const s = document.querySelector('#p-system .sys-lead');
+      const s = document.querySelector('#health-top > p');
       return { status: s ? s.textContent : '', shown: !!s && s.getClientRects().length > 0 };
     });
     ok(

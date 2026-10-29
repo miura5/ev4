@@ -113,6 +113,7 @@
     const openSys = new Set();
     function sysLine(key, text, mark, detail) {
       const li = el('li', 'row sys-item' + (openSys.has(key) ? ' open' : ''));
+      li.dataset.key = key; // D-387: harnesses find a line by what it shows
       const b = el('button', 'sys-line');
       b.type = 'button';
       b.setAttribute('aria-expanded', String(openSys.has(key)));
@@ -391,18 +392,16 @@
       ]) {
         const pref = el('div', 'pref'),
           lbl = el('span', 'lbl', label),
-          seg = el('div', 'seg theme-seg');
+          // B-509: Proprietary's Segmented; the wiring below paints and handles it, by each option's data value
+          seg = DS.segmented({
+            cls: 'theme-seg',
+            options: opts.map(([v, t]) => ({ value: v, label: t || v })),
+            value: id === 'contrast' ? '60' : opts[0][0],
+          });
         lbl.id = id + '-lbl';
         seg.id = id + '-seg';
-        seg.setAttribute('role', 'group');
         seg.setAttribute('aria-labelledby', lbl.id);
-        opts.forEach(([v, t], i) => {
-          const b = el('button', null, t || v); // a segment of the switch, not a kit button
-          b.type = 'button';
-          b.dataset[attr] = v;
-          b.setAttribute('aria-pressed', String(id === 'contrast' ? v === '60' : i === 0));
-          seg.append(b);
-        });
+        opts.forEach(([v], i) => (seg.children[i].dataset[attr] = v));
         pref.append(lbl, seg);
         if (card && note) card.insertBefore(pref, note);
       }

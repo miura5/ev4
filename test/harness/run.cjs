@@ -3677,7 +3677,7 @@ async function tap(page, locator, name) {
       'status reads Live, or a short phrase for the problem System leads with (B-120, B-384)',
       await page.evaluate(() => {
         const s = document.getElementById('status').textContent,
-          l = document.querySelector('#health .sys-lead');
+          l = document.querySelector('#health-top > p');
         return s === 'Live' || (!!l && (s === l.textContent || (/^[A-Z][^.\d]{3,60}$/.test(s) && !/\d/.test(s))));
       }),
       await page.textContent('#status')
@@ -4732,18 +4732,18 @@ async function tap(page, locator, name) {
         await page.setViewportSize({ width: w, height: h });
         await page.waitForTimeout(200);
         const bars = await page.evaluate(() =>
-          [...document.querySelectorAll('#prog-chart .pc-bar')].map(b => b.dataset.key)
+          [...document.querySelectorAll('#prog-chart button')].map(b => b.dataset.key)
         );
         const rows = [];
         for (const key of bars) {
-          await page.click(`#prog-chart .pc-bar[data-key="${key}"]`);
+          await page.click(`#prog-chart button[data-key="${key}"]`);
           await page.waitForTimeout(40);
           rows.push(
             await page.evaluate(k => {
-              const bar = document.querySelector(`#prog-chart .pc-bar[data-key="${k}"]`);
+              const bar = document.querySelector(`#prog-chart button[data-key="${k}"]`);
               // B-342 (D-327): the demo's day panel: the day's total over what it holds in Record (sessions, quizzes, notes)
-              const items = [...document.querySelectorAll('#prog-day .prog-s')];
-              const tt = (document.querySelector('#prog-day .prog-day-total') || {}).textContent || '';
+              const items = [...document.querySelectorAll('#prog-day li[data-key]')];
+              const tt = (document.querySelector('#prog-day > p') || {}).textContent || '';
               const mm = /^(\d+) h(?: (\d+) m)?$/.exec(tt) || [];
               const m2 = /^(\d+) min$/.exec(tt) || [];
               const want = Object.entries(window.__db.sessions || {})
@@ -4790,7 +4790,7 @@ async function tap(page, locator, name) {
             rows.every(r => r.width >= 44),
             rows.map(r => r.width).join(',')
           );
-        await page.click(`#prog-chart .pc-bar[data-key="${plant.d0}"]`);
+        await page.click(`#prog-chart button[data-key="${plant.d0}"]`);
         await page.waitForTimeout(80);
         for (const th of ['light', 'dark']) {
           await page.evaluate(m => document.documentElement.setAttribute('data-theme', m), th);
@@ -4804,7 +4804,7 @@ async function tap(page, locator, name) {
         await page.click(`#prog-period [data-p="${p}"]`);
         await page.waitForTimeout(100);
         const r = await page.evaluate(() => {
-          const bars = [...document.querySelectorAll('#prog-chart .pc-bar')];
+          const bars = [...document.querySelectorAll('#prog-chart button')];
           const pick = bars.find(b => b.getAttribute('aria-pressed') === 'true');
           return {
             n: bars.length,
@@ -4814,7 +4814,7 @@ async function tap(page, locator, name) {
               const a = /^(\d+) h(?: (\d+) m)?$/.exec(t) || [],
                 b = /^(\d+) min$/.exec(t) || [];
               return a[1] ? 60 * Number(a[1]) + Number(a[2] || 0) : b[1] ? Number(b[1]) : NaN;
-            })((document.querySelector('#prog-day .prog-day-total') || {}).textContent || ''),
+            })((document.querySelector('#prog-day > p') || {}).textContent || ''),
             stats: document.getElementById('prog-stats').textContent,
           };
         });
@@ -5084,7 +5084,7 @@ async function tap(page, locator, name) {
     ok(
       'system shows capacity and the runs',
       /412 documents in your record · 1 near or over budget/.test(await page.textContent('#cap-card-line')) &&
-        (await page.locator('#pipes .sys-item').count()) >= 5 &&
+        (await page.locator('#pipes li[data-key]').count()) >= 5 &&
         !(await page.isVisible('#pipes')),
       await page.textContent('#cap-card-line')
     );
@@ -5093,7 +5093,7 @@ async function tap(page, locator, name) {
       const c = await page.textContent('#capacity'); // B-37 (D-093): the budgets, worst first, no 25,000 cap
       ok(
         'system shows the D-093 budgets, the one near its budget first with its relief',
-        (await page.locator('#capacity .sys-item').count()) === 3 &&
+        (await page.locator('#capacity li[data-key]').count()) === 3 &&
           /^setsnear budget401 documents · warns at 400 · relief: the weekly roll-upstate/.test(c) &&
           /warns at 192 KiB, fails at 240 KiB/.test(c) &&
           /1\.5 MiB · warns at 4 MiB/.test(c) &&
@@ -5121,7 +5121,7 @@ async function tap(page, locator, name) {
         'the Checks card shows the nightly lint: when, the counts, the warning, the notes by kind',
         /Checks · 0 errors, 1 warning · /.test(await page.textContent('#lint-card-line')) &&
           /3 of 4 built documents reproduced\./.test(c) &&
-          (await page.locator('#lint .sys-item').count()) === 1 &&
+          (await page.locator('#lint li[data-key]').count()) === 1 &&
           /derived-stale|built by build/.test(c) &&
           /days\/2026-10-17/.test(c) &&
           /Notes, not problems: 1 kept from before, frozen · 1 rebuilt by their next run/.test(c),
@@ -5141,7 +5141,7 @@ async function tap(page, locator, name) {
     }
     // ---- System health panel (B-17, B-119): health/current in plain words, never alarming; the first thing to look at leads
     const hp = await page.textContent('#health');
-    const lead = await page.textContent('#health .sys-lead'),
+    const lead = await page.textContent('#health-top > p'),
       nTop = await page.locator('#health-top li').count();
     ok(
       'health panel leads with the first thing to look at, the rest one line each',
@@ -5221,7 +5221,7 @@ async function tap(page, locator, name) {
           /This health check is 5 hours old\. The watchdog checks every three hours, so it may have stopped\./.test(
             t
           ) &&
-            /^This health check is 5 hours old/.test(await page.textContent('#health .sys-lead')) &&
+            /^This health check is 5 hours old/.test(await page.textContent('#health-top > p')) &&
             (await page.locator('#health-top li').count()) === 3,
           t.slice(0, 200)
         );

@@ -130,7 +130,10 @@
       // the switch
       $('prog-period')
         .querySelectorAll('button')
-        .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === P)));
+        .forEach(b => {
+          b.setAttribute('aria-pressed', String(b.dataset.p === P));
+          b.tabIndex = b.dataset.p === P ? 0 : -1;
+        });
       // three property rows
       const acc = accIn(span.from, span.to);
       const pa = prev ? accIn(prev.from, prev.to) : null;
@@ -222,10 +225,11 @@
           const r = el('div', 'prog-hb');
           const top = el('div', 'prog-hb-top');
           top.append(el('span', null, c), el('span', 'meta', hm(byC[c] || 0)));
-          const bar = el('div', 'pbar x-violet');
-          const f = el('i');
-          f.style.width = grand ? Math.round((100 * (byC[c] || 0)) / grand) + '%' : '0';
-          bar.append(f);
+          const bar = DS.meter({
+            value: grand ? Math.round((100 * (byC[c] || 0)) / grand) : 0,
+            tone: 'violet',
+            label: c + ': ' + hm(byC[c] || 0),
+          });
           r.append(top, bar);
           return r;
         });
@@ -301,21 +305,19 @@
               unit === 'none' ? 'no plan yet' : so + ' of ' + n + (same || unit === 'objectives' ? '' : ' ' + unit)
             )
           );
-          const bar = el('div', 'pbar');
-          bar.setAttribute('role', 'img');
-          bar.setAttribute(
-            'aria-label',
-            unit === 'objectives'
-              ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
-              : unit === 'none'
-                ? 'no objectives or plan yet'
-                : so + ' of ' + n + ' ' + unit + ' done'
-          );
-          const g = el('i', 'x-green'),
-            y = el('i', 'x-yellow');
-          g.style.width = (n ? Math.round((100 * so) / n) : 0) + '%';
-          y.style.width = (n ? Math.round((100 * al) / n) : 0) + '%';
-          bar.append(g, y);
+          const bar = DS.meter({
+            kind: 'segments',
+            parts: [
+              { value: n ? Math.round((100 * so) / n) : 0, tone: 'ok' },
+              { value: n ? Math.round((100 * al) / n) : 0, tone: 'warn' },
+            ],
+            label:
+              unit === 'objectives'
+                ? so + ' solid, ' + al + ' almost, of ' + n + ' objectives'
+                : unit === 'none'
+                  ? 'no objectives or plan yet'
+                  : so + ' of ' + n + ' ' + unit + ' done',
+          });
           row.append(top, bar);
           row.dataset.unit = unit;
           return row;
@@ -348,6 +350,7 @@
         const li = el('li', 'prog-s');
         li.dataset.kind = x.kind;
         li.dataset.id = x.id;
+        li.dataset.key = x.id; // D-387: the record id it shows
         // the entry's name opens it in Record's log, where it lives (D-147)
         const nm = el('button', 'nm', x.name);
         nm.type = 'button';
@@ -356,7 +359,7 @@
         const txt = el('div', 'prog-s-t');
         txt.append(nm, el('span', 'mini', x.result || ''));
         const [word, cls] = REC_BADGE[x.kind];
-        li.append(el('span', 'badge' + (cls ? ' ' + cls : ''), word), txt);
+        li.append(DS.badge({ text: word, cls }), txt);
         ul.append(li);
       }
       $('prog-day').replaceChildren(
@@ -413,17 +416,26 @@
           return d;
         };
       const bar = mk('toolbar prog-bar', 'prog-bar'),
-        seg = mk('seg', 'prog-period');
-      seg.setAttribute('role', 'group');
-      seg.setAttribute('aria-label', 'Period');
-      for (const [k, n] of Object.entries(PERIODS)) {
-        const b = el('button', null, n);
-        b.type = 'button';
-        b.dataset.p = k;
-        seg.append(b);
-      }
+        seg = DS.segmented({
+          label: 'Period',
+          options: Object.entries(PERIODS).map(([value, label]) => ({ value, label })),
+          value: prog.period,
+          onPick: p => {
+            prog.period = p;
+            prog.pick = null;
+            store.set('prog.period', p);
+            renderProgressTime();
+          },
+        });
+      seg.id = 'prog-period';
+      Object.keys(PERIODS).forEach((k, i) => (seg.children[i].dataset.p = k));
       bar.append(seg);
-      const cc = mk('ui-card', 'prog-chart-card'),
+      const card = (cls, id) => {
+          const c = DS.card({ cls });
+          c.id = id;
+          return c;
+        },
+        cc = card('', 'prog-chart-card'),
         hd = el('div', 'prog-chart-head'),
         h = el('h3', null, 'Study time by day'),
         ch = mk('prog-chart', 'prog-chart');
@@ -433,26 +445,16 @@
       hd.append(h, el('span', 'meta', 'From your logged sessions'));
       cc.append(hd, ch);
       const grid = el('div', 'prog-grid');
-      grid.append(mk('ui-card', 'prog-course'), mk('ui-card', 'prog-ready'));
+      grid.append(card('', 'prog-course'), card('', 'prog-ready'));
       // E.V.'s line: the demo's strip under the header, her mark and one sentence
       const line = mk('evline prog-line', 'prog-line');
       line.innerHTML =
         '<svg class="ico sicon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z"></path></svg><span class="et"></span>';
       line.hidden = true;
       R.prepend(line, bar);
-      R.querySelector('.col-main').prepend(mk('ui-card prog-props', 'prog-stats'), cc, grid);
+      R.querySelector('.col-main').prepend(card('prog-props', 'prog-stats'), cc, grid);
       R.querySelector('.col-side').prepend(mk('card', 'prog-day'));
     }
-    $('prog-period')
-      .querySelectorAll('button')
-      .forEach(b =>
-        b.addEventListener('click', () => {
-          prog.period = b.dataset.p;
-          prog.pick = null;
-          store.set('prog.period', prog.period);
-          renderProgressTime();
-        })
-      );
     function renderReadiness() {
       renderProgressTime(); // B-301 (B-381: the hidden readiness, audit, score and accuracy shells are gone)
     }

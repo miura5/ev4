@@ -521,15 +521,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 .prep-add input{flex:1 1 auto;min-width:0;min-height:40px}
 .prep-add button{flex:none;min-height:40px}
 /* B-119: System. One lead line; pipelines, runs and each card's list fold under one line; only exceptions are marked (yellow). */
-#health .fold-line{display:block;margin-top:6px}
-.sys-lead{font-size:calc(18px * var(--ts));line-height:1.35;margin:4px 0 2px;text-wrap:pretty}
-.sys-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
-.sys-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
-.sys-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-.sys-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sys-mark{flex:none;color:var(--warn);font-size:calc(13px * var(--ts))}
-.sys-more{display:none;padding:0 0 6px}.sys-item.open .sys-more{display:block}.sys-more .meta{margin:0}
-.sys-foot{margin:10px 4px 0}
 /* B-120 (D-156): the page title only from 1024 px; below it the highlighted tab icon names the page. D-157: a problem in the status line reads yellow, on desktop only (System leads with it everywhere). */
 @media (max-width:1023px){.ptitle{display:none}}
 /* B-121 (D-158): from 1024 px Today, Study, Progress, Record and System are two columns: the lead and the list he acts
@@ -539,7 +530,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
   body:not(.on-ev) .wrap{max-width:1120px}
   .cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
   .col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
-  .col-side .sys-foot{margin:2px 4px 0}
 }
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
 .check-head .check-fold{color:var(--ink);font-weight:600;font-size:calc(15px * var(--ts))}
@@ -861,9 +851,6 @@ button.tlink{color:var(--text);text-decoration:underline;text-decoration-color:v
 button.tlink:hover{text-decoration-color:currentColor}
 
 /* B-214: System in C; the theme switch */
-#theme-card .seg{align-self:flex-start}
-#theme-card .meta{margin:4px 0 0;font-size:calc(12px * var(--ts));color:var(--faint)}
-@media (max-width:599px){#theme-card .seg{align-self:stretch}}
 /* B-217, B-275 (D-270): the session chip is grey like every chip (green is done or right only); the chips wrap, never clip */
 .qchip.go{background:none;border-color:var(--line2);color:var(--quiet);font-weight:500}
 .qchip.go:hover{color:var(--text)}
@@ -995,9 +982,6 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
 :root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{transition:none!important;animation:none!important}
 :root[data-motion="reduce"] body.captions .reveal .w{opacity:1;filter:none;transform:none}
 :root[data-motion="reduce"] body.captions.side-on #p-ev>#ev-side{animation:none}
-#theme-card .pref{display:flex;flex-direction:column;gap:6px;margin:0}
-#theme-card .pref+.pref{margin-top:10px}
-#theme-card .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint)}
 
 /* ============================================================ B-225 (D-271): folds open in 0.28 s and close in 0.16 s ==
    A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
@@ -1851,82 +1835,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 @media (max-width:1199px){
   #study-side:not([hidden]){display:flex;flex-direction:column;gap:14px;margin:16px -16px -18px;padding:16px 18px;border-top:1px solid var(--line);box-sizing:border-box}
   #study-side .set-list{margin:0}
-}
-/* ============================================================ B-301, B-338 (D-312): Progress =======================
-   Ported from the demo's Progress board: the period switch in the toolbar; one card of property rows (a 92 px label
-   column, the value beside it); the study-time chart, slim 40 px violet bars on no ground with an outlined stub for a
-   bar ahead; by course and exam readiness side by side from 1000 px; the day panel (the right panel from 1200 px) is
-   its date, the big total and that day's sessions, each with its Session badge. Absent while empty (D-151). */
-/* B-366: the demo's heights, her line 49 px with its hairline, the toolbar 53 px (12 px round a 28 px switch) */
-#progress-readiness .prog-bar{padding:12px 18px;margin:-14px -16px 4px;border-bottom:1px solid var(--line);min-height:53px;box-sizing:border-box;display:flex;align-items:center}
-#progress-readiness .prog-line[hidden]+.prog-bar{margin-top:-18px}
-/* B-342: E.V.'s line above the switch, the demo's strip: her mark and one sentence on a hairline */
-#progress-readiness .prog-line{display:flex;align-items:center;gap:10px;min-height:49px;padding:4px 12px 4px 18px;margin:-18px -16px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts));color:var(--text)}
-#progress-readiness .prog-line[hidden]{display:none}
-#progress-readiness .prog-line .ico{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#progress-readiness .prog-line .et{flex:1;min-width:0}
-/* from 1200 px her line runs under the header across the window, as the demo's, and the day panel starts below it */
-@media (min-width:1200px){
-  #progress-readiness .prog-line{margin-right:calc(-16px - var(--right-w));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #progress-readiness .prog-line .et{overflow:hidden;text-overflow:ellipsis}
-  body:has(#p-progress:not([hidden]) #prog-line:not([hidden])) #progress-readiness>.cols>.col-side{top:calc(var(--panel-top) + 49px)}
-}
-#progress-readiness .prog-bar .seg{align-self:center;flex:none;width:auto;background:var(--hover);box-shadow:none;border-radius:8px;padding:2px;gap:2px}
-#progress-readiness .prog-bar .seg button{min-height:24px;height:24px;padding:0 9px;display:inline-flex;align-items:center;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);box-sizing:border-box}
-#progress-readiness .prog-bar .seg button:hover{color:var(--text);background:var(--bg)}
-#progress-readiness .prog-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
-/* the demo's 18 px inset for the cards (the pane gives 16) */
-#progress-readiness .col-main>.prog-props,#progress-readiness .col-main>#prog-chart-card,#progress-readiness .col-main>.prog-grid{margin-left:2px;margin-right:2px}
-#progress-readiness .col-main{gap:12px}
-#p-progress .lab{font-size:calc(12px * var(--ts));color:var(--quiet);font-weight:500}
-#p-progress .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-.prog-props{display:flex;flex-direction:column;gap:2px;padding:14px}
-.prog-props .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts));border:0}
-.prog-props .prop-k{color:var(--quiet)}
-.prog-props .prop-v{min-width:0}
-.prog-props .prop-v b{font-weight:600;color:var(--text)}
-.prog-props .prop-v .meta{color:var(--faint);font-size:calc(12.5px * var(--ts))}
-#prog-chart-card{gap:6px}
-.prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.prog-chart-head h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans)}
-.prog-chart-head .meta{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts))}
-.prog-chart{display:flex;align-items:flex-end;gap:10px;height:194px;padding:24px 4px 0;box-sizing:border-box}
-.pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:4px;height:100%}
-.pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0;padding:0;border:0;border-radius:6px;background:none;cursor:pointer;box-shadow:none;min-height:0}
-.pc-bar>i{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--sem-violet)}
-.pc-bar:hover{background:none}
-.pc-bar:hover>i{filter:brightness(1.08)}
-.pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
-.pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.pc-lab{text-align:center;color:var(--quiet);font-size:calc(11.5px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
-.pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text);font-weight:600}
-.prog-grid{display:grid;grid-template-columns:1fr;gap:12px}
-@media (min-width:1000px){.prog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.prog-grid .ui-card[hidden]{display:none}
-.prog-grid .ui-card{gap:10px}
-.prog-hb{display:flex;flex-direction:column;gap:5px}
-.prog-hb-top{display:flex;justify-content:space-between;gap:8px;font-size:calc(13.5px * var(--ts))}
-.prog-hb-top .meta{color:var(--faint);font-size:calc(12.5px * var(--ts));margin:0;white-space:nowrap}
-.prog-hb .pbar{height:10px;border-radius:5px;background:var(--hover);overflow:hidden;display:flex}
-.prog-hb .pbar>i{display:block;height:100%;background:var(--x,var(--sem-violet))}
-.prog-hb .pbar>i.x-green{background:var(--sem-green)}
-.prog-hb .pbar>i.x-yellow{background:var(--sem-yellow)}
-#prog-day{display:flex;flex-direction:column;gap:14px;background:none;border:0;border-radius:0;box-shadow:none;padding:0}
-#prog-day .prog-day-total{margin:0;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--text)}
-#prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
-#prog-day .prog-s{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:8px;padding:0;min-height:0;border:0;font-size:calc(13px * var(--ts))}
-#prog-day .prog-s-t{display:flex;flex-direction:column;gap:1px;min-width:0}
-#prog-day .prog-s .nm{min-height:0;height:auto;line-height:22px;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
-#prog-day .prog-s .nm:hover{text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
-@media (max-width:599px){
-  .prog-chart{gap:2px}
-  .pc-col{min-width:44px}
-  .pc-bar>i,.pc-bar>.pc-ahead{width:44px}
-  #progress-readiness .prog-bar{padding:10px 12px;min-height:69px}
-  #progress-readiness .prog-bar .seg{align-self:center;width:auto}
-  #progress-readiness .prog-line{padding:4px 8px 4px 16px;flex-wrap:wrap}
-  #progress-readiness .prog-bar .seg button{flex:none;height:44px;min-height:44px;padding:0 12px;min-width:44px;justify-content:center}
-  #progress-readiness .col-main>#prog-chart-card{margin-left:-8px;margin-right:-8px} /* the demo's chart card sits 8 px from the edge on a phone */
 }
 /* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================
    The log's toolbar (Filter and its pop-over, then the type tabs), its rows grouped by day, and the picked row's
