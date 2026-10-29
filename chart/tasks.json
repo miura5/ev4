@@ -9800,9 +9800,9 @@
   "id": "B-525",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Approving a plan hides its Open questions and Scope map.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "An approved plan still shows its Open questions and Scope map; test. (F-21)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9811,6 +9811,10 @@
   "reportedAt": "2026-10-29T16:00:10.491Z",
   "board": {
    "row": "v4 B-525: Approving a plan hides its Open questions and Scope"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:00:16.205Z"
   }
  }
 ]
