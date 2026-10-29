@@ -9411,10 +9411,10 @@
   "title": "Proprietary token freeze: a :root block in page/styles.css (or page/ds/tokens.css) declares the type, space, radius, duration, easing, z and wash scales at today's most-used values, with the alias-retirement map in a comment (D-372, D-379)",
   "dod": "No view rule changed; npm test and npm run smoke GREEN; npm run check -- --touched shows the look-pass screenshots at 390 and 1280 unchanged; ship staging GREEN",
   "milestone": "Polish prep",
-  "status": "open",
+  "status": "done",
   "depends": [],
-  "notes": "Built at 5542632: page/ds/tokens.css published ahead of styles.css; scales fs/fw/lh, sp, r, wash, shadow/ring/elev, dur-1..5 (80/140/160/280/420, D-379), easings, z; alias map in a comment; no view rule reads them yet; look shots unchanged. Staging with tonight's release.",
-  "commit": null,
+  "notes": "Staging GREEN at ceba846; real runs passed (aa177a1 full run, ceba846 targeted re-run); whole-release review No gaps.",
+  "commit": "5542632",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
