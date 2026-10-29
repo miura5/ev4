@@ -9627,5 +9627,22 @@
   "notes": "",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+ },
+ {
+  "id": "B-517",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): \"Quiz me\" and Start session open a blank note or switch views; they should start the quiz or session in place.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "\"Quiz me\" and Start session open a blank note or switch views; they should start the quiz or session in place.",
+  "reportedAt": "2026-10-29T15:58:54.332Z",
+  "board": {
+   "row": "v4 B-517: \"Quiz me\" and Start session open a blank note or switch views; they…"
+  }
  }
 ]
