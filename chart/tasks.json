@@ -9884,9 +9884,9 @@
   "id": "B-529",
   "kind": "bug",
   "title": "Bug (reported Oct 29): E.V.'s answers in Record and elsewhere misstate the record (an approved change called pending, today's quiz and notes skipped).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Checked first on a one-user record (the probe shared one record between two testers); where real, E.V.'s record answers read the current state; test. (F-55, F-64)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9895,6 +9895,10 @@
   "reportedAt": "2026-10-29T16:00:53.218Z",
   "board": {
    "row": "v4 B-529: E.V.'s answers in Record and elsewhere misstate the record (an…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:00:58.424Z"
   }
  }
 ]
