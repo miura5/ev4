@@ -9131,7 +9131,7 @@
   "depends": [
    "B-487"
   ],
-  "notes": "",
+  "notes": "Built at 44c867e (with B-494): Written with typo allowance (0/1/2 by length) and 'I was right'; Learn in rounds of 7, MC then Written, one rating per card, Learned/Still shaky end; mode picker remembered per deck. Tests green. Haiku near-answer judging and a Flip step in Learn left out by design. Ships to staging with tonight's release.",
   "commit": null,
   "source": "chat, Oct 29 (Matt)",
   "words": "Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
