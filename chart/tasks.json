@@ -9055,5 +9055,22 @@
    "outcome": "task",
    "at": "2026-10-29T06:09:46.604Z"
   }
+ },
+ {
+  "id": "B-485",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): On staging after B-479, asking for flashcards still fails end to end: the chat, remembering earlier rejections in the conversation, sends the request as a general job instead of a flashcards job, and the general job then fails E.V.'s check because its text runs past 1,500 characters; a flashcard request should always become a flashcards job (routed by the page, as Ask for changes now is), and a general job's long answer should not fail on the text limit.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, staging run Oct 29 early",
+  "words": "On staging after B-479, asking for flashcards still fails end to end: the chat, remembering earlier rejections in the conversation, sends the request as a general job instead of a flashcards job, and the general job then fails E.V.'s check because its text runs past 1,500 characters; a flashcard request should always become a flashcards job (routed by the page, as Ask for changes now is), and a general job's long answer should not fail on the text limit.",
+  "reportedAt": "2026-10-29T08:29:32.572Z",
+  "board": {
+   "row": "v4 B-485: On staging after B-479, asking for flashcards still fails end to end:…"
+  }
  }
 ]
