@@ -53,6 +53,7 @@
         const n = E.deckCards(d).length,
           k = dueIn(d);
         const r = el('div', 'st-row');
+        r.dataset.key = d.id;
         const b = el('button', 'st');
         b.type = 'button';
         const nm = el('span', 'sn');
@@ -102,7 +103,18 @@
       d = DS.sheet({
         label: 'Flashcards',
         cls: 'new-dlg fc-dlg',
-        onClose: () => ((FC.s = null), (FC.edit = null), render()),
+        onClose: () => {
+          FC.s = null;
+          FC.edit = null;
+          render();
+          // the deck's row is painted anew on the next frame, so focus goes back to its new button then (B-511)
+          const deck = FC.deck;
+          requestAnimationFrame(() => {
+            const box = document.activeElement === document.body && deck && $('ov-decks');
+            const row = box && [...box.querySelectorAll('.st-row')].find(x => x.dataset.key === deck);
+            if (row) row.querySelector('.st').focus();
+          });
+        },
       });
       d.replaceChildren();
       d.id = 'fc-dlg';

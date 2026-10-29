@@ -1,0 +1,95 @@
+/* ---- The quiz runner, its results and Study's side pane (B-511, D-376, D-380, D-391): moved whole from
+   page/styles.css. The patterns layer sits under legacy (D-373), so every declaration says !important until B-515
+   retires legacy and strips them. Raw values left are those with no token. */
+/* B-348 (D-312): the quiz, its results and the Plan tab as the demo's StudyQuiz and StudyResults boards. The quiz's strip
+   (All topics, what is open, Quiz me, Weak spots · n); one card up to 640 px wide, centred 26 px under the strip: its
+   label and score, a 6 px violet bar, the 22 px question, 52 px answers lettered A to D that tint green or red with a
+   mark, the verdict, then Next with its Enter key. From 1200 px the panel is "This quiz", a dot a question. The results
+   card is the big score, Logged to Record, the weak-spot line in its own box, then the buttons. Plan sits in the Weak
+   spots tab's frame: the strip, quiet day heads over full-width rows, its summary in the panel from 1200 px. */
+#study-qlab{font-size:calc(12.5px * var(--ts))!important;color:var(--quiet)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0!important}
+#study-back .ico{width:14px!important;height:14px!important}
+#study-review:not([hidden]),#study-practice:not([hidden]){display:block!important;padding-bottom:18px!important}
+#study-review > .qz-card,#pr-card.qz-card{width:calc(100% - 36px)!important;max-width:640px!important;margin:10px auto 0!important;padding:26px!important;border:0!important;border-radius:14px!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line)!important;display:flex!important;flex-direction:column!important;gap:var(--sp-4)!important;box-sizing:border-box!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+#pr-card > .card-head{display:none!important}
+#pr-prog:not([hidden]){display:flex!important;flex-direction:column!important;gap:var(--sp-4)!important}
+.qz-card .qz-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:var(--sp-1) 10px!important;flex-wrap:wrap!important;min-width:0!important}
+.qz-card .qz-head .set-count{flex:0 1 auto!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important;min-height:0!important;padding:0!important;margin:0!important;text-align:left!important;min-width:0!important;overflow-wrap:anywhere!important} /* B-519: shrinks to the card; flex:none let a long set title make the page 545 px wide at 390 */
+.qz-card{overflow-wrap:break-word!important} /* B-519: a long word or link in a question wraps inside the card at 390 */
+.qz-resume{display:flex!important;flex-direction:row!important;align-items:center!important;gap:var(--sp-2) var(--sp-3)!important;flex-wrap:wrap!important} /* B-519: Resume quiz after a reopen */
+.qz-resume .qr-t{flex:1 1 200px!important;min-width:0!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important;overflow-wrap:break-word!important}
+.qz-card .qz-head .set-count:disabled{opacity:1!important;cursor:default!important} /* B-370: the demo's grey, not a faded button */
+.qz-card .qz-head .set-count.flat::after{display:none!important}
+.qz-card .qz-score{font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important;white-space:nowrap!important;flex:none!important}
+.qz-card .qz-bar{height:6px!important;border-radius:3px!important;background:var(--hover)!important;overflow:hidden!important;margin:0!important}
+.qz-card .qz-bar i{background:var(--sem-violet)!important;border-radius:0!important}
+.qz-card #rv-body,.qz-card #pr-body{display:flex!important;flex-direction:column!important;gap:var(--sp-4)!important}
+.qz-card #rv-body > *,.qz-card #pr-body > *{margin:0!important}
+.qz-card .q-stem{font-size:calc(22px * var(--ts))!important;font-weight:var(--fw-medium)!important;letter-spacing:-.01em!important;line-height:1.35!important;color:var(--text)!important}
+.qz-card .q-tags{margin-top:-10px !important!important;font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important}
+.qz-card .opts{display:flex!important;flex-direction:column!important;gap:var(--sp-2)!important;border:0!important;padding:0!important;margin:0!important;min-width:0!important}
+.qz-card .opt{position:relative!important;align-items:center!important;gap:10px!important;min-height:52px!important;padding:var(--sp-2) 14px!important;border:0!important;border-radius:9px!important;background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line2)!important;font-size:var(--fs-3)!important;color:var(--text)!important;box-sizing:border-box!important}
+.qz-card .opt:not(.locked):hover{background:var(--hover)!important}
+.qz-card .opt > .grow{flex:1!important;min-width:0!important}
+.qz-card .qz-bar[hidden]{display:none!important}
+.qz-card .opt input[type=radio]{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;margin:0!important;pointer-events:none!important}
+.qz-card .opt kbd.opt-n{display:inline-block!important;flex:0 0 20px!important;width:20px!important;height:auto!important;box-shadow:none!important;background:none!important;color:var(--quiet)!important;font:var(--fw-medium) calc(12.5px * var(--ts)) var(--sans)!important;text-align:left!important}
+.qz-card .opt input:checked~kbd.opt-n{box-shadow:none!important;color:var(--text)!important}
+.qz-card .opt:not(.locked):has(input:checked){box-shadow:inset 0 0 0 1.5px var(--text)!important}
+.qz-card .opt:has(input:focus-visible){outline:2px solid var(--text)!important;outline-offset:2px!important}
+.qz-card .opt.right{background:color-mix(in srgb,var(--sem-green) 11%,var(--surface))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-green) 40%,var(--line2))!important}
+.qz-card .opt.wrong{background:color-mix(in srgb,var(--sem-red) 11%,var(--surface))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-red) 40%,var(--line2))!important}
+.qz-card .opt > .ico{width:16px!important;height:16px!important;flex:none!important;fill:none!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.qz-card .opt.right > .ico{stroke:var(--sem-green)!important}.qz-card .opt.wrong > .ico{stroke:var(--sem-red)!important}
+.qz-card .opt .why{display:block!important;margin-top:var(--sp-0_5)!important;font-size:calc(12.5px * var(--ts))!important;color:var(--quiet)!important}
+.qz-card .verdict{font:var(--fw-regular) calc(13.5px * var(--ts))/1.5 var(--sans)!important;color:var(--text)!important}
+.qz-card .verdict.ok,.qz-card .verdict.no{color:var(--text)!important}
+.qz-card .actions{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:var(--sp-2)!important;flex-wrap:wrap!important}
+.qz-card .actions > .btn.primary{order:-1!important}
+.qz-card .btn.primary .kbd{margin-left:var(--sp-2)!important;font:var(--fw-medium) calc(11px * var(--ts)) var(--sans)!important;padding:1px 5px!important;border-radius:4px!important;box-shadow:inset 0 0 0 1px currentColor!important}
+@media (hover:none){.qz-card .btn.primary .kbd{display:none!important}}
+.qz-card .set-score{font-size:calc(30px * var(--ts))!important;font-weight:var(--fw-semibold)!important;letter-spacing:-.02em!important;line-height:1.1!important;margin:0!important}
+.qz-card .set-score + .mini{margin-top:-6px!important;font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important}
+.qz-card .endline{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;padding:10px var(--sp-3)!important;border-radius:9px!important;background:var(--bg)!important;box-shadow:inset 0 0 0 1px var(--line2)!important;font-size:var(--fs-2)!important}
+.qz-card .endline .sp{flex:1!important;min-width:180px!important}
+@media (max-width:599px){.qz-card .endline .sp{flex-basis:100%!important}} /* B-376: her line over its buttons on the phone, as the demo */
+.qz-card .sum-acts #more-card{display:contents!important}
+.qz-card .sum-acts #more-status{display:none!important}
+#study-side .qz-side .set-list{display:flex!important;flex-direction:column!important;margin:-6px 0 0!important;padding:0!important;list-style:none!important}
+#study-side .qz-side .set-item{border:0!important;padding:0!important;min-height:0!important}
+#study-side .qz-side .set-q{display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:44px!important;padding:0 10px!important;border:0!important;border-radius:var(--r-md)!important;background:none!important;font:var(--fw-regular) var(--fs-2) var(--sans)!important;color:var(--text)!important;text-align:left!important;cursor:pointer!important}
+#study-side .qz-side .set-q:hover{background:var(--hover)!important}
+.set-q .sq-d{width:8px!important;height:8px!important;border-radius:4px!important;flex:none!important;background:var(--line2)!important}
+.set-q .sq-d.ok{background:var(--sem-green)!important}.set-q .sq-d.no{background:var(--sem-red)!important}.set-q .sq-d.now{background:var(--sem-violet)!important}
+#study-side .qz-side .sq-s{font-size:calc(11.5px * var(--ts))!important;color:var(--quiet)!important}
+#study-side .qz-side .sq-s.ok{color:var(--quiet)!important}
+#study-side .qz-side .set-item.current .sq-t{color:var(--text)!important;font-weight:400!important}
+/* B-370 (D-316): as the demo's results card at every width; This quiz lists each question, right or missed */
+.qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none!important}
+.plan-sum .big{font-size:calc(30px * var(--ts))!important;font-weight:var(--fw-semibold)!important;letter-spacing:-.02em!important;line-height:1.1!important;margin:0!important}
+.plan-sum .lab{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important}
+.plan-sum .mini{font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important;margin:0!important}
+@media (max-width:599px){
+  #p-study .sbar-study{gap:var(--sp-2)!important;margin:-18px -16px 0!important;padding:10px var(--sp-3)!important;flex-wrap:wrap!important}
+  #p-study .sbar-study .seg{width:auto!important;align-self:center!important;flex:0 1 auto!important;min-width:0!important}
+  #p-study .sbar-study .seg button{flex:0 0 auto!important;padding:0 var(--sp-3)!important}
+  #study-objectives{padding:var(--sp-0_5) 0 18px!important}
+  #study-weak:not([hidden]){margin:-18px -16px 0!important}
+  #study-review > .qz-card,#pr-card.qz-card{width:100%!important;margin:var(--sp-4) 0 0!important;padding:26px!important}
+  .qz-card .opt{min-height:52px!important}
+  .ov .obj{flex-wrap:nowrap!important;padding:0!important}
+  .obj .oq{display:none!important}
+  .obj .nm{min-height:44px!important;padding:var(--sp-1_5) 0!important}
+  .ov-up .up{min-height:48px!important}
+  .ov-grid{grid-template-columns:1fr!important}
+  .ov-sets .st{grid-template-columns:minmax(0,1fr) auto!important;min-height:48px!important;row-gap:var(--sp-0_5)!important}
+  .ov-sets .sn{flex-direction:column!important;align-items:stretch!important;gap:1px!important}
+  .ov-sets .sn{grid-row:1 / span 2!important}
+  .ov-sets .ss,.ov-sets .sd{grid-column:2!important;text-align:right!important}
+}
+/* B-365 (D-316): below 1200 px the side pane follows the pane, as the demo's right column under a hairline (a quiz's
+   questions, Weak spots' triage card) */
+@media (max-width:1199px){
+  #study-side:not([hidden]){display:flex!important;flex-direction:column!important;gap:14px!important;margin:var(--sp-4) -16px -18px!important;padding:var(--sp-4) 18px!important;border-top:1px solid var(--line)!important;box-sizing:border-box!important}
+  #study-side .set-list{margin:0!important}
+}
