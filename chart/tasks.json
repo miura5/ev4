@@ -9388,9 +9388,9 @@
   "id": "B-500",
   "kind": "bug",
   "title": "Bug (reported Oct 29): A Mini quiz question shows its own worked answer in the question.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "No question shown in the Mini quiz (or any runner) carries its answer or worked solution in the stem; the check that holds written keys (B-481) covers the Mini quiz's questions; test.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9399,6 +9399,10 @@
   "reportedAt": "2026-10-29T15:31:47.951Z",
   "board": {
    "row": "v4 B-500: A Mini quiz question shows its own worked answer in the"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:31:56.336Z"
   }
  }
 ]
