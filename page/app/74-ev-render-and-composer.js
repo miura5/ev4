@@ -283,16 +283,19 @@
     // call; "idea: …" stays a build ask (BUILD_ASK).
     const NOTE_ASK = /^\s*note\s*:\s*(\S[\s\S]*)$/i;
     async function noteSave(text, words) {
+      // B-497: nothing he wrote is cut: a short title from its first line, every word in the body; its course is the
+      // one his words or the conversation's last lines today name, else the next exam's
+      const recent = allMsgs()
+        .filter(m => !m.greeting && m.text && E.chicagoDate(m.at) === today)
+        .slice(-6)
+        .reverse()
+        .map(m => m.text);
       await mattSay(text);
       try {
-        await write(
-          E.noteIdea(words.replace(/\s+/g, ' ').trim().slice(0, 400), {
-            at: now(),
-            date: today,
-            existing: S.ideas || [],
-          })
-        );
-        await evSay('Saved to Record as a note.', [], { tier: 'local' });
+        const { title, body } = E.noteParts(words);
+        const course = E.noteCourse({ text: words, recent, exams: S.exams, date: today });
+        await write(E.noteIdea(title, { at: now(), date: today, body, course: course || '', existing: S.ideas || [] }));
+        await evSay('Saved to Record as a note' + (course ? ' under ' + course : '') + '.', [], { tier: 'local' });
       } catch (e) {
         await evSay('I couldn’t save that note (' + ((e && (e.message || e.code)) || 'error') + ').', [], {
           tier: 'local',

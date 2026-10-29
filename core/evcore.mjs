@@ -1789,7 +1789,7 @@ const EVCore = (() => {
     safeId,
     slug,
   });
-  Object.assign(LIB, makeCourseScope({ defaultCourse })); // B-498: spotCourse, read by study plans and the page
+  Object.assign(LIB, makeCourseScope({ defaultCourse, courseTable })); // B-498, B-497: spotCourse, noteCourse
   const {
     MATERIAL_KINDS,
     citeMaterial,
