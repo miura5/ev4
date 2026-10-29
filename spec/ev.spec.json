@@ -5076,8 +5076,7 @@
         }
        },
        "required": [
-        "id",
-        "objective"
+        "id"
        ],
        "additionalProperties": false
       }

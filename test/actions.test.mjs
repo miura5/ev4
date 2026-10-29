@@ -724,11 +724,7 @@ test('B-233 (D-242): accept, snooze, decline and solid are events on each spot n
     tap('weakspot-decline', { items: [{ id: 'ws-zz' }] }, W).refused,
     /weakspots\/ws-zz is not in the record/
   );
-  assert.match(
-    tap('weakspot-accept', { items: [{ id: 'ws-a' }] }, W).refused,
-    /do not fit/,
-    'accept needs an objective'
-  );
+  assert.equal(tap('weakspot-accept', { items: [{ id: 'ws-a' }] }, W).ok, true, 'accept without an objective (B-499)');
   assert.match(tap('weakspot-accept', { items: [] }, W).refused, /do not fit/);
   const s = tap(
     'weakspot-snooze',

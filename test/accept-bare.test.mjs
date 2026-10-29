@@ -56,9 +56,9 @@ test('B-499: an objective picked later names it and keeps its schedule; a pick o
   const after = EV.deriveWeakspot(picked, [ans]);
   assert.equal(after.objective, 'BX3-2');
   assert.deepEqual([after.status, after.streak, after.nextDue], [before.status, before.streak, before.nextDue]);
-  // with the actions table as it is today, a pick still names its objective, and a bare Accept is refused, not sent
+  // the actions table allows a bare Accept (Matt's OK, Oct 29): a pick names its objective, and a bare Accept is sent
   const tap = A.actor(spec, 'tap');
   const ctx = { now: NOW, weakspots: models([proposed]) };
   assert.equal(tap('weakspot-accept', { items: [{ id: proposed.id, objective: 'BX3-2' }] }, ctx).ok, true);
-  assert.equal(tap('weakspot-accept', { items: [{ id: proposed.id }] }, ctx).ok, false);
+  assert.equal(tap('weakspot-accept', { items: [{ id: proposed.id }] }, ctx).ok, true);
 });
