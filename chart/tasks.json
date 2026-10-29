@@ -9445,8 +9445,8 @@
  {
   "id": "B-504",
   "kind": "task",
-  "title": "Proprietary chapter in the Phase 3 review (B-415): fix the component list, the page/ds file layout, the @layer order, the harness selector policy, the budget and whether page/app/01-kit.js splits",
-  "dod": "The chapter is in the review's plan; any change to D-372 to D-379 is recorded as a superseding decision; the component list is final",
+  "title": "Settle Proprietary's component list now (moved ahead of the Phase 3 review by D-384): from the UX map probe's findings, the research report and the page code, fix the component list, the page/ds file layout, the @layer order, the harness selector policy, the budget and whether page/app/01-kit.js splits",
+  "dod": "A short design note (Claude Doc section in the Proprietary doc) with the final component list and each component's states, mapped to the probe findings it fixes; any change to D-372 to D-379 recorded as a superseding decision; the Phase 3 review later reviews Proprietary as built",
   "milestone": "Phase 3 review",
   "status": "open",
   "depends": [
