@@ -158,6 +158,15 @@ export function answerFor(brief, later = false) {
     });
     return { text: 'Stub practice set: two questions.', items: [q(1), q(2)] };
   }
+  if (kind === 'flashcards')
+    return {
+      text: 'Stub flashcards on dosage terms.',
+      items: [
+        { term: 'mcg', definition: 'microgram, 1/1000 of a milligram' },
+        { term: 'gtt', definition: 'drops' },
+        { term: 'Drop factor', definition: 'drops per mL of the tubing', verify: true },
+      ],
+    };
   if (kind === 'exam-plan' && ctx.mode === 'make' && ctx.section) return studyPlanAnswer(brief, later);
   if (kind === 'exam-plan' && ctx.mode === 'edit' && ctx.draft) return planEditAnswer(brief);
   if (kind === 'exam-plan' && ctx.mode && ctx.refused) return { text: 'Stub: nothing to plan.', failed: ctx.refused };

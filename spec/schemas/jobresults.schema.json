@@ -149,6 +149,10 @@
       "offerNewPlan": {
        "type": "boolean",
        "description": "D-362: an exam-plan edit found his ask needs a whole new plan and offered the Make a new plan chip instead of a patch"
+      },
+      "quizlet": {
+       "type": "string",
+       "description": "B-479: a flashcards job: its cards as Quizlet import text, term TAB definition, one card per line"
       }
      },
      "required": [],

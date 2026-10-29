@@ -68,7 +68,7 @@ export const CODE_STEPS = {
     const idx = library(db);
     const q = `${job.title} ${job.brief}`;
     const context = {};
-    if (kind === 'study-guide') context.passages = passages(idx, q, 6);
+    if (kind === 'study-guide' || kind === 'flashcards') context.passages = passages(idx, q, 6); // B-479
     if (kind === 'practice-set') {
       context.weakSpots = EV.rankDue(ms.filter(EV.isActive), '9999-12-31', db.exams || [])
         .map(w => ({ w, s: EV.similarity(q, w.topic + ' ' + w.objective) }))
@@ -307,6 +307,17 @@ export const AGENT_FOLDS = {
         result.setId = setId;
         say.push(`Practice set ${setId}: ${items.length} of ${raw.length} questions kept.`);
       } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
+    }
+    if (!failed && job.kind === 'flashcards') {
+      // B-479: the cards go to Quizlet, not into E.V.: the job's card holds them as import text with a Copy button
+      const block = EV.cardsText((answer.items || []).slice(0, 40));
+      const n = block ? block.split('\n').length : 0;
+      if (n) {
+        result.quizlet = block;
+        result.text =
+          `${n === 1 ? 'Your flashcard is' : n + ' flashcards are'} ready to paste into Quizlet: tap Copy on this card, ` +
+          'then in Quizlet choose Create, Import and paste.';
+      } else result.text += ' (No cards came back, so there is nothing to copy.)';
     }
     const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
     const saved = (planId, data, days) => {

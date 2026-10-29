@@ -446,3 +446,34 @@ test('B-232 (D-115): the staging check knows a weak-spot bump copy as the migrat
   for (const [why, id, data] of bad) assert.equal(knownWriter(doc('legacy', id, data), new Map(), have), null, why);
   assert.equal(knownWriter(doc('notes', copy.id, copy.data), new Map(), have), null, 'only in legacy');
 });
+
+test('B-479: a flashcards job ends with its cards on the job card as Quizlet import text, and no set', async () => {
+  const { writes } = await run('flashcards', { brief: 'dosage terms, units and abbreviations' });
+  const all = flat(writes);
+  const done = all.find(w => w.collection === 'jobresults' && w.data.status === 'done');
+  assert.ok(done, 'the job is done');
+  assert.equal(
+    done.data.result.quizlet,
+    'mcg\tmicrogram, 1/1000 of a milligram\ngtt\tdrops\nDrop factor\tdrops per mL of the tubing [verify]'
+  );
+  assert.match(done.data.result.text, /^3 flashcards are ready to paste into Quizlet/);
+  assert.ok(!all.some(w => w.collection === 'sets'), 'no flashcard set is made in E.V.');
+  const talk = all.find(w => w.collection === 'talk');
+  const msg = Object.values(talk.data.messages)[0];
+  assert.match(msg.text, /ready to paste into Quizlet/);
+  assert.deepEqual(msg.cards, [{ type: 'job', id: done.id }]);
+});
+
+test('B-479: the Quizlet block is term TAB definition, one card per line, verify marks kept', async () => {
+  const EV = (await import('../core/evcore.mjs')).default;
+  assert.equal(
+    EV.cardsText([
+      { term: ' mg/kg ', definition: 'milligrams per\tkilogram\nof body weight' },
+      { term: 'BSA', definition: 'body surface area [verify]', verify: true },
+      { term: 'q6h', definition: 'every 6 hours', verify: true },
+      { term: '', definition: 'no term' },
+      { term: 'PRN' },
+    ]),
+    'mg/kg\tmilligrams per kilogram of body weight\nBSA\tbody surface area [verify]\nq6h\tevery 6 hours [verify]'
+  );
+});

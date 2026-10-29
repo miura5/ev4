@@ -4221,6 +4221,10 @@
     "label": "Shareable practice page",
     "guide": "The page is already built in code from the set the brief names (D-110): its questions and options, each answer and rationale shown after an attempt, no name and none of his weak-spot data. If context.refused says why the set cannot be shared, say that in failed and make no call. Otherwise make the one Artifact publish in context.groups exactly as listed, change nothing in the page, and answer with one or two warm lines in text (it is private until he shares it from the page’s Share menu; he answers the same set in E.V. so his weak spots still track) and the returned link first in links."
    },
+   "flashcards": {
+    "label": "Flashcards",
+    "guide": "Write the number of flashcards the brief asks for (default 20, at most 40) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. They go to Quizlet: he pastes them there, so make no set and no doc, and leave links out. In text, one short line on what the cards cover."
+   },
    "general": {
     "label": "Background task",
     "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."

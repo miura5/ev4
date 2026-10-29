@@ -26,6 +26,7 @@ export const PROOF_JOBS = {
   'exam-retro': 'The retro for E3.',
   'clinical-prep': '2026-10-28: the skills to review for this clinical day.',
   'share-set': 'drill-E4-ch39 for my study group.',
+  flashcards: '10 flashcards on dosage units and abbreviations.',
   general: 'List the major electrolytes and one sign of each being low.',
 };
 /** What each kind ends as in the app: a share-set is refused there (its page is published on claude.ai only). The
@@ -66,6 +67,10 @@ export function judge(kind, job, res, made) {
       });
     if (kind === 'exam-plan')
       lines.push({ ok: !!made, what: made ? `exam-plan: plans/${made.id} written` : 'exam-plan: no plan saved' });
+    if (kind === 'flashcards') {
+      const n = result.quizlet ? String(result.quizlet).split('\n').length : 0; // B-479: on the job card, for Quizlet
+      lines.push({ ok: n > 0, what: `flashcards: ${n} cards as Quizlet import text` });
+    }
   }
   lines.push({ ok: !!(job && job.data.fired && job.data.fired.ok), what: `${kind}: handed to the runner at once` });
   return lines;

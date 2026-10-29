@@ -432,8 +432,21 @@ export function makeSkills(core) {
       .join(' · ');
   }
 
+  /** Flashcards as Quizlet import text: term, a tab, the definition, one card per line (B-479: tabs and line breaks
+   *  inside a card become spaces, a card marked verify keeps "[verify]" in its definition, empty cards are left out). */
   function cardsText(cards) {
-    return (cards || []).map(c => `${c.term}\t${c.definition}`).join('\n');
+    const flat = t =>
+      String(t == null ? '' : t)
+        .replace(/[\t\r\n]+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    return (cards || [])
+      .filter(c => c && flat(c.term) && flat(c.definition))
+      .map(c => {
+        const d = flat(c.definition);
+        return flat(c.term) + '\t' + (c.verify && !/\[verify\]/i.test(d) ? d + ' [verify]' : d);
+      })
+      .join('\n');
   }
   /**
    * The open weak spots as Quizlet cards (B-41, Matt's pick 5): the topic as the term; the objective's text and the

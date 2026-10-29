@@ -510,6 +510,13 @@
           p.append(fmt(r.text));
           box.append(p);
         } else box.append(el('p', 'meta', st.detail));
+        // B-479: a flashcards job's cards, as the Quizlet import text Copy puts on the clipboard, exactly
+        const qz = j.status === 'done' && typeof r.quizlet === 'string' && r.quizlet ? r.quizlet : '';
+        if (qz) {
+          const pre = el('pre', 'quizlet-block', qz);
+          pre.setAttribute('aria-label', 'Flashcards as Quizlet import text');
+          box.append(pre);
+        }
         const links = (r.links || []).filter(l => l && /^https:\/\//.test(l.url || ''));
         if (links.length) {
           const L = el('div', 'links');
@@ -537,6 +544,30 @@
               { primary: true }
             )
           );
+          any = true;
+        }
+        if (qz) {
+          const n = qz.split('\n').length;
+          const cp = btn(
+            `Copy ${plural(n, 'card')} for Quizlet`,
+            async () => {
+              try {
+                await navigator.clipboard.writeText(qz);
+                cp.textContent = 'Copied. In Quizlet: Import, then paste';
+              } catch {
+                const ta = el('textarea');
+                ta.readOnly = true;
+                ta.value = qz;
+                ta.setAttribute('aria-label', 'Flashcards as Quizlet import text');
+                box.append(ta);
+                ta.focus();
+                ta.select();
+                toast('Select all and copy, then paste into Quizlet’s Import.');
+              }
+            },
+            { primary: true }
+          );
+          a.append(cp);
           any = true;
         }
         if (j.status === 'done' && j.kind === 'exam-plan') {

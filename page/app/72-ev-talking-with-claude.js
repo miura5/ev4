@@ -168,7 +168,12 @@
               : 'Objectives not yet solid: ' +
                 (sc.objectives
                   .filter(o => objState(o, acc[o.id]).state !== 'solid')
-                  .map(o => `${o.id} ${String(o.text || '').slice(0, 70).replace(/\.$/, '')}`)
+                  .map(
+                    o =>
+                      `${o.id} ${String(o.text || '')
+                        .slice(0, 70)
+                        .replace(/\.$/, '')}`
+                  )
                   .join('; ') || 'none, all solid') +
                 '. ') +
             `Open weak spots for it: ${ws}; ${plan}.`
@@ -368,7 +373,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. flashcards: Quizlet flashcards on a topic (put the topic and number in the brief); the cards come back on the job card ready to paste into Quizlet, and there is no flashcard set in E.V. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
