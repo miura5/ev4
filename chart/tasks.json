@@ -9248,5 +9248,22 @@
   "board": {
    "row": "v4 B-493: A flashcards job left the words '; verify: true' inside two card…"
   }
+ },
+ {
+  "id": "B-494",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): On a phone, Today's Cards row hides its Start button until hover; tapping the row's name works.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "staging e2e of B-487 at d7a55f5",
+  "words": "On a phone, Today's Cards row hides its Start button until hover; tapping the row's name works.",
+  "reportedAt": "2026-10-29T14:49:35.202Z",
+  "board": {
+   "row": "v4 B-494: On a phone, Today's Cards row hides its Start button until hover;…"
+  }
  }
 ]
