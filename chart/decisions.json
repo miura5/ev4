@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-384",
+  "date": "Oct 29",
+  "title": "Proprietary is built now, before the UI polish and before the Phase 3 review: token freeze and audit, component list settled from the UX map and the code, foundations, the Gallery, components, every view moved invisibly; then the UI polish lands through tokens and components; then the review and consolidation",
+  "why": "Matt (Oct 29): a redesign done later keeps sliding and goes stale, as backlog items have; done now while the probe and research are fresh, every polish fix lands once, bugs in what he sees and touches get one place to be fixed, design mock-ups start from the Gallery, and consolidation stays about the codebase rather than also carrying a design system. Studying-breaking bugs and the flashcards feature stay ahead of it; behaviour fixes from the probe are bugs, not polish.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-370"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-383",
   "date": "Oct 29",
   "title": "Every Proprietary component shows in the Gallery in every state, and the Gallery's harness asserts tap size, contrast, row height and focus at 390 and 1280 in light and dark",
