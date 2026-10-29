@@ -309,7 +309,8 @@ seed.sets['more-' + today + '-nav'] = {
     topic: who + ' basics',
     type: 'single',
     cjStep: 'recognize-cues',
-    stem: `Which theorist is question ${i + 1} about? (${who})`,
+    // B-500: a stem never names its answer (it used to end "(Erikson)"); each still names its own question
+    stem: `For question ${i + 1}, which theorist described ${['trust vs. mistrust', 'concrete operations', 'moral reasoning'][i]}?`,
     options: [who, 'Freud', 'Maslow', 'Skinner'],
     correct: [0],
     rationales: [who + ' is right.', 'Not Freud.', 'Not Maslow.', 'Not Skinner.'],
