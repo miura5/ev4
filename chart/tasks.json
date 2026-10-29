@@ -9108,7 +9108,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Taken Oct 29 morning as today's priority (Matt). One builder; part 1 on staging aimed for early afternoon CT.",
+  "notes": "Matt (Oct 29): spaced repetition uses Anki-style effort ratings. Again/Hard/Good/Easy with SM-2 ease per card (start 2.5, floor 1.3); intervals shown on the buttons; in Multiple choice a wrong pick is Again and a right pick asks Hard/Good/Easy. Replaces the fixed-step schedule.",
   "commit": null,
   "source": "chat, Oct 29 (Matt)",
   "words": "Flashcard decks inside E.V. (D-368), part 1: per-course decks in Study beside Practice sets; E.V. makes a deck from a chat ask (topic and count) and cards can be added and edited by hand; study a deck in Flip (tap to reveal, Got it / Again) and Multiple choice (distractors from the deck's other cards); each card has its own spaced-repetition schedule (new cards due now; Got it pushes the next due out on a growing interval; Again brings it back this session and tomorrow); due cards appear on Today as one 'Cards · n due' item.",
