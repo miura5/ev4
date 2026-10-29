@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-369",
+  "date": "Oct 29",
+  "title": "A one-time UX map probe is the baseline for the final UI/UX polish; later changes get delta probes",
+  "why": "Matt (Oct 29): before polish, the architecture review and consolidation, two cold testers (1280, 390 one-handed) walk every journey recording expected / happened / after-thought, motion and fine detail, and ideas; a fresh agent turns it into a living UX map doc outside the repo (journeys, map diagram with frictions, per view, E.V. window, rubric baseline, limits, Matt's own pass with agree/disagree per signal, Tasks to add, coverage ledger). After flashcards or tweaks only the journeys a change touched are re-probed and appended; never a full re-run.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-368",
   "date": "Oct 29",
   "title": "Flashcards return inside E.V. (Matt, Oct 29): course decks with Flip, Multiple choice and Written study, Anki-style spaced repetition per card, a Learn mode, due cards on Today, and a paste import of Quizlet export text; Quizlet stays read-only (B-17) and E.V. no longer routes cards to Quizlet",
