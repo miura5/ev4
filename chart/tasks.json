@@ -9963,5 +9963,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:24.277Z"
   }
+ },
+ {
+  "id": "B-533",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Ask for changes as a field on the plan card instead of switching to the conversation.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Ask for changes as a field on the plan card instead of switching to the conversation.",
+  "reportedAt": "2026-10-29T16:01:28.089Z",
+  "board": {
+   "row": "v4 B-533: Ask for changes as a field on the plan card instead of switching to…"
+  }
  }
 ]
