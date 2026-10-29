@@ -456,7 +456,9 @@ const EVCore = (() => {
     return { ok: errors.length === 0, errors, warnings };
   }
   function validItems(set, opts) {
-    return (set && Array.isArray(set.items) ? set.items : []).filter(q => validateItem(q, opts).ok);
+    // B-500: a question whose stem gives its answer away is never shown, in any runner (item-kinds stemGivesAway)
+    const fair = q => validateItem(q, opts).ok && !practiceReply.stemGivesAway(q);
+    return (set && Array.isArray(set.items) ? set.items : []).filter(fair);
   }
   /**
    * Scores an answer. chosen: option indexes (single/sata), one column index per row (matrix), or for a numeric item

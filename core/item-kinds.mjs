@@ -663,12 +663,33 @@ export function makeItemKinds(core) {
     const stem = String(q.stem || '');
     if (!ASKS.test(stem)) return 'its stem asks no question';
     if (WORKED.test(stem)) return 'its stem gives its answer away';
+    return stemGivesAway(q);
+  }
+  // B-500: what a stem already written may never hold: its answer said ("Answer: 37.5 mg", "the correct answer is B"),
+  // a solution or rationale written into it, or its key repeated after the question
+  const SAYS_ANSWER =
+    /\banswers?\s*(?:is\s*)?[:=]|\b(?:correct|right)\s+(?:answer|option|choice)\s+(?:is|would be|=)\b|\b(?:solution|working|worked (?:answer|solution)|rationale|explanation)\s*:/i;
+  /**
+   * B-500: why a question's stem gives its answer away, or null: the check every runner holds a stored question to
+   * before it is shown (EVCore.validItems), the Mini quiz's included. Unlike the writer's stemProblem it never asks
+   * that the stem be phrased as a question, so an older question only goes when it shows its answer.
+   */
+  function stemGivesAway(q) {
+    if (!q || typeof q !== 'object' || q.type === 'open') return null;
+    const stem = String(q.stem || '');
+    if (SAYS_ANSWER.test(stem)) return 'its stem gives its answer away';
+    const opts = Array.isArray(q.options) ? q.options : [];
+    const key = q.type !== 'matrix' && Array.isArray(q.correct) ? q.correct : [];
+    // the key's own words after the question ("Which vitamin builds collagen? (Vitamin C)")
+    const tail = flat(stem.slice(stem.lastIndexOf('?') + 1));
+    const holds = t => t.length >= 4 && new RegExp('(?:^|\\W)' + esc(t) + '(?:\\W|$)').test(tail);
+    if (stem.includes('?') && key.some(i => holds(flat(opts[i])))) return 'its stem gives its answer away';
     const keys =
       q.type === 'numeric'
         ? typeof q.answer === 'number'
           ? [{ value: q.answer, unit: q.unit || null }]
           : []
-        : (Array.isArray(q.correct) ? q.correct : []).map(i => optionNumber((q.options || [])[i])).filter(Boolean);
+        : key.map(i => optionNumber(opts[i])).filter(Boolean);
     const said = [...stem.matchAll(new RegExp(NUMBER.source, 'g'))].map(m => ({
       value: Number(m[1].replace(/,/g, '')),
       unit: m[2] ? unitKey(m[2]) : null,
@@ -729,6 +750,7 @@ export function makeItemKinds(core) {
       tagItems,
       ITEM_KEYS,
       answerKeyProblem, // B-481
+      stemGivesAway, // B-500
       calcAnswer, // B-481
       setShortfall, // B-480
     }, // B-446, B-455
