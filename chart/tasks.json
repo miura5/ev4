@@ -9320,5 +9320,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:07:38.837Z"
   }
+ },
+ {
+  "id": "B-497",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): A long note sent through the chat ('note: …') was saved with its whole text as the title and cut off, losing the last third without warning, and got no course.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX probe tester B, staging d7a55f5",
+  "words": "A long note sent through the chat ('note: …') was saved with its whole text as the title and cut off, losing the last third without warning, and got no course.",
+  "reportedAt": "2026-10-29T15:14:56.930Z",
+  "board": {
+   "row": "v4 B-497: A long note sent through the chat ('note: …') was saved with its…"
+  }
  }
 ]
