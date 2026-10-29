@@ -6,6 +6,27 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 29, ~noon Central): v4.5.18 live; Proprietary design system started; three builders running
+
+- **Live:** v4.5.18 at db90509, recorded GREEN. It contains flashcards part 1 (B-487), the stringified-plan fix (B-491), the new icon (B-490) and the stray verify words fix (B-493).
+- **The UX map probe (D-369) is done.** Doc: https://claude.ai/artifact/Ts4o6bG8FjQF3Dkyr8Rx37. It records 66 findings, a rubric baseline of 2.6/5 and 19 tasks to add. Matt is marking it up with agree/disagree; file its look tasks after his pass. Its 42 behaviour findings are filed as B-517 to B-535, milestone "UX probe fixes", plus B-497 to B-500. The probe method is in the workflow map.
+- **Proprietary (D-370, D-371 to D-387):** E.V.'s own design system, with its reference page named the Gallery. Doc: https://claude.ai/artifact/Lf1aKShdVK5ojjjgwk5yfv.
+  - D-384 (Matt): it is built now, before the UI polish and before the Phase 3 review.
+  - D-385 (Matt): one-time exception allowing up to 4 builders in tracks or lanes with file ownership. Staging stays serialized, and live stays on his word.
+  - Tasks B-501 to B-516. B-503 and B-504 are done. The component list is 16 components plus 7 patterns, in page/app/01-ui.js under the `DS` namespace (D-386). Harness selectors follow D-387.
+  - The roadmap (v11) carries the calendar: Gallery Oct 29, components Oct 30, pilot Oct 31, views Nov 1–2 (staging only around Matt's Sunday exam), E.V. window Nov 3, cleanup Nov 4, polish about Nov 5–6.
+- **Running now** (D-358: check each one's status first):
+  - The flashcards track has B-488 built at 44c867e (with B-494) and is now on B-489, then B-495, then B-496.
+  - The bugs track is on B-498 (cross-course mixing), B-499, B-500, B-497.
+  - The Proprietary track is on B-502, then B-501. Next after those: B-505 foundations, then B-506 Gallery.
+  - When bugs and flashcards wrap up, a lane planner cuts B-507 to B-514 into lanes.
+- **Tonight:** one staging release (bugs + flashcards + the invisible Proprietary skeleton + Gallery), then one real run, one review and a card. Live only on "ship <sha>".
+- **Waiting on Matt:**
+  - His markup of the UX map.
+  - The Max-plan choice, only if the calendar slips past Nov 23.
+  - Installing the new icon: remove the app from the home screen and re-add it.
+- **Filed small items:** B-492 (staging read-back retry), B-495, B-496.
+
 ## Update (Oct 29, morning Central): v4.5.17 live
 
 - **Live: v4.5.17 at 91847f6**, recorded GREEN (record and the ev-live app; the claude.ai page is frozen, D-367).
