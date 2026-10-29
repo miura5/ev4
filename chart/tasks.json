@@ -8845,5 +8845,22 @@
    "outcome": "task",
    "at": "2026-10-28T23:52:30.290Z"
   }
+ },
+ {
+  "id": "B-475",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by the first B-465 build before date edits were read; it is to be retired by marking on staging (nothing deleted), and nothing like it reaches live (the live dry-run at f39d054 writes no exams).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review, Oct 28 evening",
+  "words": "Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by the first B-465 build before date edits were read; it is to be retired by marking on staging (nothing deleted), and nothing like it reaches live (the live dry-run at f39d054 writes no exams).",
+  "reportedAt": "2026-10-29T01:34:14.968Z",
+  "board": {
+   "row": "v4 B-475: Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by…"
+  }
  }
 ]

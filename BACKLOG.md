@@ -548,3 +548,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-281 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; folded into B-297 to B-300 (Study), B-301 (Progress) and B-302 (Record). |
 | B-282 | task |  |  | plan 5reEBoToU1W5pmnq5q48ij | declined | Re-planned by hand-off 2: v4 UI; replaced by B-303. |
 | B-321 | task |  |  | plan 1eW5FgG9VNzhCySbL1uWuo | declined | Waiting on Matt to scope it: its definition of done is written with him when he does (hand-off 3). |
+| B-475 | bug | 2026-10-29T01:34:14.968Z | Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by the first B-465 build before date edits were read; it is to be retired by marking on staging (nothing deleted), and nothing like it reaches live (the live dry-run at f39d054 writes no exams). | release review, Oct 28 evening | inbox |  |
