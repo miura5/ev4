@@ -1874,47 +1874,29 @@ body.has-line #today-week .wk-her{display:none}
    the right panel from 1200 px, and reads under the list from 1024 to 1199 px. */
 #p-notes > .n-list{margin:-18px -16px 0;gap:0}
 #p-notes .n-list .col-main{gap:0}
-#p-notes .n-toolbar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-#p-notes .n-toolbar .sp{flex:1}
 #p-notes .n-filters{align-self:center;flex:none}
-#p-notes .n-filters .n{color:var(--quiet);font-weight:400;font-variant-numeric:tabular-nums}
-#p-notes .n-grp{display:flex;gap:8px;padding:14px 18px 6px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-#p-notes .n-grp .n{color:var(--faint);font-weight:400;font-variant-numeric:tabular-nums}
 #p-notes .n-row{display:flex;align-items:center;gap:12px;height:auto;min-height:44px;padding:0 18px;border-bottom:1px solid var(--line);color:var(--text);font:400 calc(13.5px * var(--ts)) var(--sans);box-sizing:border-box}
 #p-notes .n-row:hover,#p-notes .n-row.sel{background:var(--chrome)}
 #p-notes .n-row .nm{flex:1 1 auto;min-width:0;align-self:stretch;appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #p-notes .n-row .nm:focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:-2px;border-radius:4px}
-#p-notes .n-row .sicon{color:var(--quiet)}
 #p-notes .n-row .hov{visibility:hidden}
 #p-notes .n-row:hover .hov,#p-notes .n-row:focus-within .hov{visibility:visible}
 #p-notes .n-row .nk,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;text-align:right}
-#p-notes .n-row .nk{width:92px;overflow:hidden;text-overflow:ellipsis}
-#p-notes .n-row .t{min-width:70px}
 #p-notes .n-row .n-unsaved{flex:none;font-size:calc(12.5px * var(--ts));color:var(--urg);white-space:nowrap} /* B-410: refused, kept on this device */
 #p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
 #p-notes .nempty span{max-width:360px}
 #p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
 #p-notes .nempty b{color:var(--text);font-size:calc(15px * var(--ts));font-weight:600}
 #p-notes .nempty .btn{margin-top:6px}
-#p-notes .n-pv .badge{align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #p-notes .n-pvt{margin:0;font:600 calc(17px * var(--ts))/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
-#p-notes .n-props{display:flex;flex-direction:column;gap:2px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
-#p-notes .n-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
-#p-notes .n-props .prop > span:first-child{color:var(--quiet)}
-#p-notes .n-props .prop-v{overflow-wrap:anywhere}
-#p-notes .n-otl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-#p-notes .n-outline{display:flex;flex-direction:column;margin-top:-8px}
 #p-notes .n-outline .si{height:30px;padding:0 10px;font-size:calc(13px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
-#p-notes .n-acts{display:flex;flex-direction:column;gap:10px}
 #p-notes .n-acts .btn{width:100%;justify-content:center}
-#p-notes .n-pvfoot,#p-notes .n-pvnone{font-size:calc(12.5px * var(--ts));color:var(--quiet);line-height:1.5}
 @media (max-width:1199px){
   #p-notes .n-pv{display:flex;flex-direction:column;gap:14px;padding:18px;border-top:1px solid var(--line);margin-top:24px}
 }
 #p-notes .n-fbar{position:sticky;top:calc(var(--mh-h,48px) + 8px);z-index:6;display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg)}
 /* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
    nothing of the note shows in the ground above the page while it scrolls */
-#p-notes > .n-ed{margin:-18px -16px 0}
 #p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--line-h,0px));padding:0 28px;box-sizing:border-box}
 @media (min-width:600px){
   body:has(#notes-editor:not([hidden])) .mh::before{content:"";position:absolute;left:-1px;right:-1px;top:-8px;height:8px;background:var(--sunken);pointer-events:none}
@@ -1923,11 +1905,7 @@ body.has-line #today-week .wk-her{display:none}
 /* D-361: the quiet line beside the strip's control, on its row */
 .estrip #ev-uncounted:not([hidden]){display:inline-flex;align-items:center;flex:0 1 auto;color:var(--faint)}
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
-#p-notes .fsep{width:1px;height:18px;background:var(--line);margin:0 6px;flex:none}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
-#p-notes .n-stb .gl,#p-notes .n-stm .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:600 11.5px var(--sans);color:var(--quiet);letter-spacing:-.02em}
-#p-notes .n-stb .lb{flex:1;text-align:left}
-#p-notes .n-stb .sicon{color:var(--quiet)}
 #p-notes .menu{position:absolute;z-index:30;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box;display:flex;flex-direction:column}
 #p-notes .menu[hidden],#p-notes .n-lkp[hidden]{display:none}
 /* B-442: Ask E.V. on words selected in a note, under the selection */
@@ -1936,31 +1914,16 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .menu .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
 #p-notes .menu .mi:hover,#p-notes .menu .mi:focus-visible,#p-notes .menu .mi.on{background:var(--hover)}
 #p-notes .menu .mi.on{font-weight:500}
-#p-notes .n-stm{left:84px;top:40px;width:252px}
-#p-notes .n-stm .mi .lb{flex:1}
-#p-notes .n-stm .mi .ks{font-size:12px;color:var(--faint);letter-spacing:.04em;font-variant-numeric:tabular-nums}
-#p-notes .n-stm .mi.on .gl{color:var(--text)}
 #p-notes .n-lkp{position:absolute;left:300px;top:40px;z-index:30;width:300px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
-#p-notes .n-lkp .lab{font-size:12px;color:var(--quiet);font-weight:500}
 #p-notes .n-lkp .in{height:38px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:400 14px var(--sans);color:var(--text);width:100%;box-sizing:border-box}
-#p-notes .n-lkerr{font-size:12px;color:var(--urg)}
-#p-notes .n-lkerr:empty{display:none}
-#p-notes .n-lkrow{display:flex;justify-content:flex-end;gap:8px}
 #p-notes .n-doc{position:relative;width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
-#p-notes .n-meta{position:relative;display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:var(--quiet);margin:0 0 8px -10px}
 #p-notes .n-meta .btn{color:var(--quiet);gap:5px}
 #p-notes .n-meta .ico{width:14px;height:14px}
-#p-notes .n-meta .dt{padding:0 4px}
-#p-notes .n-meta .dt::before{content:"·";margin-right:8px}
-#p-notes .n-cmenu{left:0;top:32px;width:200px}
 #note-body{outline:none;min-height:50vh;white-space:pre-wrap;overflow-wrap:anywhere;font-size:calc(15.5px * var(--ts));line-height:1.65;counter-reset:nol}
 /* B-437: spaces kept as typed (pre-wrap): a line holding only spaces, as Enter before a heading's trailing space
    leaves, has its height, and the caret's place is the one he sees */
 #note-body.empty:not(.untitled)::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
 /* B-440: an empty first heading 1 reads a grey "Untitled"; under it, while the note is empty, the hint */
-#note-body.untitled>.nb:first-child{position:relative}
-#note-body.untitled>.nb:first-child::before{content:"Untitled";position:absolute;left:0;top:0;pointer-events:none;color:var(--faint)}
-#note-body.empty.untitled::after{content:attr(data-placeholder);display:block;margin-top:2px;pointer-events:none;color:var(--faint);font-size:calc(14px * var(--ts));max-width:620px}
 #note-body .nb{margin:6px 0}
 #note-body h1.nb{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #note-body h2.nb{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
@@ -1969,9 +1932,6 @@ body.has-line #today-week .wk-her{display:none}
 #note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{position:relative;margin:1px 0;padding-left:28px}
 /* B-474: Safari fills a selection's left gap from the editor's edge to the text, a band under the bullets, numbers and
    checkboxes; an identity transform makes each list line its own selection root, so the fill starts at its text */
-#note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{transform:translateX(0)}
-#note-body .nb:not([data-t=ol]){counter-reset:nol}
-#note-body .nb[data-t=ul]::before{content:"•";position:absolute;left:10px;color:var(--faint)}
 #note-body .nb[data-t=ol]{counter-increment:nol}
 #note-body .nb[data-t=ol]::before{content:counter(nol) ".";position:absolute;left:0;width:22px;text-align:right;color:var(--faint);font-size:14px;font-variant-numeric:tabular-nums}
 #note-body .nb[data-indent="1"]{margin-left:24px}#note-body .nb[data-indent="2"]{margin-left:48px}#note-body .nb[data-indent="3"]{margin-left:72px}
@@ -1981,14 +1941,10 @@ body.has-line #today-week .wk-her{display:none}
 #note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
 #note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
 #note-body .n-chk.done .ico{opacity:1}
-#note-body strong{font-weight:600}
 #note-body u{text-underline-offset:3px}
 #note-body a{color:inherit;text-decoration:underline;text-decoration-color:var(--quiet);text-underline-offset:3px}
-.mh .n-crumb{font:400 calc(13px * var(--ts)) var(--sans);color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mh .n-sync{order:9;display:inline-flex;align-items:center;gap:5px;margin-left:auto;font:400 calc(12.5px * var(--ts)) var(--sans);color:var(--quiet);white-space:nowrap}
-.mh .n-sync .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .mh .n-sync.bad{color:var(--urg)}
-body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:12px}
 /* B-404 (D-326, NoteStates): the sync line's two-versions state, and the picker above his text */
 .mh .n-sync.warn .ico{color:var(--att)}
 #p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}

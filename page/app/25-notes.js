@@ -88,14 +88,9 @@
       return s;
     };
     const nGlyph = g => (NI[g] ? nIcon(NI[g]) : document.createTextNode(g));
-    const nBtn = (cls, label, d, on) => {
-      const b = el('button', cls);
-      b.type = 'button';
-      if (label) b.setAttribute('aria-label', label);
-      if (d) b.append(nIcon(d));
-      if (on) b.addEventListener('click', on);
-      return b;
-    };
+    // B-512 (D-376): every Notes button is Proprietary's Button, its old classes riding along (D-387)
+    const nBtn = (cls, label, d, on) =>
+      DS.button({ cls, ariaLabel: label || undefined, icon: d ? nIcon(d) : undefined, onClick: on || undefined });
     const courseKeys = () => Object.keys(EV_SPEC.courses || {}).filter(k => !k.startsWith('_'));
     const defaultCourse = () => courseKeys().find(k => EV_SPEC.courses[k].default) || courseKeys()[0] || null;
     const noteName = n => (n && (n.title || E.noteTitleOf(n.blocks || []))) || 'Untitled';
@@ -151,10 +146,9 @@
     const nList = el('div', 'panel n-list');
     nList.id = 'notes-list';
     const nListBar = el('div', 'n-toolbar');
-    const nFilters = el('div', 'seg n-filters');
+    // B-512: the course filters are Proprietary's Segmented, made again on each paint (renderNotes)
+    let nFilters = DS.segmented({ label: 'Course', cls: 'n-filters' });
     nFilters.id = 'notes-filters';
-    nFilters.setAttribute('role', 'group');
-    nFilters.setAttribute('aria-label', 'Course');
     const nNew = nBtn('btn primary sm', null, NI.plus, () => newNote());
     nNew.id = 'notes-new';
     nNew.append('New note');
@@ -401,23 +395,25 @@
         (k, i, a) => a.indexOf(k) === i
       );
       if (NOTE_LIST.filter !== 'all' && !order.includes(NOTE_LIST.filter)) NOTE_LIST.filter = 'all';
-      nFilters.replaceChildren(
-        ...['all', ...order].map(k => {
-          const b = el('button');
-          b.type = 'button';
-          b.dataset.filter = k;
-          b.setAttribute('aria-pressed', String(NOTE_LIST.filter === k));
-          b.append(
-            k === 'all' ? 'All' : k,
-            el('span', 'n', String(k === 'all' ? all.length : all.filter(n => keyOf(n) === k).length))
-          );
-          b.addEventListener('click', () => {
-            NOTE_LIST.filter = k;
-            renderNotes();
-          });
-          return b;
-        })
-      );
+      const keys = ['all', ...order];
+      const seg = DS.segmented({
+        label: 'Course',
+        cls: 'n-filters',
+        value: NOTE_LIST.filter,
+        options: keys.map(k => ({
+          value: k,
+          label: k === 'all' ? 'All' : k,
+          count: k === 'all' ? all.length : all.filter(n => keyOf(n) === k).length,
+        })),
+        onPick: k => {
+          NOTE_LIST.filter = k;
+          renderNotes();
+        },
+      });
+      seg.id = 'notes-filters';
+      [...seg.children].forEach((b, i) => (b.dataset.filter = keys[i]));
+      nFilters.replaceWith(seg);
+      nFilters = seg;
       const shown = all.filter(n => NOTE_LIST.filter === 'all' || keyOf(n) === NOTE_LIST.filter);
       // a filter that hides the picked note moves the preview to the first note shown
       // B-409: never an "(earlier)" copy by default
@@ -426,7 +422,10 @@
         .map(k => ({ k, rows: shown.filter(n => keyOf(n) === k) }))
         .filter(g => g.rows.length);
       const rowOf = n => {
+        // B-512: the row keeps today's markup (Line's own rules would move it, D-376); data-key names the note (D-387)
         const r = el('div', 'li n-row' + (pick && pick.id === n.id ? ' sel' : ''));
+        r.dataset.key = n.id;
+        r.dataset.part = 'row';
         r.dataset.note = n.id;
         const nm = el('button', 'nm', noteName(n));
         nm.type = 'button';
@@ -531,7 +530,7 @@
       bStudy.append('Study with E.V.');
       acts.append(bOpen, bStudy);
       nSide.replaceChildren(
-        el('span', 'badge x-quiet', courseName(n.course || NO_COURSE)),
+        DS.badge({ course: courseName(n.course || NO_COURSE) }),
         el('h2', 'n-pvt', noteName(n)),
         props,
         el('span', 'lab n-otl', 'On this page'),

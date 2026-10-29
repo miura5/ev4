@@ -1,0 +1,52 @@
+/* ---- Notes's layout (B-512, D-376, D-380, D-391): the rules of page/styles.css scoped to Notes (#p-notes, #note-body,
+   .n-*) that no other legacy rule fights on the same element, moved as written. The views layer sits under legacy
+   (D-373), so every declaration here says !important until B-515 retires legacy; B-515 strips the !important. The
+   Notes rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
+   synthetic record does not paint uses; B-515 moves them with the shared rules. Raw values left have no token. */
+#p-notes .n-toolbar{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;padding:var(--sp-3) 18px!important;border-bottom:1px solid var(--line)!important;flex-wrap:wrap!important}
+#p-notes .n-toolbar .sp{flex:1!important}
+#p-notes .n-filters .n{color:var(--quiet)!important;font-weight:400!important;font-variant-numeric:tabular-nums!important}
+#p-notes .n-grp{display:flex!important;gap:var(--sp-2)!important;padding:14px 18px var(--sp-1_5)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important}
+#p-notes .n-grp .n{color:var(--faint)!important;font-weight:400!important;font-variant-numeric:tabular-nums!important}
+#p-notes .n-row .sicon{color:var(--quiet)!important}
+#p-notes .n-row .nk{width:92px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#p-notes .n-row .t{min-width:70px!important}
+#p-notes .n-pv .badge{align-self:flex-start!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#p-notes .n-props{display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important;padding:14px!important;border-radius:var(--r-lg)!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line)!important}
+#p-notes .n-props .prop{display:grid!important;grid-template-columns:92px minmax(0,1fr)!important;align-items:center!important;gap:var(--sp-2)!important;min-height:34px!important;font-size:var(--fs-2)!important}
+#p-notes .n-props .prop > span:first-child{color:var(--quiet)!important}
+#p-notes .n-props .prop-v{overflow-wrap:anywhere!important}
+#p-notes .n-otl{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important}
+#p-notes .n-outline{display:flex!important;flex-direction:column!important;margin-top:-8px!important}
+#p-notes .n-acts{display:flex!important;flex-direction:column!important;gap:10px!important}
+#p-notes .n-pvfoot,#p-notes .n-pvnone{font-size:calc(12.5px * var(--ts))!important;color:var(--quiet)!important;line-height:1.5!important}
+#p-notes > .n-ed{margin:-18px -16px 0!important}
+#p-notes .fsep{width:1px!important;height:18px!important;background:var(--line)!important;margin:0 var(--sp-1_5)!important;flex:none!important}
+#p-notes .n-stb .gl,#p-notes .n-stm .gl{width:20px!important;flex:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font:var(--fw-semibold) 11.5px var(--sans)!important;color:var(--quiet)!important;letter-spacing:-.02em!important}
+#p-notes .n-stb .lb{flex:1!important;text-align:left!important}
+#p-notes .n-stb .sicon{color:var(--quiet)!important}
+#p-notes .n-stm{left:84px!important;top:40px!important;width:252px!important}
+#p-notes .n-stm .mi .lb{flex:1!important}
+#p-notes .n-stm .mi .ks{font-size:12px!important;color:var(--faint)!important;letter-spacing:.04em!important;font-variant-numeric:tabular-nums!important}
+#p-notes .n-stm .mi.on .gl{color:var(--text)!important}
+#p-notes .n-lkp .lab{font-size:12px!important;color:var(--quiet)!important;font-weight:var(--fw-medium)!important}
+#p-notes .n-lkerr{font-size:12px!important;color:var(--urg)!important}
+#p-notes .n-lkerr:empty{display:none!important}
+#p-notes .n-lkrow{display:flex!important;justify-content:flex-end!important;gap:var(--sp-2)!important}
+#p-notes .n-meta{position:relative!important;display:flex!important;align-items:center!important;gap:var(--sp-1)!important;flex-wrap:wrap!important;font-size:12.5px!important;color:var(--quiet)!important;margin:0 0 var(--sp-2) -10px!important}
+#p-notes .n-meta .dt{padding:0 var(--sp-1)!important}
+#p-notes .n-meta .dt::before{content:"·"!important;margin-right:var(--sp-2)!important}
+#p-notes .n-cmenu{left:0!important;top:32px!important;width:200px!important}
+#note-body.untitled>.nb:first-child{position:relative!important}
+#note-body.untitled>.nb:first-child::before{content:"Untitled"!important;position:absolute!important;left:0!important;top:0!important;pointer-events:none!important;color:var(--faint)!important}
+#note-body.empty.untitled::after{content:attr(data-placeholder)!important;display:block!important;margin-top:var(--sp-0_5)!important;pointer-events:none!important;color:var(--faint)!important;font-size:var(--fs-3)!important;max-width:620px!important}
+#note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{transform:translateX(0)!important}
+#note-body .nb:not([data-t=ol]){counter-reset:nol!important}
+#note-body .nb[data-t=ul]::before{content:"•"!important;position:absolute!important;left:10px!important;color:var(--faint)!important}
+#note-body strong{font-weight:var(--fw-semibold)!important}
+.mh .n-crumb{font:var(--fw-regular) var(--fs-2) var(--sans)!important;color:var(--quiet)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0!important}
+.mh .n-sync .ico{width:14px!important;height:14px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3)!important}
+/* D-391's lesson 2: an !important here outranks legacy's own [hidden]{display:none!important}, so a hidden element
+   stays hidden by this rule, written heavy enough (2,3,0, the :not(#_) adding an id each) to outrank every display rule above; B-515 drops it. */
+[hidden][hidden][hidden]:not(#_):not(#_){display:none!important}
