@@ -9741,7 +9741,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 5c4038a: core/measures.mjs is the one source for open weak spots, objective state and study time; Progress's open count now matches Study (previews excluded), Today's readiness matches, a running session counts at its current time, today's ticked minutes count per course (larger of session and ticked). Staging with the next release.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Counts disagree across views (weak spots 20/24, readiness), and Progress doesn't count today's ticked work or notes.",
