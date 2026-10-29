@@ -9523,7 +9523,7 @@
   "depends": [
    "B-508"
   ],
-  "notes": "",
+  "notes": "Pilot pushed at bf5ca12: Progress and System on DS (segmented, card, meter, badge, data-key); ~90 lines left styles.css; pixdiff 0 in 34 shots; check --touched green. Lessons in D-391.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
