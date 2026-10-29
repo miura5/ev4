@@ -9039,9 +9039,9 @@
   "id": "B-484",
   "kind": "bug",
   "title": "Bug (reported Oct 29): After B-481, dosage practice sets come back correct but short: on staging a 6-problem oral liquid set kept 2 (both correct, no answer in the stem) and a 10-problem weight-based set kept 8; most drops are items the writer sent without usable calc numbers or with the answer in the stem, and the one top-up ask did not fill the gap. A dosage set should reach the asked count with checked items.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A dosage practice set of N reaches N checked items in the usual case: the writer is shown one worked example of a calc item and a clean stem, and the job logs why each dropped item was dropped; if the yield stays under 80% on two real staging runs, calculation items are composed from code-chosen numbers (code picks weight, dose, stock; the model writes the wording, options from known wrong-method answers). Proved by two real sets on staging.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9050,6 +9050,10 @@
   "reportedAt": "2026-10-29T06:09:43.297Z",
   "board": {
    "row": "v4 B-484: After B-481, dosage practice sets come back correct but short: on…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T06:09:46.604Z"
   }
  }
 ]
