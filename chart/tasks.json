@@ -9127,5 +9127,22 @@
   "board": {
    "row": "v4 B-488: Flashcard decks, part 2 (D-368): Written mode (type the answer; small…"
   }
+ },
+ {
+  "id": "B-489",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Flashcard decks, part 3 (D-368): import a Quizlet set by pasting its export text (term and definition per line, tab or other separator chosen on paste) into a new deck for a course; nothing is read from or written to Quizlet itself.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 29 (Matt)",
+  "words": "Flashcard decks, part 3 (D-368): import a Quizlet set by pasting its export text (term and definition per line, tab or other separator chosen on paste) into a new deck for a course; nothing is read from or written to Quizlet itself.",
+  "reportedAt": "2026-10-29T12:34:08.898Z",
+  "board": {
+   "row": "v4 B-489: Flashcard decks, part 3 (D-368): import a Quizlet set by pasting its…"
+  }
  }
 ]
