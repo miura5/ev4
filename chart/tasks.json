@@ -9018,9 +9018,9 @@
   "id": "B-483",
   "kind": "bug",
   "title": "Bug (reported Oct 28): On live, a study plan's tasks and Today's list are not one set of tasks: approving a plan did not put its tasks for today on Today's list; after Plan the rest added them, ticking an item in the Study plan does not tick it on Today and ticking on Today does not tick it in the plan. Each plan task should appear once on Today when its plan is approved and share one tick in both places; Plan the rest should not add copies of plan tasks.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "On approving a plan, its tasks for today show on Today's list (and each later day's on that day) without Plan the rest; a plan task on Today is the same item as in the Study plan: a tick in either place shows in both and is stored once (the plan's own tick record); Plan the rest never adds a copy of a task the approved plan already holds; tasks Plan the rest already copied on live are recognised as the plan's (matched by plan task id or title+date) so their ticks join up, nothing deleted. npm test covers approve-to-Today and the shared tick; proved in the staging app by approving a plan and ticking in both views.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9029,6 +9029,10 @@
   "reportedAt": "2026-10-29T03:56:58.177Z",
   "board": {
    "row": "v4 B-483: On live, a study plan's tasks and Today's list are not one set of…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T03:57:01.126Z"
   }
  }
 ]
