@@ -106,6 +106,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-531 | Bug (reported Oct 29): Record's Kind menu offers "Feature", which is not a record kind for Matt. Done when: Record's Kind menu offers only Matt's kinds; test. (F-50) | — | UX probe fixes | open |  |
 | B-532 | Request (reported Oct 29): An E.V. window on the phone, as a sheet from any view. Done when: On the phone every view has the E.V. window as a bottom sheet, built on Proprietary's Sheet; staging look at 390. Depends on B-508. (F-59) | — | UX probe fixes | open |  |
 | B-533 | Request (reported Oct 29): Ask for changes as a field on the plan card instead of switching to the conversation. Done when: The plan card has an Ask for changes field whose reply and See changes show in place; test; staging run. (F-16, F-17) | — | UX probe fixes | open |  |
+| B-534 | Request (reported Oct 29): Start buttons on the tasks E.V. names in its answers. Done when: When E.V. names a task in a reply it carries a Start or Open chip; test. (F-57) | — | UX probe fixes | open |  |
 
 ## Your turn
 
@@ -605,4 +606,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-476 | bug | 2026-10-29T02:03:57.287Z | On live, Ask for changes on the NUR 112 ATI Proctored Dosage Assessment plan, asking to add Dosage Exam 1 (Wed 11/4, already an exam in his record) and continue the study items until then, started a job but ended with 'I couldn't finish this one: Not applicable.'; the edit should extend the plan through the second exam or offer the multi-exam path, and a failed edit should say why in plain words. | chat, Oct 28 evening (Matt, live) | declined |  |
 | B-485 | bug | 2026-10-29T08:29:32.572Z | On staging after B-479, asking for flashcards still fails end to end: the chat, remembering earlier rejections in the conversation, sends the request as a general job instead of a flashcards job, and the general job then fails E.V.'s check because its text runs past 1,500 characters; a flashcard request should always become a flashcards job (routed by the page, as Ask for changes now is), and a general job's long answer should not fail on the text limit. | build manager, staging run Oct 29 early | declined |  |
 | B-494 | bug | 2026-10-29T14:49:35.202Z | On a phone, Today's Cards row hides its Start button until hover; tapping the row's name works. | staging e2e of B-487 at d7a55f5 | declined |  |
-| B-534 | request | 2026-10-29T16:01:35.659Z | Start buttons on the tasks E.V. names in its answers. | UX map probe (D-369), Oct 29 | inbox |  |

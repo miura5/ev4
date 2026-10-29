@@ -9989,9 +9989,9 @@
   "id": "B-534",
   "kind": "request",
   "title": "Request (reported Oct 29): Start buttons on the tasks E.V. names in its answers.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "When E.V. names a task in a reply it carries a Start or Open chip; test. (F-57)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10000,6 +10000,10 @@
   "reportedAt": "2026-10-29T16:01:35.659Z",
   "board": {
    "row": "v4 B-534: Start buttons on the tasks E.V. names in its"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:01:39.523Z"
   }
  }
 ]
