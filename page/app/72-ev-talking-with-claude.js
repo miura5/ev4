@@ -1030,10 +1030,9 @@
     // tool, then says it again, so a reply shows only the text written after the last tool call (falling back to
     // everything when that part is empty or a short sign-off).
     const lastRound = (raw, cut) => {
-      const all = String(raw || '').trim();
-      const tail = String(raw || '')
-        .slice(cut || 0)
-        .trim();
+      // B-470: the history's card mark, when her reply echoes it, never shows
+      const all = E.withoutCardMarks(raw).trim();
+      const tail = E.withoutCardMarks(String(raw || '').slice(cut || 0)).trim();
       return !cut || !tail || (tail.length < 40 && all.length > tail.length * 3) ? all : tail;
     };
     async function chat(text, o = {}) {

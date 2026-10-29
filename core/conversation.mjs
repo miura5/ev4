@@ -727,10 +727,14 @@ export function makeConversation(core) {
     );
   }
 
+  /** B-470: the history marks a line with cards as "[cards: job]"; a reply that echoes the mark never shows it. */
+  const withoutCardMarks = text => String(text || '').replace(/[ \t]*\[cards: [^\]\n]*\]/g, '');
+
   return {
     noteLineChanges,
     noteChatPlan,
     condenseTurns,
+    withoutCardMarks,
     restoredBox,
     greeting,
     situation,

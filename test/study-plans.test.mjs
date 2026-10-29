@@ -320,7 +320,12 @@ test('D-356: an edit is a Haiku patch on the draft: no materials, hard rules onl
   assert.equal(asks.length, 1);
   const a = asks[0];
   assert.equal(a.purpose, 'plan-edit');
-  assert.equal(a.max_tokens, undefined, 'the usual length');
+  // B-470: room for a whole patch (40 ops of whole tasks ran past the usual 8,192), and the Worker takes it
+  assert.equal(a.max_tokens, spec.jobs.kinds['exam-plan'].edit.maxTokens);
+  assert.equal(a.max_tokens, 16000);
+  const use = purposeOf(a);
+  assert.equal(typeof use, 'object', String(use));
+  assert.deepEqual([use.model, use.maxTokens], ['claude-haiku-5-5', 16000]);
   assert.deepEqual(a.cache, [
     { m: 0, b: 0 },
     { m: 0, b: 1 },
@@ -897,7 +902,7 @@ async function viaWorker(bodies, vars = {}, seed = db => seedJob(db, 'job-plan')
 test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 48k (D-365), an edit and every other ask on Haiku', async () => {
   const { out, sent } = await viaWorker([
     { purpose: 'exam-plan', max_tokens: 48000, job: 'job-plan' },
-    { purpose: 'plan-edit' },
+    { purpose: 'plan-edit', max_tokens: 16000 }, // B-470
     { model: 'claude-sonnet-5-5', max_tokens: 24000 }, // a chat ask naming a model gets Haiku and the usual length
     {},
   ]);
@@ -906,7 +911,7 @@ test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 48k (D
     sent.map(b => [b.model, b.max_tokens]),
     [
       ['claude-sonnet-5-5', 48000],
-      ['claude-haiku-5-5', 8192],
+      ['claude-haiku-5-5', 16000],
       ['claude-haiku-5-5', 8192],
       ['claude-haiku-5-5', 8192],
     ]
@@ -919,12 +924,12 @@ test('D-355: the Worker picks the model by purpose: a plan on Sonnet with 48k (D
   assert.equal(env.sent[0].model, 'claude-sonnet-x');
 });
 
-test('D-355: an unknown purpose, a plan over 48k, an edit over the usual length or a purposed read-along is refused, unsent', async () => {
+test('D-355: an unknown purpose, a plan over 48k, an edit over 16k (B-470) or a purposed read-along is refused, unsent', async () => {
   const { out, sent } = await viaWorker([
     { purpose: 'chat' },
     { purpose: 'exam-plan', max_tokens: 48001, job: 'job-plan' },
     { purpose: 'exam-plan', max_tokens: 1.5, job: 'job-plan' },
-    { purpose: 'plan-edit', max_tokens: 9000 },
+    { purpose: 'plan-edit', max_tokens: 16001 },
     { purpose: 'exam-plan', read: { note: 'n1', h: 'abc' }, job: 'job-plan' },
   ]);
   assert.deepEqual(out, [400, 400, 400, 400, 400]);

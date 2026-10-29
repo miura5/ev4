@@ -141,3 +141,12 @@ test('B-442: 10 follow-ups on a 3,000-token note cost under half the tokens they
   assert.ok(share <= 0.5, `after is ${Math.round(share * 100)}% of before`);
   assert.ok(after.input < before.input); // fewer tokens sent at all, cached or not
 });
+
+test('B-470: a reply that echoes the history’s card mark never shows it', () => {
+  assert.equal(
+    EV.withoutCardMarks('The draft shows the new version when the job posts back. [cards: job]'),
+    'The draft shows the new version when the job posts back.'
+  );
+  assert.equal(EV.withoutCardMarks('Two [cards: job, copy] marks [cards: check] here.'), 'Two marks here.');
+  assert.equal(EV.withoutCardMarks('No mark, [a bracket] kept.'), 'No mark, [a bracket] kept.');
+});

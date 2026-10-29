@@ -92,8 +92,8 @@ export function tokensOf(res, scale = 1) {
 
 // B-449 (D-355, D-356): the Worker chooses the model; the page never names one (a model field it sends is ignored). An
 // ask may name a purpose, checked here: only making a study plan ('exam-plan') goes to Sonnet, with a longer answer
-// allowed; a plan edit ('plan-edit'), any other ask or none stays on Haiku with the usual answer length. An unknown
-// purpose is refused.
+// allowed; a plan edit ('plan-edit') stays on Haiku with room for a whole patch; any other ask or none stays on Haiku with
+// the usual answer length. An unknown purpose is refused.
 export const ASK_TOKENS = 8192; // B-324: a job's answer (a practice set of 15 questions) runs past 4,096
 export const PURPOSES = {
   // B-449 (D-355): making a study plan
@@ -103,8 +103,8 @@ export const PURPOSES = {
     scale: 3, // Sonnet's input and output cost about 3 times Haiku's, so its tokens count 3 each against the ceilings
     job: true, // bound to its job (planJobProblem, claimPlanAsk)
   },
-  // D-356: a change to a plan draft is a patch, on Haiku with the usual length
-  'plan-edit': { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: ASK_TOKENS, scale: 1 },
+  // D-356: a change to a plan draft is a patch, on Haiku; B-470: up to 40 ops of whole tasks ran past the usual length
+  'plan-edit': { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: 16000, scale: 1 },
 };
 /** {model, maxTokens, scale} for an ask's purpose and max_tokens, or an error string. */
 export function purposeOf(body, env = {}) {

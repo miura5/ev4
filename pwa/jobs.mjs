@@ -193,7 +193,9 @@ export function planRequest(spec, prepared) {
       { m: 0, b: 1 },
     ],
     purpose: edit ? (spec.jobs.kinds[PLAN].edit || {}).purpose || 'plan-edit' : R.purpose,
-    ...(edit ? {} : { max_tokens: R.maxTokens, job: prepared.ctx.input.job }), // D-355: the Worker checks the job
+    ...(edit
+      ? { max_tokens: (spec.jobs.kinds[PLAN].edit || {}).maxTokens || 16000 } // B-470: a whole patch fits
+      : { max_tokens: R.maxTokens, job: prepared.ctx.input.job }), // D-355: the Worker checks the job
   };
 }
 
