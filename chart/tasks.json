@@ -9346,9 +9346,9 @@
   "id": "B-498",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Items from one course show up in another course's exam plan (NUR 112 items in a BIO 201 plan on live, noticed Oct 29 morning, possibly added overnight by a scheduled run); the UX probe also saw BIO misses filed under NUR weak spots.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Found and fixed where cross-course items enter a course's plan or weak spots (plan job, plan edits, scheduled evening/morning runs, quiz-miss routing); an exam's plan holds only its course's work and a miss files under its own course; tests; real check on staging; any mixed items already in live are listed for Matt (never removed by hand).",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9357,6 +9357,10 @@
   "reportedAt": "2026-10-29T15:26:58.665Z",
   "board": {
    "row": "v4 B-498: Items from one course show up in another course's exam plan (NUR 112…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:27:22.502Z"
   }
  }
 ]
