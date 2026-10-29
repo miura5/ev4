@@ -9821,9 +9821,9 @@
   "id": "B-526",
   "kind": "bug",
   "title": "Bug (reported Oct 29): Study forgets the selected course on reopen, and E.V.'s \"what should I do now\" advice ignores the other course's near exam.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Study reopens on the last course; E.V.'s now-advice weighs every course's next exam; tests. (F-09, F-57)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9832,6 +9832,10 @@
   "reportedAt": "2026-10-29T16:00:20.817Z",
   "board": {
    "row": "v4 B-526: Study forgets the selected course on reopen, and E.V.'s \"what should…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:00:27.107Z"
   }
  }
 ]
