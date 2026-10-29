@@ -1,1 +1,48 @@
-/* Proprietary 05 Line: the line component's rules, components layer (D-373, D-388); lane C1 (B-507) fills this file */
+/* Proprietary 05 Line (B-507, D-374): today's two rows in tokens (sizes by --sp-8 and --tap: legacy's :root still uses
+   --line-h for the status line until B-515). The set's one-line row (.li, B-285: 32 px from 600 px,
+   44 px on the phone, C-1) and the stacked row (kind stack, the kit's row()). Legacy's .li, .row and input.tick rules
+   still win until B-515 (D-373), so the look below moves nothing today (D-376); the states legacy never drew (hover's
+   fill aside) show through already. Two rules say !important for that reason, each named below; both drop at B-515. */
+:where([data-ui='line']:not([data-kind='stack'])){display:flex;align-items:center;gap:var(--sp-3);height:var(--sp-8);padding:0 var(--sp-3);border-bottom:1px solid var(--line);color:var(--text);font-size:var(--fs-2);min-width:0}
+:where([data-ui='line']:not([data-kind='stack'])) > .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:where([data-ui='line']:not([data-kind='stack'])) > .t{flex:none;color:var(--quiet);font-size:var(--fs-1);font-variant-numeric:tabular-nums}
+:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:hidden}
+:where([data-ui='line']:not([data-kind='stack'])):is(:hover,:focus-within,[data-state='hover']) > .hov{visibility:visible}
+:where([data-ui='line'][data-kind='stack']){display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-3) 0;border-top:1px solid var(--wash-2);min-width:0}
+:where([data-ui='line'][data-kind='stack']:first-child){border-top:0}
+:where([data-ui='line'][data-kind='stack']) .grow{flex:1;min-width:0}
+:where([data-ui='line'][data-kind='stack']) .title{overflow-wrap:anywhere}
+:where([data-ui='line'][data-kind='stack']) .meta{margin-top:var(--sp-0_5);color:var(--faint);font-size:var(--fs-2)}
+:where([data-ui='line'][data-kind='stack']) .when{min-width:4.6rem;padding-top:var(--sp-0_5);color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);font-variant-numeric:tabular-nums}
+:where([data-ui='line'][data-kind='stack']) .row-badge{margin-left:var(--sp-1_5);vertical-align:1px;height:var(--sp-5)}
+/* the tick: one shape, 22 px drawn */
+:where([data-ui='line']) > input.tick{appearance:none;flex:0 0 calc(var(--sp-5) + var(--sp-0_5));width:calc(var(--sp-5) + var(--sp-0_5));height:calc(var(--sp-5) + var(--sp-0_5));margin:0;border:1.5px solid var(--faint);border-radius:var(--r-sm);background:transparent;cursor:pointer;display:grid;place-content:center;transition:background var(--dur-4) var(--ease-out),border-color var(--dur-4) var(--ease-out)}
+:where([data-ui='line']) > input.tick:checked{background:var(--ok);border-color:var(--ok)}
+:where([data-ui='line']) > input.tick:checked::after{content:"";width:var(--sp-1_5);height:calc(var(--sp-3) - 1px);border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+/* D-383: on the phone the tick is a 44 px tap and still draws 22 px (the Gallery's note). Its box grows by a clear
+   border the margins take back, and the ring it drew as a border it draws as an inset shadow, so no pixel moves. The
+   box properties say !important because legacy's input.tick sets them; the 16 px dot the views' cards draw (legacy's
+   #p-* rule) keeps its own ring and grows by 14 px a side. */
+@media (max-width:599px){
+  :where([data-ui='line']) > input.tick{box-sizing:content-box!important;border:11px solid transparent!important;background-clip:padding-box!important;margin:-10px -11px -11px!important;border-radius:18px!important;box-shadow:inset 0 0 0 1.5px var(--faint)}
+  :where([data-ui='line']) > input.tick:checked{box-shadow:none}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) :where([data-ui='line']) > input.tick{border-width:14px!important;margin:-14px!important;border-radius:var(--r-round)!important}
+}
+/* the title that opens the line: a plain button. Legacy's bare button rule draws a pill around any button, so these
+   few say !important until B-515. */
+:where([data-ui='line']) button:is(.nm,.title){appearance:none!important;min-height:var(--sp-8)!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;font:inherit!important;color:inherit!important;text-align:left!important;cursor:pointer;text-decoration-color:var(--line2);text-underline-offset:3px}
+:where([data-ui='line']) button:is(.nm,.title):hover{text-decoration-line:underline}
+:where([data-ui='line']) button.nm{align-self:center}
+@media (max-width:599px){:where([data-ui='line']) button:is(.nm,.title){min-height:var(--tap)!important}}
+:where([data-ui='line']) button:is(.nm,.title):focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:var(--r-xs)!important}
+/* states: hover, pressed, open, done, urgent, disabled, dragging */
+:where([data-ui='line']:not([data-kind='stack'])):is(:hover,[data-state='hover']){background:var(--hover)}
+:where([data-ui='line']:not([data-kind='stack'])):is(:active,[data-state='pressed']):not([aria-disabled='true']){background:var(--wash-3)}
+:where([data-ui='line']:not([data-kind='stack'])):has(> button[aria-expanded='true']){background:var(--hover)}
+:where([data-ui='line'].done) :is(.nm,.title){color:var(--faint);text-decoration:line-through;text-decoration-color:var(--wash-4)}
+:where([data-ui='line'][data-tone='bad']){box-shadow:inset 2px 0 0 var(--bad)}
+:where([data-ui='line'][aria-disabled='true']){opacity:.45;cursor:default}
+:where([data-ui='line'][data-state='dragging']){position:relative;z-index:var(--z-raised);background:var(--surface);box-shadow:var(--elev-2);border-radius:var(--r-md);cursor:grabbing}
+/* the Gallery's forced hover shows the hover action over legacy's .li .hov until B-515 */
+[data-ui='line'][data-state='hover'] > .hov{visibility:visible!important}
+@media (max-width:599px){:where([data-ui='line']:not([data-kind='stack'])){height:var(--tap);padding:0 var(--sp-4)}:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:visible}}

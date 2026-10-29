@@ -126,7 +126,7 @@ function measure() {
         today: !!e.closest('[data-state="today"]'),
       };
     });
-  const lines = [...g.querySelectorAll('[data-slot="line"] .li')].map(
+  const lines = [...g.querySelectorAll('[data-slot="line"] .gal-set > [data-ui="line"]')].map(
     r => Math.round(r.getBoundingClientRect().height * 10) / 10
   );
   const yb = g.querySelector('[data-slot="badge"] [data-ui="badge"][data-tone="warn"]');

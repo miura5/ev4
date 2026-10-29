@@ -6,8 +6,9 @@
      * the words stay text. Today's classes (badge and x-<colour>, B-285) are its classes, so it looks as it did (D-376).
      */
     function dsBadge(o = {}) {
-      const tone = o.course != null && !o.tone ? 'quiet' : o.tone || undefined;
-      const mod = tone === 'proposed' ? 'proposed' : dsTone(tone);
+      const want = o.course != null && !o.tone ? 'quiet' : o.tone;
+      const mod = want === 'proposed' ? 'proposed' : dsTone(want);
+      const tone = mod ? want : undefined; // a tone it does not know paints as neutral, as the kit's badge() did
       const b = dsRoot('span', 'badge', Object.assign({}, o, { tone, cls: dsClasses('badge', o.cls, mod) }));
       const text = o.text != null ? o.text : o.course;
       if (text != null && text !== '') b.textContent = String(text);
