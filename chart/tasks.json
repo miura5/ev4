@@ -9413,7 +9413,7 @@
   "milestone": "Polish prep",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 5542632: page/ds/tokens.css published ahead of styles.css; scales fs/fw/lh, sp, r, wash, shadow/ring/elev, dur-1..5 (80/140/160/280/420, D-379), easings, z; alias map in a comment; no view rule reads them yet; look shots unchanged. Staging with tonight's release.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
