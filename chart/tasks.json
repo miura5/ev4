@@ -9783,7 +9783,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at c17499f: over budget, Plan the rest proposes the smallest further cut (fixed work never moves); with only fixed work left it says 'N min over… Snooze a task to move it', never 'fits'. prep 297/297.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Plan the rest says \"Nothing to change\" while the day is over its time budget.",
