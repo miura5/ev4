@@ -9968,9 +9968,9 @@
   "id": "B-533",
   "kind": "request",
   "title": "Request (reported Oct 29): Ask for changes as a field on the plan card instead of switching to the conversation.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The plan card has an Ask for changes field whose reply and See changes show in place; test; staging run. (F-16, F-17)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9979,6 +9979,10 @@
   "reportedAt": "2026-10-29T16:01:28.089Z",
   "board": {
    "row": "v4 B-533: Ask for changes as a field on the plan card instead of switching to…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:01:31.826Z"
   }
  }
 ]
