@@ -9171,9 +9171,9 @@
   "id": "B-490",
   "kind": "request",
   "title": "Request (reported Oct 29): Replace the app's home-screen icon (the dark E.V. tile) with E.V.'s avatar in its idle state, centered and sized for the PWA icon.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The PWA's icons (manifest icons incl. maskable, apple-touch-icon, favicon) show E.V.'s avatar in its idle state, centered with the maskable safe zone respected, on the avatar's own light background; drawn from the same avatar shape the app uses; installed icon checked in the staging app on iPhone size.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9183,6 +9183,10 @@
   "reportedAt": "2026-10-29T13:47:34.222Z",
   "board": {
    "row": "v4 B-490: Replace the app's home-screen icon (the dark E.V. tile) with E.V.'s…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T13:47:59.089Z"
   }
  }
 ]
