@@ -9900,5 +9900,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:00:58.424Z"
   }
+ },
+ {
+  "id": "B-530",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): A \"Studying\" pill and the E.V. window title stay after a session ends.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "A \"Studying\" pill and the E.V. window title stay after a session ends.",
+  "reportedAt": "2026-10-29T16:01:03.933Z",
+  "board": {
+   "row": "v4 B-530: A \"Studying\" pill and the E.V. window title stay after a session"
+  }
  }
 ]
