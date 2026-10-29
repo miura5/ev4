@@ -334,10 +334,18 @@
     }
     async function flashcardSend(text, fa) {
       const mid = await mattSay(text);
-      const r = await startJob({ kind: 'flashcards', title: fa.title, brief: fa.brief, course: fa.course });
+      const r = await startJob({
+        kind: 'flashcards',
+        title: fa.title,
+        brief: fa.brief,
+        course: fa.course,
+        deck: fa.deck,
+      });
       await evSay(
         r.fired.ok
-          ? `Making ${fa.count} ${fa.course ? fa.course + ' ' : ''}flashcards now. The deck lands in Study under Flashcards.`
+          ? fa.deck
+            ? `Making ${fa.count} more cards for ${fa.title.replace(/^Flashcards: /, '')} now. They join the deck; the cards it has keep their schedules.`
+            : `Making ${fa.count} ${fa.course ? fa.course + ' ' : ''}flashcards now. The deck lands in Study under Flashcards.`
           : 'Couldn’t start the deck: ' + fireCopy(r.fired.error),
         r.id ? [{ type: 'job', id: r.id }] : [],
         { tier: 'local', replyTo: mid }
@@ -392,7 +400,7 @@
         return;
       }
       // B-487 (closes B-485): a line asking for flashcards starts the flashcards job here, by code; no model routes it
-      const fa = E.flashcardAsk(text);
+      const fa = E.flashcardAsk(text, S.decks); // B-496: "add 20 cards to <deck>" names one of his decks
       if (fa) {
         input.placeholder = placeholder();
         await flashcardSend(text, fa);

@@ -69,6 +69,17 @@ export const CODE_STEPS = {
     const q = `${job.title} ${job.brief}`;
     const context = {};
     if (kind === 'study-guide' || kind === 'flashcards') context.passages = passages(idx, q, 6); // B-479
+    if (kind === 'flashcards' && job.deck) {
+      // B-496: more cards for a deck he has: its title and the terms it holds, which the new cards must not repeat
+      const deck = (db.decks || []).find(d => d.id === job.deck);
+      if (deck)
+        context.deck = {
+          title: deck.title,
+          terms: EV.deckCards(deck)
+            .map(c => c.term)
+            .slice(0, 300),
+        };
+    }
     if (kind === 'practice-set') {
       context.weakSpots = EV.rankDue(ms.filter(EV.isActive), '9999-12-31', db.exams || [])
         .map(w => ({ w, s: EV.similarity(q, w.topic + ' ' + w.objective) }))
@@ -319,16 +330,24 @@ export const AGENT_FOLDS = {
       } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
     }
     if (!failed && job.kind === 'flashcards') {
-      // B-487 (D-368): the cards become a deck in E.V. for the course (B-479's Quizlet block is retired)
-      const w = EV.deckFromJob({ job, items: answer.items || [], now: ctx.now, source: ctx.source });
-      const n = Object.keys(w.data.cards).length;
-      if (n) {
-        writes.push(w);
-        result.deckId = w.id;
-        result.deckCards = n;
-        result.text = `Deck ready: ${n === 1 ? '1 card' : n + ' cards'} on ${w.data.title}, in Study under ${w.data.course} Flashcards.`;
-        say.push(`Deck ${w.id}: ${n} cards.`);
-      } else result.text += ' (No cards came back, so no deck was made.)';
+      // B-487 (D-368): the cards become a deck in E.V. for the course (B-479's Quizlet block is retired). B-496: a job
+      // that names a deck adds its new cards to that deck, never touching the cards it has.
+      const deck = job.deck ? (db.decks || []).find(d => d.id === job.deck && !d.retired) || null : null;
+      const r = EV.deckFromJob({ job, items: answer.items || [], now: ctx.now, source: ctx.source, deck });
+      const cards = r.n === 1 ? '1 card' : r.n + ' cards';
+      if (job.deck && !deck) result.text += ' (Its deck isn’t in the record any more, so nothing was added.)';
+      else if (r.n) {
+        writes.push(r.write);
+        result.deckId = r.write.id;
+        result.deckCards = r.n;
+        result.text = r.added
+          ? `Added ${cards} to ${r.title}, in Study under ${r.course} Flashcards.`
+          : `Deck ready: ${cards} on ${r.title}, in Study under ${r.course} Flashcards.`;
+        say.push(`Deck ${r.write.id}: ${r.added ? '+' : ''}${cards}.`);
+      } else
+        result.text += r.added
+          ? ' (Every card that came back was already in the deck, so nothing was added.)'
+          : ' (No cards came back, so no deck was made.)';
     }
     const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
     const saved = (planId, data, days) => {

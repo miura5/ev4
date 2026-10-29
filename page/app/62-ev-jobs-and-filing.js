@@ -50,7 +50,7 @@
         startedAt: by.has(j.id) ? by.get(j.id).startedAt || null : null, // B-456: a stalled run frees the plan guard
       }));
     }
-    async function startJob({ kind, title, brief, course, revise, said, chip }) {
+    async function startJob({ kind, title, brief, course, revise, said, chip, deck }) {
       kind = KINDS[kind] ? kind : 'general';
       title =
         String(title || '')
@@ -88,6 +88,7 @@
           // B-449: a study plan names its course, and a change names the plan it changes (D-356)
           ...((kind === 'exam-plan' || kind === 'flashcards') && course ? { course: String(course).slice(0, 40) } : {}), // B-487
           ...(kind === 'exam-plan' && revise ? { revise: String(revise).slice(0, 80) } : {}),
+          ...(kind === 'flashcards' && deck ? { deck: String(deck).slice(0, 125) } : {}), // B-496: cards for this deck
           // D-362: an edit carries his own line (its chip's brief); a chip's new plan names the chip it came from
           ...(kind === 'exam-plan' && said ? { said: String(said).slice(0, 1500) } : {}),
           ...(kind === 'exam-plan' && chip ? { chip: String(chip).slice(0, 200) } : {}),

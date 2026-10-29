@@ -1080,6 +1080,26 @@ async function importChecks(page, scheme) {
       made.open === 'Harness import ' + scheme,
     JSON.stringify(made)
   );
+  // B-496: Add with E.V. on a deck starts a flashcards job that names the deck
+  await page.locator('#fc-dlg .fc-addev').click();
+  await page.waitForTimeout(120);
+  await page.selectOption('#fc-dlg .fc-addn', '10');
+  await page.fill('#fc-dlg .fc-addt', 'heart rhythms');
+  await page.screenshot({ path: `${shots}/fc-addev-${scheme}.png` });
+  await page.locator('#fc-dlg .fc-addf .btn', { hasText: 'Ask E.V.' }).click();
+  await page.waitForTimeout(500);
+  const job = await page.evaluate(t => {
+    const deck = Object.entries(window.__db.decks || {}).find(([, d]) => d.title === t);
+    const j = Object.entries(window.__db.jobs || {}).find(
+      ([, x]) => x.kind === 'flashcards' && deck && x.deck === deck[0]
+    );
+    return j ? { brief: j[1].brief, course: j[1].course, form: !!document.querySelector('#fc-dlg .fc-addf') } : null;
+  }, 'Harness import ' + scheme);
+  ok(
+    `[${scheme}] Add with E.V. on a deck starts a flashcards job for that deck (B-496)`,
+    !!job && /^10 more flashcards for the deck Harness import \w+ on heart rhythms\.$/.test(job.brief) && !job.form,
+    JSON.stringify(job)
+  );
   await page.evaluate(() => document.getElementById('fc-dlg') && document.getElementById('fc-dlg').close());
 }
 // B-488: Written shows the definition and takes the typed term: a miss is Again with the answer and I was right (which

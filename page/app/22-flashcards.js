@@ -116,6 +116,7 @@
       return d;
     }
     function openDeck(id) {
+      FC.addEv = false;
       FC.deck = id;
       FC.view = 'deck';
       FC.edit = null;
@@ -353,11 +354,14 @@
       else if (due) go.append(el('span', 'meta fc-note', 'A run takes the ' + plural(due, 'card') + ' due.'));
       body.append(go);
       const lh = el('div', 'fc-lh');
-      lh.append(
-        el('span', 'lab', 'Cards'),
+      const lr = el('span', 'fc-hr');
+      lr.append(
+        btn('Add with E.V.', () => ((FC.addEv = !FC.addEv), paintDeck()), { cls: 'btn ghost sm fc-addev' }),
         btn('New card', () => ((FC.edit = 'new'), paintDeck()), { cls: 'btn ghost sm' })
       );
+      lh.append(el('span', 'lab', 'Cards'), lr);
       body.append(lh);
+      if (FC.addEv) body.append(addEvForm(deck));
       const ul = el('div', 'fc-list');
       if (FC.edit === 'new') ul.append(cardForm(deck, null));
       for (const c of cards) ul.append(FC.edit === c.id ? cardForm(deck, c) : cardRow(deck, c));
@@ -396,6 +400,58 @@
       body.scrollTop = top;
       const f = body.querySelector('.fc-form textarea');
       if (f) f.focus();
+    }
+    /**
+     * B-496: Add with E.V.: a flashcards job that names this deck; its new cards join it (terms it has are left out) and
+     * the cards it has keep their schedules. How many, and what they should cover (optional).
+     */
+    function addEvForm(deck) {
+      const f = el('form', 'fc-row fc-form fc-addf');
+      f.addEventListener('submit', e => e.preventDefault());
+      const row = el('div', 'fc-iopts');
+      const n = el('select', 'fc-addn');
+      n.setAttribute('aria-label', 'How many cards');
+      for (const k of [10, 20, 40, 100]) {
+        const o = el('option', null, k + ' cards');
+        o.value = String(k);
+        n.append(o);
+      }
+      n.value = '20';
+      const topic = el('input', 'fc-in fc-addt');
+      topic.type = 'text';
+      topic.placeholder = 'What they should cover (optional)';
+      topic.setAttribute('aria-label', 'What the new cards should cover');
+      row.append(n, topic);
+      const a = el('div', 'fc-acts');
+      a.append(
+        btn('Cancel', () => ((FC.addEv = false), paintDeck()), { cls: 'btn ghost sm' }),
+        btn(
+          'Ask E.V.',
+          ev => {
+            const k = Number(n.value) || 20;
+            const t = topic.value.replace(/\s+/g, ' ').trim().slice(0, 120);
+            guard(ev.currentTarget, async () => {
+              const r = await startJob({
+                kind: 'flashcards',
+                title: 'Flashcards: ' + deck.title,
+                brief: `${k} more flashcards for the deck ${deck.title}${t ? ' on ' + t : ''}.`,
+                course: deck.course,
+                deck: deck.id,
+              });
+              FC.addEv = false;
+              toast(
+                r.fired.ok
+                  ? `E.V. is making ${k} cards for ${deck.title}`
+                  : 'Couldn’t start it: ' + fireCopy(r.fired.error)
+              );
+              paintDeck();
+            });
+          },
+          { cls: 'btn primary sm' }
+        )
+      );
+      f.append(row, a);
+      return f;
     }
     function cardRow(deck, c) {
       const r = el('div', 'fc-row');

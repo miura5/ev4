@@ -172,7 +172,7 @@ test('B-487 (B-485): a flashcard ask is routed by code to the flashcards job, wi
   assert.match(a.brief, /^15 flashcards on cardiac meds/);
   assert.equal(EV.flashcardAsk('flash cards please').count, 20);
   assert.equal(EV.flashcardAsk('cards on the cranial nerves for bio 201').course, 'BIO 201');
-  assert.equal(EV.flashcardAsk('99 flashcards on electrolytes').count, 40);
+  assert.equal(EV.flashcardAsk('199 flashcards on electrolytes').count, 150); // B-496: up to 150, in batches
   for (const no of [
     'what is due this week',
     'weak spots to Quizlet',
@@ -186,7 +186,7 @@ test('B-487 (B-485): a flashcard ask is routed by code to the flashcards job, wi
   const comp = fs.readFileSync(path.join(ROOT, 'page/app/74-ev-render-and-composer.js'), 'utf8');
   const send = comp.slice(comp.indexOf('async function sendTextNow'));
   assert.ok(
-    send.indexOf('E.flashcardAsk(text)') > 0 && send.indexOf('E.flashcardAsk(text)') < send.indexOf('await chat(')
+    send.indexOf('E.flashcardAsk(text') > 0 && send.indexOf('E.flashcardAsk(text') < send.indexOf('await chat(')
   );
 });
 
@@ -247,7 +247,7 @@ test('B-493: a verify marker the job wrote into a card’s words is taken off th
     { term: 'Hold parameters', definition: 'HR under 60: hold and the nurse must verify' },
     { term: 'Carvedilol', definition: 'Alpha and beta blocker' },
   ];
-  const dk = EV.deckFromJob({ job, items, now: AT });
+  const dk = EV.deckFromJob({ job, items, now: AT }).write;
   const cards = Object.values(dk.data.cards);
   for (const c of cards) assert.doesNotMatch(c.term + ' ' + c.definition, /verify\s*:|\(verify\)|\[verify\]/i);
   assert.deepEqual(
@@ -445,6 +445,145 @@ test('B-495: only an ask to make cards starts a job; a line about studying his c
     assert.equal(EV.cardsStudyAsk(s), false, s);
   const comp = fs.readFileSync(path.join(ROOT, 'page/app/74-ev-render-and-composer.js'), 'utf8');
   const send = comp.slice(comp.indexOf('async function sendTextNow'));
-  assert.ok(send.indexOf('E.cardsStudyAsk(text)') > send.indexOf('E.flashcardAsk(text)'));
+  assert.ok(send.indexOf('E.cardsStudyAsk(text)') > send.indexOf('E.flashcardAsk(text'));
   assert.ok(send.indexOf('E.cardsStudyAsk(text)') < send.indexOf('await chat('), 'routed before the chat model');
+});
+
+// B-496: large asks in batches of at most 40, each told the terms made so far; "add N cards to <deck>" adds to a deck
+const flashJob = (id, brief, extra = {}) => ({
+  id,
+  schema: 2,
+  writer: 'page',
+  at: '2026-10-25T15:00:00.000Z',
+  source: 'E.V. Home',
+  kind: 'flashcards',
+  title: 'Flashcards: cardiac meds',
+  brief,
+  course: 'NUR 112',
+  ...extra,
+});
+/** A model stand-in: each batch writes the count its line asks for, the first card of each repeating one already made. */
+const batchAsk = asks => async body => {
+  const text = body.messages[0].content;
+  asks.push(text);
+  const m = /write exactly (\d+) cards/.exec(text);
+  const n = m ? Number(m[1]) : 20;
+  const k = asks.length;
+  const items = Array.from({ length: n }, (_, i) => ({
+    term: `Term ${k}-${i + 1}`,
+    definition: `Meaning ${k}-${i + 1}`,
+  }));
+  if (k > 1) items[0] = { term: 'Term 1-1', definition: 'a repeat' };
+  return {
+    stop_reason: 'tool_use',
+    content: [{ type: 'tool_use', name: 'answer', input: { text: 'Cards.', items } }],
+  };
+};
+
+test('B-496: an ask counts up to 150 cards, in batches of at most 40; "add N cards to <deck>" names the deck', () => {
+  assert.deepEqual(EV.cardBatches(20), [20]);
+  assert.deepEqual(EV.cardBatches(40), [40]);
+  assert.deepEqual(EV.cardBatches(100), [34, 33, 33]);
+  assert.deepEqual(EV.cardBatches(150), [38, 38, 37, 37]);
+  assert.equal(EV.flashcardAsk('make 100 flashcards on cardiac meds').count, 100);
+  assert.equal(EV.jobCardCount({ brief: '100 flashcards on cardiac meds. His words: …' }), 100);
+  assert.equal(EV.jobCardCount({ brief: '15 more flashcards for the deck Meds.' }), 15);
+  const decks = [
+    { id: 'deck-20261025-150000-dosage', title: 'Dosage abbreviations', course: 'NUR 112', cards: {} },
+    { id: 'deck-20261025-150000-old', title: 'Old deck', course: 'NUR 112', retired: true, cards: {} },
+  ];
+  const a = EV.flashcardAsk('add 15 cards to Dosage abbreviations', decks);
+  assert.deepEqual([a.kind, a.count, a.deck, a.course], ['flashcards', 15, decks[0].id, 'NUR 112']);
+  assert.match(a.brief, /^15 more flashcards for the deck Dosage abbreviations/);
+  assert.equal(EV.flashcardAsk('add 10 more flashcards to my dosage abbreviations deck', decks).deck, decks[0].id);
+  assert.equal(EV.flashcardAsk('add 10 cards to Old deck', decks), null, 'a retired deck is not named');
+  assert.equal(EV.flashcardAsk('add 10 cards to my nonexistent deck', decks), null);
+});
+
+test('B-496: a 100-card job is asked in 3 batches, each told the terms made, and makes one deck with no term twice', async () => {
+  const NOW = new Date('2026-10-25T15:00:00Z');
+  const db = J.asRunDb(seedRecord(NOW));
+  const id = 'job-20261025-150000-flashcards-cardiac';
+  db.jobs = [...(db.jobs || []), flashJob(id, '100 flashcards on cardiac meds. His words: make 100 flashcards')];
+  const writes = [],
+    asks = [];
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas: loadSchemas(),
+    jobId: id,
+    now: NOW,
+    release: 'v4.5.5+1',
+    ask: batchAsk(asks),
+    write: async w => writes.push(w),
+  });
+  assert.equal(r.status, 'done', JSON.stringify(r));
+  assert.equal(asks.length, 3);
+  assert.match(asks[0], /batch 1 of 3: write exactly 34 cards\./);
+  assert.match(asks[1], /batch 2 of 3: write exactly 33 cards, none with a term already made .*"Term 1-34"/);
+  const dk = writes.flat().find(w => w.collection === 'decks');
+  const terms = Object.values(dk.data.cards).map(c => c.term);
+  assert.equal(terms.length, 98, 'the two repeats are left out');
+  assert.equal(new Set(terms.map(t => t.toLowerCase())).size, terms.length);
+  assert.ok(validate('decks', dk.data, { id: dk.id }).ok);
+  const done = writes.flat().find(w => w.collection === 'jobresults' && w.data.status === 'done');
+  assert.equal(done.data.result.deckCards, 98);
+});
+
+test('B-496: a job that names a deck adds only new terms to it; the cards it has keep their schedules', async () => {
+  const NOW = new Date('2026-10-25T15:00:00Z');
+  const db = J.asRunDb(seedRecord(NOW));
+  const deckId = 'deck-20261024-150000-cardiac';
+  const deck = EV.deckNew({
+    title: 'Cardiac meds',
+    course: 'NUR 112',
+    items: [
+      { term: 'Term 1-1', definition: 'had' },
+      { term: 'Digoxin', definition: 'a cardiac glycoside' },
+    ],
+    now: '2026-10-24T15:00:00Z',
+    id: deckId,
+  });
+  deck.data.cards['c-002'] = {
+    ...deck.data.cards['c-002'],
+    state: 'review',
+    ivl: 6,
+    ease: 2.3,
+    reps: 3,
+    due: '2026-10-30',
+  };
+  db.decks = [...(db.decks || []), { id: deckId, ...deck.data }];
+  const id = 'job-20261025-150000-flashcards-more';
+  db.jobs = [...(db.jobs || []), flashJob(id, '5 more flashcards for the deck Cardiac meds.', { deck: deckId })];
+  assert.ok(validate('jobs', flashJob(id, 'x', { deck: deckId }), { id }).ok, 'the jobs schema takes deck');
+  const writes = [],
+    asks = [];
+  const r = await J.runJob({
+    db,
+    spec,
+    schemas: loadSchemas(),
+    jobId: id,
+    now: NOW,
+    release: 'v4.5.5+1',
+    ask: batchAsk(asks),
+    write: async w => writes.push(w),
+  });
+  assert.equal(r.status, 'done', JSON.stringify(r));
+  assert.equal(asks.length, 1);
+  assert.match(asks[0], /write exactly 5 cards, none with a term already made .*"Digoxin"/);
+  const up = writes.flat().find(w => w.collection === 'decks');
+  assert.equal(up.op, 'update');
+  assert.equal(up.id, deckId);
+  const added = Object.values(up.data.cards);
+  assert.equal(added.length, 4, 'Term 1-1, already in the deck, is left out');
+  assert.ok(
+    Object.keys(up.data.cards).every(k => !deck.data.cards[k]),
+    'only new entries'
+  );
+  assert.ok(
+    added.every(c => !c.state && !c.due),
+    'new cards are new'
+  );
+  const done = writes.flat().find(w => w.collection === 'jobresults' && w.data.status === 'done');
+  assert.match(done.data.result.text, /^Added 4 cards to Cardiac meds/);
 });

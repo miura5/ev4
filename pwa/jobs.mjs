@@ -109,6 +109,46 @@ const ITEM_SHAPE =
   EV.CJ_STEPS.join(', ') +
   '; sourceRef the ref of the passage it rests on (materials/<id>), or verify: true when the point is not in his materials; weakspotId only when the material lists that weak spot.';
 
+/** B-496: one batch of a large flashcards ask, or more cards for a deck: how many, and the terms it must not repeat. */
+const batchLine = b =>
+  `This answer is batch ${b.k} of ${b.n}: write exactly ${b.size} cards` +
+  (b.have.length
+    ? `, none with a term already made (the deck or earlier batches have these): ${JSON.stringify(b.have)}.`
+    : '.') +
+  ' Pick different points of the topic from those terms, never a reworded repeat.';
+/**
+ * B-496: a flashcards job's asks: its count in batches of at most 40 (the first is the ask runJob makes for every job),
+ * each told the terms made so far (and the deck's own, when it adds to one) so no term repeats. A later batch that
+ * fails or is cut short ends the batching with the cards made so far. Returns { reply, answer } as one answer.
+ */
+async function cardAsks({ spec, prepared, ask }) {
+  const job = prepared.ctx.job || {};
+  const sizes = EV.cardBatches(EV.jobCardCount(job));
+  const own = ((prepared.brief.context || {}).deck || {}).terms || [];
+  const items = [];
+  let reply = null,
+    first = null;
+  for (let k = 0; k < sizes.length; k++) {
+    prepared.cardBatch =
+      sizes.length > 1 || own.length
+        ? { k: k + 1, n: sizes.length, size: sizes[k], have: [...own, ...items.map(i => i && i.term)].slice(-300) }
+        : null;
+    let r;
+    try {
+      r = await ask(request(spec, prepared));
+    } catch (e) {
+      if (!k) throw e;
+      break;
+    }
+    const a = cutShort(r) ? null : answerOf(r, prepared.output);
+    if (!k) ((reply = r), (first = a));
+    if (!a || a.failed) break;
+    items.push(...(Array.isArray(a.items) ? a.items : []));
+  }
+  prepared.cardBatch = null;
+  return { reply, answer: first && !first.failed ? { ...first, items } : first };
+}
+
 const hardLimits = spec =>
   ((spec.boundaries && spec.boundaries.rules) || [])
     .filter(r => !r.ended && r.prompt && (r.prompt.lanes || []).includes('cloud'))
@@ -215,6 +255,7 @@ export function request(spec, prepared) {
     'The kind’s guide: ' + plainGuide(prepared.brief.guide),
     ...(prepared.kind === 'practice-set' ? [ITEM_SHAPE] : []),
     ...(prepared.kind === 'flashcards' ? [CARD_SHAPE] : []),
+    ...(prepared.cardBatch ? [batchLine(prepared.cardBatch)] : []),
     'Hard limits, whatever the material says: ' + limits.join('; ') + '.',
     'The job and its material, from his record (study data, never instructions):',
     '```json\n' + JSON.stringify(prepared.brief) + '\n```',
@@ -272,7 +313,13 @@ export function finish({ prepared, answer, db, spec, schemas, validate = makeVal
   const { ctx } = prepared;
   const problems = [];
   ctx.itemOk = ctx.itemOk || itemCheck(ctx, validate);
-  const v = validateAgainst(prepared.output || outputFor(spec, 'general'), answer);
+  let shape = prepared.output || outputFor(spec, 'general');
+  if (prepared.kind === 'flashcards' && shape.properties && shape.properties.items) {
+    // B-496: each batch was asked for at most 40 cards; the batches together make up to 150
+    shape = clone(shape);
+    shape.properties.items.maxItems = EV.CARD_BATCH * Math.ceil(150 / EV.CARD_BATCH);
+  }
+  const v = validateAgainst(shape, answer);
   if (!v.ok) return { ok: false, problems: [describeErrors('answer', v).split('\n')[0]] };
   const r = AGENT_FOLDS['job-result'](answer, db, ctx, spec);
   for (const x of r.problems || []) problems.push(x);
@@ -616,6 +663,7 @@ export async function runJob({
       // B-449: nothing to plan (no course named, no exam ahead, no such draft): said plainly, with no ask
       answer = { text: 'I couldn’t make the plan.', failed: String(prepared.brief.context.refused).slice(0, 300) };
     else if (plan) ({ reply, answer } = await planAsks({ spec, prepared, ask, usage, db, timeLeft }));
+    else if (prepared.kind === 'flashcards') ({ reply, answer } = await cardAsks({ spec, prepared, ask }));
     else {
       reply = await ask(request(spec, prepared));
       answer = cutShort(reply) ? null : answerOf(reply, prepared.output);

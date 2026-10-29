@@ -13,7 +13,9 @@ export function makeCards(core) {
   const RATINGS = ['again', 'hard', 'good', 'easy'];
   const EASE0 = 2.5,
     EASE_MIN = 1.3,
-    MAX_CARDS = 40;
+    MAX_CARDS = 40,
+    ASK_MAX = 150, // B-496: one ask makes up to 150 cards, in batches of BATCH
+    BATCH = 40;
   const r2 = x => Math.round(x * 100) / 100;
   const clean = (t, n) =>
     String(t == null ? '' : t)
@@ -127,8 +129,10 @@ export function makeCards(core) {
    * B-487 (closes B-485): a line asking for flashcards, routed by code to the flashcards job (never the chat model's
    * choice): "flashcards on …", "flash cards", "make 15 cards on …". { kind, title, brief, course, count } or null.
    */
-  function flashcardAsk(text) {
+  function flashcardAsk(text, decks) {
     const line = clean(text, 1500);
+    const add = addCardsAsk(line, decks);
+    if (add) return add;
     const cards = /\b(flash[\s-]*)?cards?\b/i;
     if (!cards.test(line)) return null;
     if (/\bquizlet\b/i.test(line) && /\bweak[\s-]*spots?\b/i.test(line)) return null; // the weak spots' Quizlet ask
@@ -143,11 +147,11 @@ export function makeCards(core) {
       'i'
     );
     const lead =
-      /^(please\s+)?(\d{1,2}\s+)?(flash[\s-]*cards?\b(\s+(on|about|for|covering)\b|\s*(please)?\s*$)|cards?\s+(on|about|covering)\s)/i;
+      /^(please\s+)?(\d{1,3}\s+)?(flash[\s-]*cards?\b(\s+(on|about|for|covering)\b|\s*(please)?\s*$)|cards?\s+(on|about|covering)\s)/i;
     if (cardsStudyAsk(line) && !/\b(make|create|generate|build|write)\b/i.test(line)) return null;
     if (!make.test(line) && !lead.test(line)) return null;
-    const m = /\b(\d{1,2})\s+(?:flash[\s-]*)?cards?\b/i.exec(line);
-    const count = Math.min(MAX_CARDS, Math.max(1, m ? Number(m[1]) : 20));
+    const m = /\b(\d{1,3})\s+(?:flash[\s-]*)?cards?\b/i.exec(line);
+    const count = Math.min(ASK_MAX, Math.max(1, m ? Number(m[1]) : 20));
     const t = /\b(?:on|about|for|covering)\s+(.+)$/i.exec(line);
     const topic = clean((t ? t[1] : line).replace(/[?.!]+$/, ''), 70) || 'your course';
     const course = (guessCourse && guessCourse(line)) || (defaultCourse && defaultCourse()) || null;
@@ -158,6 +162,52 @@ export function makeCards(core) {
       course,
       count,
     };
+  }
+  /**
+   * B-496: "add 20 cards to Dosage abbreviations" (more cards, on, into, for the deck): a flashcards job that adds to
+   * that deck, when one of `decks` (not retired) is named by its title; else null (the line is not this ask).
+   */
+  function addCardsAsk(line, decks) {
+    const m =
+      /\badd\s+(?:(\d{1,3})\s+)?(?:more\s+|new\s+)?(?:flash[\s-]*)?cards?\s+(?:to|into|for)\s+(?:my\s+|the\s+)?(.+?)(?:\s+deck)?\s*(?:\bon\s+(.+?))?[.?!]*$/i.exec(
+        line
+      );
+    if (!m) return null;
+    const k = t =>
+      String(t || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    const named = k(m[2]);
+    const live = [].concat(decks || []).filter(d => d && !d.retired && d.title);
+    const deck =
+      live.find(d => k(d.title) === named) ||
+      live.find(d => named.length >= 4 && (k(d.title).includes(named) || named.includes(k(d.title))));
+    if (!deck) return null;
+    const count = Math.min(ASK_MAX, Math.max(1, m[1] ? Number(m[1]) : 20));
+    const topic = m[3] ? clean(m[3], 70) : '';
+    return {
+      kind: 'flashcards',
+      title: 'Flashcards: ' + clean(deck.title, 80),
+      brief:
+        `${count} more flashcards for the deck ${deck.title}${topic ? ' on ' + topic : ''}. His words: ${line}`.slice(
+          0,
+          1500
+        ),
+      course: deck.course || null,
+      count,
+      deck: deck.id,
+    };
+  }
+  /** B-496: the cards a flashcards job asks for, from its brief ("100 flashcards on …"): 20 when it names none. */
+  const jobCardCount = job => {
+    const m = /\b(\d{1,3})\s+(?:more\s+)?(?:flash[\s-]*)?cards?\b/i.exec(String((job && job.brief) || ''));
+    return Math.min(ASK_MAX, Math.max(1, m ? Number(m[1]) : 20));
+  };
+  /** B-496: a count in batches of at most 40, as even as they come (100: 34, 33, 33). */
+  function cardBatches(count) {
+    const n = Math.max(1, Math.ceil(count / BATCH));
+    return Array.from({ length: n }, (_, i) => Math.floor(count / n) + (i < count % n ? 1 : 0));
   }
   /** B-495: a line about studying the cards he has ("study my cards", "review flashcards"): it opens his due cards. */
   function cardsStudyAsk(text) {
@@ -186,13 +236,15 @@ export function makeCards(core) {
    * verify marker in the words is taken off them and kept as the flag alone (B-493). */
   function cardsFrom(items, at, max = MAX_CARDS) {
     const out = {};
+    const seen = new Set(); // B-496: a term once per deck
     let n = 0;
     for (const it of items || []) {
       const t0 = clean(it && it.term, 300),
         d0 = clean(it && it.definition, 1000);
       const term = t0.replace(VERIFY_TAIL, ''),
         def = d0.replace(VERIFY_TAIL, '');
-      if (!term || !def || n >= max) continue;
+      if (!term || !def || n >= max || seen.has(term.toLowerCase())) continue;
+      seen.add(term.toLowerCase());
       const verify = !!(it.verify === true || it.verify === 'true' || term !== t0 || def !== d0);
       out['c-' + String(++n).padStart(3, '0')] = { term, definition: def, ...(verify ? { verify: true } : {}), at };
     }
@@ -266,12 +318,21 @@ export function makeCards(core) {
     const r = rateCard(c, rating, chicagoDate(at), at);
     return { write: cardWrite(deck, id, { ...c, ...r.sched }), again: r.again, card: { ...c, ...r.sched } };
   }
-  /** B-487: the deck a flashcards job's answer makes: its course is the job's, else the one its words name. */
-  function deckFromJob({ job, items, now, source, writer = 'worker' }) {
+  /**
+   * B-487: the deck a flashcards job's answer makes: its course is the job's, else the one its words name. B-496: up to
+   * 150 cards; a job that names a deck (job.deck, `deck` the deck as the record has it) adds to it instead: only new
+   * terms, as one update of new entries, so no card there changes. { write, n, title, course, added }.
+   */
+  function deckFromJob({ job, items, now, source, writer = 'worker', deck }) {
+    if (job.deck && deck) {
+      const r = deckCardsAdd(deck, items, now, ASK_MAX);
+      return { write: r.write, n: r.added, title: deck.title, course: deck.course, added: true, dupes: r.dupes };
+    }
     const course = job.course || (guessCourse ? guessCourse(job.title + ' ' + job.brief) : null);
     const id = 'deck-' + String(job.id).replace(/^job-/, '');
     const title = clean(String(job.title || '').replace(/^flashcards:\s*/i, ''), 120) || 'Flashcards';
-    return deckNew({ title, course, items, writer, source, now, job: job.id, id });
+    const w = deckNew({ title, course, items, writer, source, now, job: job.id, id, max: ASK_MAX });
+    return { write: w, n: Object.keys(w.data.cards).length, title: w.data.title, course: w.data.course, added: false };
   }
 
   // ---------------------------------------------------------------- B-488: Written and Learn
@@ -445,6 +506,9 @@ export function makeCards(core) {
     cardChoices,
     flashcardAsk,
     cardsStudyAsk,
+    jobCardCount,
+    cardBatches,
+    CARD_BATCH: BATCH,
     deckNew,
     deckCardAdd,
     deckCardEdit,

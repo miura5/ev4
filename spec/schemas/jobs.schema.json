@@ -64,6 +64,11 @@
    "type": "string",
    "description": "B-449: an exam-plan job: the course to plan; B-487: a flashcards job: the course its deck is for"
   },
+  "deck": {
+   "type": "string",
+   "pattern": "^deck-[a-z0-9-]{1,120}$",
+   "description": "B-496: a flashcards job that adds cards to this deck (decks/<id>) instead of making a new one"
+  },
   "revise": {
    "type": "string",
    "description": "B-449: an exam-plan job: the plans/<id> to revise, the brief saying what to change"

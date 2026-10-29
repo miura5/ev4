@@ -1581,7 +1581,7 @@
     "deck-<YYYYMMDD-HHMMSS>-<slug>",
     "deck-proof-<YYYYMMDDHHMMSS>-<slug>"
    ],
-   "holds": "B-487 (D-368): a flashcard deck for one course: title, course and its cards map (c-<n>), each card with term, definition, an optional verify mark and its own SM-2 schedule; the page adds, edits, rates and retires cards as marks, nothing is deleted",
+   "holds": "B-487 (D-368): a flashcard deck for one course: title, course and its cards map (c-<n>), each card with term, definition, an optional verify mark and its own SM-2 schedule; the page adds, edits, rates and retires cards as marks, and a flashcards job that names the deck adds new cards to it (B-496); nothing is deleted",
    "fromV3": "new (D-368)",
    "schema": "spec/schemas/decks.schema.json",
    "marks": {
@@ -1589,7 +1589,8 @@
      "page"
     ],
     "cards": [
-     "page"
+     "page",
+     "worker"
     ],
     "retired": [
      "page"
@@ -4255,7 +4256,7 @@
    },
    "flashcards": {
     "label": "Flashcards",
-    "guide": "Write the number of flashcards the brief asks for (default 20, at most 40) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. When no passage covers the topic, still write every card from general knowledge, each with verify: true; thin or missing materials are never a reason for failed. The cards become a deck in E.V. for the course, studied there with spaced repetition: make no set and no doc, and leave links out. In text, one short line on what the cards cover."
+    "guide": "Write the number of flashcards the brief asks for (default 20; a larger ask comes in batches of at most 40, each batch saying how many and the terms already made, which no card repeats) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. When no passage covers the topic, still write every card from general knowledge, each with verify: true; thin or missing materials are never a reason for failed. The cards become a deck in E.V. for the course, studied there with spaced repetition: make no set and no doc, and leave links out. In text, one short line on what the cards cover."
    },
    "general": {
     "label": "Background task",
