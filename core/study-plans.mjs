@@ -29,6 +29,15 @@ export function makeStudyPlans(core) {
   const TAGS = ['graded', 'learn', 'practice', 'review', 'clinical-prep', 'skills-prep'];
 
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
+  // B-463: a plan day's name as the page writes it ("Wed 28 Oct"), from the calendar date (a Central day), so an edit's
+  // reply never works a weekday out itself
+  const WD3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function planDayName(day) {
+    if (!DAY.test(String(day || ''))) return '';
+    const [y, m, d] = day.split('-').map(Number);
+    return `${WD3[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]} ${d} ${MON3[m - 1]}`;
+  }
   /** A course name as compared: letters and digits only, any case, so spacing and dashes never split a course. */
   const courseKey = s =>
     String(s || '')
@@ -194,7 +203,12 @@ export function makeStudyPlans(core) {
     ...(p.section ? { section: p.section } : {}),
     ...(p.keyDates ? { keyDates: p.keyDates } : {}),
     ...(p.openQuestions ? { openQuestions: p.openQuestions } : {}),
-    days: (p.days || []).map(d => ({ date: d.date, ...(d.label ? { label: d.label } : {}), tasks: d.tasks || [] })),
+    days: (p.days || []).map(d => ({
+      date: d.date,
+      ...(planDayName(d.date) ? { day: planDayName(d.date) } : {}), // B-463
+      ...(d.label ? { label: d.label } : {}),
+      tasks: d.tasks || [],
+    })),
   });
 
   /**
@@ -218,6 +232,8 @@ export function makeStudyPlans(core) {
         section: draft.section || null,
         draft: planBrief(draft),
         changes: String(job.brief || ''),
+        // B-463: each date he may name or a task may move to, with its weekday, from a few days back to the exam
+        calendar: Array.from({ length: 36 }, (_, i) => addDays(date, i - 3)).map(d => d + ' ' + planDayName(d)),
       };
     }
     const course = studyPlanCourse(job, db.exams);

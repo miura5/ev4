@@ -1790,3 +1790,30 @@ test('B-483: an approved plan’s tasks reach the day saved before it, and a pla
   assert.deepEqual(EV.planCopyIds(ed, { ...task, date: TODAY }), ['add-dosage-drill-iv-rates']);
   assert.equal(EV.planCopyRef(plans, '2026-10-26', 'Dosage drill: IV rates'), null, 'another day: not that task');
 });
+
+test('B-463: a plan edit is told each day with its weekday (Wed 28 Oct for 2026-10-28), never left to work it out', () => {
+  const draft = {
+    id: 'E5-2',
+    exam: 'E5',
+    title: 'Plan',
+    days: [
+      { date: '2026-10-28', tasks: [{ id: 't1', text: 'Read ch 3', tag: 'learn' }] },
+      { date: '2026-11-02', tasks: [] },
+    ],
+  };
+  const ctx = EV.studyPlanContext({ plans: [draft] }, { date: '2026-10-28', job: { revise: 'E5-2' }, spec });
+  assert.deepEqual(
+    ctx.draft.days.map(d => d.day),
+    ['Wed 28 Oct', 'Mon 2 Nov']
+  );
+  assert.ok(ctx.calendar.includes('2026-10-28 Wed 28 Oct'));
+  assert.ok(ctx.calendar.includes('2026-10-25 Sun 25 Oct') && ctx.calendar.includes('2026-11-01 Sun 1 Nov'));
+  const body = J.planRequest(spec, {
+    mode: 'edit',
+    kind: 'exam-plan',
+    brief: { job: { id: 'j', kind: 'exam-plan', brief: 'move it' }, guide: 'g', context: { ...ctx } },
+  });
+  const text = body.messages[0].content.map(b => b.text).join('\n');
+  assert.match(text, /never work out a weekday yourself/);
+  assert.match(text, /"day":"Wed 28 Oct"/);
+});

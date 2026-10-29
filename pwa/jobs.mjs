@@ -141,7 +141,7 @@ export function planRequest(spec, prepared) {
   const stable = [
     PERSONA,
     edit
-      ? 'He wants changes to a study plan draft he has. Answer with a patch of task operations, never a whole plan, in E.V.’s voice: warm, plain and brief (text says what changed, at most 1,500 characters).'
+      ? 'He wants changes to a study plan draft he has. Answer with a patch of task operations, never a whole plan, in E.V.’s voice: warm, plain and brief (text says what changed, at most 1,500 characters). Name a day as the draft’s day and context.calendar write it (Wed 28 Oct, Central time); never work out a weekday yourself.'
       : doJob(spec).step.judgment,
     edit
       ? 'From his study plan instructions (his to edit):\n\n' + EV.studyPlanEditRules(ins.text, spec)
