@@ -10543,5 +10543,22 @@
   "notes": "",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
+ },
+ {
+  "id": "B-573",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): run harness check '[notice 1280] a job finished off the E.V. tab' fails on main: the status line reads 'A run was missed' instead of the finished job.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "lane E1 run at 6d7afa9",
+  "words": "run harness check '[notice 1280] a job finished off the E.V. tab' fails on main: the status line reads 'A run was missed' instead of the finished job.",
+  "reportedAt": "2026-10-29T23:37:10.484Z",
+  "board": {
+   "row": "v4 B-573: run harness check '[notice 1280] a job finished off the E.V. tab'…"
+  }
  }
 ]
