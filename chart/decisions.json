@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-396",
+  "date": "Oct 29",
+  "title": "UI polish ships fast: the reference mock-ups in docs/design/ui-polish are guidance, not a 1:1 gate; a task is done when it is built through Proprietary and looks right on staging at 1280; side-by-side matching and inaccuracy fixes come after release. Plan: views moved tonight, cleanup and the 13 shared-look tasks overnight in parallel lanes, the 9 view tasks Friday morning, then staging and the release card",
+  "why": "Matt (Oct 29): strict matching causes delays; Proprietary and the saved reference already keep the work on design; ship the new UI first, then correct",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-395",
   "date": "Oct 29",
   "title": "Badges and sidebar dots use a colour-coded palette by kind (Learn, Practice, Review, Reading, Class, Graded, Note, Quiz, Session), never black or white, at a fixed width; colour may mean kind as well as state",
