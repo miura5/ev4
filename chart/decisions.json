@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-395",
+  "date": "Oct 29",
+  "title": "Badges and sidebar dots use a colour-coded palette by kind (Learn, Practice, Review, Reading, Class, Graded, Note, Quiz, Session), never black or white, at a fixed width; colour may mean kind as well as state",
+  "why": "Matt's UI notes (Oct 29): black and white badges look ugly and badges should be colour-coded",
+  "status": "accepted",
+  "supersedes": [
+   "D-270"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-394",
   "date": "Oct 29",
   "title": "Desktop is the priority for polish and feel (Matt, Oct 29); the phone keeps a working baseline (fits 390, no tap flash or press shrink) and phone specialisation (haptics, swipe-dismiss, back-gesture history, status bar tuning) waits; motion is graceful: view switches stay instant, while elements inside views appear with a short soft transition (fold by height and fade, popovers and toasts fade and rise), and press feedback is colour, never a scale recoil; instant feedback means a visible change within 100 ms, not no transition",
