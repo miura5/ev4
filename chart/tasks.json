@@ -9879,5 +9879,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:00:46.163Z"
   }
+ },
+ {
+  "id": "B-529",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): E.V.'s answers in Record and elsewhere misstate the record (an approved change called pending, today's quiz and notes skipped).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "E.V.'s answers in Record and elsewhere misstate the record (an approved change called pending, today's quiz and notes skipped).",
+  "reportedAt": "2026-10-29T16:00:53.218Z",
+  "board": {
+   "row": "v4 B-529: E.V.'s answers in Record and elsewhere misstate the record (an…"
+  }
  }
 ]
