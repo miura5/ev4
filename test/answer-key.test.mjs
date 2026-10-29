@@ -120,7 +120,7 @@ test('B-481: a calculation with no calc is not trusted; rates, drops and convers
     calc: { dose: 250, doseUnit: 'mg', stockAmount: 125, stockUnit: 'mg', stockMl: 5 },
   };
   assert.equal(EV.practiceReply.answerKeyProblem(numeric), null);
-  assert.match(EV.practiceReply.answerKeyProblem({ ...numeric, answer: 5 }), /not the worked 10/);
+  assert.match(EV.practiceReply.answerKeyProblem({ ...numeric, answer: 7 }), /not the worked 10/);
   // a conceptual question that only mentions a dose is no calculation
   const words = {
     ...base,
@@ -218,4 +218,50 @@ test('B-481: a top-up item with weakspotId null carries no weak spot; an item th
   assert.equal(set.data.items.length, 3);
   assert.ok(set.data.items.every(q => !('weakspotId' in q) && q.kind === 'check'));
   assert.equal(set.data.asked, 4, 'the dropped item counts in the shortfall');
+});
+
+test('B-481: a stem that gives its answer away, or asks nothing, is dropped; a clean stem is kept', () => {
+  const P = EV.practiceReply.answerKeyProblem;
+  const item = (stem, options, correct, calc) => ({
+    ...base,
+    stem,
+    options,
+    correct: [correct],
+    rationales: options.map(() => 'Worked in the rationale.'),
+    calc,
+  });
+  // staging, Oct 29 (166bb47): Haiku wrote its working into the stem
+  const genta = item(
+    'A 15 kg child is ordered gentamicin 2.5 mg/kg IV every 8 hours. What is the single dose in mg? (Answer: 37.5 mg.)',
+    ['37.5 mg', '112.5 mg', '12.5 mg', '75 mg'],
+    0,
+    { weightKg: 15, dosePerKg: 2.5, per: 'dose' }
+  );
+  const each = item(
+    'A 22 kg child is ordered 40 mg/kg/day divided every 8 hours. What is the dose for each administration? (Dose per day = 880 mg; each dose = 293.3 mg.)',
+    ['293.3 mg', '880 mg', '440 mg', '110 mg'],
+    0,
+    { weightKg: 22, dosePerKg: 40, per: 'day', everyHours: 8 }
+  );
+  const told = item(
+    'A 14 kg child is ordered 1.2 mg/kg per dose of a medication. Each dose is 16.8 mg. (Check your materials: pediatric dosing.)',
+    ['16.8 mg', '8.4 mg', '33.6 mg', '1.2 mg'],
+    0,
+    { weightKg: 14, dosePerKg: 1.2, per: 'dose' }
+  );
+  assert.equal(P(genta), 'its stem gives its answer away');
+  assert.equal(P(each), 'its stem gives its answer away');
+  assert.equal(P(told), 'its stem asks no question');
+  const clean = item(
+    'A 15 kg child is ordered gentamicin 2.5 mg/kg IV every 8 hours. What is the single dose in mg?',
+    ['37.5 mg', '112.5 mg', '12.5 mg', '75 mg'],
+    0,
+    { weightKg: 15, dosePerKg: 2.5, per: 'dose' }
+  );
+  assert.equal(P(clean), null);
+  // the stated key alone gives it away too, with no "Answer:"
+  assert.equal(
+    P({ ...clean, stem: clean.stem.replace('What', 'The dose is 37.5 mg. What') }),
+    'its stem gives its answer away'
+  );
 });

@@ -648,8 +648,34 @@ export function makeItemKinds(core) {
    * B-481: why a written item can't be trusted, or null when it can: its rationale disagrees with its key, its calc
    * works to another answer (or to none of its options), or it asks for a worked number and carries no calc.
    */
+  // B-481: a stem asks; it never holds its answer or its working ("(Answer: 37.5 mg.)", "each dose = 293.3 mg")
+  const ASKS =
+    /\?|:\s*$|\b(?:calculate|compute|determine|how (?:many|much|long|often)|what|which|who|when|where|why|select|choose|identify|indicate|find|give|round|match|classify|explain|describe|list)\b/i;
+  const WORKED = /\banswers?\s*(?:is\s*)?[:=]|=\s*-?\.?\d/i;
+  /** B-481: why a stem is no fair question, or null: it asks nothing, shows its working, or states its numeric key. */
+  function stemProblem(q) {
+    const stem = String(q.stem || '');
+    if (!ASKS.test(stem)) return 'its stem asks no question';
+    if (WORKED.test(stem)) return 'its stem gives its answer away';
+    const keys =
+      q.type === 'numeric'
+        ? typeof q.answer === 'number'
+          ? [{ value: q.answer, unit: q.unit || null }]
+          : []
+        : (Array.isArray(q.correct) ? q.correct : []).map(i => optionNumber((q.options || [])[i])).filter(Boolean);
+    const said = [...stem.matchAll(new RegExp(NUMBER.source, 'g'))].map(m => ({
+      value: Number(m[1].replace(/,/g, '')),
+      unit: m[2] ? unitKey(m[2]) : null,
+    }));
+    for (const k of keys)
+      if (k.unit && said.some(n => n.unit === unitKey(k.unit) && Math.abs(n.value - k.value) < 1e-9))
+        return 'its stem gives its answer away';
+    return null;
+  }
   function answerKeyProblem(q) {
     if (!q || typeof q !== 'object') return 'not an object';
+    const st = stemProblem(q);
+    if (st) return st;
     const r = rationaleProblem(q);
     if (r) return r;
     const work = q.calc ? calcAnswer(q.calc) : null;
