@@ -6,6 +6,22 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 28, ~8 pm Central): plan-fix release on staging, waiting on Matt's test
+
+- **Live:** v4.5.15 at f0bd996, recorded GREEN (record, page and the ev-live app).
+- **Staging GREEN at fd4f69f** (v4.5.15+27): B-465 (exams for every course from calendar dates, Add exam; ids like
+  BIO201.20261028, now in spec.collections.exams.key), B-469 (Put away a plan, marked in planedits/<exam>.retired,
+  nothing deleted), B-470 (thinking blocks assembled and never replayed empty; plan-edit max_tokens 16000; the
+  "[cards: …]" marker stripped). Real runs in the staging app: BIO 201 plan made; NUR 112 plan put away, remade, and a
+  rework edit applied. Four staging deploys this release (Matt was told; the extra two were blockers found by the runs).
+- **Running:** one whole-release code review (f0bd996..fd4f69f). **Waiting on Matt:** his test in the staging app and
+  his word "ship fd4f69f". Then: ship live --matt-ok (it tags v4.5.16; re-ship staging once), the live calls, pwa-live
+  dispatch and his Approve in GitHub.
+- **Next:** B-472 (the claude.ai page stops being published, D-367), then B-448, B-461, B-464, B-462, B-463, B-474.
+  B-473 waits for a sitting at the Mac. B-467 (red nightly) and B-468 (brief's stale health read) are small ops tasks.
+- Staging e2e scripts (scratchpad, may not survive): open.cjs, plan2.cjs, putaway.cjs, edit.cjs, say.cjs under
+  scratchpad/e2e; they open the staging app with the staging Worker token from system/worker.json.
+
 ## Update (Oct 28, late evening Central): v4.5.15 going live; the next batch running
 
 - **v4.5.15 is tagged at f0bd996** (a81e819 + the B-450 harness fix + B-466, which removed the R-06 gate; the hashed
