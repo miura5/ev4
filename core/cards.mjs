@@ -164,15 +164,21 @@ export function makeCards(core) {
     const t = compact(at);
     return `deck-${t.slice(0, 8)}-${t.slice(8)}-${slugOf(title)}`;
   };
-  /** Cards from a list ({ term, definition, verify }): cleaned, empty ones left out, at most 40, keyed c-001 on. */
+  // B-493: a verify marker a model wrote into the words ("…; verify: true", "(verify)", "[verify]") at their end
+  const VERIFY_TAIL =
+    /(?:\s*[;,|]\s*verify(?:\s*:\s*(?:true|yes))?|\s*[([]\s*verify(?:\s*:\s*(?:true|yes))?\s*[)\]]|\s+verify\s*:\s*(?:true|yes))[\s.;]*$/i;
+  /** Cards from a list ({ term, definition, verify }): cleaned, empty ones left out, at most 40, keyed c-001 on. A
+   * verify marker in the words is taken off them and kept as the flag alone (B-493). */
   function cardsFrom(items, at) {
     const out = {};
     let n = 0;
     for (const it of items || []) {
-      const term = clean(it && it.term, 300),
-        def = clean(it && it.definition, 1000).replace(/\s*\[verify\]\s*$/i, '');
+      const t0 = clean(it && it.term, 300),
+        d0 = clean(it && it.definition, 1000);
+      const term = t0.replace(VERIFY_TAIL, ''),
+        def = d0.replace(VERIFY_TAIL, '');
       if (!term || !def || n >= MAX_CARDS) continue;
-      const verify = !!(it.verify || /\[verify\]\s*$/i.test(String(it.definition || '')));
+      const verify = !!(it.verify === true || it.verify === 'true' || term !== t0 || def !== d0);
       out['c-' + String(++n).padStart(3, '0')] = { term, definition: def, ...(verify ? { verify: true } : {}), at };
     }
     return out;

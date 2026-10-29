@@ -237,3 +237,28 @@ test('B-487: a flashcards job makes a deck for its course in E.V. (the stub’s 
   const cards = fs.readFileSync(path.join(ROOT, 'page/app/67-ev-cards.js'), 'utf8');
   assert.match(cards, /btn\('Open deck', \(\) => openDeck\(r\.deckId\)/);
 });
+
+test('B-493: a verify marker the job wrote into a card’s words is taken off them; the flag alone drives the badge', () => {
+  const job = { id: 'job-20261029-150000-flashcards-beta', title: 'Flashcards: beta blockers', course: 'NUR 112' };
+  const items = [
+    { term: 'Metoprolol', definition: 'A cardioselective beta blocker; verify: true', verify: true },
+    { term: 'Propranolol', definition: 'A nonselective beta blocker; verify: true' },
+    { term: 'Atenolol', definition: 'Renally cleared beta blocker (verify)' },
+    { term: 'Hold parameters', definition: 'HR under 60: hold and the nurse must verify' },
+    { term: 'Carvedilol', definition: 'Alpha and beta blocker' },
+  ];
+  const dk = EV.deckFromJob({ job, items, now: AT });
+  const cards = Object.values(dk.data.cards);
+  for (const c of cards) assert.doesNotMatch(c.term + ' ' + c.definition, /verify\s*:|\(verify\)|\[verify\]/i);
+  assert.deepEqual(
+    cards.map(c => [c.definition, !!c.verify]),
+    [
+      ['A cardioselective beta blocker', true],
+      ['A nonselective beta blocker', true],
+      ['Renally cleared beta blocker', true],
+      ['HR under 60: hold and the nurse must verify', false],
+      ['Alpha and beta blocker', false],
+    ]
+  );
+  assert.ok(validate('decks', dk.data, { id: dk.id }).ok);
+});
