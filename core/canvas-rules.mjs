@@ -11,6 +11,7 @@ export function makeCanvasRules(core) {
     chicagoClock,
     chicagoDate,
     courseOf,
+    courses,
     envelope,
     isoOf,
     kindsOf,
@@ -166,13 +167,19 @@ export function makeCanvasRules(core) {
   }
 
   // ---------------------------------------------------------------- exams from the calendar (B-465)
-  // A calendar entry whose title names an exam (exam, test, final, midterm; not a review, remediation, prep or practice
-  // for one) is an exam of its course, whichever course spec.courses names (D-099): exams/<COURSE>.<yyyymmdd>, its kind
-  // from the title and the course's examKinds, its title and date the entry's. An exam the record already holds for that
-  // course and day covers it (matched by course and date, or by the entry it names), so nothing is written twice and no
-  // exam is ever overwritten. Matt's own Add exam in Study takes the same shape.
+  // A calendar entry that names an exam is an exam of its course, whichever course spec.courses names (D-099):
+  // exams/<COURSE>.<yyyymmdd>, its kind from the title and the course's examKinds, its title and date the entry's. An
+  // entry of kind exam names one when its title says exam, test, final or midterm; any other entry only when its title
+  // says exam or midterm (a "TB test" or a "Final care plan" is not one); neither when the title is a review,
+  // remediation, prep, practice, pre- or post-test, quiz, care plan, reflection or paper. Only entries with their own
+  // course and a day today or later derive: an exam made is permanent (B-11), so a past or courseless one is never
+  // guessed. An exam the record already holds for that course and day covers it (matched by course and date, or by the
+  // entry it names), so nothing is written twice and no exam is ever overwritten. Matt's own Add exam in Study takes
+  // the same shape.
   const EXAM_WORD = /\b(exam|test|final|midterm)s?\b/i;
-  const NOT_EXAM = /\b(review|remediation|prep|practice|study guide|sim|simulation)\b/i;
+  const EXAM_TITLE = /\b(exam|midterm)s?\b/i;
+  const NOT_EXAM =
+    /\b(review|remediation|prep|practice|study guide|sim|simulation|pre[- ]?tests?|post[- ]?tests?|quiz(zes)?|care plans?|reflections?|papers?)\b/i;
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const KIND_WORDS = [
     ['lab', /\b(lab|practical)\b/i],
@@ -180,11 +187,12 @@ export function makeCanvasRules(core) {
     ['dosage', /\b(dosage|dose|calculation|math)\b/i],
     ['ati', /\bati\b/i],
   ];
-  /** Whether a calendar entry names an exam: its kind is exam or its title says so, and it is not a review of one. */
+  /** Whether a calendar entry names an exam: its title says so (widely for an entry of kind exam, only exam or midterm
+   *  otherwise), and it is not a review of one. */
   const isExamDate = d =>
     !!d &&
     DAY.test(String(d.date || '')) &&
-    (d.kind === 'exam' || EXAM_WORD.test(d.title || '')) &&
+    (d.kind === 'exam' ? EXAM_WORD : EXAM_TITLE).test(d.title || '') &&
     !NOT_EXAM.test(d.title || '');
   /** The exam kinds a course may have (spec.courses.<course>.examKinds, the course by its aliases too); none for a
    *  name that is not a course. */
@@ -211,8 +219,24 @@ export function makeCanvasRules(core) {
     if (dateId) data.dateId = dateId;
     return { op: 'set', collection: 'exams', id: examId(course, date), data };
   }
+  /** An exam's course: its own course field; else by its id (spec.collections.exams.key): <COURSE>.<yyyymmdd> names
+   *  it, a letters- prefix (BIO-E3) names the one course whose name starts with those letters, and the rest (E1…E6,
+   *  ATI-*) are the default course's. */
+  function examCourse(e) {
+    if (e.course) return courseOf(e);
+    const id = String(e.id || '');
+    const compact = s => String(s).replace(/\s+/g, '').toLowerCase();
+    const dated = id.match(/^(.+)\.\d{8}$/);
+    if (dated) return courses().find(c => compact(c) === compact(dated[1])) || null;
+    const lead = id.match(/^([A-Za-z]+)-/);
+    if (lead) {
+      const hit = courses().filter(c => compact(c).startsWith(lead[1].toLowerCase()));
+      if (hit.length === 1) return hit[0];
+    }
+    return courseOf({});
+  }
   const coveredBy = (exams, course, d) =>
-    (exams || []).some(e => e && ((d.id && e.dateId === d.id) || (e.date === d.date && courseOf(e) === course)));
+    (exams || []).some(e => e && ((d.id && e.dateId === d.id) || (e.date === d.date && examCourse(e) === course)));
   /**
    * The exams the calendar names that the record has no exam for yet, as writes (set exams/<id>), one per course and
    * day. dates and dateedits as read (an entry taken off names nothing); exams as read; today the Central date; skip
@@ -220,11 +244,12 @@ export function makeCanvasRules(core) {
    */
   function examsFromDates({ dates, dateedits, exams, now, today, writer = 'page', skip } = {}) {
     const out = [];
+    if (!today) return out; // only today or later derives, so no today means nothing
     const skipped = new Set(skip || []);
     for (const d of liveDates(dates, dateedits)
-      .filter(isExamDate)
+      .filter(d => isExamDate(d) && d.date >= today && d.course)
       .sort((a, b) => a.date.localeCompare(b.date))) {
-      const course = courseOf(d);
+      const course = courseOf(d); // its own course: courseless entries are filtered out above
       if (!examKinds(course).length || coveredBy(exams, course, d) || skipped.has(examId(course, d.date))) continue;
       if (out.some(w => w.data.date === d.date && w.data.course === course)) continue;
       out.push(
@@ -257,5 +282,5 @@ export function makeCanvasRules(core) {
     return examWrite({ course, kind, title, date }, { now, today, writer: 'page', source: 'Added by Matt' });
   }
 
-  return { normalizeCanvas, isExamDate, examKinds, examKindFor, examsFromDates, examAdd };
+  return { normalizeCanvas, isExamDate, examKinds, examKindFor, examCourse, examsFromDates, examAdd };
 }

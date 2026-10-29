@@ -2278,6 +2278,7 @@ const EVCore = (() => {
     chicagoDate,
     constants,
     courseOf,
+    courses,
     envelope,
     isoOf,
     kindsOf,

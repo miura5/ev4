@@ -204,6 +204,8 @@
         S.datesAll = S.datesRaw.map(d => E.dateView(d, by[d.id]));
         S.dates = S.datesAll.filter(d => !E.isRemovedDate(d));
         loaded.add('dates');
+        // B-465: each collection's own first snapshot, so the calendar's exams wait for his date edits too
+        loaded.add(key === 'dates' ? 'dates:raw' : 'dateedits');
       }
       if (key === 'plans' || key === 'planedits') {
         S.plans = E.planViews(S.plansRaw, S.planedits);

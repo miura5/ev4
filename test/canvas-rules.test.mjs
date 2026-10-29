@@ -149,14 +149,12 @@ test('B-465: a calendar entry whose title names an exam becomes its course’s e
   }
   assert.equal(w[0].data.title, 'Chapter 9 lab exam (starts today)', 'his words, as written');
   assert.deepEqual(unknownCourses({ exams: w.map(x => ({ id: x.id, ...x.data })) }), [], 'exams.course names a course');
-  // a past exam day is done; the page's lint of the record holds
-  const past = EV.examsFromDates({
-    dates: [date('d-old', '2026-10-18', 'Lecture Exam 3')],
-    exams: [],
-    now: NOW,
-    today: TODAY,
-  });
-  assert.equal(past[0].data.status, 'done');
+  // a past exam day derives nothing (an exam made is permanent, B-11); no today means nothing at all
+  assert.deepEqual(
+    EV.examsFromDates({ dates: [date('d-old', '2026-10-18', 'Lecture Exam 3')], exams: [], now: NOW, today: TODAY }),
+    []
+  );
+  assert.deepEqual(EV.examsFromDates({ dates, exams: [], now: NOW }), []);
   // the kind by the title and the course: NUR 112 has no lab kind, BIO 201 no dosage; midterm and test are unit exams
   assert.deepEqual(
     [
@@ -219,6 +217,70 @@ test('B-465: a day the course already has an exam for, a non-exam entry, a revie
   );
   // nothing is ever an update or a delete: every write is a set of an exam the record lacks
   assert.ok(w.every(x => x.op === 'set' && !exams.some(e => e.id === x.id)));
+});
+
+test('B-465 review: only real exams of a known course, today or later, and never a second exam for one already held', () => {
+  const one = (d, exams = []) => EV.examsFromDates({ dates: [d], exams, now: NOW, today: TODAY }).map(w => w.id);
+  // not exams: a care plan, a pre-test, a TB test, a quiz, a reflection, a paper (kind due or even kind exam)
+  assert.deepEqual(one(date('a', '2026-11-02', 'Final Care Plan', { kind: 'due', course: 'NUR 112' })), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'ATI Pre-test', { course: 'NUR 112' })), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'ATI Fundamentals post test', { course: 'NUR 112' })), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'TB test due', { kind: 'due', course: 'NUR 112' })), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'Final test', { kind: 'due' })), [], 'test or final only on kind exam');
+  assert.deepEqual(one(date('a', '2026-11-02', 'Chapter 9 quiz (exam prep)')), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'Exam 4 reflection', { kind: 'due', course: 'NUR 112' })), []);
+  assert.deepEqual(one(date('a', '2026-11-02', 'Exam paper', { kind: 'due' })), []);
+  // exams: a kind-due entry titled exam or midterm; a kind-exam "Final exam"
+  assert.deepEqual(one(date('a', '2026-11-02', 'Midterm', { kind: 'due' })), ['BIO201.20261102']);
+  assert.deepEqual(one(date('a', '2026-12-10', 'Final exam')), ['BIO201.20261210']);
+  // no course of its own: nothing (no default-course guess)
+  const { course, ...courseless } = date('a', '2026-11-02', 'Exam 6');
+  assert.deepEqual(one(courseless), []);
+  // a past day: nothing; today: an exam, upcoming
+  assert.deepEqual(one(date('a', '2026-10-27', 'Exam 6', { course: 'NUR 112' })), []);
+  const today = EV.examsFromDates({
+    dates: [date('a', TODAY, 'Exam 6', { course: 'NUR 112' })],
+    exams: [],
+    now: NOW,
+    today: TODAY,
+  });
+  assert.deepEqual(
+    today.map(w => [w.id, w.data.status]),
+    [['NUR112.20261028', 'upcoming']]
+  );
+  // an exam held without a course field is matched by its own course from its id, never the default one
+  const bioE3 = { id: 'BIO-E3', kind: 'unit', date: '2026-11-02', title: 'Lecture Exam 3' };
+  assert.deepEqual(one(date('a', '2026-11-02', 'Lecture Exam 3'), [bioE3]), []);
+  assert.deepEqual(
+    one(date('a', '2026-11-02', 'Exam 6', { course: 'NUR 112' }), [bioE3]),
+    ['NUR112.20261102'],
+    'BIO-E3 is BIO 201’s, so it does not cover a NUR 112 exam that day'
+  );
+  assert.deepEqual(
+    [
+      EV.examCourse(bioE3),
+      EV.examCourse({ id: 'E5' }),
+      EV.examCourse({ id: 'ATI-fund' }),
+      EV.examCourse({ id: 'BIO201.20261102' }),
+    ],
+    ['BIO 201', 'NUR 112', 'NUR 112', 'BIO 201']
+  );
+  assert.deepEqual(
+    one(date('a', '2026-11-05', 'Exam 5', { course: 'NUR 112' }), [{ id: 'E5', date: '2026-11-05' }]),
+    []
+  );
+});
+
+test('B-465 review: the page derives exams only after dates, dateedits and exams have each had a first snapshot', () => {
+  const connect = fs.readFileSync(path.join(ROOT, 'page', 'app', '03-connect.js'), 'utf8');
+  const study = fs.readFileSync(path.join(ROOT, 'page', 'app', '20-study.js'), 'utf8');
+  assert.match(connect, /loaded\.add\(key === 'dates' \? 'dates:raw' : 'dateedits'\)/);
+  assert.match(study, /\['dates:raw', 'dateedits', 'exams'\]\.every\(k => loaded\.has\(k\)\)/);
+  // dates arriving with no edits yet would give the entry he took off its exam; once the edits are in, it gives none
+  const dates = [date('d-off', '2026-11-12', 'Chapter 10 exam')];
+  const dateedits = [{ id: 'd-off', removed: { at: NOW, by: 'Matt' } }];
+  assert.equal(EV.examsFromDates({ dates, dateedits: [], exams: [], now: NOW, today: TODAY }).length, 1);
+  assert.deepEqual(EV.examsFromDates({ dates, dateedits, exams: [], now: NOW, today: TODAY }), []);
 });
 
 test('B-465: his Add exam composes a valid exams document through core (D-200), never over an exam that day', () => {

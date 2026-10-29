@@ -162,7 +162,9 @@
     // over an exam already there); each id is written once per load. The claude.ai page is read-only and writes none.
     const examsDerived = new Set();
     function deriveExams() {
-      if (READ_ONLY || !loaded.has('dates') || !loaded.has('exams')) return;
+      // only once dates, dateedits and exams have each had their first snapshot: an entry he took off or moved never
+      // gets an exam at its old Canvas date (the subscriptions arrive one at a time, in spec order)
+      if (READ_ONLY || !['dates:raw', 'dateedits', 'exams'].every(k => loaded.has(k))) return;
       const args = {
         dates: S.datesRaw,
         dateedits: S.dateedits,
