@@ -1,1 +1,17 @@
-/* Proprietary 11 Popover: the popover component's rules, components layer (D-373, D-388); lane C2 (B-508) fills this file */
+/* Proprietary 11 Popover (B-508, D-375): .popover on the native popover attribute, at today's New menu look */
+:where(.popover){position:fixed;inset:auto;left:var(--pop-x,8px);top:var(--pop-y,8px);margin:0;z-index:var(--z-overlay);
+  min-width:200px;max-width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box;
+  display:flex;flex-direction:column;gap:0;padding:5px;border:0;border-radius:10px;background:var(--surface);color:var(--text);
+  box-shadow:var(--elev-2);font:var(--fw-regular) var(--fs-2) var(--sans)}
+:where(.popover)[popover]:not(:popover-open){display:none}
+:where(.popover)[role=dialog]{gap:10px;padding:var(--sp-3)}
+/* inline: drawn in the flow (a preview), never over the page */
+.popover:not([popover]){position:relative;left:auto;top:auto;z-index:auto;width:240px}
+/* an item: today's .btn, a full-width row with its words at the start */
+:where(.popover-i){width:100%;justify-content:flex-start;text-align:start;gap:10px;padding:0 9px;color:var(--text)}
+:where(.popover-i) > span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:start}
+:where(.popover-i) > svg{color:var(--quiet)}
+:where(.popover-i):hover,:where(.popover-i):focus-visible{background:var(--hover)}
+:where(.popover-i)[aria-checked=true]{font-weight:var(--fw-medium)}
+:where(.popover-i)[aria-checked=true]::after{content:"";flex:none;width:5px;height:9px;margin:0 3px 2px auto;
+  border:solid var(--quiet);border-width:0 1.5px 1.5px 0;rotate:45deg}
