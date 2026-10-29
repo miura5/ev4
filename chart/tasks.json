@@ -9669,5 +9669,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:09.509Z"
   }
+ },
+ {
+  "id": "B-519",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): The quiz renders wider than a phone screen (545 px at 390), and reopening the app mid-quiz loses the quiz.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "The quiz renders wider than a phone screen (545 px at 390), and reopening the app mid-quiz loses the quiz.",
+  "reportedAt": "2026-10-29T15:59:13.389Z",
+  "board": {
+   "row": "v4 B-519: The quiz renders wider than a phone screen (545 px at 390), and…"
+  }
  }
 ]
