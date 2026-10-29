@@ -9093,5 +9093,22 @@
   "board": {
    "row": "v4 B-486: Plan task refs on day items are keyed by exam id…"
   }
+ },
+ {
+  "id": "B-487",
+  "kind": "request",
+  "title": "Request (reported Oct 29): Flashcard decks inside E.V. (D-368), part 1: per-course decks in Study beside Practice sets; E.V. makes a deck from a chat ask (topic and count) and cards can be added and edited by hand; study a deck in Flip (tap to reveal, Got it / Again) and Multiple choice (distractors from the deck's other cards); each card has its own spaced-repetition schedule (new cards due now; Got it pushes the next due out on a growing interval; Again brings it back this session and tomorrow); due cards appear on Today as one 'Cards · n due' item.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 29 (Matt)",
+  "words": "Flashcard decks inside E.V. (D-368), part 1: per-course decks in Study beside Practice sets; E.V. makes a deck from a chat ask (topic and count) and cards can be added and edited by hand; study a deck in Flip (tap to reveal, Got it / Again) and Multiple choice (distractors from the deck's other cards); each card has its own spaced-repetition schedule (new cards due now; Got it pushes the next due out on a growing interval; Again brings it back this session and tomorrow); due cards appear on Today as one 'Cards · n due' item.",
+  "reportedAt": "2026-10-29T12:34:02.871Z",
+  "board": {
+   "row": "v4 B-487: Flashcard decks inside E.V. (D-368), part 1: per-course decks in…"
+  }
  }
 ]
