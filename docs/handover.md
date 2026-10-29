@@ -6,6 +6,18 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 28, ~11 pm Central): overnight run (Matt asleep; he asked the team to keep working)
+
+- **Live: v4.5.16 at f39d054.** Staging GREEN at c83d9c4 with B-472 (page no longer published), B-461 + B-477
+  (Ask for changes edits that plan by id; Add exam beside Coming up; plain failure text), B-448 (day arrows on Today).
+- **Overnight order, one builder at a time, each shipped to staging as it lands:** B-464 (UI look fixes, running),
+  B-481 (wrong dosage answer keys: code recomputes calculation items; top priority), B-483 (plan tasks and Today share
+  one tick; approve puts tasks on Today), B-478 (objectives ask scoped to the next exam), B-479 (flashcards as a
+  Quizlet block), B-480 (sets top up to the asked count), B-462, B-463, B-474, then B-482 (Practice sets card in Study).
+  Then one whole-release code review and the card for Matt's morning. No live deploys without his word.
+- A send_later heartbeat every 60 min wakes the build manager to check builders and continue.
+- Matt's call (Oct 28): plans stay one per exam; no shared time or multi-exam plans; small fixes only.
+
 ## Update (Oct 28, ~9 pm Central): v4.5.16 live
 
 - **Live: v4.5.16 at f39d054**, recorded GREEN (record, page, ev-live app). It carries B-465 (exams for every course,
