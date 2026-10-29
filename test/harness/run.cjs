@@ -560,9 +560,18 @@ for (const [id, task, commit, text, error] of [
 // B-297 (D-283, C-8, C-13): Study's overview. The view's one primary is Start session; the toolbar holds no Quiz me
 // and the view no mini-quiz card; at 390 the toolbar is one row. Objective rows are 32 px from 600 px and 44 px on the
 // phone. An objective's Quiz me opens a set of its own existing questions; with none, it starts the practice-set job.
+// B-464: with any plan under the exam card its objectives fold to one line; open or close it as a check needs
+async function objFold(page, open) {
+  const f = page.locator(`#ov-card .fold-line.pm-more[aria-expanded="${!open}"]`);
+  if (await f.count()) {
+    await f.first().click();
+    await page.waitForTimeout(150);
+  }
+}
 async function quizMeChecks(page, scheme) {
   await studyView(page, 'objectives');
   await page.waitForTimeout(200);
+  await objFold(page, true);
   const o = await page.evaluate(() => {
     const vis = e =>
       !!e &&
@@ -1382,6 +1391,7 @@ async function studyPlanChecks(page) {
   );
   await page.click('#tab-study');
   await page.waitForTimeout(400);
+  await objFold(page, false); // an earlier check may have left them open
   for (const w of [1280, 390]) {
     await page.setViewportSize(w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 });
     await page.waitForTimeout(250);
@@ -1722,7 +1732,9 @@ async function studyPlanChecks(page) {
   const done = () =>
     page.evaluate(() => {
       const c = document.querySelector('#ov-plans .pl-card.ok[data-plan="E4-H2"]');
-      const n = c && /^(\d+) of (\d+) done/.exec((c.querySelector('.pl-done') || {}).textContent || '');
+      // B-464: the count shows once: on the card's head, or in the panel's summary when the card owns the panel
+      const at = (c && c.querySelector('.pl-done')) || document.querySelector('#study-side .plan-sum .plan-lead');
+      const n = c && /^(\d+) of (\d+) done/.exec((at || {}).textContent || '');
       return {
         n: n ? +n[1] : -1,
         all: n ? +n[2] : -1,

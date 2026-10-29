@@ -435,7 +435,7 @@
       bar.append(g, y);
       const box = el('div', 'ov-rows');
       // B-450: one row per objective; with a plan under the card they fold to one line, which opens them in place.
-      // With no objectives the card carries the plan's progress, and the plan's own card its days.
+      // B-464: with no objectives the card is its name and date; the plan's own card carries its count, once.
       const planned = foldsObjectives(ex);
       const items = objs.length ? objRows(objs, acc, fullName, planned && !ui.objFold) : planBar(ex);
       head.append(nm0, el('span', 'meta ov-count', items.count));
@@ -464,7 +464,11 @@
       box.append(...items.rows);
       card.classList.toggle('pm-ex', planned);
       card.replaceChildren(
-        ...(box.children.length ? [head, bar, box] : [head, bar, el('p', 'empty ov-none', items.none)])
+        ...(box.children.length
+          ? [head, bar, box]
+          : objs.length
+            ? [head, bar]
+            : [head, ...(items.none ? [el('p', 'empty ov-none', items.none)] : [])])
       );
       // B-450: the plans under the card; from 1200 px a draft (to approve) or the plan fills the panel, unless he
       // opened an objective
@@ -596,21 +600,17 @@
         states,
       };
     }
-    /** B-450: an exam with no objectives carries its plan's progress on the card's bar (the plan's card under it has
-     *  the days); with no plan either, the card says what shows here. */
+    /** B-464: an exam with no objectives: with a plan under it, the card says so in its head and the plan's card
+     *  carries the count (shown once); with no plan, one line says where its objectives come from. No bar either way. */
     function planBar(ex) {
-      const plan = examPlans(ex).plan;
-      const c = plan ? planCounts(plan) : null;
-      const n = c ? c.ts.length : 0;
+      const planned = hasStudyPlan(ex);
       return {
         rows: [],
-        count: c ? c.done + ' of ' + plural(n, 'plan task') + ' done' : '',
-        solid: (n ? (100 * c.done) / n : 0) + '%',
+        count: planned ? 'No objectives yet' : '',
+        solid: '0%',
         almost: '0%',
-        aria: c ? `${c.done} of ${n} plan tasks done` : 'No objectives or plan yet',
-        none: hasStudyPlan(ex)
-          ? 'Its objectives show here once they’re in the record.'
-          : 'Its objectives or its plan show here once they’re in the record.',
+        aria: 'No objectives yet',
+        none: planned ? '' : 'Its objectives show here once they’re in the record.',
       };
     }
     /** B-351 (D-313): the course's quiz, the demo's Quiz me and mini quiz: a practice set on this exam with questions

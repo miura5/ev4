@@ -475,7 +475,7 @@
     }
 
     // ---------------------------------------------------------------- the summary (right panel, or the card's head)
-    function draftSummary(p, ex, course, { ask, inCard }) {
+    function draftSummary(p, ex, course, { ask, working, inCard }) {
       const ts = taskList(p);
       const d = el('div', 'ov-detail plan-sum');
       d.append(el('span', 'lab', `${course} · ${exShortOf(ex)} plan · draft`));
@@ -552,7 +552,7 @@
       const act = el('div', 'pm-act');
       const ap = btn('Approve', ev => approvePlan(ev.currentTarget, p), { cls: 'btn tint x-green pm-approve' });
       ap.prepend(svgEl('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'));
-      ap.disabled = !!ask;
+      ap.disabled = !!(ask || working); // B-464: held while E.V. is changing this plan
       act.append(
         btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }),
         ap,
@@ -561,6 +561,7 @@
       );
       d.append(act);
       if (ask) d.append(el('span', 'mini pm-wait', 'Answer or skip E.V.’s question to approve.'));
+      else if (working && !inCard) d.append(el('span', 'mini pm-wait', 'Approve opens when E.V.’s new draft lands.'));
       return d;
     }
     function planSummary(p, ex, course, c) {
@@ -642,7 +643,8 @@
           ...(first ? [el('span', 'meta pl-span', `·\u00a0${short(first)} – ${short(sec.to || ex.date)}`)] : []),
           el('span', 'sp'),
           ...(swap ? [swap] : []),
-          el('span', 'meta pl-done', `${c.done} of ${c.ts.length} done`),
+          // B-464: the count shows once: the right panel's summary carries it when this card owns the panel
+          ...(panelled ? [] : [el('span', 'meta pl-done', `${c.done} of ${c.ts.length} done`)]),
         ])
       );
       // below 1200 px the summary is one line and the bar
@@ -686,7 +688,8 @@
       if (js.ask) card.append(askBlock(js.ask, course, ex));
       if (js.working) card.append(el('p', 'mini pl-working', 'E.V. is changing this plan. The new draft shows here.'));
       // the panel holds one summary; a draft whose summary is not there carries its own, with its actions
-      if (!PANEL.matches || !panelled) card.append(draftSummary(p, ex, course, { ask: js.ask, inCard: true }));
+      if (!PANEL.matches || !panelled)
+        card.append(draftSummary(p, ex, course, { ask: js.ask, working: js.working, inCard: true }));
       const bf = badgeFilter(p, ts);
       if (bf) card.append(bf.seg);
       const rows = planRowsFor(p, ex, { draft: true, f: bf ? bf.f : 'all', isDone: () => false });
@@ -715,7 +718,10 @@
         );
       }
       card.append(rows);
-      return { card, panel: () => draftSummary(p, ex, course, { ask: js.ask, inCard: false }) };
+      return {
+        card,
+        panel: () => draftSummary(p, ex, course, { ask: js.ask, working: js.working, inCard: false }),
+      };
     }
     function noPlanCard(ex, course, js) {
       const making = js.working || E.studyPlanNewJobRunning(S.jobs, course); // D-362: one new plan per course
@@ -939,12 +945,8 @@
       const { plan, draft } = examPlans(ex);
       return !!(plan || draft);
     };
-    /** Whether an exam's card folds its objectives to one line: a study plan (B-449) or its draft sits under it. An
-     *  older exam plan (a plan page's, no section) leaves the objective rows open, as before. */
-    const foldsObjectives = ex => {
-      const { plan, draft } = examPlans(ex);
-      return !!(draft || (plan && plan.section));
-    };
+    /** Whether an exam's card folds its objectives to one line: any plan or draft sits under it (B-464). */
+    const foldsObjectives = hasStudyPlan;
 
     // ---------------------------------------------------------------- the plan settings (the toolbar's sliders)
     const briefText = () => String(((EV_SPEC.jobs.kinds || {})['exam-plan'] || {}).instructions || '');
