@@ -42,14 +42,17 @@
       const pt = planTaskById(it.ref);
       return !!(pt && pt.plan.section);
     }
-    function dayState() {
-      // the planned list (saved at 4:25am, else built live) plus what he or E.V. added or took off (D-078)
-      const day = M.day && M.day.list ? M.day : liveDay();
-      const v = E.dayView(day, M.dayedit);
-      const checks = (M.dayedit && M.dayedit.checks) || {};
+    function dayState(date = today) {
+      // the planned list (saved at 4:25am, else built live) plus what he or E.V. added or took off (D-078); B-448: an
+      // earlier day is its saved plan and its own dayedits, as the week's day panel shows it
+      const past = date !== today;
+      const day = past ? dayDoc(date) || { date } : M.day && M.day.list ? M.day : liveDay();
+      const ed = past ? dayEditDoc(date) : M.dayedit;
+      const v = E.dayView(day, ed);
+      const checks = (ed && ed.checks) || {};
       const isDone = it => {
         const pt = planTaskById(it.ref);
-        if (pt) return E.taskDone(pt.plan, { ...pt.task }, today, S.sets, S.answers);
+        if (pt) return E.taskDone(pt.plan, { ...pt.task }, date, S.sets, S.answers);
         return !!checks[it.id];
       };
       return { day, items: v.items.filter(it => !keptInPlan(it)), isDone, budget: v.budget, skipped: v.skipped };
@@ -69,10 +72,10 @@
       const items = rs ? E.validItems(rs) : [];
       return { rs, total: items.length, left: items.filter(q => !answersOf(rs)[q.id]).length };
     }
-    function tickWrite(it, on) {
+    function tickWrite(it, on, date = today) {
       const pt = planTaskById(it.ref);
       if (pt) return tickPlan(pt.plan, pt.task, on);
-      return editList(today, { action: 'check', id: it.id, done: on }, 'Matt');
+      return editList(date, { action: 'check', id: it.id, done: on }, 'Matt'); // B-448: on the day the row is on
     }
     function tickPlan(plan, task, on) {
       // planedits/<exam id>: the page's ticks, replaced whole
@@ -196,17 +199,20 @@
       c.setAttribute('aria-label', 'Done: ' + text);
       c.addEventListener('change', () => {
         T.ticked.add(it.id);
-        guard(c, () => tickWrite(it, c.checked), null);
+        guard(c, () => tickWrite(it, c.checked, o.date || today), null);
       });
       tk.append(c);
       const nm = el('button', 'nm ti-nm');
       nm.type = 'button';
       nm.append(el('span', 'ti-t', text));
-      nm.setAttribute('aria-controls', 'today-task');
-      nm.setAttribute('aria-expanded', String(sel));
-      nm.addEventListener('click', () => openTask(it.id));
+      // B-448: an earlier day's row is checked off in place; its task view (Snooze, Start) is today's
+      if (!o.date) {
+        nm.setAttribute('aria-controls', 'today-task');
+        nm.setAttribute('aria-expanded', String(sel));
+        nm.addEventListener('click', () => openTask(it.id));
+      }
       // B-343, B-382: a click anywhere on the row's free space opens the task, as the name does, at every width
-      if (!o.off)
+      if (!o.off && !o.date)
         li.addEventListener('click', e => {
           if (!e.target.closest('button, label, input, a')) openTask(it.id);
         });
@@ -994,17 +1000,21 @@
       ['study', 'Study'],
     ];
     function renderToday() {
-      const { day, items, isDone, budget } = dayState();
+      // B-448: the list may show an earlier day (the toolbar's arrows); a date that is today or later is today
+      if (!(ui.listDay && ui.listDay < today)) ui.listDay = null;
+      const ld = ui.listDay;
+      const { day, items, isDone, budget } = dayState(ld || today);
       // B-291 (D-286): no Now card; the prep check is under her greeting and the exam countdown on Study.
       // List
       const box = $('today-list');
       // B-292 (C-5): the day's budget as what's left against the time left; the side card holds the bar and the rows
-      const bv = budgetView(budget, items, isDone);
+      const bv = ld ? null : budgetView(budget, items, isDone);
       renderChanges(); // B-294
+      if (ld) ui.taskSel = null;
       renderTask(items, isDone, day); // B-296
       // B-293 (C-9): Plan the rest, in the toolbar; its proposal waits here until he accepts, keeps or rejects it
       if (ui.restPlan && ui.restPlan.date !== today) ui.restPlan = null;
-      const P = ui.restPlan;
+      const P = ld ? null : ui.restPlan;
       const rest = btn('Plan the rest', null, { cls: 'btn neutral sm ti-rest', disabled: !!P });
       rest.prepend(svgIcon('M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z'));
       rest.addEventListener('click', () => {
@@ -1040,7 +1050,8 @@
         fseg.append(b);
       }
       todayBar.list = [fseg];
-      todayBar.listEnd = [rest];
+      todayBar.nav = dayNav(ld);
+      todayBar.listEnd = ld ? [] : [rest];
       todayBar.add.className = 'btn sm ti-add ' + (P ? 'neutral' : 'primary');
       const offOf = it => P && P.offs.find(p => p.id === it.id);
       const first = todo.find(it => startable(it, isDone) && !offOf(it));
@@ -1048,7 +1059,7 @@
       for (const it of todo) {
         const p = offOf(it);
         const st = !p && startable(it, isDone) ? (it === first ? 'first' : 'hov') : null;
-        ul.append(todayRow(it, isDone, { start: st, off: p ? { P, p } : null }));
+        ul.append(todayRow(it, isDone, { start: ld ? null : st, off: p ? { P, p } : null, date: ld }));
       }
       // B-369 (D-312): proposed additions sit after the first row, as the demo's
       if (P)
@@ -1060,7 +1071,14 @@
       const after = [];
       if (todo.length || (P && P.adds.length)) kids.push(ul);
       else if (shown.length && f !== 'all')
-        kids.push(el('p', 'empty', 'Nothing open in ' + FILTERS.find(x => x[0] === f)[1] + ' on today’s list.'));
+        kids.push(
+          el(
+            'p',
+            'empty',
+            'Nothing open in ' + FILTERS.find(x => x[0] === f)[1] + (ld ? ' on this day’s list.' : ' on today’s list.')
+          )
+        );
+      else if (!shown.length && ld) kids.push(el('p', 'empty', 'Nothing was on this day’s list.'));
       else if (!shown.length)
         kids.push(
           el(
@@ -1072,7 +1090,7 @@
       if (done.length)
         after.push(
           ...doneGroup(
-            done.map(it => todayRow(it, isDone)),
+            done.map(it => todayRow(it, isDone, { date: ld })),
             folds.done !== false
           )
         );
@@ -1165,6 +1183,30 @@
         WK_MON[m1 - 1] +
         (wk === 0 ? ' · next 7 days' : '');
       nav.append(prev, now, next, el('span', 'mini wk-range', label));
+      return nav;
+    }
+    // B-448: the list's day, as the week's arrows: back a day, Today, forward a day up to today; an earlier day is named
+    function dayNav(ld) {
+      const nav = el('div', 'wk-nav');
+      nav.id = 'today-daynav';
+      const cur = ld || today;
+      const go = d => () => {
+        ui.listDay = d < today ? d : null;
+        ui.taskSel = null;
+        ui.taskGone = null;
+        render();
+      };
+      const prev = btn('', go(E.addDays(cur, -1)), { cls: 'btn ghost icon sm' }),
+        next = btn('', go(E.addDays(cur, 1)), { cls: 'btn ghost icon sm', disabled: !ld });
+      prev.append(svgIcon('M15 6l-6 6 6 6'));
+      next.append(svgIcon('M9 6l6 6-6 6'));
+      prev.setAttribute('aria-label', 'Previous day');
+      next.setAttribute('aria-label', 'Next day');
+      nav.append(prev, btn('Today', go(today), { cls: 'btn ghost sm' }), next);
+      if (ld) {
+        const [, m, d] = ld.split('-').map(Number);
+        nav.append(el('span', 'mini wk-range', dayName(ld).slice(0, 3) + ' ' + d + ' ' + WK_MON[m - 1]));
+      }
       return nav;
     }
     const dayName = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' });
@@ -1326,7 +1368,8 @@
         cal.append(...dates.map(x => weekChip(x, false)));
         out.push(el('span', 'lab', 'On the calendar'), cal);
       }
-      if (date === today) {
+      if (date <= today) {
+        // B-448: an earlier day's list opens too, to check off what was done
         const acts = el('div', 'wd-acts');
         acts.append(
           btn(
@@ -1334,6 +1377,7 @@
             () => {
               ui.todayView = 'list';
               store.set('todayView', 'list');
+              ui.listDay = date < today ? date : null;
               render();
             },
             { cls: 'btn neutral' }
@@ -1403,7 +1447,7 @@
       todayBar.bar.replaceChildren(
         ...(on ? [] : todayBar.list),
         weekSeg,
-        ...(on ? [weekNav(start, wk)] : []),
+        ...(on ? [weekNav(start, wk)] : todayBar.nav ? [todayBar.nav] : []),
         el('span', 'sp'),
         ...(on ? [] : todayBar.listEnd),
         todayBar.add
@@ -1478,6 +1522,7 @@
           t.addEventListener('click', () => {
             ui.todayView = 'list';
             store.set('todayView', 'list');
+            ui.listDay = null;
             render();
           });
           chips.append(t);
@@ -1549,6 +1594,7 @@
             () => {
               ui.todayView = 'list';
               store.set('todayView', 'list');
+              ui.listDay = null;
               ui.taskSel = it.id;
               ui.taskGone = null;
               render();

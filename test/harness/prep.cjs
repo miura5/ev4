@@ -1593,6 +1593,133 @@ async function tickAll(page) {
       ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
       await ctx.close();
     }
+  // B-448: Today's list goes back a day with the week's arrows. Yesterday shows its own list (its saved plan less what
+  // was taken off, and the task added to it), a check-off there writes yesterday's dayedits and not today's, Next comes
+  // back to today and stops there. At 390 and 1280.
+  const pastRecord = () => {
+    const db = record();
+    const y = addDays(today, -1);
+    db.days = db.days || {};
+    db.days[y] = {
+      ...env,
+      date: y,
+      dayType: 'class',
+      list: {
+        items: [
+          { id: 'p448-read', text: 'Read chapter 12, wound care', tag: 'READING', minutes: 30, ref: null },
+          { id: 'p448-cards', text: 'Flashcards: wound stages', tag: 'PRACTICE', minutes: 15, ref: null },
+          { id: 'p448-off', text: 'Watch the dressing change video', tag: 'READING', minutes: 10, ref: null },
+        ],
+      },
+      plan: { budget: { available: 120, planned: 55 }, deferred: [] },
+    };
+    db.dayedits = db.dayedits || {};
+    db.dayedits[y] = {
+      ...env,
+      date: y,
+      checks: { 'p448-cards': { at: env.at, by: 'Matt' } },
+      added: {
+        'add-p448-email': {
+          text: 'Email the skills lab about makeup hours',
+          kind: 'todo',
+          tag: null,
+          minutes: 10,
+          at: env.at,
+          by: 'Matt',
+        },
+      },
+      skipped: { 'p448-off': { at: env.at, by: 'Matt' } },
+      checkin: null,
+    };
+    return db;
+  };
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1280, height: 860 },
+  ]) {
+    const w = viewport.width,
+      tag = `[past day ${w}]`,
+      y = addDays(today, -1);
+    const ctx = await browser.newContext({ viewport, colorScheme: 'light' });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await openPage(page, ct(today, 0, 40), pastRecord());
+    await page.click('#tab-today');
+    await page.waitForTimeout(300);
+    const look = () =>
+      page.evaluate(() => {
+        const nav = document.getElementById('today-daynav');
+        return {
+          nav: nav
+            ? [...nav.querySelectorAll('button')].map(
+                b => (b.getAttribute('aria-label') || b.textContent) + (b.disabled ? ':off' : '')
+              )
+            : [],
+          label: ((nav && nav.querySelector('.wk-range')) || {}).textContent || '',
+          open: [...document.querySelectorAll('#today-list .ti-list > li.today-item')].map(li => li.dataset.id),
+          done: [...document.querySelectorAll('#today-list .ti-folded > li.today-item')].map(li => li.dataset.id),
+          rest: !!document.querySelector('#today-bar .ti-rest'),
+          budget: !document.getElementById('today-budget').hidden,
+          sideways: document.documentElement.scrollWidth > innerWidth + 1,
+        };
+      });
+    const t0 = await look();
+    await page.screenshot({ path: `${shots}/today-daynav-${w}.png` });
+    ok(
+      `${tag} the list's toolbar has back, Today and forward; forward is off on today`,
+      t0.nav.join() === 'Previous day,Today,Next day:off' && !t0.label,
+      JSON.stringify(t0)
+    );
+    await page.click('#today-daynav [aria-label="Previous day"]');
+    await page.waitForTimeout(300);
+    const t1 = await look();
+    const [, m, d] = y.split('-').map(Number);
+    const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][m - 1];
+    ok(
+      `${tag} back a day: yesterday's own list, its plan less the take-off and its added task, its tick in Done`,
+      t1.open.join() === 'p448-read,add-p448-email' &&
+        t1.done.join() === 'p448-cards' &&
+        t1.label.endsWith(d + ' ' + mon) &&
+        t1.nav.join() === 'Previous day,Today,Next day' &&
+        !t1.rest &&
+        !t1.budget,
+      JSON.stringify(t1)
+    );
+    await page.locator('#p-today').screenshot({ path: `${shots}/today-pastday-${w}.png` });
+    const n0 = await page.evaluate(() => window.__writes.length);
+    await page.click('#today-list li[data-id="p448-read"] input.tick');
+    await page.waitForTimeout(400);
+    const tk = await page.evaluate(
+      n =>
+        window.__writes
+          .slice(n)
+          .filter(x => x[1] === 'dayedits')
+          .map(x => [
+            x[2],
+            Object.keys(x[3].checks || {})
+              .sort()
+              .join('+'),
+          ]),
+      n0
+    );
+    const t2 = await look();
+    ok(
+      `${tag} a check-off there is recorded on yesterday's dayedits, not today's`,
+      tk.length === 1 && tk[0][0] === y && tk[0][1] === 'p448-cards+p448-read' && t2.done.includes('p448-read'),
+      JSON.stringify({ tk, t2 })
+    );
+    await page.click('#today-daynav [aria-label="Next day"]');
+    await page.waitForTimeout(300);
+    const t3 = await look();
+    ok(
+      `${tag} forward comes back to today, and stops there`,
+      t3.nav.join() === 'Previous day,Today,Next day:off' && !t3.open.includes('p448-read') && t3.rest,
+      JSON.stringify(t3)
+    );
+    ok(`${tag} no sideways scroll, no page errors`, !t1.sideways && !t3.sideways && !errors.length, errors.join(' | '));
+    await ctx.close();
+  }
   await browser.close();
   for (const [st, n, d] of results) console.log(`${st}  ${n}${d && st === 'FAIL' ? '  -- ' + d : ''}`);
   const failed = results.filter(x => x[0] === 'FAIL').length;
