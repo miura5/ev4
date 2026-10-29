@@ -2495,6 +2495,11 @@ async function studyPlanChecks(page) {
       );
       await page.$eval('#seg-today [data-v="week"]', b => b.click());
       await page.waitForTimeout(300);
+      // B-518 (F-26): the day's load counts the plan's tasks and their minutes
+      const load = await page.evaluate(
+        d => (document.querySelector(`#today-week .wk-day[data-date="${d}"] .wk-load`) || {}).textContent || '',
+        tomorrow
+      );
       await page.$eval(`#today-week .wk-day[data-date="${tomorrow}"] .wk-h`, b => b.click()); // the day's panel
       await page.waitForTimeout(250);
       const week = await page.evaluate(() =>
@@ -2505,7 +2510,7 @@ async function studyPlanChecks(page) {
       );
       await page.$eval('#seg-today [data-v="list"]', b => b.click());
       await page.waitForTimeout(150);
-      return { line, list, week };
+      return { line, list, week, load };
     };
     const on = await view(false),
       off = await view(true);
@@ -2514,6 +2519,11 @@ async function studyPlanChecks(page) {
       'Keep in the plan takes a study plan’s tasks off Today’s list and the week’s day panel',
       on.list && on.week && !off.list && !off.week,
       JSON.stringify({ on, off })
+    );
+    ok(
+      'B-518: the week’s day load counts the plan’s two tasks and their 40 min; kept in the plan, it doesn’t',
+      parseInt(on.load) - (parseInt(off.load) || 0) === 2 && /40 min$/.test(on.load) && !/40 min/.test(off.load),
+      JSON.stringify({ on: on.load, off: off.load })
     );
     await view(false);
     await page.click('#tab-study');

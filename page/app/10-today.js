@@ -1357,6 +1357,40 @@
         .items.filter(it => !keptInPlan(it))
         .map(it => ({ ...it, done: !!it.checked }));
     }
+    // B-518 (F-27): a day picked in the week opens in view: on the phone its panel sits below the seven days, so the
+    // page goes to it once it is drawn; where the panel is beside the week (and on screen) nothing moves.
+    function openDay(date) {
+      ui.weekSel = 'day:' + date;
+      render();
+      requestAnimationFrame(() => {
+        const p = $('today-date');
+        if (!p || p.hidden) return;
+        const r = p.getBoundingClientRect();
+        if (r.top < 0 || r.top > innerHeight - 120) p.scrollIntoView({ block: 'start' });
+      });
+    }
+    // B-518 (F-26): a day's real load, every task on its list (an approved plan's tasks too) and their minutes, as its
+    // panel counts them; it opens the day.
+    function dayLoad(tasks) {
+      const real = tasks.filter(it => it.tag !== 'EXAM'); // the exam is its own card on the calendar (B-117)
+      const open = real.filter(it => !it.done);
+      return { all: real.length, open: open.length, mins: open.reduce((n, it) => n + (Number(it.minutes) || 0), 0) };
+    }
+    function loadChip(date, tasks) {
+      const l = dayLoad(tasks);
+      if (!l.all) return null;
+      const c = el('button', 'wchip wk-load' + (l.open ? '' : ' done'));
+      c.type = 'button';
+      c.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
+      const sub = el('span', 'wc-s');
+      sub.append(
+        el('i', 'dot'),
+        document.createTextNode(l.open ? (l.mins ? durFmt(l.mins) : 'No time set') : 'All done')
+      );
+      c.append(el('span', 'wc-t', l.open ? plural(l.open, 'task') : plural(l.all, 'task')), sub);
+      c.addEventListener('click', () => openDay(date));
+      return c;
+    }
     const taskSub = it =>
       [(BADGE[it.tag] || [it.tag ? 'Class' : 'To do'])[0], it.minutes ? durFmt(it.minutes) : '']
         .filter(Boolean)
@@ -1371,10 +1405,7 @@
       const sub = el('span', 'wc-s');
       sub.append(el('i', 'dot'), document.createTextNode(it.done ? 'Done' : taskSub(it)));
       c.append(el('span', 'wc-t', it.text || ''), sub);
-      c.addEventListener('click', () => {
-        ui.weekSel = 'day:' + date;
-        render();
-      });
+      c.addEventListener('click', () => openDay(date));
       return c;
     }
     // B-419: a day opened from the week: its name, when, its tasks (each with its kind, time and who added it) and its
@@ -1557,10 +1588,7 @@
         h.type = 'button';
         h.setAttribute('aria-label', 'Open ' + dayName(date) + ' ' + Number(dd) + ': its tasks');
         h.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
-        h.addEventListener('click', () => {
-          ui.weekSel = 'day:' + date;
-          render();
-        });
+        h.addEventListener('click', () => openDay(date));
         h.append(
           el('span', null, dayName(date).slice(0, 3)),
           el('b', null, String(Number(dd))),
@@ -1573,12 +1601,15 @@
           )
         );
         const chips = el('div', 'wk-chips');
+        const tasks = weekTasks(date);
         if (date === today) {
-          const n = sideOpen().length;
+          const open = sideOpen();
+          const n = open.length,
+            mins = open.reduce((m, it) => m + (Number(it.minutes) || 0), 0); // B-518: today's load too
           const t = el('button', 'wchip wk-list');
           t.type = 'button';
           const ts = el('span', 'wc-s');
-          ts.append(el('i', 'dot'), document.createTextNode('Open the list'));
+          ts.append(el('i', 'dot'), document.createTextNode(mins ? durFmt(mins) : 'Open the list'));
           t.append(el('span', 'wc-t', n + ' on today’s list'), ts);
           t.addEventListener('click', () => {
             ui.todayView = 'list';
@@ -1587,12 +1618,13 @@
             render();
           });
           chips.append(t);
+        } else {
+          const lc = loadChip(date, tasks);
+          if (lc) chips.append(lc);
         }
         chips.append(
           ...entries.filter(d => d.date === date).map(d => weekChip(d, d.id === ui.weekSel)),
-          ...weekTasks(date)
-            .filter(it => it.added)
-            .map(it => taskChip(it, date))
+          ...tasks.filter(it => it.added).map(it => taskChip(it, date))
         );
         col.append(h, chips);
         days.append(col);

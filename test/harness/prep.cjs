@@ -1549,9 +1549,28 @@ async function tickAll(page) {
             btn: document.querySelector('#today-date .wk-off').textContent,
           };
         }, n0);
-        // B-419: a later day opens ahead of time from its head: its tasks, who added them, and its calendar dates
+        // B-518 (F-26, F-27): each day shows its load, the tasks and minutes on its list; the day opens in view
+        const ld = await page.evaluate(
+          d => {
+            const c = document.querySelector(`#today-week .wk-day[data-date="${d}"] .wk-load`);
+            return c ? c.textContent : '';
+          },
+          addDays(today, 2)
+        );
+        ok(`${tag} a later day shows its load: 2 tasks · 1 h (B-518)`, ld === '2 tasks1 h', ld);
+        await page.evaluate(() => window.scrollTo(0, 0));
         await page.click(`#today-week .wk-day[data-date="${addDays(today, 2)}"] .wk-h`);
-        await page.waitForTimeout(200);
+        await page.waitForTimeout(250);
+        const inView = await page.evaluate(() => {
+          const r = document.getElementById('today-date').getBoundingClientRect();
+          return { top: Math.round(r.top), h: innerHeight };
+        });
+        ok(
+          `${tag} tapping a day brings its panel on screen (B-518)`,
+          inView.top >= 0 && inView.top < inView.h - 100,
+          JSON.stringify(inView)
+        );
+        // B-419: a later day opens ahead of time from its head: its tasks, who added them, and its calendar dates
         const dp = await page.evaluate(() => ({
           title: document.querySelector('#today-date .wd-title').textContent,
           tasks: [...document.querySelectorAll('#today-date .wd-task')].map(t => t.textContent),

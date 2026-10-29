@@ -1228,6 +1228,8 @@ button.btn:disabled{opacity:.45;cursor:default}
 .wchip .wc-s.urgent{color:var(--urg)}
 .wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
 .wchip.wk-list .wc-t{color:var(--quiet)}
+.wchip.wk-load.done .wc-t{color:var(--quiet)}
+#today-date{scroll-margin-top:calc(var(--top-h, 0px) + 12px)}
 /* B-419: a day's head opens its panel; a task added to a day is a card on it, struck through when done; the day's
    panel lists its tasks in one card, as the date panel's properties. */
 button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:left;cursor:pointer;border-radius:6px}
