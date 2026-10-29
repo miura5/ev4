@@ -9942,5 +9942,22 @@
    "outcome": "task",
    "at": "2026-10-29T16:01:16.110Z"
   }
+ },
+ {
+  "id": "B-532",
+  "kind": "request",
+  "title": "Request (reported Oct 29): An E.V. window on the phone, as a sheet from any view.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "An E.V. window on the phone, as a sheet from any view.",
+  "reportedAt": "2026-10-29T16:01:19.969Z",
+  "board": {
+   "row": "v4 B-532: An E.V. window on the phone, as a sheet from any"
+  }
  }
 ]
