@@ -9301,10 +9301,12 @@
   "id": "B-496",
   "kind": "request",
   "title": "Request (reported Oct 29): Let E.V. make large flashcard sets (around 100 cards) and add newly made cards to an existing deck instead of always starting a new one.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "A flashcards ask for up to ~150 cards is made in batches of about 40, each batch grounded in the course materials and checked against the cards already made (no duplicate terms), written to one deck; 'add N cards to <deck>' (or Add with E.V. on a deck) appends new, non-duplicate cards to that deck without touching existing cards' schedules; real 100-card run on staging.",
+  "milestone": "Flashcards (D-368)",
+  "status": "open",
+  "depends": [
+   "B-488"
+  ],
   "notes": "",
   "commit": null,
   "source": "chat, Oct 29",
@@ -9313,6 +9315,10 @@
   "reportedAt": "2026-10-29T15:07:29.780Z",
   "board": {
    "row": "v4 B-496: Let E.V. make large flashcard sets (around 100 cards) and add newly…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T15:07:38.837Z"
   }
  }
 ]
