@@ -9774,5 +9774,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:55.172Z"
   }
+ },
+ {
+  "id": "B-524",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Plan the rest says \"Nothing to change\" while the day is over its time budget.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Plan the rest says \"Nothing to change\" while the day is over its time budget.",
+  "reportedAt": "2026-10-29T16:00:00.183Z",
+  "board": {
+   "row": "v4 B-524: Plan the rest says \"Nothing to change\" while the day is over its time…"
+  }
  }
 ]
