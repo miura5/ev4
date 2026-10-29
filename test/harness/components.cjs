@@ -1,11 +1,13 @@
-// B-285 (D-274, D-269, C-1, C-15): the component set, rendered on its own sheet from the built stylesheet and
-// the theme generator, at 390 and 1280 in light and dark at contrast 60, with a screenshot of each. It checks what the
-// set promises every view: a row is 32 px from 600 px and 44 px on the phone; the screen-reader tree names the picked
-// option of every segmented switch; coded yellow is D-269's L52 C54 (light) and L72 C48 (dark) at hue 82, read back
-// from the page, not from the generator; the words on a badge and a tint button hold 4.5:1 on their own tint. B-357
-// (D-327): the five-kinds, one-primary and no-close-button checks are retired with the old UI tenets.
+// B-285 (D-274, D-269, C-1, C-15), B-506 (D-383): the Gallery's harness. It opens the Gallery (/gallery on staging,
+// page/app/89-gallery.js) over the built page with the record stubbed (stub.js, the synthetic record) at 390 and 1280 in
+// light and dark, takes one screenshot per section, and asserts what Proprietary promises every view: every control is
+// a 44 px target on the phone; every text holds 4.5:1 on the ground it is painted on (disabled controls aside); the
+// component set's rows are 32 px from 600 px and 44 px on the phone; a control reached by Tab shows a visible focus
+// ring; nothing scrolls sideways; reduced motion zeroes every duration. It keeps B-285's checks: the screen-reader tree
+// names the picked option of every switch; coded yellow is D-269's L52 C54 (light) and L72 C48 (dark) at hue 82, read
+// back from the page; the words on a badge and a button hold 4.5:1 on their own tint. And the Gallery is absent on live:
+// live's /gallery opens the app with no Gallery, and live's app.js and styles.css carry none of it.
 //   node test/harness/components.cjs [record dir | synthetic] [screenshots dir] [target]
-// The record argument is accepted so check.mjs can call every harness alike; the sheet reads no record.
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
 const fs = require('fs');
 const path = require('path');
@@ -46,126 +48,238 @@ function judgeYellow(color, mode) {
   };
 }
 
-/** The sheet: every part, in three small views (a list view, a form view, a composer view), each with one primary. */
-function sheet() {
-  const ico = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
-  const colours = ['green', 'yellow', 'red', 'blue', 'violet'];
-  const seg = (id, label, opts, picked) =>
-    `<div class="seg" id="${id}" role="group" aria-label="${label}">${opts.map(o => `<button type="button" aria-pressed="${o === picked}">${o}</button>`).join('')}</div>`;
-  const row = (nm, badge, t) =>
-    `<div class="li"><span class="nm">${nm}</span>${badge}<span class="t">${t}</span><button type="button" class="btn ghost sm hov">Open</button></div>`;
-  return `
-<main class="cs">
-<section class="cs-view" data-view="list" aria-label="A list view">
-  <div class="toolbar">${seg('seg-a', 'Views', ['Objectives', 'Plan', 'Weak spots'], 'Objectives')}<span class="sp"></span><button type="button" class="btn neutral">Course</button><button type="button" class="btn primary">Start session</button></div>
-  <div class="cs-list">
-    ${row('Fluid and electrolyte balance', '<span class="badge x-green">Solid</span>', '9:00')}
-    ${row('IV rates and drop factors', '<span class="badge x-yellow">Almost</span>', '9:30')}
-    ${row('Fundamentals exam', '<span class="badge x-red">Due tomorrow</span>', '10:00')}
-    ${row('Sodium and potassium review', '<span class="badge proposed">Proposed</span>', '10:45')}
-    ${row('ATI Engage: Nutrition', '<span class="badge">Graded</span>', '11:30')}
-    ${row('A long name that has to give way to its badge and its time on a narrow phone', '<span class="badge x-blue">Info</span>', '12:15')}
-    ${row('Pathophysiology reading', '<span class="badge x-violet">Study</span>', '1:00')}
-  </div>
-</section>
-<section class="cs-view" data-view="parts" aria-label="Buttons, cards and bars">
-  <div class="toolbar">${seg('seg-b', 'Period', ['Week', 'Month'], 'Month')}<span class="sp"></span><button type="button" class="btn primary sm">Accept all</button></div>
-  <div class="cs-grid">
-    <div class="ui-card"><h3>Buttons</h3><div class="cs-row">
-      <button type="button" class="btn neutral">Neutral</button><button type="button" class="btn ghost">Ghost</button>
-      <button type="button" class="btn icon" aria-label="Done">${ico}</button><button type="button" class="btn neutral icon" aria-label="Done, outlined">${ico}</button>
-      <button type="button" class="btn neutral sm">Small</button><button type="button" class="btn ghost sm">Small ghost</button><button type="button" class="btn icon sm" aria-label="Done, small">${ico}</button>
-      <button type="button" class="btn neutral" disabled>Disabled</button>
-    </div><div class="cs-row">${colours.map(c => `<button type="button" class="btn tint x-${c}">${ico}${c[0].toUpperCase() + c.slice(1)}</button>`).join('')}</div></div>
-    <div class="ui-card"><h3>Progress</h3>
-      <div class="pbar" role="progressbar" aria-label="Done" aria-valuenow="60"><i style="width:60%"></i></div>
-      <div class="pbar x-yellow" role="progressbar" aria-label="Almost" aria-valuenow="35"><i style="width:35%"></i></div>
-      ${seg('seg-c', 'Contrast', ['30', '60', '100'], '60')}
-    </div>
-  </div>
-</section>
-<section class="cs-view" data-view="composer" aria-label="The composer">
-  <form class="field" onsubmit="return false"><input type="text" aria-label="Message E.V." placeholder="Ask E.V., or tell it something to log"><button type="submit" class="btn primary icon send" aria-label="Send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button></form>
-</section>
-</main>`;
-}
-const SHEET_CSS =
-  '.cs{display:flex;flex-direction:column;gap:20px;max-width:900px;margin:0 auto;padding:20px 0}' +
-  '.cs-view{border-radius:12px;background:var(--bg);box-shadow:0 0 0 1px var(--line);overflow:hidden}' +
-  '.cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;padding:12px}' +
-  '.cs-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.cs-view[data-view=composer]{padding:12px}';
+module.exports = { lchOf, judgeYellow };
 
-module.exports = { lchOf, judgeYellow, sheet };
+// The page as the look pass serves it (look.cjs): the host's skeleton around the built shell, files from dist.
+const skeleton = body =>
+  '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>' +
+  body +
+  '</body></html>';
+const TYPES = { '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css', '.html': 'text/html' };
+const SECTIONS = ['tuner', 'colour', 'type', 'space', 'motion', 'components', 'patterns'];
+
+/** In the page: what every check reads, from the open Gallery. */
+function measure() {
+  const g = document.getElementById('gallery');
+  const cx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d');
+  // a computed colour (rgb, rgba or color(srgb ...) from color-mix) as [r, g, b, a], read as the canvas paints it
+  const rgba = c => {
+    cx.clearRect(0, 0, 1, 1);
+    cx.fillStyle = '#000';
+    cx.fillStyle = c;
+    const a = cx.fillStyle; // normalised
+    cx.fillRect(0, 0, 1, 1);
+    const d = cx.getImageData(0, 0, 1, 1).data;
+    return [d[0], d[1], d[2], d[3] / 255, a];
+  };
+  const over = (top, under) => [0, 1, 2].map(i => top[i] * top[3] + under[i] * (1 - top[3])).concat(1);
+  // the ground an element is painted on: its own and its ancestors' backgrounds, composed down to the page's
+  const ground = e => {
+    const layers = [];
+    for (let x = e; x; x = x.parentElement) {
+      const c = rgba(getComputedStyle(x).backgroundColor);
+      if (c[3] > 0) layers.push(c);
+      if (c[3] >= 1) break;
+    }
+    let base = rgba(getComputedStyle(document.documentElement).backgroundColor);
+    if (base[3] < 1) base = [255, 255, 255, 1];
+    return layers.reverse().reduce((u, t) => over(t, u), layers.length && layers[0][3] >= 1 ? [0, 0, 0, 1] : base);
+  };
+  const lum = c => {
+    const f = v => ((v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  };
+  const ratio = (a, b) => {
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+  };
+  const shown = e => {
+    const r = e.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+  };
+  const name = e =>
+    (e.getAttribute('aria-label') || e.textContent || e.tagName).trim().replace(/\s+/g, ' ').slice(0, 48);
+  // text: every element with its own words
+  const low = [];
+  let texts = 0;
+  const lowToday = [];
+  for (const e of g.querySelectorAll('*')) {
+    if (![...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+    if (!shown(e) || e.closest(':disabled,[aria-disabled="true"]')) continue;
+    texts++;
+    const bg = ground(e);
+    const fg = over(rgba(getComputedStyle(e).color), bg);
+    const r = ratio(fg, bg);
+    if (r < 4.5) (e.closest('[data-state="today"]') ? lowToday : low).push(name(e) + ' ' + r.toFixed(2) + ':1');
+  }
+  // tap targets: every control a finger can reach
+  const controls = [
+    ...g.querySelectorAll('button,input,select,textarea,a[href],[role=button],[tabindex]:not([tabindex="-1"])'),
+  ]
+    .filter(e => shown(e) && !e.closest('[aria-hidden="true"]'))
+    .map(e => {
+      const r = e.getBoundingClientRect();
+      return {
+        name: name(e),
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+        today: !!e.closest('[data-state="today"]'),
+      };
+    });
+  const lines = [...g.querySelectorAll('[data-slot="line"] .li')].map(
+    r => Math.round(r.getBoundingClientRect().height * 10) / 10
+  );
+  const yb = g.querySelector('.badge.x-yellow');
+  const words = [...g.querySelectorAll('[data-slot="badge"] .badge, [data-slot="button"] button.btn')]
+    .filter(e => !e.disabled)
+    .map(e => {
+      const s = getComputedStyle(e);
+      const bg = over(rgba(s.backgroundColor), ground(e.parentElement));
+      return { label: name(e), r: ratio(over(rgba(s.color), bg), bg) };
+    })
+    .filter(x => x.r < 4.5)
+    .map(x => x.label + ' ' + x.r.toFixed(2) + ':1');
+  const root = getComputedStyle(document.documentElement);
+  return {
+    sections: [...g.querySelectorAll('[data-gal-sec]')].map(s => s.dataset.galSec),
+    slots: [...g.querySelectorAll('[data-slot]')].map(s => s.dataset.slot + ':' + s.dataset.state),
+    texts,
+    low,
+    lowToday,
+    controls,
+    lines,
+    yellow: root.getPropertyValue('--sem-yellow').trim(),
+    yellowDot: yb ? getComputedStyle(yb, '::before').backgroundColor : '',
+    words,
+    sideways: g.scrollWidth > g.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+    durs: ['--dur-1', '--dur-2', '--dur-3', '--dur-4', '--dur-5'].map(d => root.getPropertyValue(d).trim()),
+  };
+}
+/** In the page: whether the control Tab just reached shows a ring: an outline of 1 px or more, or a shadow on it or on
+ *  the box around it (the composer's field draws its ring on :focus-within) that it lacks unfocused. It puts the focus
+ *  back where Tab left it, so the next Tab goes on from there. */
+function ringOf() {
+  const e = document.activeElement;
+  if (!e || !e.closest('#gallery')) return null;
+  const look = () =>
+    [e, e.parentElement].map(x => {
+      const s = getComputedStyle(x);
+      return [s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 1 ? s.outlineWidth : '', s.boxShadow];
+    });
+  const on = look();
+  e.blur();
+  const off = look();
+  e.focus(); // after a key, a focus by script is focus-visible too
+  const label = (e.getAttribute('aria-label') || e.textContent || e.tagName).trim().slice(0, 40);
+  const ring = !!on[0][0] || on.some((x, i) => x[1] !== off[i][1]);
+  return { label, ring };
+}
 
 if (require.main === module) {
   const { chromium } = require('playwright');
   const root = path.resolve(__dirname, '../..');
+  const dbDir = require('../data/synthetic.cjs').recordDir(process.argv[2]);
   const shots = process.argv[3] || '/tmp/ev4-components';
   fs.mkdirSync(shots, { recursive: true });
   const target = process.argv[4] || 'staging';
-  const styles = fs.readFileSync(path.join(root, 'dist/page', target, 'styles.css'), 'utf8');
-  const theme = fs.readFileSync(path.join(root, 'page/theme.js'), 'utf8');
+  const ORIGIN = 'https://ev.local';
+  const seed = {};
+  for (const c of fs.readdirSync(dbDir)) {
+    const p = path.join(dbDir, c);
+    if (!fs.statSync(p).isDirectory() || ['system', 'legacy', 'debug', 'journal'].includes(c)) continue;
+    seed[c] = {};
+    for (const f of fs.readdirSync(p))
+      if (f.endsWith('.json')) seed[c][f.slice(0, -5)] = JSON.parse(fs.readFileSync(path.join(p, f), 'utf8'));
+  }
+  const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
   const results = [];
+  const notes = [];
   const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', name, detail]);
-  const html = mode =>
-    `<!doctype html><html data-theme="${mode}"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>${styles}</style><style>${SHEET_CSS}</style><script>${theme}</script></head><body>${sheet()}</body></html>`;
+  async function open(browser, dir, w, h, mode, extra = {}) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, colorScheme: mode, ...extra });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
+    await page.route(ORIGIN + '/**', r => {
+      const name = new URL(r.request().url()).pathname.replace(/^\//, '') || 'index.html';
+      if (name === 'index.html' || name === 'gallery')
+        return r.fulfill({
+          body: skeleton(fs.readFileSync(path.join(dir, 'index.html'), 'utf8')),
+          contentType: 'text/html',
+        });
+      const f = path.join(dir, name);
+      return fs.existsSync(f)
+        ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' })
+        : r.fulfill({ status: 404, body: 'not published' });
+    });
+    await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
+    await page.goto(ORIGIN + '/gallery');
+    await page
+      .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 })
+      .catch(() => {});
+    await page.waitForSelector('#gallery .gal-main', { timeout: 3000 }).catch(() => {});
+    return { ctx, page, errors };
+  }
   (async () => {
     const browser = await chromium
       .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
       .catch(() => chromium.launch());
+    const dir = path.join(root, 'dist/page', target);
     for (const mode of ['light', 'dark'])
       for (const [w, h] of [
         [390, 844],
         [1280, 900],
       ]) {
         const tag = `[${w} ${mode}]`;
-        const page = await browser.newPage({ viewport: { width: w, height: h }, colorScheme: mode });
-        const errors = [];
-        page.on('pageerror', e => errors.push(e.message));
-        await page.setContent(html(mode));
-        await page.screenshot({ path: path.join(shots, `components-${w}-${mode}.png`), fullPage: true });
-        ok(`${tag} the sheet renders with no page error`, !errors.length, errors.join('; '));
-        const got = await page.evaluate(() => ({
-          contrast: document.documentElement.getAttribute('data-contrast'),
-          rows: [...document.querySelectorAll('.li')].map(r => Math.round(r.getBoundingClientRect().height * 10) / 10),
-          yellow: getComputedStyle(document.documentElement).getPropertyValue('--sem-yellow').trim(),
-          yellowDot: getComputedStyle(document.querySelector('.badge.x-yellow'), '::before').backgroundColor,
-          words: [...document.querySelectorAll('.badge, button.btn.tint, button.btn.neutral, button.btn.primary')]
-            .filter(e => !e.disabled)
-            .map(e => {
-              // computed colours may come back as color(srgb ...) from color-mix: read them as the canvas paints them
-              const cx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d');
-              const solid = c => {
-                cx.clearRect(0, 0, 1, 1);
-                cx.fillStyle = c;
-                cx.fillRect(0, 0, 1, 1);
-                const [r, g, b] = cx.getImageData(0, 0, 1, 1).data;
-                return `rgb(${r}, ${g}, ${b})`;
-              };
-              const s = getComputedStyle(e);
-              return {
-                label: e.textContent.trim() || e.getAttribute('aria-label'),
-                fg: solid(s.color),
-                bg: solid(s.backgroundColor),
-              };
-            }),
-          tall: [...document.querySelectorAll('button.btn, .seg button')]
-            .filter(b => b.getBoundingClientRect().height < 44)
-            .map(b => b.textContent.trim() || b.getAttribute('aria-label')),
-        }));
-        ok(`${tag} the generator runs at contrast 60`, got.contrast === null, `data-contrast ${got.contrast}`);
+        const { ctx, page, errors } = await open(browser, dir, w, h, mode);
+        const got = await page.evaluate(measure).catch(e => ({ error: e.message }));
+        ok(
+          `${tag} the Gallery opens at /gallery with no page error`,
+          !errors.length && !got.error && got.sections,
+          errors.concat(got.error || []).join('; ')
+        );
+        if (!got.sections) {
+          await ctx.close();
+          continue;
+        }
+        ok(
+          `${tag} it holds its seven sections`,
+          JSON.stringify(got.sections) === JSON.stringify(SECTIONS),
+          got.sections.join(', ')
+        );
+        ok(`${tag} D-383: a slot for each of the 16 components`, got.slots.length === 16, got.slots.join(', '));
+        ok(`${tag} nothing scrolls sideways`, !got.sideways);
+        ok(
+          `${tag} D-273: every text holds 4.5:1 on its ground (${got.texts} read)`,
+          got.texts > 200 && !got.low.length,
+          got.low.join('; ')
+        );
+        if (got.lowToday.length)
+          notes.push(
+            `${tag} today's versions under 4.5:1, for B-507 and B-508 to fix: ` + [...new Set(got.lowToday)].join('; ')
+          );
+        if (w < 600) {
+          const small = got.controls.filter(c => c.h < 44 || c.w < 44);
+          const held = small.filter(c => !c.today);
+          ok(
+            `${tag} D-383: every control is a 44 px target on the phone (${got.controls.length} measured)`,
+            got.controls.length > 30 && !held.length,
+            held.map(c => `${c.name} ${c.w}x${c.h}`).join('; ')
+          );
+          const today = small.filter(c => c.today);
+          if (today.length)
+            notes.push(
+              `${tag} today's versions under 44 px, for B-507 and B-508 to fix: ` +
+                [...new Set(today.map(c => `${c.name} ${c.w}x${c.h}`))].join('; ')
+            );
+        }
         const want = w < 600 ? 44 : 32;
         ok(
-          `${tag} C-1: every row measures ${want} px`,
-          got.rows.length === 7 && got.rows.every(x => x === want),
-          got.rows.join(', ')
+          `${tag} C-1: every row of the set measures ${want} px`,
+          got.lines.length === 7 && got.lines.every(x => x === want),
+          got.lines.join(', ')
         );
-        if (w < 600)
-          ok(
-            `${tag} every button and switch segment is a 44 px target on the phone`,
-            !got.tall.length,
-            got.tall.join(', ')
-          );
         const y = judgeYellow(got.yellow, mode);
         ok(`${tag} D-285: yellow is D-269's`, y.ok, y.detail);
         ok(
@@ -173,32 +287,81 @@ if (require.main === module) {
           JSON.stringify(rgb(got.yellowDot)) === JSON.stringify(rgb(got.yellow)),
           `${got.yellowDot} vs ${got.yellow}`
         );
-        const low = got.words
-          .map(x => ({ ...x, r: rgb(x.fg) && rgb(x.bg) ? ratio(rgb(x.fg), rgb(x.bg)) : 0 }))
-          .filter(x => x.r < 4.5);
         ok(
           `${tag} the words on every badge and button hold 4.5:1 on their own ground`,
-          !low.length,
-          low.map(x => `${x.label} ${x.r.toFixed(2)}:1`).join('; ')
+          !got.words.length,
+          got.words.join('; ')
         );
-        // C-15: the accessibility tree, as a screen reader gets it: each switch names exactly its picked option.
-        for (const id of await page.$$eval('.seg', s => s.map(x => x.id))) {
-          const tree = await page.locator('#' + id).ariaSnapshot();
-          const picked = await page.$eval(
-            '#' + id,
-            s => (s.querySelector('[aria-pressed="true"],[aria-checked="true"]') || {}).textContent
-          );
-          const named = [...tree.matchAll(/button "([^"]+)" \[(?:pressed|checked)\]/g)].map(m => m[1]);
-          ok(
-            `${tag} C-15: the screen-reader tree names ${id}'s picked option`,
-            named.length === 1 && named[0] === picked,
-            `picked ${picked}; tree: ${tree.replace(/\n/g, ' | ')}`
-          );
+        // C-15: each switch names exactly its picked option, as a screen reader gets it
+        const segs = page.locator('#gallery .seg');
+        const nSeg = await segs.count();
+        let named = 0;
+        for (let i = 0; i < nSeg; i++) {
+          const s = segs.nth(i);
+          if (!(await s.isVisible())) continue;
+          const tree = await s.ariaSnapshot();
+          const picked = await s.evaluate(x => (x.querySelector('[aria-pressed="true"]') || {}).textContent);
+          const names = [...tree.matchAll(/button "([^"]+)" \[pressed\]/g)].map(m => m[1]);
+          if (names.length === 1 && names[0] === picked) named++;
+          else
+            ok(
+              `${tag} C-15: a switch names its picked option`,
+              false,
+              `picked ${picked}; tree: ${tree.replace(/\n/g, ' | ')}`
+            );
         }
-        await page.close();
+        ok(`${tag} C-15: every switch's tree names its picked option (${named})`, named >= 5);
+        // a visible focus ring on every control Tab reaches
+        await page.evaluate(() => document.querySelector('#gallery .gal-top button').focus());
+        const rings = [];
+        for (let i = 0; i < 40; i++) {
+          await page.keyboard.press('Tab');
+          const r = await page.evaluate(ringOf);
+          if (!r) continue;
+          rings.push(r);
+        }
+        const bare = rings.filter(r => !r.ring);
+        ok(
+          `${tag} D-383: a control reached by Tab shows its focus ring (${rings.length} reached)`,
+          rings.length >= 20 && !bare.length,
+          bare.map(r => r.label).join('; ')
+        );
+        // one screenshot per section: the window as tall as the page, so each section is whole
+        const tall = await page.evaluate(() => document.getElementById('gallery').scrollHeight);
+        await page.setViewportSize({ width: w, height: Math.min(tall + 40, 16000) });
+        for (const sec of SECTIONS)
+          await page
+            .locator(`[data-gal-sec="${sec}"]`)
+            .screenshot({ path: path.join(shots, `gallery-${sec}-${w}-${mode}.png`) });
+        await ctx.close();
       }
+    {
+      // reduced motion: every duration is 0.01 ms
+      const { ctx, page } = await open(browser, dir, 390, 844, 'light', { reducedMotion: 'reduce' });
+      const got = await page.evaluate(measure).catch(() => ({ durs: [] }));
+      ok(
+        '[390] reduced motion makes every duration 0.01 ms',
+        got.durs.length === 5 && got.durs.every(d => d === '0.01ms'),
+        got.durs.join(', ')
+      );
+      await ctx.close();
+    }
+    if (target === 'staging') {
+      // absent on live: live's /gallery is the app with no Gallery, and live's files carry none of it
+      const live = path.join(root, 'dist/page/live');
+      const { ctx, page } = await open(browser, live, 1280, 900, 'dark');
+      const there = await page.evaluate(() => !!document.getElementById('gallery') || typeof window.EVApp !== 'object');
+      ok('[live] /gallery opens the app with no Gallery', !there);
+      const files = ['app.js', 'styles.css'].map(f => fs.readFileSync(path.join(live, f), 'utf8'));
+      ok(
+        "[live] live's app.js and styles.css carry no Gallery",
+        files.every(t => !/\bgal-|data-gal-sec|89-gallery/.test(t))
+      );
+      await ctx.close();
+    }
     await browser.close();
     for (const [s, n, d] of results) console.log(`${s}  ${n}${s === 'FAIL' && d ? ' :: ' + d : ''}`);
+    for (const n of notes) console.log('NOTE  ' + n);
     const failed = results.filter(r => r[0] === 'FAIL').length;
     console.log(`\n${results.length - failed}/${results.length} passed; screenshots in ${shots}`);
     process.exit(failed ? 1 : 0);

@@ -30,12 +30,15 @@ const SYSTEM_DOCS = ['system/manifest', 'system/spec', 'system/environments'];
 
 /** The page's app.js as published: page/app/*.js in name order, joined as they are (B-64). Each part is one section of
  *  the one closure EVApp.boot runs, split by tab for the reader; only the joined file is JavaScript on its own. */
-export function appSource(root = HERE) {
+// B-506 (D-371): the Gallery's parts, published on staging only: live's app.js and styles.css never carry them.
+export const STAGING_ONLY = ['page/app/89-gallery.js', 'page/ds/gallery.css'];
+export function appSource(root = HERE, target = 'staging') {
   const dir = path.join(root, 'page', 'app');
   if (!fs.existsSync(dir)) throw new Error('no page/app/: the page logic lives there as parts (B-64)');
   return fs
     .readdirSync(dir)
     .filter(f => f.endsWith('.js'))
+    .filter(f => target === 'staging' || !STAGING_ONLY.includes('page/app/' + f))
     .sort()
     .map(f => fs.readFileSync(path.join(dir, f), 'utf8'))
     .join('');
@@ -51,11 +54,14 @@ export const STYLE_LAYERS = [
   ['tokens', 'page/ds/tokens.css'],
   ['components', 'page/ds/components.css'],
   ['patterns', 'page/ds/patterns.css'],
+  ['views', 'page/ds/gallery.css'],
   ['legacy', 'page/styles.css'],
 ];
-export function stylesheet(root = HERE) {
+export function stylesheet(root = HERE, target = 'staging') {
   const parts = STYLE_LAYERS.filter(
-    ([layer, f]) => layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))
+    ([layer, f]) =>
+      (layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))) &&
+      (target === 'staging' || !STAGING_ONLY.includes(f))
   );
   return (
     [
@@ -514,7 +520,7 @@ export function buildPages({ root, spec, schemas, release }) {
   // B-149: core and the page carry no release of their own; the build writes the one release into both.
   const app0 = appSource(root);
   if (!app0.includes(RELEASE_SLOT)) throw new Error(`page/app has no ${RELEASE_SLOT} for the release`);
-  const app = app0.replaceAll(RELEASE_SLOT, release);
+  const appFor = target => appSource(root, target).replaceAll(RELEASE_SLOT, release);
   // Inlined without its comments and indentation, to keep the shell inside its budget; the lines stay as written.
   const theme = read('page/theme.js')
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -554,9 +560,10 @@ export function buildPages({ root, spec, schemas, release }) {
       [ui.shell]: shell,
       'core.js': coreJs,
       'spec.json': specJson,
-      'app.js': app,
-      // B-501 (D-372), B-505 (D-373): Proprietary's layers and today's stylesheet in legacy, in one published file.
-      'styles.css': stylesheet(root),
+      'app.js': appFor(target),
+      // B-501 (D-372), B-505 (D-373): Proprietary's layers and today's stylesheet in legacy, in one published file;
+      // B-506: the Gallery's parts on staging only.
+      'styles.css': stylesheet(root, target),
     };
     const want = [ui.shell, ...ui.files].sort().join();
     if (Object.keys(out[target]).sort().join() !== want)

@@ -72,6 +72,7 @@ const PARTS = {
   73: ['run', 'captions', 'prep', 'greet', 'look'],
   74: ['run', 'captions', 'look'],
   75: ['run', 'captions', 'prep', 'look'],
+  89: ['components'], // B-506: the Gallery, staging only
   90: ['run', 'frame', 'notes', 'look'], // B-405: the L-frame, strip and pop-up
   91: ['run', 'look'],
 };

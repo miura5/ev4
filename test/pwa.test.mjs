@@ -104,6 +104,9 @@ test('B-309: build-pwa wraps each record’s built page byte for byte, titled E.
   const b = fs.readFileSync(path.join(dir, 'out-live/index.html'), 'utf8');
   assert.match(a, /<meta name="ev-target" content="staging">/);
   assert.match(b, /<meta name="ev-target" content="live">/);
+  // B-506: the Gallery's address, /gallery, is the staging app itself; live has none
+  assert.equal(fs.readFileSync(path.join(dir, 'out-staging/gallery.html'), 'utf8'), a);
+  assert.equal(fs.existsSync(path.join(dir, 'out-live/gallery.html')), false);
 });
 
 test('B-309: build-pwa refuses a record it does not know, or a page not built', () => {

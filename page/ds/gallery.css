@@ -1,0 +1,70 @@
+/* The Gallery (B-506, D-371, D-383): Proprietary's reference page, staging only. The build publishes this file in
+   @layer views on staging and leaves it out of live (tools/build.mjs STAGING_ONLY), with page/app/89-gallery.js. It
+   lays out the page only: what it shows keeps the look of the bundle it is built from, so legacy's rules still win on
+   today's components inside it. Tokens only (D-380); widths of the page's own layout are its own. */
+.gal{position:fixed;inset:0;z-index:calc(var(--z-banner) + 10);overflow:auto;overscroll-behavior:contain;background:var(--bg);color:var(--text);
+  padding:env(safe-area-inset-top,0px) max(var(--sp-4),env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(var(--sp-4),env(safe-area-inset-left,0px));font-size:var(--fs-4);line-height:var(--lh-ui)}
+.gal-top{position:sticky;top:0;z-index:var(--z-sticky);display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);padding:var(--sp-3) 0;background:var(--bg);box-shadow:0 1px 0 var(--line)}
+.gal-title{display:flex;flex-direction:column;gap:var(--sp-0_5);min-width:0}
+.gal-name{margin:0;font-size:var(--fs-6);font-weight:var(--fw-semibold);letter-spacing:var(--track-display);line-height:var(--lh-tight)}
+.gal-main{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-8);padding:var(--sp-6) 0 var(--sp-16)}
+.gal-sec{display:flex;flex-direction:column;gap:var(--sp-3);min-width:0}
+.gal-h{margin:0;font-size:var(--fs-5);font-weight:var(--fw-semibold);line-height:var(--lh-tight)}
+.gal-sub{margin:var(--sp-2) 0 0;font-size:var(--fs-3);font-weight:var(--fw-semibold);color:var(--text)}
+.gal-lead{margin:0;color:var(--quiet);font-size:var(--fs-2);max-width:68ch}
+.gal-cnote{display:block;color:var(--quiet);font-size:var(--fs-1);line-height:var(--lh-ui)}
+.gal code{font:var(--fw-medium) var(--fs-1)/var(--lh-ui) var(--mono);color:var(--text)}
+.gal-row{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center}
+/* Inputs */
+.gal-tuner{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:var(--sp-2) var(--sp-6)}
+.gal-knob{display:grid;grid-template-columns:7.5rem minmax(0,1fr) 3rem;align-items:center;gap:var(--sp-3);min-height:var(--tap);font-size:var(--fs-2);color:var(--text)}
+.gal-range{width:100%;min-height:var(--tap);margin:0;accent-color:var(--text)}
+.gal-val{font-variant-numeric:tabular-nums;text-align:right;color:var(--quiet)}
+.gal-recipe{margin:0;padding:var(--sp-3);border-radius:var(--r-md);background:var(--chrome);box-shadow:var(--edge-quiet);font:var(--fs-1)/var(--lh-ui) var(--mono);color:var(--text);overflow:auto}
+/* Colour */
+.gal-colours{display:flex;flex-direction:column;border-radius:var(--r-lg);box-shadow:var(--edge-quiet);background:var(--surface);overflow:hidden}
+.gal-crow{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:var(--sp-2);align-items:center;padding:var(--sp-2) var(--sp-3);border-top:1px solid var(--line)}
+.gal-crow:first-child{border-top:0}
+.gal-chead{font-size:var(--fs-1);font-weight:var(--fw-semibold);color:var(--quiet);background:var(--chrome)}
+.gal-cname{min-width:0;overflow-wrap:anywhere}
+.gal-cval{display:flex;align-items:center;gap:var(--sp-2);min-width:0;font:var(--fs-1)/var(--lh-ui) var(--mono);color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.gal-sw{flex:0 0 auto;width:var(--sp-6);height:var(--sp-6);border-radius:var(--r-sm);background:var(--sw);box-shadow:var(--edge)}
+@media (max-width:599px){.gal-cval{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}}
+/* Type */
+.gal-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:var(--sp-6)}
+.gal-ramp{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0}
+.gal-ramp-row{display:grid;grid-template-columns:3.5rem minmax(0,1fr);gap:var(--sp-3);align-items:baseline}
+.gal-ramp-t{font-size:calc(var(--gal-fs) * var(--gal-k) / var(--ts));line-height:var(--lh-tight);overflow-wrap:anywhere}
+/* Space, corners and lift */
+.gal-ruler{display:flex;flex-direction:column;gap:var(--sp-1)}
+.gal-rule{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:var(--sp-3);align-items:center}
+.gal-bar{display:block;width:var(--gal-w);height:var(--sp-3);border-radius:var(--r-xs);background:var(--quiet)}
+.gal-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr));gap:var(--sp-4)}
+.gal-tile{display:flex;flex-direction:column;justify-content:flex-end;gap:var(--sp-1);min-height:5.5rem;padding:var(--sp-3);background:var(--surface)}
+.gal-radius{border-radius:var(--gal-r);box-shadow:var(--edge)}
+.gal-lift{border-radius:var(--r-lg);box-shadow:var(--gal-e)}
+/* Motion */
+.gal-motion{display:flex;flex-direction:column;gap:var(--sp-2)}
+.gal-mrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:var(--sp-3);align-items:center}
+.gal-track{position:relative;height:var(--sp-6);border-radius:var(--r-pill);background:var(--chrome);box-shadow:var(--edge-quiet)}
+.gal-dot{position:absolute;top:var(--sp-1);left:var(--sp-1);width:var(--sp-4);height:var(--sp-4);border-radius:var(--r-round);background:var(--text);transition:left var(--gal-d) var(--gal-e)}
+.gal-track.on .gal-dot{left:calc(100% - var(--sp-5))}
+@media (max-width:599px){.gal-mrow{grid-template-columns:minmax(0,1fr) auto}.gal-track{grid-column:1 / -1;grid-row:2}}
+/* Components */
+.gal-comps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(520px,100%),1fr));gap:var(--sp-4)}
+.gal-comp{display:flex;flex-direction:column;gap:var(--sp-3);min-width:0;padding:var(--pad-card);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--edge-quiet)}
+.gal-comp-h{display:flex;flex-direction:column;gap:var(--sp-0_5)}
+.gal-comp-h .gal-sub{margin:0}
+.gal-cells{display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:flex-start;min-width:0}
+.gal-cell{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0;max-width:100%}
+.gal-comp[data-slot=line] .gal-cell,.gal-comp[data-slot=field] .gal-cell,.gal-comp[data-slot=message] .gal-cell,.gal-comp[data-slot=notice] .gal-cell,.gal-comp[data-slot=toast] .gal-cell{flex:1 1 100%}
+.gal-comp[data-slot=meter] .gal-cell{flex:1 1 8rem}
+.gal-state{font-size:var(--fs-1);color:var(--quiet)}
+/* a position:fixed toast is held by a transformed stage, so today's toast shows in place (150px up on the E.V. tab) */
+.gal-stage{position:relative;transform:translateZ(0);height:calc(var(--sp-16) * 3.5);border-radius:var(--r-md);background:var(--chrome);overflow:hidden}
+/* Patterns */
+.gal-pats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:var(--sp-4)}
+.gal-pat{display:flex;flex-direction:column;gap:var(--sp-3);min-width:0}
+.gal-q{margin:0;font-size:var(--fs-5);font-weight:var(--fw-medium);color:var(--text)}
+.gal-day{margin:var(--sp-2) 0 0;font-size:var(--fs-1);font-weight:var(--fw-semibold);color:var(--quiet)}
+.gal-thread{display:flex;flex-direction:column;gap:var(--sp-3)}

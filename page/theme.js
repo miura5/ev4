@@ -94,9 +94,31 @@
   // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast.
   var HER = { light: ['#b5530f', '#a8402f'], dark: ['#f2a35e', '#f08a78'] };
 
-  /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100. */
-  var genTheme = function (mode, contrast) {
-    var V = EMBER,
+  // B-506: the tuner's recipe, the inputs besides mode and contrast: the base's hue and chroma and her accent's.
+  // Ember's own (D-268) when none is given; her second face follows her accent by the same turn and strength.
+  var RECIPE = { base: { h: EMBER.base.h, c: EMBER.base.c }, accent: { h: EMBER.acc.h, c: EMBER.acc.c } };
+  var num = function (v, lo, hi, d) {
+    v = Number(v);
+    return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d;
+  };
+  var recipeOf = function (r) {
+    r = r || {};
+    var b = r.base || {},
+      a = r.accent || {};
+    return {
+      base: { h: num(b.h, 0, 360, RECIPE.base.h), c: num(b.c, 0, 20, RECIPE.base.c) },
+      accent: { h: num(a.h, 0, 360, RECIPE.accent.h), c: num(a.c, 0, 100, RECIPE.accent.c) },
+    };
+  };
+  /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100, and the tuner's recipe (Ember when none). */
+  var genTheme = function (mode, contrast, recipe) {
+    var R = recipeOf(recipe),
+      V = {
+        base: R.base,
+        accL: EMBER.accL,
+        acc: R.accent,
+        acc2: { h: EMBER.acc2.h + (R.accent.h - EMBER.acc.h), c: (EMBER.acc2.c * R.accent.c) / EMBER.acc.c },
+      },
       k = Math.max(0.3, Math.min(1, (contrast || 60) / 100)),
       B = V.base,
       dark = mode === 'dark';
@@ -251,19 +273,20 @@
   /** The stylesheet for one contrast. B-505 (D-373): the tokens sit in the tokens layer and the ground under html and
    *  body in base, so legacy's own rules win over both as they did before layers. The colour scheme stays unlayered:
    *  the host document's :root{color-scheme:light} is unlayered, and a layered scheme would lose to it in dark. */
-  var css = function (contrast) {
+  var css = function (contrast, recipe) {
     var c = contrastOf(contrast);
     return (
       LAYERS +
       '@layer tokens{' +
-      modes(decl(vars(genTheme('dark', c))), decl(vars(genTheme('light', c)))) +
+      modes(decl(vars(genTheme('dark', c, recipe))), decl(vars(genTheme('light', c, recipe)))) +
       '}' +
       modes('color-scheme:dark', 'color-scheme:light') +
       '@layer base{:where(html,body){background:var(--bg);color:var(--text)}}'
     );
   };
-  /** Paints the theme for a contrast now: one style element, placed after the stylesheet link the first time. */
-  var apply = function (doc, contrast, after) {
+  /** Paints the theme for a contrast (and a tuner's recipe, B-506) now: one style element, placed after the stylesheet
+   *  link the first time. */
+  var apply = function (doc, contrast, after, recipe) {
     var el = doc.getElementById('ev-theme');
     if (!el) {
       el = doc.createElement('style');
@@ -271,7 +294,7 @@
       if (after && after.parentNode) after.parentNode.insertBefore(el, after.nextSibling);
       else (doc.head || doc.documentElement).appendChild(el);
     }
-    el.textContent = css(contrast);
+    el.textContent = css(contrast, recipe);
     if (contrastOf(contrast) === 60) doc.documentElement.removeAttribute('data-contrast');
     else doc.documentElement.setAttribute('data-contrast', String(contrastOf(contrast)));
     return el;
@@ -288,6 +311,8 @@
     CONTRASTS: CONTRASTS,
     SEM: SEM,
     CODED: CODED,
+    RECIPE: RECIPE,
+    recipeOf: recipeOf,
     LAYERS: LAYERS,
   };
   if (typeof module === 'object' && module.exports) module.exports = api;

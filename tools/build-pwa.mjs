@@ -23,6 +23,7 @@ export const ICON_FILES = [
   'favicon.svg',
   'favicon-32.png',
 ];
+export const GALLERY_PAGE = 'gallery.html';
 export const SHIM = ['bridge.js', 'sw.js', 'manifest.webmanifest', ...ICON_FILES];
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -107,7 +108,11 @@ export function buildPwa({ record, root = ROOT, out = path.join(root, 'pwa', 'pu
   }
   for (const f of JOB_SHIMS) fs.copyFileSync(path.join(root, 'pwa', f), path.join(out, f));
   fs.writeFileSync(path.join(out, 'jobs-spec.json'), JSON.stringify(jobsSpec(root)));
-  fs.writeFileSync(path.join(out, 'index.html'), releaseKeyed(wrap(fs.readFileSync(path.join(from, 'index.html')))));
+  const page = releaseKeyed(wrap(fs.readFileSync(path.join(from, 'index.html'))));
+  fs.writeFileSync(path.join(out, 'index.html'), page);
+  // B-506 (D-371): the Gallery's own address on staging, /gallery: the same app (signed in as staging always is), which
+  // opens the Gallery over itself there. Live has no such file, and its app.js has no Gallery.
+  if (record === 'staging') fs.writeFileSync(path.join(out, GALLERY_PAGE), page);
   return { record, from, out, files: fs.readdirSync(out) };
 }
 
