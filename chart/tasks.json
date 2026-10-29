@@ -9467,7 +9467,7 @@
    "B-501",
    "B-504"
   ],
-  "notes": "",
+  "notes": "Built at 5312088: build emits the layer order, tokens.css in @layer tokens, styles.css whole in @layer legacy (file untouched); theme.js generates washes, shadows, ring, focus and coded tokens in tokens (color-scheme unlayered on purpose); 14 !important audited, none moved; pixel diff = baseline noise at 390/1280 light/dark; components 38/38. Staging and real-data look with tonight's release.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
