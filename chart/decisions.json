@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-387",
+  "date": "Oct 29",
+  "title": "Harnesses select by role and name, data-ui, data-key (the record id an item shows) or the shell's fixed region ids; visual classes and data-kind/size/tone stay forbidden outside the Gallery's harness; old classes ride along one release",
+  "why": "Role and data-ui name kinds of thing, but a test that ticks one task needs that task's id (B-504)",
+  "status": "accepted",
+  "supersedes": [
+   "D-377"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-386",
   "date": "Oct 29",
   "title": "Proprietary's components live in page/app/01-ui.js under the namespace DS (not 02-ui.js / ui.*); page/ds/patterns.css holds the seven patterns (Shell, Week, Runner, Plan card, Thread, Note page, Triage) under a cap of about 500 lines; the budget of D-378 otherwise stands",
@@ -121,7 +133,7 @@
   "date": "Oct 29",
   "title": "Harnesses select by role and name or data-ui, never by visual class, for every moved view; old classes ride along as second classes for one release",
   "why": "About 1,590 class pins today make every markup change a test change",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv P-7"
