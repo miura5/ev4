@@ -9690,5 +9690,22 @@
    "outcome": "task",
    "at": "2026-10-29T15:59:17.447Z"
   }
+ },
+ {
+  "id": "B-520",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Note tasks on Today don't open their note, and New note leaves empty Untitled notes and ignores the selected course.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UX map probe (D-369), Oct 29",
+  "words": "Note tasks on Today don't open their note, and New note leaves empty Untitled notes and ignores the selected course.",
+  "reportedAt": "2026-10-29T15:59:22.609Z",
+  "board": {
+   "row": "v4 B-520: Note tasks on Today don't open their note, and New note leaves empty…"
+  }
  }
 ]
