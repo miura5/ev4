@@ -9863,9 +9863,9 @@
   "id": "B-528",
   "kind": "bug",
   "title": "Bug (reported Oct 29): In notes, \"On this page\" ignores headings and \"Reading along\" shows nothing beside the note.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "On this page lists the note's headings and Reading along shows E.V.'s notes beside it, or the label is not shown; test. (F-48)",
+  "milestone": "UX probe fixes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -9874,6 +9874,10 @@
   "reportedAt": "2026-10-29T16:00:41.889Z",
   "board": {
    "row": "v4 B-528: In notes, \"On this page\" ignores headings and \"Reading along\" shows…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T16:00:46.163Z"
   }
  }
 ]
