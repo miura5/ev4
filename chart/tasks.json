@@ -9076,5 +9076,22 @@
    "outcome": "task",
    "at": "2026-10-29T08:29:35.942Z"
   }
+ },
+ {
+  "id": "B-486",
+  "kind": "bug",
+  "title": "Bug (reported Oct 29): Plan task refs on day items are keyed by exam id (plans/<exam>#<task>), so a new plan approved for the same exam can claim an old day's row by a matching task id; day-item refs should carry the plan id.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release code review, Oct 29",
+  "words": "Plan task refs on day items are keyed by exam id (plans/<exam>#<task>), so a new plan approved for the same exam can claim an old day's row by a matching task id; day-item refs should carry the plan id.",
+  "reportedAt": "2026-10-29T09:32:32.262Z",
+  "board": {
+   "row": "v4 B-486: Plan task refs on day items are keyed by exam id…"
+  }
  }
 ]
