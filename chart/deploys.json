@@ -5770,5 +5770,24 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "f39d054",
+  "time": "2026-10-29T01:47:12.908Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "f0bd996",
+  "from": "f0bd996",
+  "tasks": [
+   "B-469",
+   "B-470",
+   "B-465"
+  ],
+  "summary": "On live (v4.5.15), an exam plan cannot be put away: with a NUR 112…; On live, Ask for changes on the NUR 112 exam plan (a rewrite from…; Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.16"
  }
 ]

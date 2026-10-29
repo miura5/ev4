@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 28 | v4 live deployed at f39d054 (20:47 CT), from f0bd996: On live (v4.5.15), an exam plan cannot be put away: with a NUR 112…; On live, Ask for changes on the NUR 112 exam plan (a rewrite from…; Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No… (B-469, B-470, B-465). verify-deploy live GREEN. Rollback is a redeploy of f0bd996 | Matt's OK | D-049 |
 | Oct 28 | v4 staging deployed at f39d054 (20:32 CT), from fd4f69f: Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No… (B-465). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at fd4f69f (19:47 CT), from 8187c10: On live (v4.5.15), an exam plan cannot be put away: with a NUR 112…; Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No…; On live, Ask for changes on the NUR 112 exam plan (a rewrite from… (B-469, B-465, B-470). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 28 | v4 staging deployed at 8187c10 (18:14 CT), from f0bd996: Study shows only NUR 112 with an exam and a plan; BIO 201 says 'No… (B-465). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
