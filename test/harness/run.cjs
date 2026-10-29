@@ -1842,6 +1842,30 @@ async function studyPlanChecks(page) {
       r2['plan-h5'] === false && !t2 && (await nDayedits()) === w0,
       JSON.stringify({ r2, t2 })
     );
+    // the real-app case (staging, Oct 29): a plan's graded task ticked on Today reaches the plan's ticks (Study's
+    // first tick above may have ticked it already: each click turns both over together)
+    const h1 = async () => !!((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h1;
+    const g0 = await todayRows();
+    const p0 = await h1();
+    await page.locator('#today-list li.today-item[data-id="plan-h1"] input.tick').click();
+    await page.waitForTimeout(300);
+    const p1 = await h1();
+    const g1 = await todayRows();
+    await page.locator('#today-list li.today-item[data-id="plan-h1"] input.tick').click(); // and back, for what follows
+    await page.waitForTimeout(300);
+    const p2 = await h1();
+    const g2 = await todayRows();
+    ok(
+      'B-483: a plan’s graded task is on Today and its tick there is the plan’s, stored once',
+      'plan-h1' in g0 &&
+        g0['plan-h1'] === p0 &&
+        p1 === !p0 &&
+        g1['plan-h1'] === p1 &&
+        p2 === p0 &&
+        g2['plan-h1'] === p0 &&
+        (await nDayedits()) === w0,
+      JSON.stringify({ today: [g0['plan-h1'], g1['plan-h1'], g2['plan-h1']], plan: [p0, p1, p2] })
+    );
     await page.click('#tab-study');
     await page.waitForTimeout(200);
   }

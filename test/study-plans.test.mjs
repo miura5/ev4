@@ -1733,6 +1733,24 @@ test('B-483: an approved plan’s tasks reach the day saved before it, and a pla
   );
   assert.equal(v.budget.planned, 20);
   assert.equal(EV.dayWithPlanTasks(day, dayFor(plans, TODAY)), day, 'already there: never a second copy');
+  // a graded plan task keeps its plan ref on the list (its tick is the plan's), as the morning saves it too
+  const graded = {
+    ...draft,
+    days: [
+      {
+        date: TODAY,
+        label: 'Due',
+        tasks: [
+          { id: 'g1', text: 'Mobility + Tissue Integrity (due 11/4)', tag: 'graded', kind: 'graded', minutes: 30 },
+        ],
+      },
+    ],
+  };
+  const gItems = dayFor(EV.planViews([graded], [pe]), TODAY);
+  assert.deepEqual(
+    gItems.map(it => [it.id, it.ref]),
+    [['plan-g1', 'plans/ATI-DOSE#g1']]
+  );
   // a later day's task lands on that day
   const later = EV.dayWithPlanTasks({ date: '2026-10-26' }, dayFor(plans, '2026-10-26'));
   assert.deepEqual(

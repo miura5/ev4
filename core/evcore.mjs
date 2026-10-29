@@ -1559,15 +1559,15 @@ const EVCore = (() => {
       },
     };
   }
-
   // ---------------------------------------------------------------- daily list and push
   function buildDayList(plan, ctx = {}) {
     const items = [];
     const push = it => items.push(it);
     const order = ['graded', 'graded-soon', 'exam', 'clinical', 'val'];
+    const refOf = b => b.ref || (b.taskId ? 'plans/' + b.plan + '#' + b.taskId : null); // B-483: graded plan tasks
     for (const k of order)
       for (const b of plan.blocks.filter(b => b.kind === k))
-        push({ id: b.id, text: b.title, tag: b.tag, note: b.note || '', minutes: b.minutes || 0, ref: b.ref || null });
+        push({ id: b.id, text: b.title, tag: b.tag, note: b.note || '', minutes: b.minutes || 0, ref: refOf(b) });
     const setFor = taskId => (ctx.sets || []).find(s => s.planTaskId === taskId);
     for (const b of plan.blocks.filter(b => b.taskId && !order.includes(b.kind))) {
       const s = setFor(b.taskId);

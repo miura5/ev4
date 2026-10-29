@@ -48,7 +48,11 @@
      * plan task's own words on that task's day (Plan the rest's add, or a copy it made before B-483) is that plan task:
      * shown once, ticked in the plan's planedits, and a tick the copy got on the day counts as the task's.
      */
-    const copyIds = task => E.planCopyIds(task && task.date && dayEditDoc(task.date), task);
+    // B-483: and the plan item's own id, ticked on the day before a graded plan task carried its plan ref
+    const copyIds = task => [
+      ...E.planCopyIds(task && task.date && dayEditDoc(task.date), task),
+      ...(task && task.id ? ['plan-' + task.id] : []),
+    ];
     function planDone(plan, task, date = today) {
       if (E.taskDone(plan, task, date, S.sets, S.answers)) return true;
       const ed = task.date && dayEditDoc(task.date);
@@ -109,21 +113,11 @@
       const ed = !on && task.date && dayEditDoc(task.date);
       const ticked = ed ? copyIds(task).filter(id => ed.checks && ed.checks[id]) : [];
       if (!ticked.length) return;
-      let doc = ed;
-      for (const id of ticked) {
-        const x = E.listEdit(
-          dayDoc(task.date) || { date: task.date },
-          doc,
-          { action: 'check', id, done: false },
-          {
-            now: now(),
-            by: 'Matt',
-            date: task.date,
-          }
-        );
-        if (x.doc) doc = x.doc;
-      }
-      if (doc !== ed) await writeDayEdit(task.date, doc);
+      const rest = { ...ed };
+      delete rest.id; // readers carry the id beside the fields; a write never does
+      const checks = { ...(ed.checks || {}) };
+      for (const id of ticked) delete checks[id];
+      await writeDayEdit(task.date, { ...rest, checks, updatedAt: now() }); // an Edit, replaced whole
     }
     function openItem(it) {
       const toSet = it.set || (it.ref && it.ref.startsWith('sets/') ? it.ref.slice(5) : null);
