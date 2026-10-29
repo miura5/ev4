@@ -9119,10 +9119,12 @@
   "id": "B-488",
   "kind": "request",
   "title": "Request (reported Oct 29): Flashcard decks, part 2 (D-368): Written mode (type the answer; small typos accepted; near answers judged once by Haiku) and Learn mode (a session mixes new and due cards and moves each card Flip -> Multiple choice -> Written as it is answered right, ending when every card has stuck once).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "Written mode (case and small-typo tolerant; a near answer judged once by Haiku and cached on the card) and Learn mode (mixes new and due cards; each card moves Flip -> Multiple choice -> Written as it is answered right; ends when every card has stuck once) on any deck; same schedule as B-487; npm test covers the typo match and Learn's progression; proved in the staging app.",
+  "milestone": "After Notes",
+  "status": "open",
+  "depends": [
+   "B-487"
+  ],
   "notes": "",
   "commit": null,
   "source": "chat, Oct 29 (Matt)",
@@ -9130,6 +9132,10 @@
   "reportedAt": "2026-10-29T12:34:05.986Z",
   "board": {
    "row": "v4 B-488: Flashcard decks, part 2 (D-368): Written mode (type the answer; small…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T12:34:26.218Z"
   }
  },
  {
