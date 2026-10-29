@@ -9509,7 +9509,7 @@
   "depends": [
    "B-507"
   ],
-  "notes": "",
+  "notes": "Done in lane C2: Meter, Presence, Choice, Field (1e4a2d6); Popover, Sheet, Message (9ed1925); stat() to DS.meter (f2f4b7b). components 58/58; pixdiff 0 in 34 shots each push; Sheet proofs (Esc, backdrop, focus return, bottom under 600 px, safe-area foot). For B-516: legacy's --line-h shadows the density token. Staging with the views.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
