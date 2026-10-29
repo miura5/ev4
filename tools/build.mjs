@@ -40,6 +40,33 @@ export function appSource(root = HERE) {
     .map(f => fs.readFileSync(path.join(dir, f), 'utf8'))
     .join('');
 }
+/**
+ * B-505 (D-373): the published styles.css. The layer order first, then each of Proprietary's files wrapped in its own
+ * layer (tokens, and components and patterns once they exist, D-386), and today's page/styles.css wrapped whole in
+ * legacy, so its rules still win wherever they apply and nothing on screen moves while views move out of it. No file
+ * declares its own layer; the files stay as written, so a change to page/styles.css never touches the wrapping.
+ */
+export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, views, legacy;';
+export const STYLE_LAYERS = [
+  ['tokens', 'page/ds/tokens.css'],
+  ['components', 'page/ds/components.css'],
+  ['patterns', 'page/ds/patterns.css'],
+  ['legacy', 'page/styles.css'],
+];
+export function stylesheet(root = HERE) {
+  const parts = STYLE_LAYERS.filter(
+    ([layer, f]) => layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))
+  );
+  return (
+    [
+      "/* E.V.'s stylesheet, built by tools/build.mjs (B-505, D-373): Proprietary's layers, then today's sheet in legacy. */",
+      LAYER_ORDER,
+      ...parts.map(
+        ([layer, f]) => `@layer ${layer}{\n/* ---- ${f} */\n${fs.readFileSync(path.join(root, f), 'utf8')}\n}`
+      ),
+    ].join('\n') + '\n'
+  );
+}
 export const sha256 = buf => crypto.createHash('sha256').update(buf).digest('hex');
 
 function git(root, args) {
@@ -528,8 +555,8 @@ export function buildPages({ root, spec, schemas, release }) {
       'core.js': coreJs,
       'spec.json': specJson,
       'app.js': app,
-      // B-501 (D-372): Proprietary's tokens (page/ds/tokens.css) ahead of the stylesheet, in one published file.
-      'styles.css': read('page/ds/tokens.css') + '\n' + read('page/styles.css'),
+      // B-501 (D-372), B-505 (D-373): Proprietary's layers and today's stylesheet in legacy, in one published file.
+      'styles.css': stylesheet(root),
     };
     const want = [ui.shell, ...ui.files].sort().join();
     if (Object.keys(out[target]).sort().join() !== want)

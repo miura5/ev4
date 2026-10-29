@@ -74,6 +74,23 @@
   var EMBER = { base: { h: 70, c: 3.2 }, accL: 48, acc: { h: 52, c: 62 }, acc2: { h: 32, c: 56 } };
   var SEM = { green: 145, yellow: 82, red: 28, blue: 265, violet: 305 };
   var CONTRASTS = [30, 60, 100];
+  // B-505 (D-372): the text-colour washes (D-370's four steps), the coded washes' strength (today's --warn-bg and
+  // --bad-bg), and each mode's lift: [y, blur, alpha] for --shadow-1 (a small float), -2 (popover, menu) and -3 (sheet,
+  // dialog), at today's values in both modes until polish makes the light lift its own (black at a lower alpha).
+  var WASH = [0.03, 0.06, 0.1, 0.18];
+  var CODED_WASH = 0.13;
+  var LIFT = {
+    light: [
+      [6, 18, 0.14],
+      [12, 32, 0.14],
+      [24, 60, 0.22],
+    ],
+    dark: [
+      [6, 18, 0.14],
+      [12, 32, 0.14],
+      [24, 60, 0.22],
+    ],
+  };
   // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast.
   var HER = { light: ['#b5530f', '#a8402f'], dark: ['#f2a35e', '#f08a78'] };
 
@@ -139,6 +156,11 @@
   var rgb = function (hex) {
     return chan(hex).join(',');
   };
+  var rgba = function (hex, a) {
+    return 'rgba(' + rgb(hex) + ',' + a + ')';
+  };
+  // B-505: Proprietary's names for the coded colours (D-269), from the generator's hues.
+  var CODED = { ok: 'green', warn: 'yellow', bad: 'red', info: 'blue', violet: 'violet' };
   /** The page's custom properties for one theme. The generator's names, then the names styles.css already uses, each
    *  one of them (her accent is --her until B-275 sweeps the old --accent; the meanings follow D-269's hues). */
   var vars = function (T) {
@@ -148,7 +170,22 @@
       ink = T.onAccent,
       L = 13;
     while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, EMBER.base.c * 1.5, EMBER.base.h);
-    return {
+    // B-505 (D-372): Proprietary's generated tokens, per mode and contrast: --focus (the text colour, as every focus
+    // ring draws today), the four washes of the text colour, the 1 px --ring on --line2, the three lifts, and the
+    // coded colours under their Proprietary names with a wash each. Legacy's --warn, --bad, --info and --violet (a grey
+    // alias) still win over these until cleanup sweeps them (D-373: the theme sits in the tokens layer).
+    var ds = { '--focus': T.text, '--ring': '0 0 0 1px ' + T.line2 };
+    WASH.forEach(function (a, i) {
+      ds['--wash-' + (i + 1)] = rgba(T.text, a);
+    });
+    LIFT[T.mode].forEach(function (z, i) {
+      ds['--shadow-' + (i + 1)] = '0 ' + z[0] + 'px ' + z[1] + 'px rgba(0,0,0,' + z[2] + ')';
+    });
+    for (var c in CODED) {
+      ds['--' + c] = g[CODED[c]];
+      ds['--' + c + '-wash'] = rgba(g[CODED[c]], CODED_WASH);
+    }
+    var out = {
       '--bg': T.bg,
       '--chrome': T.chrome,
       '--surface': T.surface,
@@ -181,6 +218,8 @@
       '--att-rgb': rgb(g.yellow),
       '--urg-rgb': rgb(g.red),
     };
+    for (var k in ds) out[k] = ds[k];
+    return out;
   };
   var decl = function (o) {
     return Object.keys(o)
@@ -193,12 +232,12 @@
     var c = Number(v);
     return CONTRASTS.indexOf(c) >= 0 ? c : 60;
   };
-  /** The stylesheet for one contrast: dark by default, light when the system says so unless the toggle says dark, and
-   *  the toggle's light (D-211's three blocks, now generated). The ground under html and body has no specificity. */
-  var css = function (contrast) {
-    var c = contrastOf(contrast),
-      d = decl(vars(genTheme('dark', c))),
-      l = decl(vars(genTheme('light', c)));
+  // B-505 (D-373): the cascade's layer order, as the published styles.css declares it first; said again here so the
+  // order holds whichever sheet a page reads first.
+  var LAYERS = '@layer reset,tokens,base,components,patterns,views,legacy;';
+  /** The three blocks of one theme's declarations: dark by default, light when the system says so unless the toggle
+   *  says dark, and the toggle's light (D-211's three blocks, now generated). */
+  var modes = function (d, l) {
     return (
       ':root,:root[data-theme="dark"]{' +
       d +
@@ -206,7 +245,21 @@
       l +
       '}}:root[data-theme="light"]{' +
       l +
-      '}:where(html,body){background:var(--bg);color:var(--text)}'
+      '}'
+    );
+  };
+  /** The stylesheet for one contrast. B-505 (D-373): the tokens sit in the tokens layer and the ground under html and
+   *  body in base, so legacy's own rules win over both as they did before layers. The colour scheme stays unlayered:
+   *  the host document's :root{color-scheme:light} is unlayered, and a layered scheme would lose to it in dark. */
+  var css = function (contrast) {
+    var c = contrastOf(contrast);
+    return (
+      LAYERS +
+      '@layer tokens{' +
+      modes(decl(vars(genTheme('dark', c))), decl(vars(genTheme('light', c)))) +
+      '}' +
+      modes('color-scheme:dark', 'color-scheme:light') +
+      '@layer base{:where(html,body){background:var(--bg);color:var(--text)}}'
     );
   };
   /** Paints the theme for a contrast now: one style element, placed after the stylesheet link the first time. */
@@ -234,6 +287,8 @@
     contrastOf: contrastOf,
     CONTRASTS: CONTRASTS,
     SEM: SEM,
+    CODED: CODED,
+    LAYERS: LAYERS,
   };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else {
