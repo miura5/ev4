@@ -8992,5 +8992,22 @@
    "outcome": "task",
    "at": "2026-10-29T03:42:51.254Z"
   }
+ },
+ {
+  "id": "B-482",
+  "kind": "request",
+  "title": "Request (reported Oct 28): Practice sets and quizzes E.V. makes are only reachable from their job card in the conversation; Study should list each course's sets so Matt can find, resume and retake them.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "Practice sets and quizzes E.V. makes are only reachable from their job card in the conversation; Study should list each course's sets so Matt can find, resume and retake them.",
+  "reportedAt": "2026-10-29T03:46:54.387Z",
+  "board": {
+   "row": "v4 B-482: Practice sets and quizzes E.V. makes are only reachable from their…"
+  }
  }
 ]
