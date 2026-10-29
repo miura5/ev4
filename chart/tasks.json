@@ -9505,12 +9505,12 @@
   "title": "Proprietary components, batch 2, at today's look (D-375, D-388): Sheet (native dialog, bottom sheet under 600 px), Popover, Field, Choice, Meter, Presence and Message, one file each (page/app/01-ui-NN-<name>.js, page/ds/components/NN-<name>.css); starts after the scaffold, not after batch 1, except Popover, Sheet and Message, which wait for C1's first push",
   "dod": "Each in the Gallery in every state; Sheet's focus return and safe-area foot proved at 390; ship staging GREEN; one check on Matt's phone, noted on the release card",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-507"
   ],
-  "notes": "Done in lane C2: Meter, Presence, Choice, Field (1e4a2d6); Popover, Sheet, Message (9ed1925); stat() to DS.meter (f2f4b7b). components 58/58; pixdiff 0 in 34 shots each push; Sheet proofs (Esc, backdrop, focus return, bottom under 600 px, safe-area foot). For B-516: legacy's --line-h shadows the density token. Staging with the views.",
-  "commit": null,
+  "notes": "All 7 components.",
+  "commit": "f2f4b7b",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
