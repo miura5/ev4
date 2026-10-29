@@ -1,1 +1,26 @@
-/* Proprietary 14 Meter: the meter component's rules, components layer (D-373, D-388); lane C2 (B-508) fills this file */
+/* Proprietary 14 Meter (B-508): .gauge, today's .pbar and .stat; the stat's label one ink darker (4.5:1 in dark) */
+:where(.gauge){
+  --gauge-track:var(--hover); --gauge-fill:var(--sem-green);
+  --gauge-label:var(--quiet); /* was --faint: 4.19:1 on the stat's ground in dark */
+  display:flex;height:6px;border-radius:3px;background:var(--gauge-track);overflow:hidden;min-width:0}
+:where(.gauge) > i{display:block;flex:none;height:100%;width:var(--v,0%);background:var(--gauge-fill)}
+:where(.gauge) > [data-tone=ok]{--gauge-fill:var(--sem-green)}
+:where(.gauge) > [data-tone=warn]{--gauge-fill:var(--sem-yellow)}
+:where(.gauge) > [data-tone=bad]{--gauge-fill:var(--sem-red)}
+:where(.gauge) > [data-tone=info]{--gauge-fill:var(--sem-blue)}
+:where(.gauge) > [data-tone=violet]{--gauge-fill:var(--sem-violet)}
+/* stat: a number over its label, on a quiet box */
+.gauge[data-kind=stat]{display:block;height:auto;overflow:visible;min-width:0;box-sizing:border-box;padding:13px var(--sp-4);
+  border:1px solid var(--line);border-radius:18px;background:var(--wash-1)}
+.gauge[data-kind=stat] > b{display:block;font-size:calc(26px * var(--ts));font-weight:var(--fw-semibold);
+  font-variant-numeric:tabular-nums;line-height:var(--lh-tight);letter-spacing:-.01em;color:var(--text)}
+.gauge[data-kind=stat] > span{font-size:var(--fs-2);color:var(--gauge-label)}
+.gauge[data-kind=stat][role=button]{cursor:pointer;min-height:var(--tap);transition:background var(--dur-2) var(--ease-out)}
+.gauge[data-kind=stat][role=button]:hover{background:var(--hover)}
+.gauge[data-kind=stat][role=button]:focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:2px}
+/* legend: the key to a bar's colours, a dot and a word each */
+.gauge[data-kind=legend]{height:auto;overflow:visible;background:none;border-radius:0;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);
+  font-size:var(--fs-1);color:var(--quiet)}
+.gauge[data-kind=legend] > span{display:inline-flex;align-items:center;gap:var(--sp-1_5)}
+.gauge[data-kind=legend] > :not([data-tone]){--gauge-fill:var(--line2)} /* the track's part */
+.gauge[data-kind=legend] > span::before{content:"";width:8px;height:8px;border-radius:var(--r-round);background:var(--gauge-fill)}
