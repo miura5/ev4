@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-389",
+  "date": "Oct 29",
+  "title": "Builders load the ev-builder skill first; the build manager's brief shrinks to tasks, track and owned files, context and attribution. UX probes are briefed from the ev-ux-probe skill. Anthropic's claude-api skill is vendored (Apache 2.0) for model-path tasks",
+  "why": "One tested set of builder rules instead of rewritten briefs that drift (today's red main and a wrong-tree test run came from brief drift); lessons are folded back into the skill as they're learned",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-388",
   "date": "Oct 29",
   "title": "Proprietary is one file per component so lanes never share a file: page/app/01-ui-NN-<name>.js (hoisted function declarations) gathered by page/app/01-ui.js into DS, page/ds/components/NN-<name>.css and staging-only page/app/89-gallery-NN-<name>.js; view CSS moves to page/ds/views/<view>.css; the D-386 budget (about 900 JS / 900 CSS / 500 patterns) counts the totals, summed by a test",
