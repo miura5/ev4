@@ -4,7 +4,23 @@
     // Easy with the next interval under each, keys 1 to 4) or Multiple choice (a wrong pick is Again; a right one asks
     // Hard / Good / Easy). Each rating is one card's update through core's composer (E.deckReview), merged into the deck
     // as it is now. Today's "Cards · n due" opens a session over every course's due cards.
+    // B-488: Written (the definition; he types the term, forgiving of case, spacing, punctuation and a small typo) and
+    // Learn (rounds of about 7 cards, each climbing from Multiple choice to Written; only a card's first answer in the
+    // session writes its rating). The last mode he used on a deck is remembered in this browser (store: try/catch).
     const FC = { view: 'deck', deck: null, edit: null, s: null, local: {} };
+    const MODES = [
+      ['flip', 'Flip'],
+      ['mc', 'Multiple choice'],
+      ['written', 'Written'],
+      ['learn', 'Learn'],
+    ];
+    const MODE_NAME = Object.fromEntries(MODES);
+    const modeOf = id => {
+      const m = store.get('fc-mode-' + id);
+      return MODE_NAME[m] ? m : 'flip';
+    };
+    /** A mode needs this many cards: Multiple choice and Learn need a second card's definition. */
+    const modeMin = m => (m === 'mc' || m === 'learn' ? 2 : 1);
     const deckById = id => S.decks.find(d => d.id === id) || null;
     const liveDecks = () => S.decks.filter(d => d && !d.retired);
     const decksOf = course => liveDecks().filter(d => (d.course || E.defaultCourse()) === course);
@@ -53,9 +69,19 @@
         b.addEventListener('click', () => openDeck(d.id));
         const slot = el('span', 'sx');
         if (k) {
-          const go = btn('Study', () => startCards([d.id], 'flip'), { cls: 'btn ghost sm' });
+          const sel = el('select', 'fc-mode');
+          sel.setAttribute('aria-label', 'Mode for ' + (d.title || d.id));
+          for (const [m, name] of MODES) {
+            const o = el('option', null, name);
+            o.value = m;
+            o.disabled = n < modeMin(m);
+            sel.append(o);
+          }
+          sel.value = n >= modeMin(modeOf(d.id)) ? modeOf(d.id) : 'flip';
+          sel.addEventListener('change', () => store.set('fc-mode-' + d.id, sel.value));
+          const go = btn('Study', () => startCards([d.id], sel.value), { cls: 'btn ghost sm' });
           go.setAttribute('aria-label', 'Study ' + (d.title || d.id));
-          slot.append(go);
+          slot.append(sel, go);
         }
         r.append(b, slot);
         list.append(r);
@@ -154,16 +180,17 @@
       body.append(fcHead(deck.title, deck.course + ' · ' + plural(cards.length, 'card') + ' · ' + due + ' due'));
       const go = el('div', 'fc-go');
       const all = !due && cards.length;
-      const lab = all ? ' all ' + cards.length : due ? ' · ' + due + ' due' : '';
-      go.append(
-        btn('Flip' + lab, () => startCards([deck.id], 'flip', all), { primary: true, disabled: !cards.length }),
-        btn('Multiple choice' + lab, () => startCards([deck.id], 'mc', all), {
-          cls: 'btn neutral',
-          disabled: cards.length < 2,
-        })
-      );
+      const last = modeOf(deck.id);
+      for (const [m, name] of MODES)
+        go.append(
+          btn(name, () => startCards([deck.id], m, all), {
+            cls: 'btn ' + (m === last ? 'primary' : 'neutral'),
+            disabled: cards.length < modeMin(m),
+          })
+        );
       if (!due && cards.length)
         go.append(el('span', 'meta fc-note', 'Nothing due today: a run now still moves each card.'));
+      else if (due) go.append(el('span', 'meta fc-note', 'A run takes the ' + plural(due, 'card') + ' due.'));
       body.append(go);
       const lh = el('div', 'fc-lh');
       lh.append(
@@ -272,7 +299,10 @@
       const queue = (
         all ? decks.flatMap(d => E.deckCards(d).map(c => ({ ...c, deck: d.id }))) : E.cardsDue(decks, today)
       ).map(c => ({ deck: c.deck, id: c.id }));
+      if (deckIds.length === 1) store.set('fc-mode-' + deckIds[0], mode);
       FC.s = { decks: deckIds, mode, queue, i: 0, shown: false, picked: null, done: 0, again: 0, seed: now() };
+      Object.assign(FC.s, { typed: '', verdict: null, prev: null, requeue: -1 });
+      if (mode === 'learn') FC.s.learn = E.learnStart(queue);
       FC.view = 'study';
       fcShow();
       paintStudy();
@@ -291,6 +321,7 @@
       const d = fcDialog();
       const s = FC.s;
       const body = el('div', 'fc-body fc-study');
+      if (s && s.mode === 'learn') return paintLearn(d, body);
       const cur = s && s.queue[s.i];
       if (!cur) {
         const reviewed = s ? s.done : 0;
@@ -320,15 +351,18 @@
         return paintStudy();
       }
       const left = s.queue.length - s.i;
-      body.append(fcHead(s.mode === 'mc' ? 'Multiple choice' : 'Flip', deck.title + ' · ' + left + ' left'));
+      body.append(fcHead(MODE_NAME[s.mode], deck.title + ' · ' + left + ' left'));
       const bar = el('div', 'fc-bar');
       const fill = el('i');
       fill.style.width = (100 * s.done) / Math.max(1, s.done + left) + '%';
       bar.append(fill);
       body.append(bar);
       const face = el('div', 'fc-card' + (s.shown ? ' shown' : ''));
-      face.append(el('div', 'fc-q', card.term));
-      if (s.mode === 'flip') {
+      if (s.mode === 'written') {
+        face.append(el('div', 'fc-q fc-dq', card.definition));
+        body.append(face, ...writtenBlock(card, s, false), ...(s.verdict ? writtenActions(card, s) : []));
+      } else if (s.mode === 'flip') {
+        face.append(el('div', 'fc-q', card.term));
         if (s.shown) {
           face.append(el('div', 'fc-a', card.definition));
           if (card.verify) face.append(el('span', 'badge x-yellow fc-verify', 'Verify'));
@@ -345,23 +379,12 @@
           body.append(sh);
         } else body.append(rateRow(card, E.CARD_RATINGS));
       } else {
-        body.append(face);
+        face.append(el('div', 'fc-q', card.term));
         const ch = E.cardChoices(deck, cur.id, s.seed + s.i);
-        const opts = el('div', 'fc-opts');
-        ch.options.forEach((o, k) => {
-          const picked = s.picked != null;
-          const cls =
-            'fc-opt' +
-            (picked && k === ch.correct ? ' right' : '') +
-            (picked && k === s.picked && k !== ch.correct ? ' wrong' : '');
-          const b = el('button', cls);
-          b.type = 'button';
-          b.append(el('span', 'fc-k', String(k + 1)), el('span', null, o));
-          b.disabled = picked;
-          b.addEventListener('click', () => fcPick(k, ch.correct));
-          opts.append(b);
-        });
-        body.append(opts);
+        body.append(
+          face,
+          mcBlock(ch, s.picked, k => fcPick(k, ch.correct))
+        );
         if (s.picked != null && s.picked === ch.correct) body.append(rateRow(card, ['hard', 'good', 'easy']));
         else if (s.picked != null) {
           const nx = btn('Next', () => fcNext(), { primary: true });
@@ -370,10 +393,256 @@
         }
       }
       d.replaceChildren(body);
-      const f = body.querySelector('.fc-show, .fc-rate button.good, .fc-opt:not([disabled])');
+      fcFocus(body);
+    }
+    /** Multiple choice's options; once one is picked, the right one and a wrong pick are marked. */
+    function mcBlock(ch, picked, onPick) {
+      const opts = el('div', 'fc-opts');
+      ch.options.forEach((o, k) => {
+        const done = picked != null;
+        const cls =
+          'fc-opt' +
+          (done && k === ch.correct ? ' right' : '') +
+          (done && k === picked && k !== ch.correct ? ' wrong' : '');
+        const b = el('button', cls);
+        b.type = 'button';
+        b.append(el('span', 'fc-k', String(k + 1)), el('span', null, o));
+        b.disabled = done;
+        b.addEventListener('click', () => onPick(k));
+        opts.append(b);
+      });
+      return opts;
+    }
+    // ---------------------------------------------------------------- Learn (B-488)
+    /**
+     * Learn: core's session (E.learnStart) says what is asked; s.lcur holds the card on screen until he moves on. A card's
+     * first answer writes its rating (a miss Again at once; right asks Hard / Good / Easy), later ones write nothing.
+     */
+    function paintLearn(d, body) {
+      const s = FC.s;
+      const st = s.learn;
+      if (!s.lcur && !s.ended) s.lcur = E.learnCur(st);
+      const cur = s.lcur;
+      const back = () => {
+        const ft = el('div', 'new-foot');
+        const b = FC.deck && deckById(FC.deck);
+        if (b) ft.append(btn('Back to deck', () => openDeck(b.id), { cls: 'btn neutral' }));
+        ft.append(btn('Close', () => d.close(), { primary: true }));
+        return ft;
+      };
+      const bar = () => {
+        const w = el('div', 'fc-lp');
+        const b = el('div', 'fc-bar');
+        const fill = el('i');
+        fill.style.width = (100 * st.learned.length) / Math.max(1, st.total) + '%';
+        b.append(fill);
+        w.append(b, el('span', 'meta fc-lpn', st.learned.length + ' of ' + st.total + ' learned'));
+        return w;
+      };
+      const termOf = k => (fcCard(k.deck, k.id) || {}).term || k.id;
+      if (!cur || s.ended) {
+        const sum = E.learnSummary(st);
+        body.append(
+          fcHead(sum.done === sum.total ? 'Learned' : 'Learn: so far', (deckById(FC.deck) || {}).title || 'Flashcards'),
+          bar()
+        );
+        const list = (lab, items, note) => {
+          if (!items.length) return;
+          const box = el('div', 'fc-sum');
+          box.append(el('span', 'lab', lab + ' · ' + items.length));
+          const ul = el('ul', 'fc-sl');
+          for (const k of items) {
+            const li = el('li', null, termOf(k));
+            if (note) li.append(el('span', 'meta', note(k)));
+            ul.append(li);
+          }
+          box.append(ul);
+          body.append(box);
+        };
+        list('Learned', sum.learned);
+        list('Still shaky', sum.shaky, k =>
+          k.missed ? 'missed ' + (k.missed === 1 ? 'once' : k.missed + ' times') : 'not learned yet'
+        );
+        if (!sum.total) body.append(el('p', 'fc-end', 'Nothing due right now. New cards and due ones show on Today.'));
+        body.append(back());
+        d.replaceChildren(body);
+        body.querySelector('.new-foot').lastChild.focus();
+        return;
+      }
+      if (cur.roundDone) {
+        body.append(fcHead('Round ' + st.roundNo + ' done', plural(st.total - st.learned.length, 'card') + ' to go'));
+        body.append(bar());
+        const nx = btn('Next round', () => {
+          E.learnNextRound(st);
+          s.lcur = null;
+          paintStudy();
+        });
+        nx.className = 'btn primary fc-show';
+        body.append(nx);
+        d.replaceChildren(body);
+        nx.focus({ preventScroll: true });
+        return;
+      }
+      const deck = deckById(cur.deck);
+      const card = fcCard(cur.deck, cur.id);
+      if (!deck || !card) {
+        st.queue.shift(); // a card gone from the deck (retired elsewhere): out of the session
+        st.total--;
+        s.lcur = null;
+        return paintStudy();
+      }
+      const stage = cur.stage === 'mc' ? 'Multiple choice' : 'Written';
+      body.append(fcHead('Learn', deck.title + ' · round ' + st.roundNo), bar());
+      const face = el('div', 'fc-card');
+      face.append(el('span', 'meta fc-stage', stage));
+      const res = s.lres; // the answer to the card on screen, once given
+      if (cur.stage === 'mc') {
+        face.append(el('div', 'fc-q', card.term));
+        const ch = E.cardChoices(deck, cur.id, s.seed + st.roundNo + ':' + (st.rated[cur.deck + '/' + cur.id] ? 1 : 0));
+        body.append(
+          face,
+          mcBlock(ch, s.picked, k => {
+            if (s.picked != null) return;
+            s.picked = k;
+            learnGive(k === ch.correct);
+          })
+        );
+      } else {
+        face.append(el('div', 'fc-q fc-dq', card.definition));
+        body.append(face, ...writtenBlock(card, s, true));
+      }
+      if (res) {
+        if (res.right && res.first) body.append(rateRow(card, ['hard', 'good', 'easy'], r => learnRate(r)));
+        else {
+          const a = el('div', 'fc-wa');
+          if (!res.right && cur.stage === 'written')
+            a.append(btn('I was right', () => learnOver(), { cls: 'btn neutral fc-over' }));
+          const nx = btn('Continue', () => learnMove(), { primary: true });
+          nx.classList.add('fc-show');
+          a.append(nx);
+          body.append(
+            el(
+              'p',
+              'meta fc-why',
+              res.right
+                ? res.learned
+                  ? 'Learned.'
+                  : 'Right: next time you write it.'
+                : res.first
+                  ? 'Counted as Again: it comes back in this round.'
+                  : 'It comes back in this round.'
+            ),
+            a
+          );
+        }
+      }
+      const end = btn('End session', () => ((s.ended = true), paintStudy()), { cls: 'btn ghost sm fc-endl' });
+      body.append(end);
+      d.replaceChildren(body);
+      fcFocus(body);
+    }
+    /** An answer in Learn: the session moves (core), and a card's first answer writes its rating (a miss is Again). */
+    function learnGive(right) {
+      const s = FC.s;
+      const cur = s.lcur;
+      const r = E.learnAnswer(s.learn, right);
+      s.lres = { right, ...r };
+      s.prev = null;
+      if (r.first && !right) s.prev = (fcWriteRating(cur.deck, cur.id, 'again') || {}).prev || null;
+      paintStudy();
+    }
+    function learnChecked() {
+      learnGive(FC.s.verdict !== 'wrong');
+    }
+    /** I was right on a Written miss: counted right; when it was the card's first answer, its Again becomes Good. */
+    function learnOver() {
+      const s = FC.s;
+      const cur = s.lcur;
+      const r = E.learnOverride(s.learn);
+      if (r.first && s.prev) fcWriteRating(cur.deck, cur.id, 'good', s.prev);
+      s.verdict = 'exact';
+      s.lres = { right: true, ...r, first: false };
+      learnMove();
+    }
+    function learnRate(rating) {
+      const cur = FC.s.lcur;
+      fcWriteRating(cur.deck, cur.id, rating);
+      learnMove();
+    }
+    function learnMove() {
+      Object.assign(FC.s, { lcur: null, lres: null, picked: null, typed: '', verdict: null, prev: null });
+      paintStudy();
+    }
+    function fcFocus(body) {
+      const f = body.querySelector('.fc-type, .fc-show, .fc-rate button.good, .fc-opt:not([disabled])');
       if (f) f.focus({ preventScroll: true });
     }
-    function rateRow(card, which) {
+    /**
+     * Written: a field for the term with Check and Don't know; once checked, what he typed against the term. Right or
+     * near (shown with the right spelling) asks Hard / Good / Easy when the answer is rated; a miss shows the answer
+     * with I was right. In Written mode a miss is Again at once; in Learn the session says what is written.
+     */
+    function writtenBlock(card, s, learn) {
+      if (!s.verdict) {
+        const f = el('form', 'fc-wf');
+        const inp = el('input', 'fc-in fc-type');
+        inp.type = 'text';
+        inp.placeholder = 'Type the term';
+        inp.setAttribute('aria-label', 'Your answer');
+        for (const [k, v] of [
+          ['autocomplete', 'off'],
+          ['autocapitalize', 'off'],
+          ['autocorrect', 'off'],
+          ['spellcheck', 'false'],
+          ['enterkeyhint', 'done'],
+        ])
+          inp.setAttribute(k, v);
+        inp.value = s.typed || '';
+        const check = () => {
+          s.typed = inp.value;
+          s.verdict = E.answerMatch(card.term, inp.value).verdict;
+          (learn ? learnChecked : writtenChecked)();
+        };
+        f.addEventListener('submit', e => (e.preventDefault(), inp.value.trim() ? check() : inp.focus()));
+        const a = el('div', 'fc-wa');
+        a.append(
+          btn("Don't know", () => ((inp.value = ''), check()), { cls: 'btn ghost' }),
+          btn('Check', () => f.requestSubmit(), { primary: true })
+        );
+        f.append(inp, a);
+        return [f];
+      }
+      const out = [];
+      const res = el('div', 'fc-res ' + s.verdict);
+      if (s.verdict === 'exact') res.append(el('span', 'fc-rh', 'Correct'));
+      else if (s.verdict === 'near') {
+        res.append(el('span', 'fc-rh', 'Almost: check the spelling'), el('span', 'fc-ans', card.term));
+        if (s.typed) res.append(el('span', 'meta fc-you', 'You wrote ' + s.typed));
+      } else {
+        res.append(el('span', 'fc-rh', s.typed.trim() ? 'Not quite' : 'The answer'), el('span', 'fc-ans', card.term));
+        if (s.typed.trim()) res.append(el('span', 'meta fc-you', 'You wrote ' + s.typed));
+      }
+      out.push(res);
+      return out;
+    }
+    /** Written mode, once checked: right or near asks Hard / Good / Easy; a miss is Again at once (I was right undoes it). */
+    function writtenChecked() {
+      const s = FC.s;
+      if (s.verdict === 'wrong') fcSave('again', false);
+      paintStudy();
+    }
+    function writtenActions(card, s) {
+      if (s.verdict !== 'wrong') return [rateRow(card, ['hard', 'good', 'easy'])];
+      const a = el('div', 'fc-wa');
+      const nx = btn('Next', () => fcNext(), { primary: true });
+      nx.classList.add('fc-show');
+      a.append(
+        btn('I was right', () => fcOverride(), { cls: 'btn neutral fc-over' }),
+        nx
+      );
+      return [el('p', 'meta fc-why', 'Counted as Again: it comes back this session.'), a];
+    }
+    function rateRow(card, which, onRate = fcRate) {
       const lbl = E.cardNextLabels(card);
       const row = el('div', 'fc-rate');
       for (const r of which) {
@@ -382,7 +651,7 @@
         b.type = 'button';
         b.append(el('span', 'fc-rl', RATE_LABEL[r]), el('span', 'fc-ri', lbl[r]));
         b.setAttribute('aria-label', RATE_LABEL[r] + ', next in ' + lbl[r] + ' (key ' + n + ')');
-        b.addEventListener('click', () => fcRate(r));
+        b.addEventListener('click', () => onRate(r));
         row.append(b);
       }
       return row;
@@ -403,32 +672,67 @@
       const s = FC.s;
       if (!s) return;
       s.i++;
-      s.shown = false;
-      s.picked = null;
+      Object.assign(s, { shown: false, picked: null, typed: '', verdict: null, prev: null, requeue: -1 });
       paintStudy();
     }
-    /** One rating: the card's update is written (through core's composer) and the session moves on at once. */
-    function fcSave(rating, advance = true) {
+    /**
+     * One card's rating written through core's composer, from `base` (the card as it was before a rating I was right
+     * replaces) or the card as this tab last rated it. { r, prev } or null.
+     */
+    function fcWriteRating(deckId, id, rating, base) {
+      const deck = deckById(deckId);
+      const card = base || fcCard(deckId, id);
+      if (!deck || !card) return null;
+      const r = E.rateCard(card, rating, today, now());
+      FC.local[deckId + '/' + id] = { ...card, ...r.sched };
+      // the deck as the record has it, with this tab's newer card, so the composer builds on what he saw
+      const seen = { ...deck, cards: { ...(deck.cards || {}), [id]: card } };
+      guard(null, () => write(E.deckReview(seen, id, rating, now()).write));
+      return { r, prev: card };
+    }
+    /** One rating: the card's update is written and the session moves on at once. */
+    function fcSave(rating, advance = true, base) {
       const s = FC.s;
       const cur = s.queue[s.i];
-      const deck = deckById(cur.deck);
-      const card = fcCard(cur.deck, cur.id);
-      if (!deck || !card) return;
-      const r = E.rateCard(card, rating, today, now());
-      FC.local[cur.deck + '/' + cur.id] = { ...card, ...r.sched };
-      // the deck as the record has it, with this tab's newer card, so the composer builds on what he saw
-      const seen = { ...deck, cards: { ...(deck.cards || {}), [cur.id]: card } };
-      guard(null, () => write(E.deckReview(seen, cur.id, rating, now()).write));
+      const w = fcWriteRating(cur.deck, cur.id, rating, base);
+      if (!w) return;
+      s.prev = w.prev;
       s.done++;
       if (rating === 'again') s.again++;
-      if (r.again) s.queue.splice(Math.min(s.queue.length, s.i + 1 + (rating === 'hard' ? 6 : 3)), 0, { ...cur });
+      s.requeue = -1;
+      if (w.r.again) {
+        s.requeue = Math.min(s.queue.length, s.i + 1 + (rating === 'hard' ? 6 : 3));
+        s.queue.splice(s.requeue, 0, { ...cur });
+      }
       if (advance) fcNext();
+    }
+    /** I was right (Written): the Again is replaced by Good, from the card as it was, and it no longer comes back. */
+    function fcOverride() {
+      const s = FC.s;
+      if (!s || !s.prev) return;
+      if (s.requeue >= 0) s.queue.splice(s.requeue, 1);
+      s.done--;
+      s.again--;
+      fcSave('good', true, s.prev);
     }
     const fcRate = r => fcSave(r, true);
     function fcKey(e) {
-      if (FC.view !== 'study' || !FC.s || e.target.closest('input, textarea')) return;
+      if (FC.view !== 'study' || !FC.s || e.target.closest('input, textarea, select')) return;
       const s = FC.s;
       const n = Number(e.key);
+      if (s.mode === 'written' || s.mode === 'learn') {
+        // keys 1 to 4: a choice while they are open, else the rating of that number; Enter and Space press the button
+        if (!(n >= 1 && n <= 4)) return;
+        const dlg = $('fc-dlg');
+        const b =
+          dlg.querySelectorAll('.fc-opt:not([disabled])')[n - 1] ||
+          dlg.querySelector('.fc-rate .' + E.CARD_RATINGS[n - 1]);
+        if (b) {
+          e.preventDefault();
+          b.click();
+        }
+        return;
+      }
       if (e.key === ' ' || e.key === 'Enter') {
         if (s.mode === 'flip' && !s.shown) {
           e.preventDefault();

@@ -259,6 +259,109 @@ export function makeCards(core) {
     return deckNew({ title, course, items, writer, source, now, job: job.id, id });
   }
 
+  // ---------------------------------------------------------------- B-488: Written and Learn
+  /** An answer as the check compares it: lower case, accents, punctuation and extra spaces gone. */
+  const norm = t =>
+    String(t == null ? '' : t)
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  function lev(a, b) {
+    let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++)
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+  /** The typos a term of this length allows: none up to 3 letters (mg is not mcg), 1 up to 9, 2 from 10. */
+  const typoAllowance = n => (n <= 3 ? 0 : n <= 9 ? 1 : 2);
+  /**
+   * B-488: Written's check of what he typed against the term: exact (case, spaces and punctuation aside), near (a
+   * small typo, shown with the right spelling) or wrong. { verdict, expected }.
+   */
+  function answerMatch(expected, typed) {
+    const e = norm(expected),
+      t = norm(typed);
+    if (!t) return { verdict: 'wrong', expected };
+    if (t === e || t.replace(/ /g, '') === e.replace(/ /g, '')) return { verdict: 'exact', expected };
+    const d = lev(t, e);
+    return { verdict: d <= typoAllowance(e.length) ? 'near' : 'wrong', expected };
+  }
+  /**
+   * B-488: a Learn session over cards ([{ deck, id }]): rounds of `size` cards; each climbs from Multiple choice to
+   * Written and is learned when answered right in Written; a miss drops it back to Multiple choice and it comes back
+   * later in the round. A round ends when each of its cards is learned; the next takes the next cards. Plain JSON, so
+   * an "I was right" can put the state back as it was before the answer.
+   */
+  function learnStart(cards, size = 7) {
+    const keys = [...new Set((cards || []).map(c => c.deck + '/' + c.id))];
+    const st = { size, total: keys.length, pool: keys, round: [], queue: [], stage: {}, learned: [], missed: {} };
+    Object.assign(st, { rated: {}, roundNo: 0, last: null });
+    learnNextRound(st);
+    return st;
+  }
+  /** The next round's cards from the pool. */
+  function learnNextRound(st) {
+    st.round = st.pool.splice(0, st.size);
+    st.queue = st.round.slice();
+    for (const k of st.round) st.stage[k] = 'mc';
+    if (st.round.length) st.roundNo++;
+    return st;
+  }
+  const keyOf = k => ({ deck: k.slice(0, k.indexOf('/')), id: k.slice(k.indexOf('/') + 1) });
+  /** What is asked now: { deck, id, stage } ('mc' or 'written'), { roundDone: true } between rounds, or null at the end. */
+  function learnCur(st) {
+    if (st.queue.length) return { ...keyOf(st.queue[0]), stage: st.stage[st.queue[0]] };
+    return st.pool.length ? { roundDone: true } : null;
+  }
+  /**
+   * The answer to what is asked now: right climbs (Multiple choice to Written, Written to learned), a miss drops back
+   * to Multiple choice two cards on. { first }: true only for the card's first answer in the session, the one answer
+   * whose rating is written (Again on a miss; Hard, Good or Easy he picks on a right one).
+   */
+  function learnAnswer(st, right) {
+    const k = st.queue[0];
+    if (!k) return { first: false, learned: false };
+    st.last = JSON.stringify({ ...st, last: null });
+    st.queue.shift();
+    const first = !st.rated[k];
+    st.rated[k] = true;
+    let learned = false;
+    if (right && st.stage[k] === 'written') {
+      st.learned.push(k);
+      learned = true;
+    } else if (right) {
+      st.stage[k] = 'written';
+      st.queue.push(k);
+    } else {
+      st.missed[k] = (st.missed[k] || 0) + 1;
+      st.stage[k] = 'mc';
+      st.queue.splice(Math.min(st.queue.length, 2), 0, k);
+    }
+    return { first, learned };
+  }
+  /** "I was right" on a missed Written answer: the state as before it, then the answer counted right. */
+  function learnOverride(st) {
+    if (!st.last) return { first: false, learned: false };
+    const before = JSON.parse(st.last);
+    for (const k of Object.keys(st)) delete st[k];
+    Object.assign(st, before);
+    return learnAnswer(st, true);
+  }
+  /** The end: what was learned cleanly and what is still shaky (missed at least once, or answered but not learned). */
+  function learnSummary(st) {
+    const learned = st.learned.filter(k => !st.missed[k]).map(keyOf);
+    const shaky = Object.keys(st.rated)
+      .filter(k => st.missed[k] || !st.learned.includes(k))
+      .map(k => ({ ...keyOf(k), missed: st.missed[k] || 0, learned: st.learned.includes(k) }));
+    return { learned, shaky, total: st.total, done: st.learned.length };
+  }
+
   return {
     CARD_RATINGS: RATINGS,
     cardSched,
@@ -275,5 +378,12 @@ export function makeCards(core) {
     deckCardRetire,
     deckReview,
     deckFromJob,
+    answerMatch,
+    learnStart,
+    learnNextRound,
+    learnCur,
+    learnAnswer,
+    learnOverride,
+    learnSummary,
   };
 }

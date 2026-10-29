@@ -850,12 +850,8 @@ async function flashcardsChecks(page, scheme) {
   });
   const live = Object.values(before).filter(c => !c.retired).length;
   ok(
-    `[${scheme}] a deck opens in its sheet: its cards, Flip and Multiple choice (B-487)`,
-    sheet.open &&
-      sheet.rows === live &&
-      /^Flip/.test(sheet.go[0]) &&
-      /^Multiple choice/.test(sheet.go[1]) &&
-      !sheet.spill,
+    `[${scheme}] a deck opens in its sheet: its cards, Flip, Multiple choice, Written and Learn (B-487, B-488)`,
+    sheet.open && sheet.rows === live && sheet.go.join() === 'Flip,Multiple choice,Written,Learn' && !sheet.spill,
     JSON.stringify(sheet)
   );
   await page.screenshot({ path: `${shots}/fc-deck-${scheme}.png` });
@@ -944,6 +940,7 @@ async function flashcardsChecks(page, scheme) {
       JSON.stringify(rate)
     );
   }
+  await writtenLearnChecks(page, scheme, deckId, openIt, cardsOf);
   // + New card and Retire are marks on the deck; nothing is deleted
   await openIt();
   await page.locator('#fc-dlg .fc-lh .btn', { hasText: 'New card' }).click();
@@ -973,6 +970,22 @@ async function flashcardsChecks(page, scheme) {
     () => (document.querySelector('#today-list .ti-cards .ti-t') || {}).textContent || ''
   );
   ok(`[${scheme}] Today shows Cards · n due (B-487)`, /^Cards · \d+ due$/.test(row), row);
+  const start = await page.evaluate(() => {
+    const b = document.querySelector('#today-list .ti-cards .ti-start');
+    const r = b && b.getBoundingClientRect();
+    const cs = b && getComputedStyle(b);
+    return b ? { w: r.width, h: r.height, right: r.right, vis: cs.visibility, disp: cs.display } : null;
+  });
+  if (row && scheme === 'phone')
+    ok(
+      `[${scheme}] Today's Cards row shows Start without a hover, tappable, inside the screen (B-494)`,
+      !!start &&
+        start.vis === 'visible' &&
+        start.disp !== 'none' &&
+        start.h >= 44 &&
+        start.right <= (await page.evaluate(() => innerWidth)),
+      JSON.stringify(start)
+    );
   await page.screenshot({ path: `${shots}/fc-today-${scheme}.png` });
   if (row) {
     await page.locator('#today-list .ti-cards .fc-nm').click();
@@ -988,6 +1001,163 @@ async function flashcardsChecks(page, scheme) {
     );
     await page.evaluate(() => document.getElementById('fc-dlg').close());
   }
+}
+// B-488: Written shows the definition and takes the typed term: a miss is Again with the answer and I was right (which
+// makes it Good); a near answer shows the right spelling and asks Hard / Good / Easy. Learn climbs each card from
+// Multiple choice to Written with a learned-of-total bar, rates each card once, and ends on what was learned. The mode
+// last used on a deck is the sheet's primary.
+async function writtenLearnChecks(page, scheme, deckId, openIt, cardsOf) {
+  const cardOnScreen = () =>
+    page.evaluate(id => {
+      const q = (document.querySelector('#fc-dlg .fc-q') || {}).textContent;
+      const e = Object.entries(window.__db.decks[id].cards).find(
+        ([, c]) => !c.retired && (c.definition === q || c.term === q)
+      );
+      return e ? { id: e[0], term: e[1].term, definition: e[1].definition } : null;
+    }, deckId);
+  await openIt();
+  await page.locator('#fc-dlg .fc-go .btn', { hasText: /^Written$/ }).click();
+  await page.waitForTimeout(150);
+  const w1 = await cardOnScreen();
+  const shown = await page.evaluate(() => ({
+    head: (document.querySelector('#fc-dlg .fc-ht h2') || {}).textContent,
+    focused: document.activeElement && document.activeElement.classList.contains('fc-type'),
+  }));
+  await page.screenshot({ path: `${shots}/fc-written-${scheme}.png` });
+  await page.fill('#fc-dlg .fc-type', 'zzzz not it');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const miss = await page.evaluate(
+    ({ id, cid }) => ({
+      res: !!document.querySelector('#fc-dlg .fc-res.wrong'),
+      ans: (document.querySelector('#fc-dlg .fc-ans') || {}).textContent,
+      over: !!document.querySelector('#fc-dlg .fc-over'),
+      last: window.__db.decks[id].cards[cid].last,
+    }),
+    { id: deckId, cid: w1 && w1.id }
+  );
+  ok(
+    `[${scheme}] Written: the definition with a field for the term; a miss shows the answer, counts Again and offers I was right (B-488)`,
+    !!w1 &&
+      shown.head === 'Written' &&
+      shown.focused &&
+      miss.res &&
+      miss.ans === w1.term &&
+      miss.over &&
+      miss.last === 'again',
+    JSON.stringify({ w1, shown, miss })
+  );
+  await page.screenshot({ path: `${shots}/fc-written-miss-${scheme}.png` });
+  await page.locator('#fc-dlg .fc-over').click();
+  await page.waitForTimeout(400);
+  const over = (await cardsOf())[w1 && w1.id] || {};
+  ok(
+    `[${scheme}] Written: I was right makes it Good (B-488)`,
+    over.last === 'good' && over.state === 'review',
+    JSON.stringify(over)
+  );
+  const w2 = await cardOnScreen();
+  if (w2) {
+    const t = w2.term.length >= 4 ? w2.term.slice(0, -1) : w2.term.toUpperCase() + '.';
+    await page.fill('#fc-dlg .fc-type', t);
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(200);
+    const near = await page.evaluate(() => ({
+      res: (document.querySelector('#fc-dlg .fc-res') || {}).className,
+      ans: (document.querySelector('#fc-dlg .fc-ans') || {}).textContent || '',
+      rate: [...document.querySelectorAll('#fc-dlg .fc-rate .btn .fc-rl')].map(b => b.textContent),
+    }));
+    ok(
+      `[${scheme}] Written: a typo or a case slip is accepted (near shows the spelling) and asks Hard / Good / Easy (B-488)`,
+      /\b(near|exact)\b/.test(near.res) &&
+        (!/near/.test(near.res) || near.ans === w2.term) &&
+        near.rate.join() === 'Hard,Good,Easy',
+      JSON.stringify({ t, ...near })
+    );
+    await page.screenshot({ path: `${shots}/fc-written-near-${scheme}.png` });
+  }
+  // Learn: rounds of up to 7; each card MC then Written; its first answer alone writes its rating
+  await openIt();
+  const primary = await page.evaluate(() => (document.querySelector('#fc-dlg .fc-go .btn.primary') || {}).textContent);
+  ok(`[${scheme}] the deck's sheet leads with the mode last used (Written) (B-488)`, primary === 'Written', primary);
+  const before = await cardsOf();
+  await page.locator('#fc-dlg .fc-go .btn', { hasText: /^Learn$/ }).click();
+  await page.waitForTimeout(150);
+  const l0 = await page.evaluate(() => ({
+    head: (document.querySelector('#fc-dlg .fc-ht h2') || {}).textContent,
+    prog: (document.querySelector('#fc-dlg .fc-lpn') || {}).textContent,
+    stage: (document.querySelector('#fc-dlg .fc-stage') || {}).textContent,
+    opts: document.querySelectorAll('#fc-dlg .fc-opt').length,
+  }));
+  ok(
+    `[${scheme}] Learn starts in Multiple choice with a learned-of-total bar (B-488)`,
+    l0.head === 'Learn' && /^0 of \d+ learned$/.test(l0.prog) && l0.stage === 'Multiple choice' && l0.opts >= 2,
+    JSON.stringify(l0)
+  );
+  await page.screenshot({ path: `${shots}/fc-learn-${scheme}.png` });
+  const seen = [];
+  let wroteShot = false;
+  for (let step = 0; step < 40; step++) {
+    const st = await page.evaluate(() => {
+      const d = document.getElementById('fc-dlg');
+      const q = (n => (n ? n.textContent : null))(d.querySelector('.fc-q'));
+      return {
+        head: (d.querySelector('.fc-ht h2') || {}).textContent,
+        q,
+        stage: (d.querySelector('.fc-stage') || {}).textContent,
+        rate: !!d.querySelector('.fc-rate'),
+        cont: !!d.querySelector('.fc-show'),
+        type: !!d.querySelector('.fc-type'),
+      };
+    });
+    if (st.head !== 'Learn') break;
+    if (st.rate) {
+      await page.locator('#fc-dlg .fc-rate .good').click();
+    } else if (st.cont) {
+      await page.locator('#fc-dlg .fc-show').click();
+    } else {
+      const c = await cardOnScreen();
+      seen.push(st.stage);
+      if (st.type) {
+        if (!wroteShot) {
+          wroteShot = true;
+          await page.screenshot({ path: `${shots}/fc-learn-written-${scheme}.png` });
+        }
+        await page.fill('#fc-dlg .fc-type', c.term);
+        await page.keyboard.press('Enter');
+      } else {
+        const k = await page.evaluate(
+          def => [...document.querySelectorAll('#fc-dlg .fc-opt')].map(b => b.lastChild.textContent).indexOf(def),
+          c.definition
+        );
+        await page.locator('#fc-dlg .fc-opt').nth(Math.max(0, k)).click();
+      }
+    }
+    await page.waitForTimeout(120);
+  }
+  await page.waitForTimeout(300);
+  const end = await page.evaluate(() => ({
+    head: (document.querySelector('#fc-dlg .fc-ht h2') || {}).textContent,
+    prog: (document.querySelector('#fc-dlg .fc-lpn') || {}).textContent,
+    learned: [...document.querySelectorAll('#fc-dlg .fc-sum .lab')].map(b => b.textContent),
+  }));
+  const after = await cardsOf();
+  const reps = Object.keys(after)
+    .filter(k => !after[k].retired)
+    .map(k => (after[k].reps || 0) - ((before[k] && before[k].reps) || 0));
+  ok(
+    `[${scheme}] Learn: each card climbs Multiple choice to Written, is rated once, and the end shows what was learned (B-488)`,
+    end.head === 'Learned' &&
+      /^(\d+) of \1 learned$/.test(end.prog) &&
+      /^Learned · \d+$/.test(end.learned[0] || '') &&
+      seen.includes('Multiple choice') &&
+      seen.includes('Written') &&
+      reps.every(n => n === 0 || n === 1) &&
+      reps.filter(n => n === 1).length === Number((end.prog || '').split(' ')[0]),
+    JSON.stringify({ end, seen, reps })
+  );
+  await page.screenshot({ path: `${shots}/fc-learn-end-${scheme}.png` });
+  await page.evaluate(() => document.getElementById('fc-dlg').close());
 }
 async function workLineChecks(page, scheme) {
   const tag = `[${scheme}] `;

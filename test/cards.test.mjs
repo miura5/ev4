@@ -262,3 +262,102 @@ test('B-493: a verify marker the job wrote into a card’s words is taken off th
   );
   assert.ok(validate('decks', dk.data, { id: dk.id }).ok);
 });
+
+test('B-488: Written’s check: exact past case, spaces and punctuation; a small typo is near; else wrong', () => {
+  const m = (e, t) => EV.answerMatch(e, t).verdict;
+  assert.equal(m('Metoprolol', 'metoprolol'), 'exact');
+  assert.equal(m('Beta-blocker', '  beta blocker. '), 'exact');
+  assert.equal(m('ACE inhibitor', 'aceinhibitor'), 'exact');
+  assert.equal(m('Metoprolol', 'metoprolo'), 'near'); // 1 typo in a 10-letter term
+  assert.equal(m('Metoprolol', 'metoprlo'), 'near'); // 2
+  assert.equal(m('Metoprolol', 'metprlo'), 'wrong'); // 3
+  assert.equal(m('Heparin', 'hepairn'), 'wrong'); // 2 in a 7-letter term
+  assert.equal(m('Heparin', 'heparn'), 'near'); // 1
+  assert.equal(m('mcg', 'mg'), 'wrong', 'a short term takes no typo');
+  assert.equal(m('Warfarin', 'Heparin'), 'wrong');
+  assert.equal(m('Warfarin', '   '), 'wrong');
+  assert.equal(EV.answerMatch('Warfarin', 'warfarn').expected, 'Warfarin');
+});
+
+test('B-488: Written’s I was right: the Again is replaced by Good from the card as it was', () => {
+  const deck = EV.deckNew({
+    title: 'Meds',
+    course: 'NUR 112',
+    items: [{ term: 'PRN', definition: 'as needed' }],
+    now: AT,
+  });
+  deck.cards = deck.data.cards;
+  const again = EV.deckReview(deck, 'c-001', 'again', AT);
+  assert.equal(again.again, true);
+  const prev = deck.cards['c-001'];
+  const over = EV.deckReview({ ...deck, cards: { 'c-001': prev } }, 'c-001', 'good', AT);
+  const good = EV.deckReview(deck, 'c-001', 'good', AT);
+  assert.deepEqual(over.write, good.write, 'as if he had been right');
+  assert.deepEqual([over.card.state, over.card.reps, over.card.lapses, over.card.last], ['review', 1, 0, 'good']);
+});
+
+test('B-488: Learn: rounds of 7; Multiple choice, then Written; a miss drops back; one rating per card a session', () => {
+  const cards = Array.from({ length: 9 }, (_, i) => ({ deck: 'deck-x', id: 'c-' + String(i + 1).padStart(3, '0') }));
+  const st = EV.learnStart(cards);
+  assert.deepEqual([st.total, st.round.length, st.pool.length, st.roundNo], [9, 7, 2, 1]);
+  let cur = EV.learnCur(st);
+  assert.deepEqual(cur, { deck: 'deck-x', id: 'c-001', stage: 'mc' });
+  // c-001 right in Multiple choice: its first answer (rated), and it comes back in Written at the round's end
+  assert.deepEqual(EV.learnAnswer(st, true), { first: true, learned: false });
+  assert.equal(st.queue.at(-1), 'deck-x/c-001');
+  assert.equal(st.stage['deck-x/c-001'], 'written');
+  // c-002 missed: Again is its rating; it comes back two cards on, in Multiple choice
+  assert.equal(EV.learnCur(st).id, 'c-002');
+  assert.deepEqual(EV.learnAnswer(st, false), { first: true, learned: false });
+  assert.equal(st.queue[2], 'deck-x/c-002');
+  // the rest of the first pass right; then each card's later answers write nothing
+  const firsts = {};
+  let guard = 0;
+  while ((cur = EV.learnCur(st)) && !cur.roundDone && guard++ < 100) {
+    const k = cur.deck + '/' + cur.id;
+    const missWritten = k === 'deck-x/c-001' && cur.stage === 'written' && !firsts.missed;
+    if (missWritten) firsts.missed = true;
+    const r = EV.learnAnswer(st, !missWritten);
+    if (r.first) firsts[k] = (firsts[k] || 0) + 1;
+  }
+  assert.ok(EV.learnCur(st).roundDone, 'a round ends when each of its cards is learned');
+  assert.equal(st.learned.length, 7);
+  assert.ok(
+    Object.keys(firsts)
+      .filter(k => k !== 'missed')
+      .every(k => firsts[k] === 1)
+  );
+  assert.ok(
+    !firsts['deck-x/c-001'] && !firsts['deck-x/c-002'],
+    'c-001 and c-002 were rated on their first answer only'
+  );
+  assert.equal(st.missed['deck-x/c-001'], 1, 'a miss in Written drops it back to Multiple choice');
+  // round 2: the last 2 cards
+  EV.learnNextRound(st);
+  assert.deepEqual([st.roundNo, st.round.length, EV.learnCur(st).id], [2, 2, 'c-008']);
+  for (let i = 0; i < 4; i++) EV.learnAnswer(st, true);
+  assert.equal(EV.learnCur(st), null, 'every card learned: the session ends');
+  const sum = EV.learnSummary(st);
+  assert.deepEqual([sum.done, sum.total, sum.learned.length], [9, 9, 7]);
+  assert.deepEqual(
+    sum.shaky.map(k => [k.id, k.missed]),
+    [
+      ['c-001', 1],
+      ['c-002', 1],
+    ]
+  );
+});
+
+test('B-488: Learn’s I was right puts the session back as before the miss and counts it right', () => {
+  const st = EV.learnStart([
+    { deck: 'd', id: 'a' },
+    { deck: 'd', id: 'b' },
+  ]);
+  EV.learnAnswer(st, true); // a: Multiple choice right
+  EV.learnAnswer(st, true); // b: Multiple choice right
+  assert.deepEqual(EV.learnCur(st), { deck: 'd', id: 'a', stage: 'written' });
+  assert.deepEqual(EV.learnAnswer(st, false), { first: false, learned: false });
+  assert.equal(st.missed['d/a'], 1);
+  assert.deepEqual(EV.learnOverride(st), { first: false, learned: true });
+  assert.deepEqual([st.missed['d/a'], st.learned, st.queue], [undefined, ['d/a'], ['d/b']]);
+});

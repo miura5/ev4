@@ -1650,7 +1650,42 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .fc-k{flex:none;width:18px;height:18px;border-radius:5px;background:var(--chip);color:var(--quiet);font-size:calc(11px * var(--ts));display:inline-flex;align-items:center;justify-content:center}
 .fc-why{margin:0}
 .fc-end{margin:0;color:var(--quiet)}
+/* B-488: four modes (the last one used is the primary), Written's field and verdict, Learn's progress and its end */
+.fc-go{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.fc-note{grid-column:1/-1}
+.ov-decks .sx{width:auto;gap:6px;align-items:center}
+.ov-decks select.fc-mode{flex:none;width:auto;height:28px;min-height:28px;padding:0 6px;border-radius:8px;font:500 calc(12.5px * var(--ts)) var(--sans)}
+.fc-dq{font-size:calc(17px * var(--ts));font-weight:500}
+.fc-wf{display:flex;flex-direction:column;gap:8px}
+.fc-wa{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.fc-wa .btn{min-height:40px}
+.fc-res{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line2);border-radius:10px}
+.fc-res.exact,.fc-res.near{border-color:var(--sem-green);box-shadow:inset 0 0 0 1px var(--sem-green)}
+.fc-res.wrong{border-color:var(--sem-red);box-shadow:inset 0 0 0 1px var(--sem-red)}
+.fc-rh{font-weight:600}
+.fc-ans{font-size:calc(15px * var(--ts));overflow-wrap:anywhere}
+.fc-you{overflow-wrap:anywhere}
+.fc-lp{display:flex;flex-direction:column;gap:4px}
+.fc-lpn{font-size:calc(12px * var(--ts));font-variant-numeric:tabular-nums}
+.fc-stage{font-size:calc(11.5px * var(--ts));text-transform:none}
+.fc-endl{align-self:center;color:var(--quiet)}
+.fc-sum{display:flex;flex-direction:column;gap:4px}
+.fc-sum .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
+.fc-sl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.fc-sl li{display:flex;justify-content:space-between;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.fc-sl li:last-child{border-bottom:0}
+.fc-sl li .meta{flex:none;font-size:calc(12px * var(--ts))}
+/* B-494: Today's Cards row keeps Start on a phone and on touch (it has no task panel to hold it) */
+@media (max-width:599px),(hover:none){
+  #today-list .li.ti-cards .ti-start{display:inline-flex;visibility:visible}
+}
 @media (max-width:599px){
+  .fc-go{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ov-decks select.fc-mode{height:44px;min-height:44px;font-size:max(16px,calc(12.5px * var(--ts)))}
+  .ov-decks .st-row{flex-wrap:wrap;column-gap:0}
+  .ov-decks .st-row .st{flex-basis:100%}
+  .ov-decks .sx{width:100%;padding:0 0 8px}
+  .fc-wa .btn{flex:1;min-height:44px}
   .fc-dlg.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}
   .fc-body{padding:14px 14px 16px}
   .fc-row{flex-wrap:wrap}
