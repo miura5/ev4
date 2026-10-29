@@ -14,7 +14,9 @@ session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One ma
   B-481 (wrong dosage answer keys: code recomputes calculation items; top priority), B-483 (plan tasks and Today share
   one tick; approve puts tasks on Today), B-478 (objectives ask scoped to the next exam), B-479 (flashcards as a
   Quizlet block), B-480 (sets top up to the asked count), B-462, B-463, B-474, then B-482 (Practice sets card in Study).
-  Then one whole-release code review and the card for Matt's morning. No live deploys without his word.
+  Then one whole-release code review and the card. **Wrap up by 5 am CT (10:00 UTC), Matt's wake time, to save his
+  usage before peak hours:** no new builder after ~3:30 am CT (08:30 UTC); the review starts by ~4 am CT; the card is
+  sent by 5 am CT with whatever is done; no agents running after that. No live deploys without his word.
 - A send_later heartbeat every 60 min wakes the build manager to check builders and continue.
 - Matt's call (Oct 28): plans stay one per exam; no shared time or multi-exam plans; small fixes only.
 
