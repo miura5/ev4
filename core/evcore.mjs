@@ -25,6 +25,7 @@ import { makeNotes } from './notes.mjs';
 import { makeStudyPlans } from './study-plans.mjs';
 import { makeCards } from './cards.mjs';
 import { makeCourseScope } from './course-scope.mjs';
+import { makeMeasures } from './measures.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -269,7 +270,6 @@ const EVCore = (() => {
     }
     return H.map(x => x.toString(16).padStart(8, '0')).join('');
   }
-
   // ---------------------------------------------------------------- v4 document helpers
   const isoOf = now => new Date(now == null ? Date.now() : now).toISOString();
   /** UTC compact time for ids and map keys: 2026-10-18T15:00:00.123Z -> 20261018-150000123. */
@@ -2365,10 +2365,10 @@ const EVCore = (() => {
   });
 
   return {
-    // B-155..B-160: each factory's names, spread whole (library keeps stripHtml to itself)
     ...CONV, // B-129: greeting, situation, headlinePrompt, checkHeadline and the conversation names
     ...PREP, // prep checks (D-143, D-144, D-204) and the clinical-prep brief (D-103, B-46)
-    ...LIB, // course materials (D-079); B-78: parseCite, citeTarget
+    ...LIB, // B-155..B-160: each factory spread whole; course materials (D-079); B-78: parseCite, citeTarget
+    ...makeMeasures(() => EVCore), // B-522: one source per measure (core/measures.mjs)
     ...INSIGHTS, // readiness, prediction, calibration, retrospectives and the readiness audit
     ...MIRROR, // the Markdown mirror and the backup's restore plan
     ...CANVAS, // Canvas sync's code side

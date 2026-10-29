@@ -102,8 +102,7 @@
     // B-498: a spot's course is its objective's exam's, else its exam's, else the one it was filed under (core's rule)
     const wsCourse = w => E.courseOf({ course: E.spotCourse(w, { exams: S.exams, objectives: S.objectives }) });
     function openInCourse(course) {
-      return M.models
-        .filter(w => E.isActive(w) && !w.derived.preRead && (!course || !wsCourse(w) || wsCourse(w) === course))
+      return E.openSpots(M.models, { course, courseOf: wsCourse }) // B-522: core's one open-spots rule
         .sort(
           (a, b) =>
             String(a.derived.nextDue || '9').localeCompare(String(b.derived.nextDue || '9')) ||
@@ -289,24 +288,10 @@
     /** An objective's state from its weak spots and answers: Not yet while one is not yet right (or none answered),
      *  Almost while its open ones are right once, Solid once none is open. */
     function objState(o, acc) {
-      const ws = M.models.filter(
-        w =>
-          (w.kind || 'concept') === 'concept' &&
-          w.objective === o.id &&
-          w.derived &&
-          !['parked', 'moved'].includes(w.derived.status) &&
-          !E.untriaged(w) // B-232 (D-235): a spot waiting for his triage counts nowhere
-      );
-      const open = ws.filter(E.isActive);
-      const notYet = open.filter(w => !w.derived.preRead && !((w.derived.streak || 0) > 0));
-      const state = notYet.length
-        ? 'notyet'
-        : open.length
-          ? 'almost'
-          : ws.length || (acc && acc.n)
-            ? 'solid'
-            : 'notyet';
-      return { state, open, ws };
+      // B-522: core's one rule (EVCore.objectiveState); a caller with no answer stats gets the record's, so Today's
+      // readiness counts as Study's and Progress's
+      if (acc === undefined) acc = E.answerStats(M.attempts.all).byObjective[o.id];
+      return E.objectiveState(o, M.models, acc);
     }
     function quizObjective(o, b) {
       // the objective's items in his practice sets: the set with most of them left, newest first; with none, the job

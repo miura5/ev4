@@ -33,8 +33,17 @@
     const monthStart = ym => ym + '-01';
     const monthEnd = ym => E.addDays(monthStart(E.addDays(monthStart(ym), 32).slice(0, 7)), -1);
     const weekStart = d => E.addDays(d, -((E.weekday(d) + 6) % 7)); // Monday
-    // the sessions that count as study time: ended (or ending) with a date and minutes
-    const timed = () => (S.sessions || []).filter(s => s.status !== 'active' && s.date && (s.minutes || 0) > 0);
+    // B-522: study time is core's one measure (EVCore.studyTime): every session Record lists (a running one at its
+    // clock), and today's ticked task minutes per course, a day and course taking the larger so nothing counts twice
+    function studyTime() {
+      const ds = dayState();
+      const ticked = ds.items
+        .filter(it => ds.isDone(it) && Number(it.minutes) > 0)
+        .map(it => ({ date: today, course: E.courseOf(it), minutes: Number(it.minutes) }));
+      return E.studyTime(S.sessions, { now: now(), courseOf: sessionCourse, ticked });
+    }
+    let ST = null; // this render's study time
+    const timed = () => (ST || (ST = studyTime())).sessions.map(x => ({ ...x.s, date: x.date, minutes: x.minutes }));
     // a session's course: its Study Watch folder names one (aliases), else its words guess one, else the default
     function sessionCourse(s) {
       // B-409: a Notes session's course is its note's (its folder is empty and its topic may be 'New note')
@@ -105,7 +114,7 @@
       return null;
     }
     const inSpan = (d, a, b) => d >= a && d <= b;
-    const minsIn = (a, b) => timed().reduce((t, s) => t + (inSpan(s.date, a, b) ? s.minutes : 0), 0);
+    const minsIn = (a, b) => E.minutesIn(ST || (ST = studyTime()), a, b);
     const accIn = (a, b) => {
       const xs = M.attempts.all.filter(x => x.date && inSpan(x.date, a, b));
       return { n: xs.length, right: xs.filter(x => x.correct).length };
@@ -122,6 +131,7 @@
       return d ? Number(d.slice(8)) + ' ' + MONL[Number(d.slice(5, 7)) - 1] : MONL[Number(span.from.slice(5, 7)) - 1];
     }
     function renderProgressTime() {
+      ST = studyTime();
       const P = prog.period,
         bs = buckets(P);
       const span = { from: bs[0].from, to: bs[bs.length - 1].to };
@@ -139,7 +149,7 @@
       const pa = prev ? accIn(prev.from, prev.to) : null;
       const accPct = acc.n ? Math.round((100 * acc.right) / acc.n) : null;
       const prevPct = pa && pa.n ? Math.round((100 * pa.right) / pa.n) : null;
-      const open = M.models.filter(w => E.isActive(w));
+      const open = E.openSpots(M.models); // B-522: Study's open list, as Study counts it
       const due = open.filter(w => E.isDue(w, today)).length;
       // absent while empty (D-151): the accuracy row waits for an answer in the period
       const props = [
@@ -216,9 +226,7 @@
         })
       );
       // by course: each active course's share of the period's study time
-      const byC = {};
-      for (const s of timed())
-        if (inSpan(s.date, span.from, span.to)) byC[sessionCourse(s)] = (byC[sessionCourse(s)] || 0) + s.minutes;
+      const byC = E.minutesByCourse(ST, span.from, span.to); // B-522: sessions and today's ticked tasks
       const courseRows = E.activeCourses()
         .filter(c => byC[c]) // a course with no time this period is absent (D-151)
         .map(c => {

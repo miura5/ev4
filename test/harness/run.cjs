@@ -4773,7 +4773,10 @@ async function tap(page, locator, name) {
             rows.every(r =>
               r.k > plant.t
                 ? r.bar === 0 && /Ahead/.test(r.text)
-                : r.sum === r.bar && r.bar === r.wantMin && r.ids.every(i => r.want.includes(i))
+                : r.sum === r.bar &&
+                  // B-522: today also counts its ticked task minutes (a course takes the larger), so never less
+                  (r.k === plant.t ? r.bar >= r.wantMin : r.bar === r.wantMin) &&
+                  r.ids.every(i => r.want.includes(i))
             ) &&
             rows.find(r => r.k === plant.d0).ids.includes('pw-a') &&
             rows.find(r => r.k === plant.d1).ids.includes('pw-c'),
