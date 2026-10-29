@@ -1033,6 +1033,26 @@
       ['class', 'Classes'],
       ['study', 'Study'],
     ];
+    /** B-487 (D-368): one row for every course's due flashcards; it opens a due-cards session (Flip). */
+    function cardsRow() {
+      const n = E.cardsDue(
+        S.decks.filter(d => d && !d.retired),
+        today
+      ).length;
+      if (!n) return null;
+      const li = el('li', 'li today-item ti-cards');
+      const tk = el('span', 'tk');
+      tk.append(svgIcon('M4 7h12v12H4zM8 4h12v12'));
+      const nm = el('button', 'nm ti-nm');
+      nm.type = 'button';
+      nm.append(el('span', 'ti-t', 'Cards · ' + n + ' due'));
+      nm.addEventListener('click', () => startDueCards());
+      const st = btn('Start', () => startDueCards(), { cls: 'btn neutral sm ti-start hov' });
+      st.prepend(svgIcon('M8 5l11 7-11 7z'));
+      st.setAttribute('aria-label', 'Start: Cards · ' + n + ' due');
+      li.append(tk, nm, el('span', 'badge x-violet', 'Study'), st, el('span', 't', ''));
+      return li;
+    }
     function renderToday() {
       // B-448: the list may show an earlier day (the toolbar's arrows); a date that is today or later is today
       if (!(ui.listDay && ui.listDay < today)) ui.listDay = null;
@@ -1090,6 +1110,8 @@
       const offOf = it => P && P.offs.find(p => p.id === it.id);
       const first = todo.find(it => startable(it, isDone) && !offOf(it));
       const ul = el('ul', 'list ti-list');
+      const cards = !ld && (f === 'all' || f === 'study') ? cardsRow() : null; // B-487: Cards · n due
+      if (cards) ul.append(cards);
       for (const it of todo) {
         const p = offOf(it);
         const st = !p && startable(it, isDone) ? (it === first ? 'first' : 'hov') : null;
@@ -1103,7 +1125,7 @@
       const folds = ui.todayFolds || {};
       const kids = [...(P ? [restLine(P, bv)] : [])];
       const after = [];
-      if (todo.length || (P && P.adds.length)) kids.push(ul);
+      if (todo.length || (P && P.adds.length) || cards) kids.push(ul);
       else if (shown.length && f !== 'all')
         kids.push(
           el(

@@ -309,15 +309,16 @@ export const AGENT_FOLDS = {
       } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
     }
     if (!failed && job.kind === 'flashcards') {
-      // B-479: the cards go to Quizlet, not into E.V.: the job's card holds them as import text with a Copy button
-      const block = EV.cardsText((answer.items || []).slice(0, 40));
-      const n = block ? block.split('\n').length : 0;
+      // B-487 (D-368): the cards become a deck in E.V. for the course (B-479's Quizlet block is retired)
+      const w = EV.deckFromJob({ job, items: answer.items || [], now: ctx.now, source: ctx.source });
+      const n = Object.keys(w.data.cards).length;
       if (n) {
-        result.quizlet = block;
-        result.text =
-          `${n === 1 ? 'Your flashcard is' : n + ' flashcards are'} ready to paste into Quizlet: tap Copy on this card, ` +
-          'then in Quizlet choose Create, Import and paste.';
-      } else result.text += ' (No cards came back, so there is nothing to copy.)';
+        writes.push(w);
+        result.deckId = w.id;
+        result.deckCards = n;
+        result.text = `Deck ready: ${n === 1 ? '1 card' : n + ' cards'} on ${w.data.title}, in Study under ${w.data.course} Flashcards.`;
+        say.push(`Deck ${w.id}: ${n} cards.`);
+      } else result.text += ' (No cards came back, so no deck was made.)';
     }
     const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
     const saved = (planId, data, days) => {

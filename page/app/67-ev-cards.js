@@ -546,6 +546,11 @@
           );
           any = true;
         }
+        // B-487: a flashcards job made a deck in E.V.: Open deck studies it
+        if (j.status === 'done' && r.deckId && S.decks.some(d => d.id === r.deckId)) {
+          a.append(btn('Open deck', () => openDeck(r.deckId), { primary: true }));
+          any = true;
+        }
         if (qz) {
           const n = qz.split('\n').length;
           const cp = btn(

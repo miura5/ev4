@@ -407,6 +407,7 @@
         renderStudyUp(cur ? cur.course : null);
         renderMiniQuiz(cur || null);
         renderStudySets(cur ? cur.course : null);
+        renderStudyDecks(cur ? cur.course : null); // B-487
         return;
       }
       card.hidden = false;
@@ -484,6 +485,7 @@
       renderStudyUp(cur.course);
       renderMiniQuiz(cur);
       renderStudySets(cur.course);
+      renderStudyDecks(cur.course); // B-487
     }
     /** B-375: the panel for an exam with no objectives and no plan, laid out as an objective's pane. */
     function examDetail(ex, fullName) {

@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 export const RECORD_COLLECTIONS = [
   'weakspots',
   'sets',
+  'decks',
   'answers',
   'exams',
   'examedits',

@@ -332,6 +332,17 @@
         { tier: 'local', replyTo: mid }
       );
     }
+    async function flashcardSend(text, fa) {
+      const mid = await mattSay(text);
+      const r = await startJob({ kind: 'flashcards', title: fa.title, brief: fa.brief, course: fa.course });
+      await evSay(
+        r.fired.ok
+          ? `Making ${fa.count} ${fa.course ? fa.course + ' ' : ''}flashcards now. The deck lands in Study under Flashcards.`
+          : 'Couldn’t start the deck: ' + fireCopy(r.fired.error),
+        r.id ? [{ type: 'job', id: r.id }] : [],
+        { tier: 'local', replyTo: mid }
+      );
+    }
     async function sendText(text) {
       try {
         await sendTextNow(text);
@@ -363,6 +374,13 @@
       const nt = NOTE_ASK.exec(text);
       if (nt) {
         await noteSave(text, nt[1]);
+        return;
+      }
+      // B-487 (closes B-485): a line asking for flashcards starts the flashcards job here, by code; no model routes it
+      const fa = E.flashcardAsk(text);
+      if (fa) {
+        input.placeholder = placeholder();
+        await flashcardSend(text, fa);
         return;
       }
       // B-357: with the demo's five chips (B-358) a finished job's Open the … is asked in words, as Your turn is

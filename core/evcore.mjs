@@ -9,8 +9,7 @@
 // materialedits) and is merged into views here (dayView, liveDates, planView, liveMaterials); appended maps are keyed
 // <writer>-<YYYYMMDD-HHMMSSmmm> (eventKey); every document core creates carries the envelope (schema, writer, at,
 // source). Reading v2 and v3 shapes is the migration's job (core/migrate.mjs), never core's.
-// B-155..B-160 (D-166): the feature sections live in their own files, one factory each, bound where each section stood;
-// what stays here is the record's rules: weak spots, items, attempts, answering, the day plan, plans, dates, snapshot, lint.
+// B-155..B-160 (D-166): feature sections live in their own factory files; what stays here is the record's rules.
 
 import { makeLibrary } from './library.mjs';
 import { makeSessions } from './sessions.mjs';
@@ -24,6 +23,7 @@ import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
 import { makeNotes } from './notes.mjs';
 import { makeStudyPlans } from './study-plans.mjs';
+import { makeCards } from './cards.mjs';
 const EVCore = (() => {
   'use strict';
   const VERSION = '__EV_RELEASE__'; // B-149: the build writes the release in (tools/build.mjs RELEASE_SLOT)
@@ -2375,7 +2375,7 @@ const EVCore = (() => {
     ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
     ...SKILLS, // skills practice, Quizlet cards, weak-spot cards and workouts (D-108)
     ...SHARE, // shareable practice pages (D-110)
-    // B-449: study plans (core/study-plans.mjs)
+    ...makeCards({ chicagoDate, addDays, guessCourse: LIB.guessCourse, defaultCourse }), // B-487: decks (core/cards.mjs)
     ...makeStudyPlans({ ...LIB, addDays, liveDates, isActive, examViews, planDrafts, planViews, taskDone, editBase }),
     ...NOTES, // his notes' blocks: the editor's model, paste and the saved document (B-402)
     VERSION,

@@ -134,6 +134,7 @@ const SMOKE_JOBS = {
   'exam-retro': { kind: 'exam-retro', brief: 'The retro for E3.' },
   'clinical-prep': { kind: 'clinical-prep', brief: '2026-10-28: the skills to review.' },
   'share-set': { kind: 'share-set', brief: 'drill-E4-ch39 for my study group.' },
+  flashcards: { kind: 'flashcards', brief: '3 flashcards on dosage terms.' }, // B-487: routed by code; the stub's 3 cards
   general: { kind: 'general', brief: 'List the major electrolytes and their normal ranges.' },
   'plant-shape': { kind: 'general', title: PLANTS.shape, brief: 'Anything.' },
   'plant-plan': { kind: 'exam-plan', title: PLANTS.plan, brief: 'A new study plan for E4.' },
@@ -991,8 +992,10 @@ async function main() {
         // job with his line as its brief. So a plan job is his whole-plan line, then the tap, found by that line.
         const isPlan = name => SMOKE_JOBS[name].kind === 'exam-plan';
         const lineOf = name => `Smoke job ${name} (${scheme})`;
+        // B-487: a flashcard line starts its job by code (no chat round), with his line in the brief
+        const byLine = name => isPlan(name) || name === 'flashcards';
         const mine = (name, j) =>
-          isPlan(name) ? String(j.brief || '').includes(lineOf(name)) : j.title === titleOf(name, scheme);
+          byLine(name) ? String(j.brief || '').includes(lineOf(name)) : j.title === titleOf(name, scheme);
         const answerCalls = name =>
           calls.filter(([, b]) => {
             const br = briefOf(b);
@@ -1001,7 +1004,9 @@ async function main() {
         const ran = {};
         for (const name of Object.keys(SMOKE_JOBS)) {
           await idle();
-          if (!isPlan(name)) await say(lineOf(name));
+          if (name === 'flashcards')
+            await say('Make flashcards on ' + lineOf(name)); // B-487: routed by code
+          else if (!isPlan(name)) await say(lineOf(name));
           else {
             await say(`Start over${name === 'plant-plan' ? ' ' + PLANTS.plan : ''}.\n${lineOf(name)}`);
             const chip = page.locator('#ev-surf button', { hasText: /^Make a new .+ plan$/ }).first();
@@ -1045,6 +1050,12 @@ async function main() {
           if (name === 'practice-set') {
             const set = docs.find(d => d.c === 'sets' && d.id === result.setId);
             if (!set || (set.data.items || []).length !== 2) bad.push('practice-set: no set of 2 questions in D1');
+          }
+          if (name === 'flashcards') {
+            // B-487: the cards are a deck in E.V. for the course, and the job's result names it
+            const dk = docs.find(d => d.c === 'decks' && d.id === result.deckId);
+            if (!dk || Object.keys(dk.data.cards || {}).length !== 3 || result.deckCards !== 3)
+              bad.push('flashcards: no deck of 3 cards in D1');
           }
           if (
             name === 'exam-plan' &&

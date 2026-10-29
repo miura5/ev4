@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "writer": "worker",
+ "at": "2026-10-28T20:15:00Z",
+ "source": "E.V. app",
+ "course": "NUR 112",
+ "title": "Dosage abbreviations",
+ "createdAt": "2026-10-28T20:15:00Z",
+ "job": "job-20261028-201500-dosage-abbreviations",
+ "cards": {
+  "c-001": { "term": "mcg", "definition": "microgram", "at": "2026-10-28T20:15:00Z" },
+  "c-002": { "term": "Drop factor", "definition": "drops per mL of tubing", "verify": true, "at": "2026-10-28T20:15:00Z" },
+  "c-003": { "term": "BID", "definition": "twice a day", "at": "2026-10-28T20:15:00Z", "state": "review", "ivl": 3, "ease": 2.5, "reps": 2, "lapses": 0, "due": "2026-10-31", "last": "good", "lastAt": "2026-10-28T20:20:00Z" },
+  "c-004": { "term": "qd", "definition": "every day", "at": "2026-10-28T20:15:00Z", "retired": true, "editedAt": "2026-10-29T08:00:00Z" }
+ }
+}

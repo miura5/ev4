@@ -1429,6 +1429,7 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
   const files = [...src.matchAll(/^import \{ (\w+) \} from '\.\/([\w-]+)\.mjs';$/gm)].map(m => m[2]);
   assert.deepEqual(files.sort(), [
     'canvas-rules',
+    'cards',
     'conversation',
     'insights',
     'item-kinds',

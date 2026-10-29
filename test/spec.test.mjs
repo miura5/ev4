@@ -27,6 +27,7 @@ const SURFACES = ['cloud-run', 'mac-run', 'browser-tab', 'page', 'build-chat'];
 const COLLECTIONS = [
   'weakspots',
   'sets',
+  'decks',
   'answers',
   'exams',
   'examedits',

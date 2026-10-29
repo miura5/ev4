@@ -68,8 +68,8 @@ export function judge(kind, job, res, made) {
     if (kind === 'exam-plan')
       lines.push({ ok: !!made, what: made ? `exam-plan: plans/${made.id} written` : 'exam-plan: no plan saved' });
     if (kind === 'flashcards') {
-      const n = result.quizlet ? String(result.quizlet).split('\n').length : 0; // B-479: on the job card, for Quizlet
-      lines.push({ ok: n > 0, what: `flashcards: ${n} cards as Quizlet import text` });
+      const n = result.deckId ? result.deckCards || 0 : 0; // B-487: a deck in E.V. (decks/<id>)
+      lines.push({ ok: n > 0, what: `flashcards: decks/${result.deckId || '-'} holds ${n} cards` });
     }
   }
   lines.push({ ok: !!(job && job.data.fired && job.data.fired.ok), what: `${kind}: handed to the runner at once` });

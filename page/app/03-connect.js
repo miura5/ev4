@@ -25,6 +25,7 @@
     const S = {
       weak: [],
       sets: [],
+      decks: [], // B-487: flashcard decks
       answers: [],
       exams: [],
       examsRaw: null,

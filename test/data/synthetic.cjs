@@ -109,6 +109,18 @@ function syntheticRecord(now = new Date()) {
     { type: 'ul', runs: [r('mL to the nearest tenth'), r(' (old rule)', { s: true })] },
   ], { archivedAt: ct(d(-2), 21) });
   note(nId(n4, 'syn4'), n4, n4, 'Fluid and electrolytes: potassium and sodium (earlier)', 'NUR 112', 'Lecture 9', k.slice(0, 4), { earlierOf: nId(n1, 'syn1') });
+  // B-487 (D-368): a flashcard deck made by a flashcards job yesterday: four new cards (due now), one in review due
+  // later, one retired; the harness studies it in Flip and Multiple choice and reads the Today item.
+  const dkAt = ct(d(-1), 20, 15), dkId = 'deck-' + dkAt.slice(0, 10).replace(/-/g, '') + '-' + dkAt.slice(11, 19).replace(/:/g, '') + '-dosage-abbreviations';
+  const card = (term, definition, x = {}) => ({ term, definition, at: dkAt, ...x });
+  put('decks', dkId, { ...env('worker', 'E.V. app', dkAt), course: 'NUR 112', title: 'Dosage abbreviations', createdAt: dkAt, job: 'job-' + dkId.slice(5), cards: {
+    'c-001': card('mcg', 'microgram, 1/1000 of a milligram'),
+    'c-002': card('gtt', 'drops'),
+    'c-003': card('PRN', 'as needed'),
+    'c-004': card('Drop factor', 'drops per mL of the IV tubing', { verify: true }),
+    'c-005': card('BID', 'twice a day', { state: 'review', ivl: 3, ease: 2.5, reps: 2, lapses: 0, due: d(2), last: 'good', lastAt: dkAt }),
+    'c-006': card('qd', 'every day (on the do-not-use list)', { retired: true, editedAt: dkAt }),
+  } });
   return db;
 }
 

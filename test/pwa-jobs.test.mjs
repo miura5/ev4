@@ -447,20 +447,20 @@ test('B-232 (D-115): the staging check knows a weak-spot bump copy as the migrat
   assert.equal(knownWriter(doc('notes', copy.id, copy.data), new Map(), have), null, 'only in legacy');
 });
 
-test('B-479: a flashcards job ends with its cards on the job card as Quizlet import text, and no set', async () => {
+test('B-487: a flashcards job makes a deck in E.V. (B-479’s Quizlet block retired), and no set', async () => {
   const { writes } = await run('flashcards', { brief: 'dosage terms, units and abbreviations' });
   const all = flat(writes);
   const done = all.find(w => w.collection === 'jobresults' && w.data.status === 'done');
   assert.ok(done, 'the job is done');
-  assert.equal(
-    done.data.result.quizlet,
-    'mcg\tmicrogram, 1/1000 of a milligram\ngtt\tdrops\nDrop factor\tdrops per mL of the tubing [verify]'
-  );
-  assert.match(done.data.result.text, /^3 flashcards are ready to paste into Quizlet/);
-  assert.ok(!all.some(w => w.collection === 'sets'), 'no flashcard set is made in E.V.');
+  assert.equal(done.data.result.quizlet, undefined);
+  const deck = all.find(w => w.collection === 'decks');
+  assert.equal(done.data.result.deckId, deck.id);
+  assert.equal(Object.keys(deck.data.cards).length, 3);
+  assert.match(done.data.result.text, /^Deck ready: 3 cards/);
+  assert.ok(!all.some(w => w.collection === 'sets'), 'no practice set');
   const talk = all.find(w => w.collection === 'talk');
   const msg = Object.values(talk.data.messages)[0];
-  assert.match(msg.text, /ready to paste into Quizlet/);
+  assert.match(msg.text, /^Deck ready/);
   assert.deepEqual(msg.cards, [{ type: 'job', id: done.id }]);
 });
 

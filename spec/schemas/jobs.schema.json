@@ -62,7 +62,7 @@
   },
   "course": {
    "type": "string",
-   "description": "B-449: an exam-plan job: the course to plan"
+   "description": "B-449: an exam-plan job: the course to plan; B-487: a flashcards job: the course its deck is for"
   },
   "revise": {
    "type": "string",

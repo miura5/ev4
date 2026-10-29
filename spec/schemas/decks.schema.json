@@ -1,0 +1,163 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "ev4/decks",
+ "title": "decks/<id>",
+ "description": "B-487 (D-368): a flashcard deck for one course: its cards, each with its own Anki-style schedule (SM-2: ease, interval in days, due as a Central date). Made by a flashcards job or by his tap; cards are added, edited, rated and retired by the page as marks, never deleted.",
+ "x-ev": {
+  "collection": "decks",
+  "class": "Fact",
+  "writers": [
+   "page",
+   "worker"
+  ],
+  "schema": 1,
+  "marks": {
+   "title": [
+    "page"
+   ],
+   "cards": [
+    "page"
+   ],
+   "retired": [
+    "page"
+   ]
+  }
+ },
+ "type": "object",
+ "properties": {
+  "schema": {
+   "const": 1
+  },
+  "writer": {
+   "enum": [
+    "page",
+    "worker"
+   ]
+  },
+  "at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "source": {
+   "type": "string",
+   "minLength": 1
+  },
+  "course": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 40
+  },
+  "title": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 120
+  },
+  "createdAt": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "job": {
+   "type": "string",
+   "description": "the flashcards job that made it"
+  },
+  "retired": {
+   "type": "boolean"
+  },
+  "cards": {
+   "type": "object",
+   "propertyNames": {
+    "pattern": "^c-\\d{3,17}$"
+   },
+   "additionalProperties": {
+    "type": "object",
+    "properties": {
+     "term": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+     },
+     "definition": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+     },
+     "verify": {
+      "type": "boolean",
+      "description": "B-487: the point is not in his materials; the card shows a verify mark"
+     },
+     "retired": {
+      "type": "boolean",
+      "description": "B-487: retired by his tap; nothing is deleted"
+     },
+     "at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "editedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "state": {
+      "enum": [
+       "new",
+       "learning",
+       "review",
+       "relearning"
+      ]
+     },
+     "due": {
+      "type": "string",
+      "format": "date"
+     },
+     "ivl": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 36500
+     },
+     "ease": {
+      "type": "number",
+      "minimum": 1.3,
+      "maximum": 10
+     },
+     "reps": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "lapses": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "last": {
+      "enum": [
+       "again",
+       "hard",
+       "good",
+       "easy"
+      ]
+     },
+     "lastAt": {
+      "type": "string",
+      "format": "date-time"
+     }
+    },
+    "required": [
+     "term",
+     "definition",
+     "at"
+    ],
+    "additionalProperties": false
+   }
+  }
+ },
+ "required": [
+  "schema",
+  "writer",
+  "at",
+  "source",
+  "course",
+  "title",
+  "createdAt",
+  "cards"
+ ],
+ "additionalProperties": false
+}

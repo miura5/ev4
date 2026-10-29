@@ -789,6 +789,206 @@ async function practiceSetsChecks(page, scheme) {
   await page.waitForTimeout(150);
   await toggle(); // the days as they were, for the checks after
 }
+// B-487 (D-368): Study's Flashcards card lists the course's decks (title, cards, due); a deck opens in its sheet with
+// its cards; Flip shows the term, Space reveals it with Again / Hard / Good / Easy and the next interval under each, and
+// a rating is one card's write with its new due date; Multiple choice offers 4 definitions, a wrong pick is Again on its
+// own and a right one asks Hard / Good / Easy; + New card and Retire write marks; Today carries Cards · n due.
+async function flashcardsChecks(page, scheme) {
+  await studyView(page, 'objectives');
+  await page.waitForTimeout(200);
+  const card = await page.evaluate(() => {
+    const c = document.getElementById('ov-decks');
+    const rows = c ? [...c.querySelectorAll('.st-row')] : [];
+    return {
+      shown: !!c && !c.hidden && c.getBoundingClientRect().height > 0,
+      lab: c ? (c.querySelector('.lab') || {}).textContent : '',
+      due: c ? (c.querySelector('.up-head .mini') || {}).textContent : '',
+      rows: rows.map(r => ({
+        title: r.querySelector('.stt').textContent,
+        n: r.querySelector('.sm').textContent,
+        s: r.querySelector('.ss').textContent,
+      })),
+      spill: rows.some(r => r.scrollWidth > r.clientWidth + 1 || r.getBoundingClientRect().right > innerWidth),
+    };
+  });
+  ok(
+    `[${scheme}] Study shows the course's Flashcards: each deck's title, card count and due today (B-487)`,
+    card.shown &&
+      card.lab === 'Flashcards' &&
+      card.rows.length > 0 &&
+      card.rows.every(r => r.title && /^\d+ cards?$/.test(r.n) && /due|Done for today|No cards/.test(r.s)) &&
+      /^\d+ due today$/.test(card.due) &&
+      !card.spill,
+    JSON.stringify(card)
+  );
+  await page.locator('#ov-decks').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${shots}/study-decks-${scheme}.png` });
+  if (!card.rows.length) return;
+  const deckId = await page.evaluate(
+    t => (Object.entries(window.__db.decks || {}).find(([, d]) => d.title === t) || [''])[0],
+    card.rows.find(r => / due$/.test(r.s)) ? card.rows.find(r => / due$/.test(r.s)).title : card.rows[0].title
+  );
+  const cardsOf = () => page.evaluate(id => JSON.parse(JSON.stringify(window.__db.decks[id].cards)), deckId);
+  const before = await cardsOf();
+  const deckTitle = await page.evaluate(id => window.__db.decks[id].title, deckId);
+  const openIt = async () => {
+    await page.evaluate(() => document.getElementById('fc-dlg') && document.getElementById('fc-dlg').close());
+    await studyView(page, 'objectives');
+    await page.locator(`#ov-decks .st[aria-label="Open deck ${deckTitle}"]`).click();
+    await page.waitForTimeout(250);
+  };
+  await openIt();
+  const sheet = await page.evaluate(() => {
+    const d = document.getElementById('fc-dlg');
+    return {
+      open: !!d && d.open,
+      title: d ? (d.querySelector('.fc-ht h2') || {}).textContent : '',
+      rows: d ? d.querySelectorAll('.fc-list .fc-row').length : 0,
+      go: d ? [...d.querySelectorAll('.fc-go .btn')].map(b => b.textContent) : [],
+      spill: d ? d.scrollWidth > d.clientWidth + 1 : true,
+    };
+  });
+  const live = Object.values(before).filter(c => !c.retired).length;
+  ok(
+    `[${scheme}] a deck opens in its sheet: its cards, Flip and Multiple choice (B-487)`,
+    sheet.open &&
+      sheet.rows === live &&
+      /^Flip/.test(sheet.go[0]) &&
+      /^Multiple choice/.test(sheet.go[1]) &&
+      !sheet.spill,
+    JSON.stringify(sheet)
+  );
+  await page.screenshot({ path: `${shots}/fc-deck-${scheme}.png` });
+  // Flip: the term, Space reveals it, four ratings with the next interval under each; Good (key 3) writes the card
+  await page.locator('#fc-dlg .fc-go .btn', { hasText: /^Flip/ }).click();
+  await page.waitForTimeout(150);
+  const term = await page.textContent('#fc-dlg .fc-q');
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(120);
+  const flip = await page.evaluate(() => ({
+    a: (document.querySelector('#fc-dlg .fc-a') || {}).textContent,
+    rate: [...document.querySelectorAll('#fc-dlg .fc-rate .btn')].map(
+      b => b.querySelector('.fc-rl').textContent + ' ' + b.querySelector('.fc-ri').textContent
+    ),
+  }));
+  ok(
+    `[${scheme}] Flip: the term, then on Space its definition and Again / Hard / Good / Easy with the next interval (B-487)`,
+    !!term && !!flip.a && flip.rate.length === 4 && /^Again /.test(flip.rate[0]) && /^Easy \d+d$/.test(flip.rate[3]),
+    JSON.stringify({ term, ...flip })
+  );
+  await page.screenshot({ path: `${shots}/fc-flip-${scheme}.png` });
+  const cid = Object.keys(before).find(k => before[k].term === term);
+  await page.keyboard.press('3');
+  await page.waitForTimeout(400);
+  const rated = (await cardsOf())[cid] || {};
+  const tomorrow = await page.evaluate(() => window.EVCore.addDays(window.EVCore.chicagoDate(new Date()), 1));
+  ok(
+    `[${scheme}] a rating writes that card's schedule: Good on a new card is due tomorrow (B-487)`,
+    rated.last === 'good' &&
+      rated.state === 'review' &&
+      rated.due === tomorrow &&
+      rated.reps === (before[cid].reps || 0) + 1,
+    JSON.stringify({ cid, rated })
+  );
+  // Multiple choice: four definitions; a wrong pick is Again on its own; a right one asks Hard / Good / Easy
+  await openIt();
+  await page.locator('#fc-dlg .fc-go .btn', { hasText: /^Multiple choice/ }).click();
+  await page.waitForTimeout(150);
+  const mc = await page.evaluate(id => {
+    const q = document.querySelector('#fc-dlg .fc-q').textContent;
+    const c = Object.entries(window.__db.decks[id].cards).find(([, x]) => x.term === q);
+    const opts = [...document.querySelectorAll('#fc-dlg .fc-opt')].map(b => b.lastChild.textContent);
+    return { q, cid: c[0], right: opts.indexOf(c[1].definition), opts };
+  }, deckId);
+  ok(
+    `[${scheme}] Multiple choice: the term with 4 definitions, the right one among them (B-487)`,
+    mc.opts.length === 4 && mc.right >= 0 && new Set(mc.opts).size === 4,
+    JSON.stringify(mc)
+  );
+  await page.screenshot({ path: `${shots}/fc-mc-${scheme}.png` });
+  await page
+    .locator('#fc-dlg .fc-opt')
+    .nth(mc.right === 0 ? 1 : 0)
+    .click();
+  await page.waitForTimeout(400);
+  const wrong = await page.evaluate(
+    ({ id, cid }) => ({
+      marked: !!document.querySelector('#fc-dlg .fc-opt.wrong') && !!document.querySelector('#fc-dlg .fc-opt.right'),
+      last: window.__db.decks[id].cards[cid].last,
+      next: !!document.querySelector('#fc-dlg .fc-show'),
+    }),
+    { id: deckId, cid: mc.cid }
+  );
+  ok(
+    `[${scheme}] a wrong pick shows the right one and counts as Again on its own (B-487)`,
+    wrong.marked && wrong.last === 'again' && wrong.next,
+    JSON.stringify(wrong)
+  );
+  await page.locator('#fc-dlg .fc-show').click();
+  await page.waitForTimeout(150);
+  const mc2 = await page.evaluate(id => {
+    const q = document.querySelector('#fc-dlg .fc-q');
+    if (!q) return null;
+    const c = Object.values(window.__db.decks[id].cards).find(x => x.term === q.textContent);
+    return [...document.querySelectorAll('#fc-dlg .fc-opt')].map(b => b.lastChild.textContent).indexOf(c.definition);
+  }, deckId);
+  if (mc2 != null && mc2 >= 0) {
+    await page.locator('#fc-dlg .fc-opt').nth(mc2).click();
+    await page.waitForTimeout(150);
+    const rate = await page.evaluate(() =>
+      [...document.querySelectorAll('#fc-dlg .fc-rate .btn .fc-rl')].map(b => b.textContent)
+    );
+    ok(
+      `[${scheme}] a right pick asks Hard / Good / Easy (B-487)`,
+      rate.join() === 'Hard,Good,Easy',
+      JSON.stringify(rate)
+    );
+  }
+  // + New card and Retire are marks on the deck; nothing is deleted
+  await openIt();
+  await page.locator('#fc-dlg .fc-lh .btn', { hasText: 'New card' }).click();
+  await page.fill('#fc-dlg .fc-form textarea[aria-label="Term"]', 'Harness term');
+  await page.fill('#fc-dlg .fc-form textarea[aria-label="Definition"]', 'Harness definition');
+  await page.locator('#fc-dlg .fc-form .btn', { hasText: 'Add card' }).click();
+  await page.waitForTimeout(400);
+  await page.locator('#fc-dlg .fc-form .btn', { hasText: 'Cancel' }).click();
+  await page.waitForTimeout(150);
+  await page.locator('#fc-dlg .fc-row .btn', { hasText: 'Retire' }).first().click();
+  await page.waitForTimeout(400);
+  const after = await cardsOf();
+  const added = Object.values(after).find(c => c.term === 'Harness term');
+  ok(
+    `[${scheme}] + New card adds a card due now, Retire marks one retired; nothing is deleted (B-487)`,
+    !!added &&
+      !added.due &&
+      Object.keys(before).every(k => after[k]) &&
+      Object.values(after).filter(c => c.retired).length === Object.values(before).filter(c => c.retired).length + 1,
+    JSON.stringify({ n: Object.keys(after).length, added })
+  );
+  await page.evaluate(() => document.getElementById('fc-dlg').close());
+  // Today: one Cards · n due item, opening a due-cards session in Flip
+  await page.click('#tab-today');
+  await page.waitForTimeout(200);
+  const row = await page.evaluate(
+    () => (document.querySelector('#today-list .ti-cards .ti-t') || {}).textContent || ''
+  );
+  ok(`[${scheme}] Today shows Cards · n due (B-487)`, /^Cards · \d+ due$/.test(row), row);
+  await page.screenshot({ path: `${shots}/fc-today-${scheme}.png` });
+  if (row) {
+    await page.locator('#today-list .ti-cards .nm').click();
+    await page.waitForTimeout(200);
+    const s = await page.evaluate(() => {
+      const d = document.getElementById('fc-dlg');
+      return { open: !!d && d.open, head: d ? (d.querySelector('.fc-ht h2') || {}).textContent : '' };
+    });
+    ok(
+      `[${scheme}] Cards · n due opens a due-cards session in Flip (B-487)`,
+      s.open && s.head === 'Flip',
+      JSON.stringify(s)
+    );
+    await page.evaluate(() => document.getElementById('fc-dlg').close());
+  }
+}
 async function workLineChecks(page, scheme) {
   const tag = `[${scheme}] `;
   await page.click('#tab-ev');
@@ -2410,6 +2610,7 @@ async function tap(page, locator, name) {
       await workLineChecks(page, scheme); // B-227
       await quizMeChecks(page, scheme); // B-297
       await practiceSetsChecks(page, scheme); // B-482
+      await flashcardsChecks(page, scheme); // B-487
       await page.close();
       continue;
     }
@@ -3672,6 +3873,7 @@ async function tap(page, locator, name) {
     // Study > Review: the migrated set, all answered
     await quizMeChecks(page, scheme); // B-297
     await practiceSetsChecks(page, scheme); // B-482
+    await flashcardsChecks(page, scheme); // B-487
     await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');
