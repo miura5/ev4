@@ -8866,5 +8866,22 @@
    "outcome": "task",
    "at": "2026-10-29T01:34:17.546Z"
   }
+ },
+ {
+  "id": "B-476",
+  "kind": "bug",
+  "title": "Bug (reported Oct 28): On live, Ask for changes on the NUR 112 ATI Proctored Dosage Assessment plan, asking to add Dosage Exam 1 (Wed 11/4, already an exam in his record) and continue the study items until then, started a job but ended with 'I couldn't finish this one: Not applicable.'; the edit should extend the plan through the second exam or offer the multi-exam path, and a failed edit should say why in plain words.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "chat, Oct 28 evening (Matt, live)",
+  "words": "On live, Ask for changes on the NUR 112 ATI Proctored Dosage Assessment plan, asking to add Dosage Exam 1 (Wed 11/4, already an exam in his record) and continue the study items until then, started a job but ended with 'I couldn't finish this one: Not applicable.'; the edit should extend the plan through the second exam or offer the multi-exam path, and a failed edit should say why in plain words.",
+  "reportedAt": "2026-10-29T02:03:57.287Z",
+  "board": {
+   "row": "v4 B-476: On live, Ask for changes on the NUR 112 ATI Proctored Dosage…"
+  }
  }
 ]
