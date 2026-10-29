@@ -8955,9 +8955,9 @@
   "id": "B-480",
   "kind": "bug",
   "title": "Bug (reported Oct 28): On live, a practice set asked for as '10 weight-based dose problems' (a plan task) came back with 9 questions; when E.V. drops a question it wrote (a failed check), the set should be topped up to the asked count, or the set's line should say how many were dropped and why.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A practice or drill set asked for N questions holds N: a question dropped by E.V.'s checks is replaced once (one more short ask for the missing count, same model); if it still falls short, the set's header says 'N-k of N: k didn't pass E.V.'s checks'. npm test covers the top-up count; proved by one real set on staging.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8966,6 +8966,10 @@
   "reportedAt": "2026-10-29T03:41:07.289Z",
   "board": {
    "row": "v4 B-480: On live, a practice set asked for as '10 weight-based dose problems'…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T03:41:09.976Z"
   }
  }
 ]
