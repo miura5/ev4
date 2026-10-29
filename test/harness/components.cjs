@@ -129,8 +129,10 @@ function measure() {
   const lines = [...g.querySelectorAll('[data-slot="line"] .li')].map(
     r => Math.round(r.getBoundingClientRect().height * 10) / 10
   );
-  const yb = g.querySelector('.badge.x-yellow');
-  const words = [...g.querySelectorAll('[data-slot="badge"] .badge, [data-slot="button"] button.btn')]
+  const yb = g.querySelector('[data-slot="badge"] [data-ui="badge"][data-tone="warn"]');
+  const words = [
+    ...g.querySelectorAll('[data-slot="badge"] [data-ui="badge"], [data-slot="button"] [data-ui="button"]'),
+  ]
     .filter(e => !e.disabled)
     .map(e => {
       const s = getComputedStyle(e);
