@@ -8913,9 +8913,9 @@
   "id": "B-478",
   "kind": "bug",
   "title": "Bug (reported Oct 28): On live, the quick ask 'Which objectives aren't solid yet?' answered from Exam 4's objectives and weak spots (an exam over a week past) while the next exam is the ATI Proctored Dosage Assessment on Mon 2 Nov, which has no objectives in the record yet; the answer should be about the next exam: its objectives, or, when it has none, its open weak spots and plan, saying plainly that its objectives aren't in the record, and never answer from a past exam without saying so.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "'Which objectives aren't solid yet?' (and the readiness ask behind it) scopes to the course's next upcoming exam: its objectives when it has them; when it has none, it says so in one line and answers from that exam's open weak spots and plan; a past exam is named as past if it's mentioned at all. npm test covers the scope choice; proved by one real ask on staging for NUR 112 (next exam ATI dosage, no objectives).",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8924,6 +8924,10 @@
   "reportedAt": "2026-10-29T03:30:10.891Z",
   "board": {
    "row": "v4 B-478: On live, the quick ask 'Which objectives aren't solid yet?' answered…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-29T03:30:13.630Z"
   }
  }
 ]
