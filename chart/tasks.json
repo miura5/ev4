@@ -9502,7 +9502,7 @@
  {
   "id": "B-508",
   "kind": "task",
-  "title": "Proprietary components, batch 2, at today's look (D-375): Sheet (native dialog, bottom sheet under 600 px), Popover, Field, Choice, Meter, Presence and Message in page/app/02-ui.js",
+  "title": "Proprietary components, batch 2, at today's look (D-375, D-388): Sheet (native dialog, bottom sheet under 600 px), Popover, Field, Choice, Meter, Presence and Message, one file each (page/app/01-ui-NN-<name>.js, page/ds/components/NN-<name>.css); starts after the scaffold, not after batch 1, except Popover, Sheet and Message, which wait for C1's first push",
   "dod": "Each in the Gallery in every state; Sheet's focus return and safe-area foot proved at 390; ship staging GREEN; one check on Matt's phone, noted on the release card",
   "milestone": "Consolidation: Proprietary",
   "status": "open",
