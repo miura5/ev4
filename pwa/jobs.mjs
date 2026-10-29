@@ -251,6 +251,14 @@ export function answerOf(reply) {
   }
 }
 
+/** B-481: each written item held to the sets schema on its own, so one bad item is dropped, never the set. */
+const itemCheck = (ctx, validate) => q =>
+  validate(
+    'sets',
+    { ...EV.envelope('worker', ctx.source, ctx.now), schema: 3, kind: 'job', items: [q] },
+    { id: 'job-item-check' }
+  ).ok;
+
 /**
  * Step 3: the worker run's checks on an answer. {ok: true, writes} with the fold's writes (each {op, collection,
  * id, data}), or {ok: false, problems} when anything fails: then nothing the reply made may be written.
@@ -258,6 +266,7 @@ export function answerOf(reply) {
 export function finish({ prepared, answer, db, spec, schemas, validate = makeValidator(schemas) }) {
   const { ctx } = prepared;
   const problems = [];
+  ctx.itemOk = ctx.itemOk || itemCheck(ctx, validate);
   const v = validateAgainst(prepared.output || outputFor(spec, 'general'), answer);
   if (!v.ok) return { ok: false, problems: [describeErrors('answer', v).split('\n')[0]] };
   const r = AGENT_FOLDS['job-result'](answer, db, ctx, spec);
@@ -522,7 +531,7 @@ export async function topUp({ spec, prepared, ask, db, answer }) {
     weakspots: models(db),
     date: ctx.date,
   });
-  const passed = answer.items.filter(r => practiceItems([r], db, target).length);
+  const passed = answer.items.filter(r => practiceItems([r], db, target, ctx.itemOk).length);
   const missing = asked - passed.length;
   if (missing <= 0) return answer;
   const body = request(spec, prepared);
@@ -604,7 +613,10 @@ export async function runJob({
     else {
       reply = await ask(request(spec, prepared));
       answer = cutShort(reply) ? null : answerOf(reply);
-      if (prepared.kind === 'practice-set') answer = await topUp({ spec, prepared, ask, db, answer });
+      if (prepared.kind === 'practice-set') {
+        prepared.ctx.itemOk = itemCheck(prepared.ctx, makeValidator(schemas));
+        answer = await topUp({ spec, prepared, ask, db, answer });
+      }
     }
   } catch (e) {
     const why =

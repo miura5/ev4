@@ -205,3 +205,17 @@ test('B-480: a set still short after its one top-up says so in its header', asyn
   const full = await runWith('2 weight-based dose problems', [answered([good(1), good(2)])]);
   assert.equal(full.asks.length, 1, 'no top-up when every question passed');
 });
+
+test('B-481: a top-up item with weakspotId null carries no weak spot; an item the schema refuses is dropped, not the set', async () => {
+  const noSpot = { ...good(3), weakspotId: null, objective: null };
+  const broken = { ...good(4), matrix: { columns: ['a', 'b'], rows: [], extra: 1 } }; // the sets schema refuses it
+  const { r, asks, set } = await runWith('4 weight-based dose problems', [
+    answered([good(1), good(2), q8]),
+    answered([noSpot, broken]),
+  ]);
+  assert.equal(asks.length, 2);
+  assert.equal(r.status, 'done', r.said);
+  assert.equal(set.data.items.length, 3);
+  assert.ok(set.data.items.every(q => !('weakspotId' in q) && q.kind === 'check'));
+  assert.equal(set.data.asked, 4, 'the dropped item counts in the shortfall');
+});

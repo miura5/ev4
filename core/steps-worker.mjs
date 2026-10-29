@@ -223,15 +223,19 @@ export function askedCount(job, wrote = 0) {
 }
 /** A practice set's written items as kept: each in a stored item's fields, held to the item rules, the cross-course
  * rule (B-193) and its own key (B-481: a key its calc or rationale doesn't support is dropped, never shown). */
-export function practiceItems(raw, db, target) {
+export function practiceItems(raw, db, target, itemOk = null) {
   const items = [];
   for (const r of raw || []) {
-    const q = {
-      id: 'p' + (items.length + 1),
-      kind: r && r.weakspotId ? 'review' : 'check',
-      ...pick(r || {}, ITEM_FIELDS),
-    };
+    const q = { id: 'p' + (items.length + 1), ...pick(r || {}, ITEM_FIELDS) };
+    // a field written as null (or of the wrong type) is no field: never a refused set (Oct 29: weakspotId null)
+    for (const k of Object.keys(q)) if (q[k] === null && k !== 'sourceRef') delete q[k];
+    for (const k of ['weakspotId', 'objective', 'topic', 'cjStep', 'unit'])
+      if (q[k] !== undefined && typeof q[k] !== 'string') delete q[k];
+    if (q.verify !== undefined && typeof q.verify !== 'boolean') delete q.verify;
     if (q.weakspotId && !(db.weakspots || []).some(w => w.id === q.weakspotId)) delete q.weakspotId;
+    if (!q.weakspotId) delete q.weakspotId;
+    q.kind = q.weakspotId ? 'review' : 'check';
+    if (Array.isArray(q.rationales) && q.rationales.some(x => typeof x !== 'string')) continue;
     if (EV.practiceReply.answerKeyProblem({ ...q, calc: r && r.calc })) continue;
     const cross = EV.crossCourse(q, {
       materials: db.materials,
@@ -239,7 +243,9 @@ export function practiceItems(raw, db, target) {
       objectives: db.objectives,
       set: { exam: target ? target.id : null },
     }); // B-193
-    if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length) items.push(cross.item);
+    // one item its set's schema would refuse is dropped (and counted short), never the whole set
+    if (EV.validateItem(q, { strict: true }).ok && !cross.errors.length && (!itemOk || itemOk(cross.item)))
+      items.push(cross.item);
   }
   return items;
 }
@@ -279,7 +285,7 @@ export const AGENT_FOLDS = {
       });
       // B-480: the count he asked for (the app's runner topped the set up once already); a set short of it says so
       const asked = ctx.askedItems || askedCount(job, raw.length);
-      const items = practiceItems(raw, db, target).slice(0, asked);
+      const items = practiceItems(raw, db, target, ctx.itemOk).slice(0, asked);
       if (items.length) {
         const setId = 'job-' + job.id.replace(/^job-/, '');
         writes.push({
