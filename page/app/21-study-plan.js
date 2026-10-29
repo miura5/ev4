@@ -638,7 +638,7 @@
       );
       return b;
     }
-    function approvedCard(p, ex, course, { panelled = true, swap = null } = {}) {
+    function approvedCard(p, ex, course, { panelled = true, swap = null, js = {} } = {}) {
       const c = planCounts(p);
       // a card whose summary is not in the right panel keeps its actions at its foot at every width
       const card = el('div', 'ui-card pl-card ok' + (panelled ? '' : ' own-foot'));
@@ -669,6 +669,11 @@
         bar
       );
       card.append(line);
+      // B-521 (F-13): Remake at work says so, with how long, and a new plan that didn't finish says why
+      const making = js.working || (p.section && E.studyPlanNewJobRunning(S.jobs, course));
+      if (making)
+        card.append(planWorking(making, js.working && js.working.revise ? 'Changing your plan' : 'Making a new plan'));
+      else if (js.failed) card.append(el('p', 'mini pl-failed', `Your new plan didn’t finish: ${js.why}`));
       const bf = badgeFilter(p, c.ts);
       if (bf) card.append(bf.seg);
       card.append(planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone }));
@@ -693,7 +698,7 @@
         ])
       );
       if (js.ask) card.append(askBlock(js.ask, course, ex));
-      if (js.working) card.append(el('p', 'mini pl-working', 'E.V. is changing this plan. The new draft shows here.'));
+      if (js.working) card.append(planWorking(js.working, 'E.V. is changing this plan')); // B-521: with how long
       // the panel holds one summary; a draft whose summary is not there carries its own, with its actions
       if (!PANEL.matches || !panelled)
         card.append(draftSummary(p, ex, course, { ask: js.ask, working: js.working, inCard: true }));
@@ -730,33 +735,35 @@
         panel: () => draftSummary(p, ex, course, { ask: js.ask, working: js.working, inCard: false }),
       };
     }
+    /** B-521 (F-13): a plan being made, said as it goes: working, how long so far, and where it lands. */
+    function planWorking(j, words) {
+      const p = el('span', 'mini pl-working');
+      p.append(liveSince(jobSince(j), words, 'pl-since'), document.createTextNode('. It shows here when it’s ready.'));
+      return p;
+    }
     function noPlanCard(ex, course, js) {
       const making = js.working || E.studyPlanNewJobRunning(S.jobs, course); // D-362: one new plan per course
-      const card = el('div', 'ui-card pl-card pl-none');
+      const card = el('div', 'ui-card pl-card pl-none' + (making ? ' working' : ''));
       card.append(svgEl(PL_SPARK));
       const g = el('div', 'grow');
       const failed = !making && js.failed; // B-459: never a silent "No study plan yet" after a plan that failed
       g.append(
         el('span', 'h', failed ? `Study plan for ${exShortOf(ex)}` : `No study plan for ${exShortOf(ex)} yet`),
-        el(
-          'span',
-          failed ? 'mini pl-failed' : 'mini',
-          making
-            ? 'E.V. is making your plan. It shows here in a few minutes.'
-            : failed
-              ? `Your last plan didn’t finish: ${js.why}`
-              : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
-        )
+        making
+          ? planWorking(making, 'Making your plan')
+          : el(
+              'span',
+              failed ? 'mini pl-failed' : 'mini',
+              failed
+                ? `Your last plan didn’t finish: ${js.why}`
+                : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
+            )
       );
       card.append(g);
-      const mk = btn(
-        making ? 'Making…' : failed ? 'Try again' : 'Make a plan',
-        ev => makePlan(ev.currentTarget, course, ex),
-        {
-          cls: 'btn neutral',
-        }
-      );
+      // B-521: the button is Make a plan in every state, held while one is being made
+      const mk = btn('Make a plan', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn neutral' });
       mk.disabled = !!making;
+      if (making) mk.setAttribute('aria-busy', 'true');
       card.append(mk);
       const out = [card];
       if (js.ask) out.unshift(askBlock(js.ask, course, ex));
@@ -858,7 +865,7 @@
         if (showPlan) {
           let a;
           const make = panelled =>
-            (a = approvedCard(plan, ex, cur.course, { panelled, swap: draft ? swapBtn(ex, false) : null }));
+            (a = approvedCard(plan, ex, cur.course, { panelled, swap: draft ? swapBtn(ex, false) : null, js }));
           parts.push({ card: true, nodes: panelled => [make(panelled).card], panel: () => a.panel() });
         } else {
           let dr;

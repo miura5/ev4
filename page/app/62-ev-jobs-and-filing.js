@@ -313,6 +313,35 @@
       await write({ op: 'update', collection: 'jobs', id: j.id, data: { fired } });
       if (!fired.ok) toast(fireCopy(fired.error));
     }
+    // B-521 (F-12, F-13): a long job says it is working and for how long, as it goes: a live line ("Working · 1 min
+    // 20 s") that a one-second tick keeps current without a repaint; a job that never started or stopped says so
+    /** When a job's wait began: its run's start, else its hand-off, else when it was asked. */
+    const jobSince = j => (j && (j.startedAt || (j.fired && j.fired.at) || j.createdAt || j.at)) || null;
+    function elapsedWords(ms) {
+      const s = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+      if (s < 60) return s + ' s';
+      const m = Math.floor(s / 60);
+      if (m < 60) return m + ' min' + (s % 60 && m < 10 ? ' ' + (s % 60) + ' s' : '');
+      return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+    }
+    function paintSince(e) {
+      const t = E.toMs(e.dataset.since);
+      const s = e.dataset.lead + ' · ' + (Number.isFinite(t) ? elapsedWords(Date.now() - t) : 'just now');
+      if (e.textContent !== s) e.textContent = s;
+    }
+    function liveSince(iso, lead, cls = 'mini') {
+      const e = el('span', cls + ' ev-since');
+      e.dataset.since = iso || now();
+      e.dataset.lead = lead;
+      e.setAttribute('role', 'status');
+      paintSince(e);
+      return e;
+    }
+    setInterval(() => {
+      try {
+        document.querySelectorAll('.ev-since').forEach(paintSince);
+      } catch {}
+    }, 1000);
     /** A job kind's label: the worker's kinds, then the builder's (B-177 review: a build job's card names its kind). */
     function kindLabel(k) {
       return (KINDS[k] || {}).label || ((EV_SPEC.jobs && EV_SPEC.jobs.builderLabels) || {})[k] || null;
@@ -355,14 +384,15 @@
               detail: `Running for ${mins(j.startedAt)} min. It may have stalled.`,
               retry: !forBuilder,
             }
-          : { label: 'running', v: 'info', detail: 'Running since ' + clock12(j.startedAt) + '.' };
-      if (!j.fired) return { label: 'queued', v: '', detail: `Handing it to ${who}…` };
+          : { label: 'running', v: 'info', detail: 'Running since ' + clock12(j.startedAt) + '.', live: 'Working' };
+      if (!j.fired) return { label: 'queued', v: '', detail: `Handing it to ${who}…`, live: 'Starting' };
       return mins(j.fired.at) > stall
         ? { label: 'queued', v: 'warn', detail: `No word from ${who} in ${stall} minutes.`, retry: !forBuilder }
         : {
             label: 'queued',
             v: 'info',
             detail: `Sent to ${who} at ` + clock12(j.fired.at) + '. It usually starts within a few minutes.',
+            live: 'Waiting to start',
           };
     }
     /** B-180 (D-194): a build job's card from its jobresults.result (the builder's trace): filed as B-nnn, built and
@@ -512,6 +542,7 @@
         j =>
           ['queued', 'running'].includes(j.status) &&
           !(j.fired && j.fired.ok === false) &&
+          !E.studyPlanJobStalled(j) && // B-521: a plan that stalled has failed, never still working
           Date.now() - E.toMs(j.createdAt) < 3 * 3600e3
       );
 

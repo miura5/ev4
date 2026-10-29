@@ -8,10 +8,13 @@
     // B-215 (D-216): turning to face him is the notification. A job that finishes, or a new ask in Your turn, while he is on
     // another tab: her small dial turns to face him, closed, with one segment lit at twelve (alert, B-272), and her
     // status reads something's ready, until he opens E.V. What the page found on load is not news.
-    const NT = { seen: null, yt: 0, on: false };
+    // B-521 (F-12): a job that failed (or a plan that stalled) is news too, but never "something's ready": her status says
+    // it didn't finish, in plain words, until he opens E.V.
+    const NT = { seen: null, yt: 0, on: false, failed: null };
+    const jobFailed = j => j.status === 'failed' || !!E.studyPlanJobStalled(j);
     function noticeSync() {
       if (!loaded.has('jobs') || !T.ready) return;
-      const fin = (S.jobs || []).filter(j => j.status === 'done' || j.status === 'failed').map(j => j.id);
+      const fin = (S.jobs || []).filter(j => j.status === 'done' || jobFailed(j)).map(j => j.id);
       const yt = yourTurnCount();
       if (NT.seen === null) {
         NT.seen = new Set(fin);
@@ -22,8 +25,16 @@
       fresh.forEach(id => NT.seen.add(id));
       const more = yt > NT.yt;
       NT.yt = yt;
+      const bad = (S.jobs || []).find(j => fresh.includes(j.id) && jobFailed(j));
       if (ui.tab === 'ev') NT.on = false;
       else if (fresh.length || more) NT.on = true;
+      if (ui.tab === 'ev') NT.failed = null;
+      else if (bad) NT.failed = bad.kind === 'exam-plan' ? 'your plan didn’t finish' : 'a job didn’t finish';
+    }
+    /** B-521 (F-12): her status while jobs run: working, and for how long the longest one has. */
+    function workingWord(jobs) {
+      const t = Math.min(...jobs.map(j => E.toMs(jobSince(j))).filter(Number.isFinite));
+      return Number.isFinite(t) ? 'working · ' + elapsedWords(Date.now() - t).replace(/ \d+ s$/, '') : 'working…';
     }
     function computeMood() {
       if (NT.on && ui.tab !== 'ev') return 'alert';
@@ -66,7 +77,7 @@
           : onBreakNow()
             ? 'on a break'
             : NT.on && ui.tab !== 'ev'
-              ? 'something’s ready'
+              ? NT.failed || 'something’s ready'
               : MOOD_NOW === 'speaking' && !T.busy
                 ? 'ready when you are'
                 : MOOD_WORD[MOOD_NOW] || 'online';
@@ -81,7 +92,7 @@
             : NT.on && ui.tab !== 'ev'
               ? word
               : running
-                ? 'thinking…'
+                ? workingWord(liveJobs())
                 : ui.restPlan && MOOD_NOW === 'idle'
                   ? 'waiting on your review'
                   : sysProblem && word === 'ready when you are' // B-381: a System problem, in plain words, at rest

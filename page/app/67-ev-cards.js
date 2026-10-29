@@ -512,7 +512,11 @@
           const p = el('div', 'result');
           p.append(fmt(r.text));
           box.append(p);
-        } else box.append(el('p', 'meta', st.detail));
+        } else {
+          // B-521: a job at work says so with how long, as it goes
+          if (st.live) box.append(liveSince(jobSince(j), st.live, 'meta job-since'));
+          box.append(el('p', 'meta', st.detail));
+        }
         // B-479: a flashcards job's cards, as the Quizlet import text Copy puts on the clipboard, exactly
         const qz = j.status === 'done' && typeof r.quizlet === 'string' && r.quizlet ? r.quizlet : '';
         if (qz) {

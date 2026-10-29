@@ -2349,11 +2349,30 @@ async function studyPlanChecks(page) {
       .filter(j => j.kind === 'exam-plan' && j.course === 'BIO 201')
       .map(j => j.brief),
     button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
+    held: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
+    line: (document.querySelector('#ov-plans .pl-none .pl-working') || {}).textContent,
+    readout: document.getElementById('readout').textContent,
   }));
+  // B-521 (F-13): Make a plan stays named so, held, and the card says it is working with how long so far; her status
+  // says working, not thinking
   ok(
-    'Make a plan names its card’s exam in the job, and the card shows it making',
-    made.briefs.some(b => /\(B9H\)/.test(b)) && made.button === 'Making…',
+    'Make a plan names its card’s exam in the job, and the card shows it making: working, how long, Make a plan held',
+    made.briefs.some(b => /\(B9H\)/.test(b)) &&
+      made.button === 'Make a plan' &&
+      made.held === true &&
+      /^Making your plan · \d+ s\. It shows here when it’s ready\.$/.test(made.line || '') &&
+      /^working · \d+ (s|min)/.test(made.readout || ''), // the longest job running sets it
     JSON.stringify(made)
+  );
+  await page.clock.setSystemTime((await page.evaluate(() => Date.now())) + 65000);
+  await page.waitForTimeout(1300);
+  const ticked = await page.evaluate(
+    () => (document.querySelector('#ov-plans .pl-none .pl-working') || {}).textContent
+  );
+  ok(
+    'its working line keeps time as it goes, with no repaint (B-521)',
+    /^Making your plan · 1 min \d+ s\./.test(ticked || ''),
+    String(ticked)
   );
   // B-456: Making… never sticks: the job got no result (no worker here), so 2 minutes after it was asked the button is
   // back, with no record change, and the job says it didn't start
@@ -2369,12 +2388,15 @@ async function studyPlanChecks(page) {
     button: (document.querySelector('#ov-plans .pl-none button') || {}).textContent,
     disabled: (document.querySelector('#ov-plans .pl-none button') || {}).disabled,
     mini: (document.querySelector('#ov-plans .pl-none .mini') || {}).textContent,
+    readout: document.getElementById('readout').textContent,
   }));
-  // B-459: and the card says the last plan didn't finish, why, and offers Try again (never a silent "No plan yet")
+  // B-459: and the card says the last plan didn't finish, why, and offers Make a plan again (never a silent "No plan
+  // yet"); B-521 (F-12): her status says so too, never "something's ready"
   ok(
-    'A new plan with no result 2 minutes after it was asked frees the card as Try again, says why, with no record change',
-    freed.button === 'Try again' &&
+    'A new plan with no result 2 minutes after it was asked frees Make a plan, says why, with no record change; her status says it didn’t finish',
+    freed.button === 'Make a plan' &&
       freed.disabled === false &&
+      /^your plan didn’t finish/.test(freed.readout || '') &&
       /^Your last plan didn’t finish: it didn’t start/.test(freed.mini || '') &&
       jobsBefore === (await page.evaluate(() => JSON.stringify(window.__db.jobs || {}))),
     JSON.stringify(freed)
@@ -2383,7 +2405,7 @@ async function studyPlanChecks(page) {
   await page.evaluate(() => delete window.claude.host);
   const nJobs = () => page.evaluate(() => Object.keys(window.__db.jobs || {}).length);
   const n0 = await nJobs();
-  await page.locator('#ov-plans .pl-none button', { hasText: 'Try again' }).click();
+  await page.locator('#ov-plans .pl-none button', { hasText: 'Make a plan' }).click();
   await page.waitForTimeout(400);
   const said = await page.evaluate(() => ({
     toast: document.getElementById('toast').textContent,
@@ -2393,7 +2415,7 @@ async function studyPlanChecks(page) {
     'On the claude.ai page Make a plan writes no job and points to the E.V. app',
     (await nJobs()) === n0 &&
       said.toast === 'Study plans are made in the E.V. app. Open it on your phone or computer to make one.' &&
-      said.button === 'Try again',
+      said.button === 'Make a plan',
     JSON.stringify(said)
   );
   await page.evaluate(async () => {
@@ -6927,6 +6949,54 @@ async function tap(page, locator, name) {
       ring: window.EVApp.core.stats().ring,
     }));
     ok(`${tag} opening E.V. ends it`, !/something’s ready/.test(off.readout) && off.ring === -1, JSON.stringify(off));
+    // B-521 (F-12): a job running says working and for how long; one that failed off the E.V. tab says it didn't
+    // finish, never "something's ready", and its card says failed in plain words
+    {
+      await page.click('#tab-today');
+      await page.waitForTimeout(300);
+      const plant = (id, result) =>
+        page.evaluate(
+          async ([id, result]) => {
+            const db = await window.claude.use('db');
+            const at = new Date(Date.now() - 95000).toISOString();
+            const env = { schema: 2, writer: 'page', at, source: 'E.V. Home' };
+            await db
+              .collection('jobs')
+              .doc(id)
+              .set({
+                ...env,
+                kind: 'study-guide',
+                title: 'Study guide: ' + id,
+                brief: 'harness',
+                fired: { at, ok: true },
+              });
+            await db
+              .collection('jobresults')
+              .doc(id)
+              .set({ schema: 1, writer: 'worker', at, source: 'worker harness', startedAt: at, ...result });
+          },
+          [id, result]
+        );
+      await plant('job-working-harness', { status: 'running' });
+      await page.waitForTimeout(700);
+      const w = await page.evaluate(() => document.getElementById('readout').textContent);
+      await plant('job-working-harness', {
+        status: 'failed',
+        finishedAt: new Date().toISOString(),
+        result: { failed: 'The made-up source could not be read.' },
+      });
+      await page
+        .waitForFunction(() => /didn’t finish/.test(document.getElementById('readout').textContent), null, {
+          timeout: 4000,
+        })
+        .catch(() => {});
+      const f = await page.evaluate(() => document.getElementById('readout').textContent);
+      ok(
+        `${tag} a running job reads "working" with how long it has run; failed off the E.V. tab, "a job didn’t finish", never "something’s ready" (B-521)`,
+        /^working · 1 min/.test(w) && /^a job didn’t finish/.test(f) && !/something’s ready/.test(f),
+        JSON.stringify({ w, f })
+      );
+    }
     ok(`${tag} no page errors`, errs.length === 0, errs.join(' | '));
     await page.close();
   }

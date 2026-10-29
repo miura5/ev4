@@ -553,7 +553,9 @@ test('B-459: a new plan that failed shows in Study with its plain reason and Try
   const page = fs.readFileSync(path.join(ROOT, 'page/app/21-study-plan.js'), 'utf8');
   assert.match(page, /const why = E\.studyPlanJobFailed\(j\);\s*if \(why\) return \{ failed: j, why \};/);
   assert.match(page, /`Your last plan didn’t finish: \$\{js\.why\}`/);
-  assert.match(page, /making \? 'Making…' : failed \? 'Try again' : 'Make a plan'/);
+  // B-521 (F-13): the button is Make a plan in every state, held while one is made
+  assert.match(page, /btn\('Make a plan', ev => makePlan\(ev\.currentTarget, course, ex\)/);
+  assert.match(page, /mk\.disabled = !!making;/);
 });
 
 test('D-365: a fix ask goes only when a whole 48k answer (about 6 minutes at 135 tokens a second) still fits the deadline', async () => {
