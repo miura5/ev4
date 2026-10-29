@@ -9154,7 +9154,7 @@
   "depends": [
    "B-487"
   ],
-  "notes": "",
+  "notes": "Built at 2bbadef: Import on the Flashcards card, paste Quizlet export, separator auto/Tab/Comma/Custom, preview of 5 and skipped count, into a new or existing deck (only new terms; existing schedules untouched), up to 300 cards, no model and nothing sent to Quizlet. Staging proof with a pasted sample in tonight's release.",
   "commit": null,
   "source": "chat, Oct 29 (Matt)",
   "words": "Flashcard decks, part 3 (D-368): import a Quizlet set by pasting its export text (term and definition per line, tab or other separator chosen on paste) into a new deck for a course; nothing is read from or written to Quizlet itself.",
