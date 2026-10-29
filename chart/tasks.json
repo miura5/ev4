@@ -9624,7 +9624,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "Its look pass is now the 34 UI polish tasks B-539 to B-572 from the passed design (https://claude.ai/artifact/9w83U8c79EjxijPXqs9xKi): Matt's notes and the desktop feel research, reviewed to UX 4.3 and 1280 about 90. This task closes when they do.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
