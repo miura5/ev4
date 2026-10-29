@@ -2161,6 +2161,9 @@ body.has-line #today-week .wk-her{display:none}
 #note-body h3.nb{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4;color:var(--ink)}
 #note-body p.nb{margin:6px 0}
 #note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{position:relative;margin:1px 0;padding-left:28px}
+/* B-474: Safari fills a selection's left gap from the editor's edge to the text, a band under the bullets, numbers and
+   checkboxes; an identity transform makes each list line its own selection root, so the fill starts at its text */
+#note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{transform:translateX(0)}
 #note-body .nb:not([data-t=ol]){counter-reset:nol}
 #note-body .nb[data-t=ul]::before{content:"•";position:absolute;left:10px;color:var(--faint)}
 #note-body .nb[data-t=ol]{counter-increment:nol}
@@ -2168,7 +2171,7 @@ body.has-line #today-week .wk-her{display:none}
 #note-body .nb[data-indent="1"]{margin-left:24px}#note-body .nb[data-indent="2"]{margin-left:48px}#note-body .nb[data-indent="3"]{margin-left:72px}
 #note-body .nb[data-indent="4"]{margin-left:96px}#note-body .nb[data-indent="5"]{margin-left:120px}#note-body .nb[data-indent="6"]{margin-left:144px}
 #note-body .nb[data-t=todo][data-checked=true]{color:var(--faint);text-decoration:line-through}
-#note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;user-select:none}
+#note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
 #note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
 #note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
 #note-body .n-chk.done .ico{opacity:1}

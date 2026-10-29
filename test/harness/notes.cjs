@@ -3341,6 +3341,65 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-474: a selection across a bulleted, numbered and checklist list highlights only the item text: each list
+  // line is its own selection root (Safari fills a selection's left gap from the editor's edge, under the markers)
+  for (const scheme of ['light', 'dark']) {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    await page.emulateMedia({ colorScheme: scheme });
+    const tag = `[1280 ${scheme} B-474]`;
+    await page.click('#tab-notes');
+    await until(page, () => !document.getElementById('p-notes').hidden);
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.keyboard.type('Lists');
+    await page.keyboard.press('Enter');
+    for (const [pre, items] of [
+      ['- ', ['Preload rises with volume', 'Afterload rises with resistance']],
+      ['1. ', ['Assess', 'Diagnose', 'Plan']],
+      ['[] ', ['Read chapter 12', 'Practice set']],
+    ]) {
+      await page.keyboard.type(pre);
+      for (const t of items) {
+        await page.keyboard.type(t);
+        await page.keyboard.press('Enter');
+      }
+      await page.keyboard.press('Enter');
+    }
+    await page.keyboard.type('After the lists.');
+    await settle(page);
+    const at = await page.evaluate(() => {
+      const k = [...document.getElementById('note-body').children];
+      const a = k[1].getBoundingClientRect();
+      const z = k[k.length - 1].getBoundingClientRect();
+      return { ax: a.left + 60, ay: a.top + a.height / 2, zx: z.left + 30, zy: z.top + z.height / 2 };
+    });
+    await page.mouse.move(at.ax, at.ay);
+    await page.mouse.down();
+    await page.mouse.move(at.zx, at.zy, { steps: 10 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const seen = await page.evaluate(() => {
+      const lists = [
+        ...document.querySelectorAll('#note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]'),
+      ];
+      const sel = getSelection();
+      return {
+        n: lists.length,
+        roots: lists.every(e => getComputedStyle(e).transform !== 'none'),
+        inSel: lists.filter(e => sel.containsNode(e, true)).length,
+        chk: [...document.querySelectorAll('#note-body .n-chk')].every(c => getComputedStyle(c).userSelect === 'none'),
+      };
+    });
+    ok(
+      `${tag} a selection across the three kinds of list covers them, each line its own selection root, checkboxes unselectable`,
+      seen.n === 7 && seen.roots && seen.inSel === 7 && seen.chk,
+      JSON.stringify(seen)
+    );
+    await page.screenshot({ path: path.join(shots, `b474-list-selection-${scheme}-1280.png`) });
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- 390: no Notes
   {
     const { page, errors } = await open(browser, { width: 390, height: 844 });
