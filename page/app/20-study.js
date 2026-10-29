@@ -11,16 +11,20 @@
     // (D-095), so each shows fresh; every answer is written as always.
     const oneAnswer = s => E.validItems(s).filter(q => E.itemType(q) === 'single');
     let miniN = 0;
-    function startMini(set, label, lead, only = null) {
+    function miniPick(set, lead, only = null) {
       const ans = answersOf(set),
         all = oneAnswer(set).filter(q => !only || only(q)), // B-498: a course's mini quiz holds its course's only
         mine = lead ? all.filter(lead) : [],
         rest = all.filter(q => !mine.includes(q)),
         fresh = qs => qs.filter(q => !ans[q.id]),
-        seen = qs => qs.filter(q => ans[q.id]),
-        pick = [...fresh(mine), ...seen(mine), ...fresh(rest), ...seen(rest)].slice(0, 5);
-      if (!pick.length) return false;
+        seen = qs => qs.filter(q => ans[q.id]);
+      const pick = [...fresh(mine), ...seen(mine), ...fresh(rest), ...seen(rest)].slice(0, 5);
       if (pick.some(q => ans[q.id])) retakes[set.id] = now();
+      return pick;
+    }
+    function startMini(set, label, lead, only = null) {
+      const pick = miniPick(set, lead, only);
+      if (!pick.length) return false;
       ui.mini = { set: set.id, ids: pick.map(q => q.id), label, n: ++miniN };
       ui.openSet = set.id;
       ui.openObj = null;
@@ -746,6 +750,51 @@
       const ok = await morePractice({ course: course || ui.studyCourse || E.defaultCourse() });
       if (b && b.isConnected) ((b.disabled = false), (b.textContent = was));
       if (!ok) toast($('more-status').textContent || 'Couldn’t write questions right now. Try again in a moment.');
+    }
+    /**
+     * B-517 (F-32, F-56, F-62): a quiz started where he is, in a course: up to five one-answer questions as a set card
+     * ({type: 'set', id, ids, title}) that the conversation or an opened task shows and he answers in place. An
+     * objective's own questions lead (its sets first). Null when the course has none in the record yet.
+     */
+    function quizCardFor(course, { objective = null } = {}) {
+      const lead = objective ? q => q.objective === objective : null;
+      const left = s => oneAnswer(s).filter(q => (!lead || lead(q)) && !answersOf(s)[q.id]).length;
+      const own = objective
+        ? practiceSets()
+            .filter(s => oneAnswer(s).some(lead))
+            .sort((a, b) => left(b) - left(a))[0]
+        : null;
+      const cur = studyExams().find(x => x.course === course) || { course, exam: null };
+      const c = own ? { set: own } : courseSet(cur);
+      const ids = c ? miniPick(c.set, lead, c.only).map(q => q.id) : [];
+      if (!ids.length) return null;
+      return { type: 'set', id: c.set.id, ids, title: 'Quiz · ' + (course || setCourse(c.set)) };
+    }
+    /** B-517: the course a quiz asked for where he is takes: the one named (when it is his), else Study's, else the
+     *  next exam's. */
+    function quizCourse(named) {
+      const cs = E.activeCourses();
+      if (named && cs.includes(named)) return named;
+      if (openNoteId() && NOTE.course && cs.includes(NOTE.course)) return NOTE.course; // the note open in Notes
+      if (ui.studyCourse && cs.includes(ui.studyCourse)) return ui.studyCourse;
+      const t = M.target && E.courseOf(M.target);
+      return t && cs.includes(t) ? t : E.defaultCourse();
+    }
+    /** B-517: the conversation's quiz: its card under her line, or five written for the course and posted when ready.
+     *  [text, cards], as a quick ask answers. Never a study session, a note or another view. */
+    function quizInChat(named, { objective = null } = {}) {
+      const course = quizCourse(named);
+      const card = quizCardFor(course, { objective });
+      if (card)
+        return [
+          `${numWord(card.ids.length)} question${card.ids.length === 1 ? '' : 's'} from ${course}, right here. Misses are proposed as weak spots at the end.`,
+          [card],
+        ];
+      if (!sample || T.sampleOff)
+        return ['There are no questions for ' + course + ' yet, and writing them needs permission to ask Claude.', []];
+      if (morePending) return ['Already writing a batch. It posts here when it’s ready.', []];
+      morePractice({ announce: true, course });
+      return [`No ${course} questions yet, so I’m writing five. They post here in about a minute.`, []];
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
     function renderMiniQuiz(cur) {
@@ -1677,6 +1726,8 @@
             `${plural(fresh.length, 'new question')}${opt.topic ? ' on ' + String(opt.topic).slice(0, 60) : ', aimed at your most due spots'}. Fresh off the line.`,
             [{ type: 'set', id }]
           );
+        else if (opt.onSet)
+          opt.onSet(id); // B-517: an opened task shows its quiz in place
         else {
           ui.openSet = id;
           setStudy('practice');

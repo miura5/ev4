@@ -1003,10 +1003,32 @@
           },
         },
         {
+          // B-517 (F-56, F-62): "quiz me" is a quiz where he is: a card under her reply, never a session or a note
+          name: 'quiz_me',
+          description:
+            'Quiz him right here: up to five questions from his record on a course (or one objective), shown as a card under your reply that he answers in place; misses are proposed as weak spots. Use it whenever he asks to be quizzed or tested. It never starts a study session, never opens a note and never changes his view. With no questions for that course yet, five are written and posted here in about a minute. Returns what was shown.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              course: { type: 'string', enum: E.activeCourses() },
+              objective: { type: 'string', description: 'an objective id, to quiz on it' },
+            },
+          },
+          execute: i => {
+            const o = S.objectives.find(x => x.id === str(i.objective, 40)) || null;
+            const ex = o && S.exams.find(e => e.id === o.exam);
+            const [text, cards] = quizInChat(str(i.course, 40) || (ex ? E.courseOf(ex) : ''), {
+              objective: o ? o.id : null,
+            });
+            cards.forEach(c => addCard(c, true));
+            return text;
+          },
+        },
+        {
           name: 'study_session',
           description: COMMENT
-            ? 'Run his study session. start: on a computer, a new note in Notes with a 25-minute session (the page reads along and comments only when a line earns it); on the phone, a session that keeps time and asks about his objectives and weak spots. quiz: 1 to 3 questions now, as a check card. end: wrap up and save the summary, weak spots and flashcards. break, resume. Returns what happened.'
-            : 'Run his study session. start: on a computer, a new note in Notes with a 25-minute session (checks on his new writing every 7 minutes); on the phone, a session that keeps time and asks about his objectives and weak spots. end: wrap up and save the summary, weak spots and flashcards. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
+            ? 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (the page reads along and comments only when a line earns it); on the phone, a session that keeps time and asks about his objectives and weak spots. quiz: 1 to 3 questions now, as a check card. end: wrap up and save the summary, weak spots and flashcards. break, resume. Returns what happened.'
+            : 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (checks on his new writing every 7 minutes); on the phone, a session that keeps time and asks about his objectives and weak spots. end: wrap up and save the summary, weak spots and flashcards. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
           inputSchema: {
             type: 'object',
             properties: { action: { type: 'string', enum: ['start', 'end', 'break', 'resume', 'extend', 'quiz'] } },
@@ -1018,6 +1040,7 @@
               return (await startSession())[0] || 'Started: a new note in Notes with a 25-minute session.';
             if (a === 'quiz') {
               const r = await quizNow();
+              (r && r[1] ? r[1] : []).forEach(c => addCard(c, true)); // B-517: with no session, the quiz card here
               return r ? r[0] : 'The quiz is posted as a check card.';
             }
             if (a === 'end') {

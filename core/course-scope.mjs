@@ -84,5 +84,25 @@ export function makeCourseScope(core) {
     const at = cut.lastIndexOf(' ');
     return { title: (at > max / 2 ? cut.slice(0, at) : cut).replace(/[\s,;:.–—-]+$/, '') + '…', body: all };
   }
-  return { spotCourse, namedCourse, noteCourse, noteParts, nextExamCourse };
+  /**
+   * B-517 (F-31, F-32): a Today task's course: the record's (its add, date, plan, set or weak spot, passed as known),
+   * else a course its words name, else their guess words. null when none of these.
+   */
+  function taskCourse(it, { known = '' } = {}) {
+    const text = String((it && it.text) || '');
+    return known || namedCourse(text, { guess: false }) || namedCourse(text) || null;
+  }
+  /**
+   * B-517 (F-32): what Start does for a Today task: 'set' opens the set it names; 'quiz' starts its course's quiz in
+   * place (a practice or drill task with no set of its own); 'session' a study session (any other task with an
+   * estimate); null when it can't start.
+   */
+  const QUIZ_TAGS = ['PRACTICE', 'DRILL'];
+  function taskStart(it) {
+    if (!it) return null;
+    if (it.set || /^sets\//.test(String(it.ref || ''))) return 'set';
+    if (!(Number(it.minutes) > 0)) return null;
+    return QUIZ_TAGS.includes(it.tag) ? 'quiz' : 'session';
+  }
+  return { spotCourse, namedCourse, noteCourse, noteParts, nextExamCourse, taskCourse, taskStart };
 }

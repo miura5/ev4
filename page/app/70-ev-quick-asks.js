@@ -149,6 +149,7 @@
       'end study session': () => endSession('ended'),
       'end my session': () => endSession('ended'),
       'quiz me now': async () => (await quizNow()) || [null, []],
+      'quiz me': async () => (activeSession() ? (await quizNow()) || [null, []] : quizInChat()), // B-517: in place
       "i'm back early": async () => [await sessionCmd('resume'), []], // B-362: the demo's chip on a break
       'take a break': async () => [await sessionCmd('break'), []],
       break: async () => [await sessionCmd('break'), []],

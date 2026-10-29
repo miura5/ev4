@@ -207,8 +207,11 @@
           return;
         }
         const cnt = el('span', 'meta');
-        const shortBy = E.practiceReply.setShortfall(s, E.validItems(s).length); // B-480: "9 of 10: 1 didn't pass E.V.'s checks"
-        const h = head2((s.title || 'Practice set') + (shortBy ? ' · ' + shortBy : ''));
+        // B-517: a quiz started in place names the questions it holds (c.ids) and its own title
+        const pick = Array.isArray(c.ids) && c.ids.length ? new Set(c.ids) : null;
+        const items = E.validItems(s).filter(q => !pick || pick.has(q.id));
+        const shortBy = pick ? '' : E.practiceReply.setShortfall(s, items.length); // B-480: "9 of 10: 1 didn't pass E.V.'s checks"
+        const h = head2((c.title || s.title || 'Practice set') + (shortBy ? ' · ' + shortBy : ''));
         h.append(cnt); // B-191 (D-160): a set surface folds back into the conversation by its own head line
         box.append(h);
         const bar = el('i');
@@ -220,11 +223,11 @@
         runner({
           key: 'ev-' + key,
           set: s,
-          items: E.validItems(s),
+          items,
           body,
           countEl: cnt,
           barEl: bar,
-          label: 'E.V. · ' + (s.title || s.id),
+          label: 'E.V. · ' + (c.title || s.title || s.id),
         });
       },
       workout(box, c) {

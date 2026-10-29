@@ -192,6 +192,7 @@
       window.scrollTo(0, 0);
     }
     function closeTask() {
+      ui.taskQuiz = null; // B-517: its quiz closes with it (every answer is already written)
       ui.taskSel = null;
       ui.taskGone = null;
       render();
@@ -284,12 +285,60 @@
       li.append(el('span', 't', when));
       return li;
     }
+    // B-517 (F-32): a practice or drill task with no set of its own starts its course's quiz inside the opened task, on
+    // Today: up to five questions answered in place (or five written for the course when it has none). Never a note, a
+    // study session or another view.
+    /** B-517: a task's course: the record's (taskFacts), else the course its words name, else Study's or the next exam's. */
+    const taskCourseOf = it =>
+      quizCourse(E.taskCourse(it, { known: taskFacts(it, () => false, dayState().day).course }) || '');
+    function quizTask(it) {
+      if (ui.taskSel !== it.id || ui.taskGone) openTask(it.id);
+      const course = taskCourseOf(it);
+      const card = quizCardFor(course);
+      if (card) {
+        ui.taskQuiz = { task: it.id, card };
+        return render();
+      }
+      if (!sample || T.sampleOff) return toast('No ' + course + ' questions yet, and writing them needs Claude.');
+      if (morePending) return toast('E.V. is already writing questions. Try again in a moment.');
+      ui.taskQuiz = { task: it.id, course, writing: true };
+      render();
+      morePractice({
+        course,
+        onSet: id => (ui.taskQuiz = { task: it.id, card: { type: 'set', id, title: 'Quiz · ' + course } }),
+      }).then(ok => {
+        if (!ok && ui.taskQuiz && ui.taskQuiz.task === it.id && ui.taskQuiz.writing) {
+          ui.taskQuiz = null;
+          toast($('more-status').textContent || 'Couldn’t write questions right now. Try again in a moment.');
+        }
+        render();
+      });
+    }
+    /** B-517: the opened task's quiz, under its description; drawn on every render, as the conversation's cards are. */
+    function paintTaskQuiz(it, main) {
+      let tq = $('today-taskquiz');
+      const q = it && ui.taskQuiz && ui.taskQuiz.task === it.id ? ui.taskQuiz : null;
+      if (!q) {
+        if (tq) tq.remove();
+        return;
+      }
+      if (!tq) {
+        tq = el('section', 'card ev-card tv-quiz');
+        tq.id = 'today-taskquiz';
+        tq.setAttribute('aria-label', 'Quiz');
+      }
+      if (tq.parentNode !== main) main.append(tq);
+      if (q.writing) return tq.replaceChildren(el('p', 'meta', 'Writing five questions on ' + q.course + '…'));
+      tq.replaceChildren();
+      CARDS.set(tq, q.card, 'task-' + it.id);
+    }
     // B-374 (D-312): what Start does, as the demo's: a set opens where it lives; any other item with an estimate starts a
     // study session with E.V.
     function startGo(it) {
       const go = openItem(it);
       if (go) return go;
       if (!(Number(it.minutes) > 0)) return null;
+      if (E.taskStart(it) === 'quiz') return () => quizTask(it); // B-517: a practice task's quiz, in the opened task
       const notes = taskStudy(it); // B-406: on desktop the session is in Notes (or a timed one of its own)
       if (notes) return notes;
       return () => {
@@ -523,6 +572,7 @@
         (exam && exam.course) ||
         (set && set.course) ||
         (ws && ws.course) ||
+        E.namedCourse(it.text || '', { guess: false }) || // B-517 (F-31): the course its words name
         '';
       const topics = [...new Set((set && set.items ? set.items : []).map(q => q.topic).filter(Boolean))];
       const topic =
@@ -704,7 +754,7 @@
         !!openItem(it),
         order.map(x => x.id),
       ]);
-      if (panel.dataset.k === k && main.firstChild) return;
+      if (panel.dataset.k === k && main.firstChild) return paintTaskQuiz(it, main);
       panel.dataset.k = k;
       const text = E.rowText(it); // B-392: its Due property says the day
       // the board's head row: Today › Study (or Classes), N of M, up and down through the list as it is shown
@@ -776,6 +826,7 @@
       }
       tvb.append(from);
       main.replaceChildren(tvh, tvb);
+      paintTaskQuiz(it, main); // B-517
       const prop = (k, v) => {
         const p = el('div', 'prop');
         p.append(el('span', 'prop-k', k), el('span', 'prop-v', v));

@@ -691,6 +691,114 @@ async function quizMeChecks(page, scheme) {
       'every objective has questions'
     );
 }
+// B-517 (F-32, F-56): "Quiz me" in the conversation and Start on a practice task start the quiz where he is, in the
+// course: a card he answers in place; no note, no study session, no other view
+async function inPlaceChecks(page, scheme) {
+  const count = () =>
+    page.evaluate(() => ({
+      notes: Object.keys(window.__db.notes || {}).length,
+      active: Object.values(window.__db.sessions || {}).filter(s => s.status === 'active').length,
+      view: document.body.dataset.view,
+    }));
+  await page.click('#tab-ev');
+  await page.waitForTimeout(150);
+  const c0 = await count();
+  await page.evaluate(() => {
+    window.__chatScript = [{ tool: 'quiz_me', input: { course: 'NUR 112' } }];
+    window.__chatReply = 'Here you go.';
+  });
+  await send(page, 'Quiz me on my NUR objectives');
+  await page.waitForTimeout(500);
+  const c1 = await count();
+  const chat = await page.evaluate(() => {
+    const s = document.getElementById('ev-surf');
+    return { text: s ? s.textContent : '', stems: s ? s.querySelectorAll('.q-stem').length : 0 };
+  });
+  ok(
+    `[${scheme}] Quiz me in the conversation shows the course's quiz as a card there; no note, no session, no view change (B-517)`,
+    /Quiz · NUR 112/.test(chat.text) &&
+      chat.stems === 1 &&
+      c1.view === 'ev' &&
+      c1.notes === c0.notes &&
+      c1.active === c0.active,
+    JSON.stringify({ chat: chat.text.slice(0, 120), c0, c1 })
+  );
+  await page.evaluate(() => {
+    window.__chatScript = [];
+  });
+  // a practice task he added, with no set of its own: Start opens its quiz inside the task, on Today
+  await page.evaluate(async () => {
+    const t = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    const db = await window.claude.use('db');
+    const ref = db.collection('dayedits').doc(t);
+    const got = await ref.get();
+    const doc = got && got.exists ? got.data() : { schema: 1, writer: 'page', source: 'E.V. Home', date: t };
+    const at = new Date().toISOString();
+    doc.added = {
+      ...(doc.added || {}),
+      'add-harness-practice': {
+        text: 'Practice: harness fluids questions',
+        tag: 'PRACTICE',
+        kind: 'practice',
+        minutes: 15,
+        course: 'NUR 112',
+        at,
+        by: 'Matt',
+      },
+    };
+    doc.at = at;
+    doc.updatedAt = at;
+    await ref.set(doc);
+  });
+  await page.click('#tab-today');
+  await page.waitForTimeout(250);
+  const row = page.locator('#today-list .li', { hasText: 'Practice: harness fluids questions' });
+  await row.locator('.nm').click();
+  await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
+  const start = page.locator('#today-task .tp-start');
+  const label = (await start.count()) ? (await start.textContent()).trim() : '';
+  const t0 = await count();
+  if (await start.count()) await start.click();
+  await page.waitForTimeout(300);
+  const t1 = await count();
+  const tq = await page.evaluate(() => {
+    const q = document.getElementById('today-taskquiz');
+    return {
+      shown: !!q && !q.closest('[hidden]') && q.getBoundingClientRect().height > 0,
+      text: q ? q.textContent : '',
+      opts: q ? q.querySelectorAll('input, .opt, button.choice, label').length : 0,
+    };
+  });
+  await page.screenshot({ path: `${shots}/task-quiz-${scheme}.png` });
+  ok(
+    `[${scheme}] a practice task's Start the quiz shows its course's questions inside the task, on Today; no note, no session (B-517)`,
+    label === 'Start the quiz' &&
+      tq.shown &&
+      /Quiz · NUR 112/.test(tq.text) &&
+      t1.view === 'today' &&
+      t1.notes === t0.notes &&
+      t1.active === t0.active,
+    JSON.stringify({ label, tq: { ...tq, text: tq.text.slice(0, 120) }, t0, t1 })
+  );
+  // answered in place: the answer is written and the verdict shows in the task
+  const a0 = await page.evaluate(() => JSON.stringify(window.__db.answers || {}).length);
+  const opt = page.locator('#today-taskquiz .opts label, #today-taskquiz label').first();
+  if (await opt.count()) await opt.click();
+  await checkAnswer(page, '#today-taskquiz');
+  await page.waitForTimeout(300);
+  const a1 = await page.evaluate(() => ({
+    len: JSON.stringify(window.__db.answers || {}).length,
+    verdict: !!document.querySelector('#today-taskquiz .verdict'),
+    view: document.body.dataset.view,
+  }));
+  ok(
+    `[${scheme}] an answer in the task's quiz is written and its verdict shows there (B-517)`,
+    a1.len > a0 && a1.verdict && a1.view === 'today',
+    JSON.stringify({ a0, a1 })
+  );
+  if (await page.isVisible('.mh-back')) await page.click('.mh-back');
+  await page.waitForTimeout(150);
+}
 // B-482: Study's Practice sets card for the course: its sets newest first, each with its question count, its score or
 // Not started, and its made date; a row opens the set, a finished one offers Retake; a plan task that made a set opens it
 async function practiceSetsChecks(page, scheme) {
@@ -2892,6 +3000,7 @@ async function tap(page, locator, name) {
       await quizMeChecks(page, scheme); // B-297
       await practiceSetsChecks(page, scheme); // B-482
       await flashcardsChecks(page, scheme); // B-487
+      await inPlaceChecks(page, scheme); // B-517
       await page.close();
       continue;
     }
@@ -4155,6 +4264,7 @@ async function tap(page, locator, name) {
     await quizMeChecks(page, scheme); // B-297
     await practiceSetsChecks(page, scheme); // B-482
     await flashcardsChecks(page, scheme); // B-487
+    await inPlaceChecks(page, scheme); // B-517
     await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');

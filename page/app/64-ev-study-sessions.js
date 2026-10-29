@@ -648,7 +648,7 @@
     }
     async function quizNow() {
       const s = activeSession();
-      if (!s || s.status !== 'active') return ['No session is running. Say “start a study session” first.', []];
+      if (!s || s.status !== 'active') return quizInChat(); // B-517: no session, so the course's quiz, right here
       if (!sample || T.sampleOff) return ['Quizzing needs permission to ask Claude, which this view doesn’t have.', []];
       if (SS.busy) return ['One moment, I’m reading your note.', []];
       await runCheck(s, { quiz: true });
