@@ -6,6 +6,15 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 29, morning Central): v4.5.17 live
+
+- **Live: v4.5.17 at 91847f6**, recorded GREEN (record and the ev-live app; the claude.ai page is frozen, D-367).
+  Carries everything in the overnight batch (see the 5 am entry below).
+- **Next, in order:** B-485 (flashcards routed by code; long general answers), B-484 (dosage sets reach the asked
+  count), B-486 (day-item plan refs by plan id), B-475 (retire the staging duplicate exam), then the older open items
+  (B-451, B-436, B-457, B-458, B-460, B-468, B-471) and the stale-backlog pass. B-473 waits for a Mac sitting.
+- Nothing running.
+
 ## Update (Oct 29, ~5 am Central): overnight batch on staging, card sent, waiting on Matt
 
 - **Live: v4.5.16 at f39d054.** **Staging GREEN at 91847f6** with: B-472, B-461/B-477, B-448, B-464, B-481/B-480
