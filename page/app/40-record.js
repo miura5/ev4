@@ -1,5 +1,6 @@
     // ------------------------------------------------------------ Record
     const IDEA_KIND = { learning: 'Learning', feature: 'Feature', general: 'General' };
+    const MATT_KINDS = ['learning', 'general']; // B-531: the Kind menu's choices; feature is E.V.'s own (save_idea)
     // B-302 (C-1, C-7, C-13): Record's log, the first of its views. Everything he logged, newest first and grouped by
     // day, one row each (32 px from 600 px, 44 px on the phone): its one badge (Session, Quiz, Note or Workout), its
     // name, its result and its time, all on the row's line. The type tabs (All, Sessions, Quizzes, Notes) and the
@@ -331,11 +332,16 @@
         const sel = document.createElement('select');
         sel.setAttribute('aria-label', 'Kind of note');
         sel.className = 'idea-kind';
+        // B-531 (F-50): the menu offers Matt's kinds only; a note E.V. filed as an idea for her (feature) shows that
+        // kind, greyed, until he picks one of his
+        const cur = i.kind || 'learning';
         for (const [v, t] of Object.entries(IDEA_KIND)) {
+          if (!MATT_KINDS.includes(v) && v !== cur) continue;
           const o = document.createElement('option');
           o.value = v;
           o.textContent = t;
-          o.selected = (i.kind || 'learning') === v;
+          o.selected = cur === v;
+          o.disabled = !MATT_KINDS.includes(v);
           sel.append(o);
         }
         sel.addEventListener('change', () =>

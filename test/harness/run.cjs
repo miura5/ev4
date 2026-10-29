@@ -4796,6 +4796,15 @@ async function tap(page, locator, name) {
         "a note's kind menu waits until its row is opened",
         (await page.locator('#rec-list .rec-li select').count()) === 0
       );
+      // B-531 (F-50): the Kind menu offers Matt's kinds only; a feature note shows its kind greyed until he picks one
+      const opts = s => [...s.options].map(o => (o.disabled ? '(' + o.textContent + ')' : o.textContent)).join(',');
+      const genMenu = await (await recOpen('note', 'Harness general idea')).locator('select.idea-kind').evaluate(opts);
+      const featMenu = await (await recOpen('note', 'Harness feature idea')).locator('select.idea-kind').evaluate(opts);
+      ok(
+        "B-531: Record's Kind menu offers only Matt's kinds (Learning, General); a feature note's own kind is greyed",
+        genMenu === 'Learning,General' && featMenu === 'Learning,(Feature),General',
+        JSON.stringify({ genMenu, featMenu })
+      );
       await (await recOpen('note', 'Harness feature idea')).locator('select.idea-kind').selectOption('learning');
       await page.waitForTimeout(200);
       const k = await page.evaluate(() => window.__db.ideas['idea-harness-feature'].kind);
