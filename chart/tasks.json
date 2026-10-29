@@ -9551,7 +9551,7 @@
   "depends": [
    "B-509"
   ],
-  "notes": "",
+  "notes": "Lane V2 pushed d53cf85 and 6ad97d0: Study's cards on DS.card, plan and deck dialogs are DS.sheet (focus now returns to the deck row), Study rules moved to page/ds views and patterns per D-391; pixdiff 0 in 34 shots; dialogs 0 px open; run 507/507. Plan settings popover and Triage's objective menu left as anchored popovers for B-515/B-516.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
