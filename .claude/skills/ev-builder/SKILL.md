@@ -83,6 +83,8 @@ Before reporting, run `npm run check -- --touched` once (Every session step 5), 
 
 ## Commit and push
 
+- **Format before every push (B-586).** Run `npm run format`, then `node --test test/format.test.mjs`, and push only
+  when it passes. This holds on every push, even one where you skipped the heavier checks: builder pushes on Oct 30 turned main red on formatting alone (B-575, B-579, B-586).
 - One commit per task: `B-xxx: <what changed, in words>`, then the attribution lines from the message.
 - `git fetch origin main && git rebase origin/main`, `npm test` again if the rebase brought anything in, then
   `git push origin HEAD:main`. Refused: rebase and push again. Never force-push, never a merge commit.
