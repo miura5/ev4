@@ -151,3 +151,27 @@
 .ov-up .ud{color:var(--quiet);font-size:var(--fs-1)}
 .ov-up .un{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
 .ov-up .ut{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* B-567: Coming up's head stays one line beside Add exam and Week view */
+.ov-up .up-head{flex-wrap:nowrap}
+.ov-up .up-head .lab{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* B-567: Practice sets as the reference's table: Set, Questions, a coloured Score, Date and an action always there.
+   #ov-sets only: the Flashcards card shares the .ov-sets rows. On the phone the title is the first line and the
+   questions, score and date one muted line under it. */
+#ov-sets{--st-cols:minmax(0,1fr) 96px 88px 88px}
+#ov-sets .st-cols{display:grid;grid-template-columns:var(--st-cols) 72px;gap:var(--sp-3);padding:var(--sp-1) var(--sp-1_5) var(--sp-2);font:var(--fw-regular) var(--fs-1) var(--sans);color:var(--faint)}
+#ov-sets .st-cols span:nth-child(n+3){text-align:right}
+#ov-sets .st-row{display:grid;grid-template-columns:minmax(0,1fr) 72px;align-items:center;gap:var(--sp-3);border-bottom:0}
+#ov-sets .st{min-width:0;display:grid;grid-template-columns:var(--st-cols);align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-1_5);font:var(--fw-regular) var(--fs-3) var(--sans);border-radius:var(--r-sm);min-height:36px}
+#ov-sets .st span.sm{text-align:left}
+#ov-sets .sd,#ov-sets .ss{text-align:right}
+#ov-sets .st span.sm,#ov-sets .sd,#ov-sets .ss{color:var(--quiet);font-size:var(--fs-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+#ov-sets .ss.fin{font-weight:var(--fw-medium);color:color-mix(in srgb,var(--x) var(--kind-text-mix),var(--text))}
+#ov-sets .sx{width:auto;display:flex;justify-content:flex-end}
+#ov-sets .sx .btn{color:var(--text)}
+@media (max-width:599px){
+  #ov-sets .st-cols{display:none}
+  #ov-sets .st{display:flex;flex-wrap:wrap;column-gap:var(--sp-1_5);row-gap:var(--sp-0_5);min-height:48px}
+  #ov-sets .stt{flex-basis:100%}
+  #ov-sets .st span.sm,#ov-sets .sd,#ov-sets .ss{text-align:left}
+  #ov-sets .st span.sm::after,#ov-sets .ss::after{content:"·";margin-left:var(--sp-1_5);color:var(--faint);font-weight:var(--fw-regular)}
+}

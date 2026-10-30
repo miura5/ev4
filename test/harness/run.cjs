@@ -815,19 +815,19 @@ async function practiceSetsChecks(page, scheme) {
         n: r.querySelector('.sm').textContent,
         s: r.querySelector('.ss').textContent,
         d: r.querySelector('.sd').textContent,
-        retake: !!r.querySelector('button.btn'),
+        act: (r.querySelector('.sx button.btn') || {}).textContent || '',
       })),
       spill: rows.some(r => r.scrollWidth > r.clientWidth + 1 || r.getBoundingClientRect().right > innerWidth),
       planLinks: document.querySelectorAll('#p-study .pl-set').length,
     };
   });
   ok(
-    `[${scheme}] Study shows the course's Practice sets: title, question count, score or Not started, made date; finished ones offer Retake (B-482)`,
+    `[${scheme}] Study shows the course's Practice sets: title, question count, score or Not started, made date; each row offers Retake, Resume or Start (B-482, B-567)`,
     card.shown &&
       card.lab === 'Practice sets' &&
       card.rows.length > 0 &&
-      card.rows.every(r => r.title && /^\d+ questions?$/.test(r.n) && /right|done|Not started/.test(r.s) && r.d) &&
-      card.rows.every(r => r.retake === / right$/.test(r.s)) &&
+      card.rows.every(r => r.title && /^\d+ questions?$/.test(r.n) && /^\d+%$|done|Not started/.test(r.s) && r.d) &&
+      card.rows.every(r => r.act === (/%$/.test(r.s) ? 'Retake' : /done/.test(r.s) ? 'Resume' : 'Start')) &&
       !card.spill,
     JSON.stringify(card)
   );
@@ -850,7 +850,7 @@ async function practiceSetsChecks(page, scheme) {
     await closeSet(page);
     await page.waitForTimeout(150);
   }
-  if (card.rows.some(r => r.retake)) {
+  if (card.rows.some(r => r.act === 'Retake')) {
     await page.locator('#ov-sets .st-row button.btn', { hasText: 'Retake' }).first().click();
     await page.waitForTimeout(250);
     const again = await page.evaluate(() => ({
@@ -2260,7 +2260,7 @@ async function studyPlanChecks(page) {
     await page.waitForTimeout(150);
     const pop = await page.evaluate(() => {
       const r = document.getElementById('plan-pop').getBoundingClientRect(),
-        bar = document.getElementById('sbar-study').getBoundingClientRect();
+        bar = document.getElementById('study-planset').getBoundingClientRect(); // B-567: a popover under its button
       return {
         shown: r.height > 0,
         top: r.top,
@@ -2271,7 +2271,7 @@ async function studyPlanChecks(page) {
       };
     });
     ok(
-      `[${w}] the sliders open the plan settings${w === 390 ? ', below the toolbar and inside the screen' : ''}`,
+      `[${w}] the sliders open the plan settings${w === 390 ? ', under its button and inside the screen' : ''}`,
       pop.shown &&
         /When something is missing/.test(pop.text) &&
         /Approved tasks/.test(pop.text) &&
@@ -2703,11 +2703,14 @@ async function studyPlanChecks(page) {
   // B-469: Put away, from the panel at 1280 and the card's foot at 390: one confirm, then the exam's plans are marked
   // put away in planedits/E4 (nothing deleted) and the card is Make a plan again
   {
-    const inPanel = await page.evaluate(() => !!document.querySelector('#study-side .plan-sum .pl-put'));
+    const inPanel = await page.evaluate(() => !!document.querySelector('#study-side .plan-sum .pl-more'));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(250);
     const nPlans = await page.evaluate(() => Object.keys(window.__db.plans || {}).length);
-    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-foot .pl-put').click();
+    // B-568: Put away is behind the plan's ⋯
+    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-foot .pl-more').click();
+    await page.waitForTimeout(150);
+    await page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-foot [data-key="putaway"]').click();
     await page.waitForTimeout(150);
     const ask = await page.evaluate(() => (document.querySelector('#ov-plans .pl-foot .pl-putq') || {}).textContent);
     await page.screenshot({ path: `${shots}/plan-putaway-390.png`, fullPage: true });

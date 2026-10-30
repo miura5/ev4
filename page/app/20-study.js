@@ -849,6 +849,8 @@
       const day = s => (setMade(s) ? E.chicagoDate(new Date(setMade(s))) : '');
       const recent = sets.filter(s => day(s) >= cut),
         older = sets.filter(s => !(day(s) >= cut));
+      // B-567: a table: the set's title first, then its questions, a coloured score, its date and an action that is
+      // always there (Retake, Resume or Start); at 390 the three columns become one muted line under the title
       const rowOf = s => {
         const qs = E.validItems(s),
           ans = answersOf(s),
@@ -856,39 +858,43 @@
           right = qs.filter(q => ans[q.id] && ans[q.id].correct).length,
           finished = done === qs.length;
         const r = el('div', 'st-row');
+        r.dataset.key = s.id;
         const b = el('button', 'st');
         b.type = 'button';
-        const nm = el('span', 'sn');
-        nm.append(el('span', 'stt', s.title || s.id), el('span', 'sm', plural(qs.length, 'question')));
-        const d = day(s);
-        b.append(
-          nm,
-          el(
-            'span',
-            'ss' + (finished ? ' fin' : ''),
-            finished
-              ? right + ' of ' + qs.length + ' right'
-              : done
-                ? done + ' of ' + qs.length + ' done'
-                : 'Not started'
-          ),
-          el('span', 'sd', d ? (d === today ? 'Today' : dayMonth(d)) : '')
+        const pct = qs.length ? Math.round((100 * right) / qs.length) : 0;
+        const nm = el('span', 'stt', s.title || s.id);
+        nm.dataset.part = 'title';
+        nm.title = s.title || s.id;
+        const sc = el(
+          'span',
+          'ss' + (finished ? ' fin ' + (pct >= 80 ? 'x-green' : pct >= 60 ? 'x-yellow' : 'x-red') : ''),
+          finished ? pct + '%' : done ? done + ' of ' + qs.length + ' done' : 'Not started'
         );
+        sc.dataset.part = 'score';
+        if (finished) sc.title = right + ' of ' + qs.length + ' right';
+        const d = day(s);
+        const n = el('span', 'sm', plural(qs.length, 'question'));
+        n.dataset.part = 'count';
+        const dt = el('span', 'sd', d ? (d === today ? 'Today' : dayMonth(d)) : '');
+        dt.dataset.part = 'date';
+        b.append(nm, n, sc, dt);
         b.setAttribute('aria-label', 'Open ' + (s.title || s.id));
         b.addEventListener('click', () => openPracticeSet(s, false));
-        const slot = el('span', 'sx'); // the same place on every row, so the scores and dates line up
-        if (finished) {
-          const again = btn('Retake', () => openPracticeSet(s, true), { cls: 'btn ghost sm' });
-          again.setAttribute('aria-label', 'Retake ' + (s.title || s.id));
-          slot.append(again);
-        }
+        const slot = el('span', 'sx'); // the same place on every row, so the actions line up
+        const word = finished ? 'Retake' : done ? 'Resume' : 'Start';
+        const go = btn(word, () => openPracticeSet(s, finished), { cls: 'btn ghost sm' });
+        go.setAttribute('aria-label', word + ' ' + (s.title || s.id));
+        slot.append(go);
         r.append(b, slot);
         return r;
       };
       const hd = el('div', 'up-head');
       hd.append(el('span', 'lab', 'Practice sets'), el('span', 'mini', plural(sets.length, 'set')));
+      const cols = el('div', 'st-cols');
+      cols.setAttribute('aria-hidden', 'true');
+      cols.append(...['Set', 'Questions', 'Score', 'Date', ''].map(t => el('span', null, t)));
       const list = el('div', 'st-list');
-      list.append(...recent.map(rowOf));
+      list.append(cols, ...recent.map(rowOf));
       if (older.length) {
         const o = !!ui.setsOlder;
         list.append(
@@ -1096,66 +1102,29 @@
     /** B-455: a To review row's Pick an objective: a small menu (the New menu's) of its candidates; a pick sends
      *  weakspot-accept with that objective, so it opens from tomorrow under it. Escape or a tap outside closes it. */
     function pickMenu(w, name, cands) {
+      // B-567: a Proprietary Popover (native: the top layer, Esc and a tap outside close it, focus goes back)
       const wrap = el('div', 'pick-wrap');
-      const menu = el('div', 'menu pick-menu');
-      menu.setAttribute('role', 'menu');
-      menu.setAttribute('aria-label', 'Objective for ' + name);
-      menu.hidden = true;
-      const open = on => {
-        menu.hidden = !on;
-        b.setAttribute('aria-expanded', String(on));
-        if (!on) return;
-        // B-499: beside Accept the button sits further right; the menu shifts left to stay on the screen
-        menu.style.left = '';
-        const r = menu.getBoundingClientRect();
-        const over = r.right - (document.documentElement.clientWidth - 8);
-        if (over > 0) menu.style.left = -Math.min(over, r.left - 8) + 'px';
-        menu.querySelector('button').focus();
-      };
-      const b = btn('Pick an objective', () => open(menu.hidden), { cls: 'btn neutral sm pick-btn' });
-      b.setAttribute('aria-haspopup', 'menu');
+      const b = btn('Pick an objective', () => {}, { cls: 'btn neutral sm pick-btn' });
       b.setAttribute('aria-expanded', 'false');
       b.setAttribute('aria-label', 'Pick an objective to accept ' + name + ' under');
-      menu.append(el('div', 'mhd', 'Accept under'));
-      for (const o of cands) {
-        const mi = btn(
-          String(o.text || o.id),
-          ev => {
-            open(false);
-            guard(ev.currentTarget, () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: o.id }] }));
-          },
-          { cls: 'btn ghost sm mi' }
-        );
-        mi.setAttribute('role', 'menuitem');
-        mi.dataset.obj = o.id;
-        mi.title = o.text || o.id;
-        menu.append(mi);
-      }
-      menu.addEventListener('keydown', e => {
-        const items = [...menu.querySelectorAll('[role="menuitem"]')];
-        const i = items.indexOf(document.activeElement);
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          open(false);
-          b.focus();
-        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          items[(i + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
-        }
+      const menu = DS.popover({
+        anchor: b,
+        label: 'Objective for ' + name,
+        cls: 'pick-menu',
+        items: cands.map(o => ({
+          label: String(o.text || o.id),
+          onPick: () => guard(b, () => weakAct('weakspot-accept', { items: [{ id: w.id, objective: o.id }] })),
+        })),
       });
+      [...menu.querySelectorAll('.popover-i')].forEach((mi, i) => {
+        mi.dataset.obj = cands[i].id;
+        mi.title = cands[i].text || cands[i].id;
+      });
+      menu.prepend(el('div', 'mhd', 'Accept under'));
+      menu.addEventListener('toggle', e => b.setAttribute('aria-expanded', String(e.newState === 'open')));
       wrap.append(b, menu);
       return wrap;
     }
-    // B-455: a tap outside an open Pick an objective menu closes it (a pointer, not focus: a tapped button on the phone
-    // may never take focus)
-    document.addEventListener('pointerdown', e => {
-      for (const m of document.querySelectorAll('.pick-menu:not([hidden])'))
-        if (!m.parentElement.contains(e.target)) {
-          m.hidden = true;
-          m.parentElement.querySelector('.pick-btn').setAttribute('aria-expanded', 'false');
-        }
-    });
     function reviewRow(w) {
       const row = el('div', 'trow');
       row.dataset.id = w.id;

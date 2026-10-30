@@ -2161,7 +2161,7 @@ const openNoteId = page =>
     const menu = await page.evaluate(() => {
       const m = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu');
       const b = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-btn');
-      if (!m || m.hidden) return null;
+      if (!m || !m.matches(':popover-open')) return null;
       const r = m.getBoundingClientRect();
       const items = [...m.querySelectorAll('[role="menuitem"]')];
       return {
@@ -2187,20 +2187,23 @@ const openNoteId = page =>
     await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
     const closed = await page.evaluate(
-      () => document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').hidden
+      () => !document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').matches(':popover-open')
     );
     ok(`${tag} Escape closes the menu`, closed, '');
     // a tap outside (a pointer, no focus change needed) closes it too
     await page.click(pickSel);
     await page.waitForTimeout(100);
-    const reopened = await page.evaluate(
-      () => !document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').hidden
+    const reopened = await page.evaluate(() =>
+      document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu').matches(':popover-open')
     );
     await page.click('#weak-list .dayh');
     await page.waitForTimeout(100);
     const tapped = await page.evaluate(() => {
       const row = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"]');
-      return [row.querySelector('.pick-menu').hidden, row.querySelector('.pick-btn').getAttribute('aria-expanded')];
+      return [
+        !row.querySelector('.pick-menu').matches(':popover-open'),
+        row.querySelector('.pick-btn').getAttribute('aria-expanded'),
+      ];
     });
     ok(
       `${tag} a tap outside closes the menu`,

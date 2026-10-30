@@ -173,7 +173,7 @@
     /** D-362: a new plan starts only from his tap: Remake, beside Ask for changes, is the same ask as Make a plan (a new
      *  plan from today that keeps what is done). Held while a plan ask for the exam runs. */
     function remakeBtn(ex, course) {
-      const b = btn('Remake', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn ghost' });
+      const b = btn('Remake', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn neutral' });
       b.title = 'A new plan from today; what you ticked stays done';
       b.disabled = !!(planJobState(ex, course, null).working || E.studyPlanNewJobRunning(S.jobs, course));
       return b;
@@ -193,35 +193,53 @@
     function approvePlan(b, draft) {
       return guard(b, () => write(E.studyPlanApproveSet(S.planedits, draft, { now: now() })));
     }
-    /** B-469: Put away, beside Ask for changes: one short confirm in the same row, then planedits marks the exam's
-     *  plans put away (nothing deleted, B-11) and the card goes back to Make a plan. */
-    function putAwayBtn(ex) {
-      const b = btn(
-        'Put away',
-        ev => {
-          const row = ev.currentTarget.parentElement;
-          const was = [...row.childNodes];
-          row.replaceChildren(
-            el(
-              'span',
-              'mini pl-putq',
-              'Put this plan away? Its tasks leave Today and Make a plan comes back. The plan stays in your record.'
-            ),
-            btn(
-              'Put away',
-              e2 =>
-                guard(e2.currentTarget, () =>
-                  write(E.studyPlanPutAwaySet(S.plansRaw, S.planedits, ex.id, { now: now() }))
-                ),
-              { cls: 'btn neutral pl-putgo' }
-            ),
-            btn('Cancel', () => row.replaceChildren(...was), { cls: 'btn ghost' })
-          );
-        },
-        { cls: 'btn ghost pl-put' }
+    /** B-469: Put away, behind the plan's ⋯ (B-568): one short confirm in the same row, then planedits marks the
+     *  exam's plans put away (nothing deleted, B-11) and the card goes back to Make a plan. */
+    function putAwayAsk(row, ex) {
+      const was = [...row.childNodes];
+      row.classList.add('confirming');
+      row.replaceChildren(
+        el(
+          'span',
+          'mini pl-putq',
+          'Put this plan away? Its tasks leave Today and Make a plan comes back. The plan stays in your record.'
+        ),
+        btn(
+          'Put away',
+          e2 =>
+            guard(e2.currentTarget, () => write(E.studyPlanPutAwaySet(S.plansRaw, S.planedits, ex.id, { now: now() }))),
+          { cls: 'btn neutral pl-putgo' }
+        ),
+        btn(
+          'Cancel',
+          () => {
+            row.classList.remove('confirming');
+            row.replaceChildren(...was);
+          },
+          { cls: 'btn ghost' }
+        )
       );
-      b.title = 'Take this plan off Study and Today; it stays in your record';
-      return b;
+    }
+    /** B-568: the plan's one button row: Ask for changes, then Approve on a draft and Remake, then ⋯ holding Put away
+     *  and the plan settings. It never wraps. */
+    function planActs(cls, ex, p, course, { approve = null, remake = true } = {}) {
+      const row = el('div', cls);
+      row.dataset.part = 'actions';
+      row.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
+      if (approve) row.append(approve);
+      if (remake) row.append(remakeBtn(ex, course));
+      const more = DS.button({
+        cls: 'pl-more',
+        kind: 'ghost',
+        label: 'More plan actions',
+        iconOnly: true,
+        icon: el('span', null, '⋯'),
+      });
+      const items = [];
+      if (!ex.own) items.push({ label: 'Put away', key: 'putaway', onPick: () => putAwayAsk(row, ex) });
+      items.push({ label: 'Plan settings', key: 'settings', onPick: () => togglePlanPop(true) });
+      row.append(el('span', 'sp'), more, DS.popover({ anchor: more, label: 'More plan actions', items }));
+      return row;
     }
     // E.V.'s one question: kept as one element per job, so his answer and the focus outlast a repaint
     const askEls = new Map();
@@ -564,46 +582,44 @@
           }
         }
       }
-      const act = el('div', 'pm-act');
       const ap = btn('Approve', ev => approvePlan(ev.currentTarget, p), { cls: 'btn tint x-green pm-approve' });
       ap.prepend(svgEl('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'));
       ap.disabled = !!(ask || working); // B-464: held while E.V. is changing this plan
-      act.append(
-        btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }),
-        ap,
-        remakeBtn(ex, course),
-        putAwayBtn(ex)
-      );
-      d.append(act);
+      d.append(planActs('pm-act', ex, p, course, { approve: ap }));
       if (ask) d.append(el('span', 'mini pm-wait', 'Answer or skip E.V.’s question to approve.'));
       else if (working && !inCard) d.append(el('span', 'mini pm-wait', 'Approve opens when E.V.’s new draft lands.'));
       return d;
     }
     function planSummary(p, ex, course, c) {
+      // B-568: the title on the full width, then "NUR 112 · Mon 2 Nov · on track" with the count, the bar, the check
       const d = el('div', 'ov-detail plan-sum');
-      d.append(
-        el('span', 'lab', `${course} · ${exShortOf(ex)} plan`),
-        el('div', 'big plan-lead', `${c.done} of ${c.ts.length} done`)
+      const title = (ex.title || exShortOf(ex)) + ' plan';
+      const t = el('div', 'pm-title', title);
+      t.dataset.part = 'title';
+      t.title = title;
+      const meta = el('div', 'pm-status');
+      meta.dataset.part = 'meta';
+      const where = el('span', 'mini grow', `${course} · ${dayMonth(ex.date)} · `);
+      where.append(
+        el(
+          'span',
+          c.missed.length ? 'pm-state behind' : 'pm-state ok',
+          c.missed.length ? c.missed.length + ' behind' : 'on track'
+        )
       );
+      meta.append(where, el('span', 'plan-lead', `${c.done} of ${c.ts.length} done`));
       const bar = el('div', 'pbar');
       const i = el('i');
       i.style.width = (c.ts.length ? (100 * c.done) / c.ts.length : 0) + '%';
       bar.append(i);
-      d.append(bar);
-      const meta = el('div', 'pm-meta');
-      meta.append(
-        el(
-          'span',
-          'mini',
-          (c.missed.length ? c.missed.length + ' behind' : 'On track') +
-            ` · Exam ${short(ex.date)} · ${E.relDay(ex.date, today)}`
-        )
-      );
-      const made = [p.at ? 'Made ' + short(p.at) : '', p.score ? `Rubric ${Math.round(p.score.total)}/100` : '']
+      d.append(t, meta, bar);
+      const made = [
+        p.score ? `Plan check ${Math.round(p.score.total)}/100` : '',
+        p.at ? 'made ' + dayMonth(E.chicagoDate(new Date(p.at))) : '',
+      ]
         .filter(Boolean)
         .join(' · ');
-      if (made) meta.append(el('span', 'mini', made));
-      d.append(meta);
+      if (made) d.append(el('span', 'mini pm-made', made));
       if (c.todayLeft.length) {
         const r = el('div', 'od-ws');
         r.append(
@@ -620,11 +636,7 @@
         r.append(el('i', 'dot x-quiet'), el('span', 'sn', `${key.title} · ${short(key.date)}`));
         d.append(r);
       }
-      const act = el('div', 'pm-act');
-      act.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
-      if (p.section) act.append(remakeBtn(ex, course));
-      if (!ex.own) act.append(putAwayBtn(ex));
-      d.append(act);
+      d.append(planActs('pm-act', ex, p, course, { remake: !!p.section }));
       return d;
     }
 
@@ -687,11 +699,7 @@
       const rows = planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone });
       rows.append(...planNotes(p)); // B-525 (F-21): approving keeps the instructor questions and the scope map
       card.append(rows);
-      const foot = el('div', 'pl-foot');
-      foot.append(btn('Ask for changes', () => askForChanges(ex, p), { cls: 'btn neutral' }));
-      if (p.section) foot.append(remakeBtn(ex, course));
-      if (!ex.own) foot.append(putAwayBtn(ex));
-      card.append(foot);
+      card.append(planActs('pl-foot', ex, p, course, { remake: !!p.section }));
       return { card, panel: () => planSummary(p, ex, course, c) };
     }
     /** The plan's Open questions for the instructor and its Scope map, each one folded line; B-525 (F-21): an approved
@@ -1019,17 +1027,21 @@
         .trim()
         .slice(0, 400);
     function planPop() {
+      // B-567: a Proprietary Popover anchored to the sliders (native: Esc, a tap outside, focus back to its button)
       let pop = $('plan-pop');
       if (!pop) {
-        pop = el('div', 'pm-pop');
+        const b = $('study-planset');
+        pop = DS.popover({ anchor: b, label: 'Plan settings', cls: 'pm-pop' });
         pop.id = 'plan-pop';
-        pop.setAttribute('role', 'dialog');
-        pop.setAttribute('aria-label', 'Plan settings');
-        pop.hidden = true;
+        pop.addEventListener('beforetoggle', e => {
+          if (e.newState === 'open') paintPlanPop(true);
+        });
+        pop.addEventListener('toggle', e => b.setAttribute('aria-expanded', String(e.newState === 'open')));
         $('study-planwrap').append(pop);
       }
       return pop;
     }
+    const planPopOpen = () => !!$('plan-pop') && $('plan-pop').matches(':popover-open');
     function segOf(label, opts, val, onPick) {
       const s = el('div', 'seg');
       s.setAttribute('role', 'group');
@@ -1043,9 +1055,9 @@
       }
       return s;
     }
-    function paintPlanPop() {
+    function paintPlanPop(opening) {
       const pop = planPop();
-      if (pop.hidden) return;
+      if (!opening && !planPopOpen()) return;
       const st = S.planSettings || {};
       const pref = (lbl, ...kids) => {
         const p = el('div', 'pref');
@@ -1094,24 +1106,11 @@
       );
     }
     function togglePlanPop(open) {
-      const pop = planPop(),
-        b = $('study-planset');
-      pop.hidden = !open;
-      b.setAttribute('aria-expanded', String(open));
-      if (open) paintPlanPop();
+      const pop = planPop();
+      if (open && !planPopOpen()) pop.showPopover();
+      else if (!open && planPopOpen()) pop.hidePopover();
     }
-    $('study-planset').addEventListener('click', () => togglePlanPop(planPop().hidden));
-    document.addEventListener('pointerdown', e => {
-      const pop = $('plan-pop');
-      if (pop && !pop.hidden && !e.target.closest('#study-planwrap')) togglePlanPop(false);
-    });
-    document.addEventListener('keydown', e => {
-      const pop = $('plan-pop');
-      if (e.key === 'Escape' && pop && !pop.hidden) {
-        togglePlanPop(false);
-        $('study-planset').focus();
-      }
-    });
+    planPop();
     function openPlanSheet() {
       togglePlanPop(false);
       let d = $('plan-dlg');
