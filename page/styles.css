@@ -253,47 +253,15 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 @keyframes pulse{50%{opacity:.35}}
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:calc(14px * var(--ts));padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
-.sk-sheet{display:flex;flex-direction:column;gap:0;background:rgba(var(--ground),.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--accent-edge);border-radius:var(--r);overflow:hidden}
-.sk-peek{display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px}
-.sk-tog{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;min-height:var(--tap);padding:2px 30px 2px 2px;background:none;border:0;border-radius:12px;color:inherit;text-align:left;font:inherit;position:relative;cursor:pointer}
 .sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform .25s var(--ease)}
-.sk-tog[aria-expanded="true"]::after{transform:translateY(-75%) rotate(225deg)}
-.sk-tog:hover{background:none}
-.sk-count{font:500 calc(12px * var(--ts)) var(--sans);color:var(--accent-text)}
-.sk-now{font-size:calc(16px * var(--ts));line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sk-top{display:flex;align-items:center;gap:6px;min-height:28px;padding-left:2px}.sk-top .grow{flex:1}
-.sk-mini{min-height:32px;padding:0 12px;font-size:calc(13px * var(--ts));border-radius:999px;background:transparent;border:1px solid var(--line);color:var(--ink2)}
-.sk-mini:hover{color:var(--ink)}
-.sk-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sk-acts button{min-height:var(--tap)}
-.sk-body{padding:12px 14px 4px;border-bottom:1px solid var(--line);max-height:min(46vh,420px);overflow:auto;display:flex;flex-direction:column;gap:10px}
-.sk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sk-head .meta{white-space:nowrap;flex:0 0 auto}
-.sk-title{font-weight:600;overflow-wrap:anywhere}
-.sk-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.sk-step{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:12px;font-size:calc(15px * var(--ts));line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
-.sk-step.cur{background:var(--accent-bg);color:var(--ink)}
-.sk-step.pass .sk-txt{color:var(--soft)}
-.sk-mark{flex:0 0 16px;font-weight:700;text-align:center;color:var(--accent-text)}
-.sk-step.miss .sk-mark{color:var(--bad)}
-.sk-crit{font:500 calc(12px * var(--ts)) var(--sans);color:var(--warn);white-space:nowrap}
-.sk-cur{margin:0;font-size:calc(17px * var(--ts));line-height:1.5}
 .sk-panel{display:none}
 body.skill-on .qchips{display:none}
 /* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
 
 /* D-108: the workout card */
-.wo-clock{margin:0;font:600 calc(34px * var(--ts)) var(--sans);font-variant-numeric:tabular-nums;color:var(--ink)}
-.wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:calc(18px * var(--ts))}
-.wo-moves b{min-width:2.4em;text-align:right;font:600 calc(20px * var(--ts)) var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
-.wo-extra{display:flex;flex-direction:column;gap:10px}
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
 .share-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.sk-headtxt{display:flex;flex-direction:column;gap:2px;min-width:0}
-.sk-head button{flex:0 0 auto;min-height:36px}
-.sk-static{cursor:default;padding-right:2px}.sk-static::after{display:none}
-.sk-clock{font-variant-numeric:tabular-nums}
 .share-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-edge);border-radius:16px;background:var(--accent-bg)}
 .share-bar .grow{flex:1 1 200px}
 @media (max-width:1023px){body.skill-on .toast{bottom:auto;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))}}
@@ -454,7 +422,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
 .check-head .check-fold{color:var(--ink);font-weight:600;font-size:calc(15px * var(--ts))}
 .ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
-.sk-pfold{color:var(--ink);font-weight:600}.sk-panel.folded{gap:0}
 /* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
 .ws-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
@@ -694,17 +661,7 @@ body.captions.on-ev .wrap{max-width:680px}
 #ev-side>.sk-panel{display:none}
 @media (min-width:1200px){
   body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
-  body.skill-on .sk-sheet .sk-tog{pointer-events:none;padding-right:2px}
-  body.skill-on .sk-sheet .sk-tog::after{display:none}
-  body.skill-on .sk-sheet .sk-body{display:none}
 }
-.sk-sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:inset 0 0 0 1px var(--line2);border-radius:12px}
-.sk-count{color:var(--quiet)}
-.sk-step.cur{background:var(--raised)}
-.sk-mark{color:var(--do)}
-.sk-step.miss .sk-mark{color:var(--urg)}
-.sk-panel .sk-head{min-width:0}
-.sk-panel .sk-pfold{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 
 /* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
    Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px

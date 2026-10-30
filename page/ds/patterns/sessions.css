@@ -1,0 +1,50 @@
+/* ---- Skills runs and workouts (B-514, D-376, D-380, D-391): moved from page/styles.css. The patterns layer sits under
+   legacy (D-373), so every declaration says !important until B-515 retires legacy and strips them. Left in legacy for
+   B-515: .sk-tog::after and its fold durations (reduced motion), .sk-panel display and #ev-side panel rules, .sbar. */
+.sk-sheet{display:flex!important;flex-direction:column!important;gap:0!important;background:rgba(var(--ground),.96)!important;-webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;border:1px solid var(--accent-edge)!important;border-radius:var(--r)!important;overflow:hidden!important}
+.sk-peek{display:flex!important;flex-direction:column!important;gap:var(--sp-2)!important;padding:10px var(--sp-3) var(--sp-3)!important}
+.sk-tog{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:var(--sp-0_5)!important;width:100%!important;min-height:var(--tap)!important;padding:var(--sp-0_5) 30px var(--sp-0_5) var(--sp-0_5)!important;background:none!important;border:0!important;border-radius:var(--r-lg)!important;color:inherit!important;text-align:left!important;font:inherit!important;position:relative!important;cursor:pointer!important}
+.sk-tog[aria-expanded="true"]::after{transform:translateY(-75%) rotate(225deg)!important}
+.sk-tog:hover{background:none!important}
+.sk-count{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--accent-text)!important}
+.sk-now{font-size:calc(16px * var(--ts))!important;line-height:1.35!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+.sk-top{display:flex!important;align-items:center!important;gap:var(--sp-1_5)!important;min-height:28px!important;padding-left:2px!important}.sk-top .grow{flex:1!important}
+.sk-mini{min-height:32px!important;padding:0 var(--sp-3)!important;font-size:var(--fs-2)!important;border-radius:999px!important;background:transparent!important;border:1px solid var(--line)!important;color:var(--ink2)!important}
+.sk-mini:hover{color:var(--ink)!important}
+.sk-acts{display:grid!important;grid-template-columns:1fr 1fr!important;gap:var(--sp-2)!important}
+.sk-acts button{min-height:var(--tap)!important}
+.sk-body{padding:var(--sp-3) 14px var(--sp-1)!important;border-bottom:1px solid var(--line)!important;max-height:min(46vh,420px)!important;overflow:auto!important;display:flex!important;flex-direction:column!important;gap:10px!important}
+.sk-head{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:10px!important}.sk-head .meta{white-space:nowrap!important;flex:0 0 auto!important}
+.sk-title{font-weight:var(--fw-semibold)!important;overflow-wrap:anywhere!important}
+.sk-steps{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important}
+.sk-step{display:flex!important;gap:10px!important;align-items:baseline!important;padding:7px var(--sp-2)!important;border-radius:var(--r-lg)!important;font-size:calc(15px * var(--ts))!important;line-height:1.45!important;color:var(--ink2)!important;overflow-wrap:anywhere!important}
+.sk-step.cur{background:var(--accent-bg)!important;color:var(--ink)!important}
+.sk-step.pass .sk-txt{color:var(--soft)!important}
+.sk-mark{flex:0 0 16px!important;font-weight:700!important;text-align:center!important;color:var(--accent-text)!important}
+.sk-step.miss .sk-mark{color:var(--bad)!important}
+.sk-crit{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--warn)!important;white-space:nowrap!important}
+.sk-cur{margin:0!important;font-size:calc(17px * var(--ts))!important;line-height:1.5!important}
+.wo-clock{margin:0!important;font:var(--fw-semibold) calc(34px * var(--ts)) var(--sans)!important;font-variant-numeric:tabular-nums!important;color:var(--ink)!important}
+.wo-moves{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:var(--sp-1_5)!important}
+.wo-moves li{display:flex!important;gap:10px!important;align-items:baseline!important;font-size:var(--fs-5)!important}
+.wo-moves b{min-width:2.4em!important;text-align:right!important;font:var(--fw-semibold) calc(20px * var(--ts)) var(--sans)!important;color:var(--ink)!important;font-variant-numeric:tabular-nums!important}
+.wo-extra{display:flex!important;flex-direction:column!important;gap:10px!important}
+.sk-headtxt{display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important;min-width:0!important}
+.sk-head button{flex:0 0 auto!important;min-height:36px!important}
+.sk-static{cursor:default!important;padding-right:2px!important}.sk-static::after{display:none!important}
+.sk-clock{font-variant-numeric:tabular-nums!important}
+.sk-pfold{color:var(--ink)!important;font-weight:var(--fw-semibold)!important}.sk-panel.folded{gap:0!important}
+.sk-sheet{background:var(--surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border:0!important;box-shadow:inset 0 0 0 1px var(--line2)!important;border-radius:var(--r-lg)!important}
+.sk-count{color:var(--quiet)!important}
+.sk-step.cur{background:var(--raised)!important}
+.sk-mark{color:var(--do)!important}
+.sk-step.miss .sk-mark{color:var(--urg)!important}
+.sk-panel .sk-head{min-width:0!important}
+.sk-panel .sk-pfold{flex:1 1 auto!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-align:left!important}
+@media (min-width:1200px){
+  body.skill-on .sk-sheet .sk-tog{pointer-events:none!important;padding-right:2px!important}
+  body.skill-on .sk-sheet .sk-tog::after{display:none!important}
+  body.skill-on .sk-sheet .sk-body{display:none!important}
+}
+/* hidden still hides: the moved display values say !important, so [hidden] restates its own */
+:is(.sk-acts,.sk-head,.sk-headtxt,.sk-peek,.sk-sheet,.sk-step,.sk-tog,.sk-top,.wo-extra)[hidden]{display:none!important}
