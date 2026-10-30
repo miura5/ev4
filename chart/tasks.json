@@ -11062,5 +11062,22 @@
    "outcome": "task",
    "at": "2026-10-30T16:51:26.531Z"
   }
+ },
+ {
+  "id": "B-597",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Change the kind badge on an existing item (including ones E.V. assigned) from a Picker on the row; a plan remake or Canvas run may overwrite it.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, build chat Oct 30",
+  "words": "Change the kind badge on an existing item (including ones E.V. assigned) from a Picker on the row; a plan remake or Canvas run may overwrite it.",
+  "reportedAt": "2026-10-30T16:51:31.108Z",
+  "board": {
+   "row": "v4 B-597: Change the kind badge on an existing item (including ones E.V.…"
+  }
  }
 ]
