@@ -1,15 +1,15 @@
 /* ---- B-515 lane D1b: the skills panel, its toggle and the skill-on rules moved from page/styles.css. The patterns layer sits under legacy (D-373), so every
    declaration says  until legacy drops and they are stripped. */
-.sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform .25s var(--ease)}
+.sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform var(--dur-chev) var(--ease)}
 .sk-panel{display:none}
 body.skill-on .qchips{display:none}
 @media (max-width:1023px){body.skill-on .toast{bottom:auto!important;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))!important}}
 #ev-side>.sk-panel{display:none}
 @media (min-width:1200px){
-  body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
+  body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--bg);border:0;border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
 }
-.sk-tog::after{transition-duration:.16s}
-.sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
+.sk-tog::after{transition-duration:var(--dur-pop-in)}
+.sk-tog[aria-expanded="true"]::after{transition-duration:var(--dur-pane)}
 
 /* ---- Skills runs and workouts (B-514, D-376, D-380, D-391): moved from page/styles.css. The patterns layer sits under
    legacy (D-373), so every declaration says  until B-515 retires legacy and strips them. Left in legacy for
@@ -20,9 +20,9 @@ body.skill-on .qchips{display:none}
 .sk-tog[aria-expanded="true"]::after{transform:translateY(-75%) rotate(225deg)}
 .sk-tog:hover{background:none}
 .sk-count{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--accent-text)}
-.sk-now{font-size:calc(16px * var(--ts));line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sk-now{font-size:var(--fs-input);line-height:1.35;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sk-top{display:flex;align-items:center;gap:var(--sp-1_5);min-height:28px;padding-left:2px}.sk-top .grow{flex:1}
-.sk-mini{min-height:32px;padding:0 var(--sp-3);font-size:var(--fs-2);border-radius:999px;background:transparent;border:1px solid var(--line);color:var(--ink2)}
+.sk-mini{min-height:32px;padding:0 var(--sp-3);font-size:var(--fs-2);border-radius:var(--r-pill);background:transparent;border:1px solid var(--line);color:var(--ink2)}
 .sk-mini:hover{color:var(--ink)}
 .sk-acts{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}
 .sk-acts button{min-height:var(--tap)}
@@ -30,13 +30,13 @@ body.skill-on .qchips{display:none}
 .sk-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.sk-head .meta{white-space:nowrap;flex:0 0 auto}
 .sk-title{font-weight:var(--fw-semibold);overflow-wrap:anywhere}
 .sk-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--sp-0_5)}
-.sk-step{display:flex;gap:10px;align-items:baseline;padding:7px var(--sp-2);border-radius:var(--r-lg);font-size:calc(15px * var(--ts));line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
+.sk-step{display:flex;gap:10px;align-items:baseline;padding:7px var(--sp-2);border-radius:var(--r-lg);font-size:var(--fs-4);line-height:1.45;color:var(--ink2);overflow-wrap:anywhere}
 .sk-step.cur{background:var(--accent-bg);color:var(--ink)}
 .sk-step.pass .sk-txt{color:var(--soft)}
 .sk-mark{flex:0 0 16px;font-weight:700;text-align:center;color:var(--accent-text)}
 .sk-step.miss .sk-mark{color:var(--bad)}
 .sk-crit{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--warn);white-space:nowrap}
-.sk-cur{margin:0;font-size:calc(17px * var(--ts));line-height:1.5}
+.sk-cur{margin:0;font-size:var(--fs-5);line-height:1.5}
 .wo-clock{margin:0;font:var(--fw-semibold) var(--fs-5) var(--sans);font-variant-numeric:tabular-nums;color:var(--ink)}
 .wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--sp-1_5)}
 .wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:var(--fs-5)}

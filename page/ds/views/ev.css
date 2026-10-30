@@ -9,10 +9,10 @@ a[href],a[href] *{cursor:pointer!important}
 .ev-av .c1{fill:var(--av1)}
 .ev-av .c2{fill:var(--av2)}
 .ev-av .under{fill:var(--bg)}
-.hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .28s var(--ease),opacity .28s ease,margin .28s var(--ease)}
+.hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height var(--dur-pane) var(--ease),opacity var(--dur-pane) ease,margin var(--dur-pane) var(--ease)}
 body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}
 .thread{display:flex;flex-direction:column;gap:18px;min-width:0}
-.thread>button{align-self:center;min-height:34px;font-size:calc(13px * var(--ts));color:var(--soft)}
+.thread>button{align-self:center;min-height:34px;font-size:var(--fs-2);color:var(--soft)}
 .msg{display:flex;gap:12px;align-items:flex-start;min-width:0;scroll-margin-top:calc(var(--top-h) + 100px);scroll-margin-bottom:220px}
 .msg.matt{justify-content:flex-end}
 .msg-body{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -20,36 +20,36 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .msg.matt .msg-body{max-width:min(82%,560px);align-items:flex-end}
 .av-slot{flex:0 0 32px}
 .bubble{overflow-wrap:anywhere;max-width:100%}
-.msg.ev .bubble{font-size:calc(16.5px * var(--ts));line-height:1.6;align-self:stretch}
-.msg.matt .bubble{background:rgba(var(--tint),.075);padding:11px 16px;border-radius:20px 20px 6px 20px;font-size:calc(16px * var(--ts))}
+.msg.ev .bubble{font-size:var(--fs-input);line-height:1.6;align-self:stretch}
+.msg.matt .bubble{background:rgba(var(--tint),.075);padding:11px 16px;border-radius:var(--r-xxl) var(--r-xxl) var(--r-sm) var(--r-xxl);font-size:var(--fs-input)}
 .bubble p{margin:0}
 .bubble p+p,.bubble p+ul,.bubble ul+p{margin-top:8px}
 .bubble ul{margin:0;padding-left:20px}
 .bubble li+li{margin-top:3px}
 .bubble b{font-weight:600}
 .bubble a{color:var(--accent-text);text-underline-offset:2px}
-.msg.ev .bubble.err{background:var(--warn-bg);border:1px solid rgba(var(--att-rgb),.32);padding:10px 14px;border-radius:14px}
+.msg.ev .bubble.err{background:var(--warn-bg);border:1px solid rgba(var(--att-rgb),.32);padding:10px 14px;border-radius:var(--r-xl)}
 .msg-cards{display:flex;flex-direction:column;gap:12px;min-width:0}
 .msg-cards:empty{display:none}
-.msg-meta{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.msg-meta button{min-height:32px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans);letter-spacing:0;text-transform:none;color:var(--quiet)}
+.msg-meta{font:500 var(--fs-1) var(--sans);color:var(--faint);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.msg-meta button{min-height:32px;padding:0 12px;font:500 var(--fs-2) var(--sans);letter-spacing:0;text-transform:none;color:var(--quiet)}
 body.opening .msg.greet{flex-direction:column;align-items:center;text-align:center;gap:0}
 body.opening .msg.greet>.ev-av,body.opening .msg.greet>.av-slot,body.opening .msg.greet .msg-meta{display:none}
 body.opening .msg.greet .msg-body{align-self:stretch;align-items:center;padding-top:0}
-body.opening .msg.greet .bubble{font-size:calc(18px * var(--ts));line-height:1.55;color:var(--quiet);max-width:620px;text-wrap:pretty}
+body.opening .msg.greet .bubble{font-size:var(--fs-5);line-height:1.55;color:var(--quiet);max-width:620px;text-wrap:pretty}
 body.opening .msg.greet .bubble p:first-child{font-size:var(--fs-5);line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;text-wrap:balance}
 body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-self:stretch;text-align:left;margin-top:14px}
 .composer::after{content:"";position:absolute;left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));top:100%;height:calc(var(--dock-h) + 40px + env(safe-area-inset-bottom,0px));background:var(--bg)}
 .composer{position:sticky;bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px));z-index:4;background:linear-gradient(to bottom,rgba(var(--ground),0),var(--bg) 18px);padding-top:18px;padding-bottom:6px;display:flex;flex-direction:column;gap:10px}
 .qchips{display:flex;scrollbar-width:none;min-width:0;padding-bottom:1px}
 .qchips::-webkit-scrollbar{display:none}
-.qchip{flex:0 0 auto;min-height:38px;border-radius:999px;padding:0 14px;font:500 calc(14px * var(--ts)) var(--sans);white-space:nowrap;border:1px solid rgba(var(--tint),.10);background:rgba(var(--tint),.03);color:var(--quiet)}
+.qchip{flex:0 0 auto;min-height:38px;border-radius:var(--r-pill);padding:0 14px;font:500 var(--fs-3) var(--sans);white-space:nowrap;border:1px solid rgba(var(--tint),.10);background:rgba(var(--tint),.03);color:var(--quiet)}
 .qchip.go{display:flex;align-items:center;gap:8px}
 .qchip.go svg{width:13px;height:13px}
-.compose-row{display:flex;flex-direction:row;min-width:0;transition:border-color .25s}
+.compose-row{display:flex;flex-direction:row;min-width:0;transition:border-color var(--dur-chev)}
 .compose-row:focus-within{border-color:var(--accent-edge)}
 .compose-row textarea{border:0;background:transparent;max-height:140px;resize:none;border-radius:0;outline:none;flex:1;min-width:0;line-height:1.4}
-.compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:50%;padding:0;display:grid;place-items:center}
+.compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:var(--r-round);padding:0;display:grid;place-items:center}
 .compose-row button svg{width:18px;height:18px}
 .compose-row .attach{background:transparent;border-color:transparent;color:var(--soft)}
 .compose-row .attach:hover{color:var(--ink);background:rgba(var(--tint),.05)}
@@ -62,27 +62,27 @@ body.captions #p-ev{min-height:0}
 body.captions .composer{padding-top:10px}
 }
 body.captions #p-ev>.hero{grid-row:1}
-body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);transition:height .28s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
-body.captions .hero>.ev-av{transition:transform .28s var(--ease)}
-body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%)}
+body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);transition:height var(--dur-pane) var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
+body.captions .hero>.ev-av{transition:transform var(--dur-pane) var(--ease)}
+body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,black 20px,black calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,black 20px,black calc(100% - 16px),transparent 100%)}
 body.captions .thread::-webkit-scrollbar{display:none}
 body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:stretch;box-sizing:border-box;text-align:left;margin:0 auto;width:100%}
-body.captions .cap-pull{height:160px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding-bottom:8px;box-sizing:border-box;opacity:var(--pull-o,0);transition:opacity .15s linear}
+body.captions .cap-pull{height:160px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding-bottom:8px;box-sizing:border-box;opacity:var(--pull-o,0);transition:opacity var(--dur-2) linear}
 body.captions .cap-pull .ring{position:relative;width:34px;height:34px}
 body.captions .cap-pull svg.r{position:absolute;inset:0}
 body.captions .cap-pull .r .t{fill:none;stroke:rgba(var(--tint),.1);stroke-width:1.5}
 body.captions .cap-pull .r .a{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:94.25;stroke-dashoffset:var(--pull-dash,94.25);transform:rotate(-90deg);transform-origin:17px 17px}
-body.captions .cap-pull .arrow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent-text);transform:rotate(var(--pull-rot,0deg));transition:transform .2s var(--ease)}
+body.captions .cap-pull .arrow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent-text);transform:rotate(var(--pull-rot,0deg));transition:transform var(--dur-row) var(--ease)}
 body.captions .cap-pull .arrow svg{width:14px;height:14px}
-body.captions .cap-pull .lbl{font-size:calc(12px * var(--ts));color:var(--soft)}
-body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft)}
+body.captions .cap-pull .lbl{font-size:var(--fs-1);color:var(--soft)}
+body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 var(--fs-1) var(--sans);color:var(--soft)}
 body.captions .cap-div::before,body.captions .cap-div::after{content:"";flex:1;height:1px;background:rgba(var(--tint),.09)}
 body.captions .msg{display:block;width:100%;scroll-margin:0}
 body.captions .msg>.ev-av,body.captions .msg>.av-slot{display:none}
 body.captions .msg-body{align-items:center;gap:8px;padding:0}
 body.captions .msg.ev .msg-body,body.captions .msg.matt .msg-body{max-width:none;flex:none}
 body.captions .bubble,body.captions .msg.matt .bubble,body.captions.opening .msg.greet .bubble{background:none;padding:0;border-radius:0;max-width:100%;text-wrap:pretty}
-body.captions .msg.ev .bubble{font-size:calc(15px * var(--ts));line-height:1.45;color:var(--quiet);opacity:.6;transition:font-size .4s ease,opacity .4s ease,color .4s ease}
+body.captions .msg.ev .bubble{font-size:var(--fs-4);line-height:1.45;color:var(--quiet);opacity:.6;transition:font-size var(--dur-5) ease,opacity var(--dur-5) ease,color var(--dur-5) ease}
 body.captions .msg.ev.current .bubble{font-size:var(--fs-5);line-height:1.45;color:var(--ink);opacity:1}
 body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5)}
 body.captions.opening .msg.greet .bubble p:first-child{font-size:inherit;line-height:inherit;font-weight:inherit;letter-spacing:0;color:inherit;margin:0;text-wrap:pretty}
@@ -95,19 +95,19 @@ body.captions .msg-cards,body.captions.opening .msg.greet .msg-cards{display:fle
 body.captions .msg-cards:empty{display:none}
 .brief{align-self:stretch;width:100%;margin:8px 0 0;text-align:left;display:flex;flex-direction:column;gap:4px}
 .msg.greet .brief{margin-top:0}
-.cap-quote{margin:2px 0 0;font-size:calc(12.5px * var(--ts));color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cap-quote{margin:2px 0 0;font-size:var(--fs-2);color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
 body.captions .msg-cards{gap:8px}
 #qchips:empty{display:none}
 body.captions .composer{position:relative;bottom:auto;background:none}
 body.captions .composer::after{display:none}
-body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:calc(13.5px * var(--ts));color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .28s ease,transform .28s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:var(--fs-3);color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity var(--dur-pane) ease,transform var(--dur-pane) ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.captions .cap-echo.on{opacity:1;transform:none}
-body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.18);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:var(--r-xl);border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px var(--shade-4);color:var(--quiet);font:500 var(--fs-2) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 body.captions .cap-now:hover{background:var(--hover);color:var(--text)}
 body.captions .cap-now svg{width:13px;height:13px}
 @media (max-width:599px){
-body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:22px}
+body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:var(--r-card)}
 }
 body.captions .cap-now[hidden]{display:none}
 body:not(.on-ev) .cap-now{display:none}
@@ -115,14 +115,14 @@ body.captions .composer>*{width:100%;margin-inline:auto;box-sizing:border-box}
 body.captions .composer>.cap-echo{max-width:none}
 @media (min-width:1024px){
 body.captions .hero{--stage-h:370px}
-body.captions .msg.ev .bubble{font-size:calc(14px * var(--ts))}
+body.captions .msg.ev .bubble{font-size:var(--fs-3)}
 body.captions .msg.ev.current .bubble{font-size:var(--fs-5)}
-body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts))}
+body.captions .msg.matt .bubble{font-size:var(--fs-3)}
 body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5)}
 }
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
-.bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
+.bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:var(--fs-3);line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(black 55%,transparent);mask-image:linear-gradient(black 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}
 @media (max-width:599px){
 body.on-ev .qchips{touch-action:pan-x}
@@ -148,18 +148,18 @@ body.captions #p-ev>.composer{grid-row:6}
 }
 .msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 body.captions .cap-in{max-width:600px;padding:0 24px 18px;gap:14px}
-body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint);opacity:1}
+body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:var(--fs-3);line-height:1.45;color:var(--faint);opacity:1}
 body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5);line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
 body.captions .msg.matt.last{display:block}
-body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--quiet);opacity:1;max-width:80%;text-align:right}
-body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}
+body.captions .msg.matt .bubble{font-size:var(--fs-3);color:var(--quiet);opacity:1;max-width:80%;text-align:right}
+body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:var(--fs-1);font-weight:500;color:var(--faint)}
 body.captions .composer{padding-top:8px;gap:10px}
 body.captions .composer>*{max-width:600px}
 .qchips{flex-wrap:nowrap;justify-content:flex-start;gap:6px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:0 16px;scroll-padding-inline:16px}
 .qchips>*{flex:none;white-space:nowrap}
 .qchips>:first-child{margin-left:auto}
 .qchips>:last-child{margin-right:auto}
-.qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans)}
+.qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:var(--r-xl);border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 var(--fs-2) var(--sans)}
 .qchip:hover{background:var(--hover);color:var(--text)}
 @media (min-width:600px){
 .qchips{flex-wrap:wrap;justify-content:center;overflow:visible;max-width:600px;margin:0 auto;box-sizing:border-box}
@@ -167,19 +167,19 @@ body.captions .composer>*{max-width:600px}
 .qchips>:last-child{margin-right:0}
 }
 @media (max-width:599px){
-.qchips{scroll-snap-type:x proximity;scroll-padding-inline:0;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
+.qchips{scroll-snap-type:x proximity;scroll-padding-inline:0;-webkit-mask-image:linear-gradient(to right,black calc(100% - 28px),transparent);mask-image:linear-gradient(to right,black calc(100% - 28px),transparent)}
 .qchips>*{scroll-snap-align:start}
 .qchips>:first-child{margin-left:0}
 .qchips>:last-child{margin-right:0}
 }
 body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px}
-.compose-row{align-items:center;min-height:50px;gap:8px;padding:0 9px 0 16px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+.compose-row{align-items:center;min-height:50px;gap:8px;padding:0 9px 0 16px;border:0;border-radius:var(--r-xl);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
 .compose-row:focus-within{box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
-.compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:calc(14.5px * var(--ts))}
+.compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:var(--fs-3)}
 .compose-row textarea::placeholder{color:var(--faint)}
 .compose-row textarea:placeholder-shown{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .compose-row .attach{width:32px;height:32px;min-height:32px;flex:0 0 32px;margin-left:-8px}
-.compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
+.compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:var(--r-xl);background:var(--her);color:var(--on-her);box-shadow:none}
 .compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
 @media (max-width:1199px){
 body.captions.surface-open #qchips{display:none}
@@ -190,16 +190,16 @@ body.captions .composer>.compose-row{width:100%}
 body.captions .cap-in{padding:0 0 12px}
 .qchip,.qchip.go{height:44px;min-height:44px}
 body.captions .composer>.compose-row{margin-bottom:12px;min-height:56px;padding:0 6px 0 16px}
-.compose-row #ev-send,.compose-row #ev-send.on{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:22px}
+.compose-row #ev-send,.compose-row #ev-send.on{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:var(--r-card)}
 .compose-row .attach{width:44px;height:44px;min-height:44px;flex:0 0 44px}
 }
-body.captions.her-folded .hero{transition-duration:.16s}
+body.captions.her-folded .hero{transition-duration:var(--dur-pop-in)}
 @media (max-width:599px){
 body.captions.kb #p-ev{min-height:0}
 }
 body.ev-booting #p-ev{opacity:0}
 /* the phone keeps the composer at 16 px or more so iOS never zooms into it (legacy shared this with the kit inputs) */
-@media (max-width:599px){.compose-row textarea{font-size:max(16px,calc(14.5px * var(--ts)))}}
+@media (max-width:599px){.compose-row textarea{font-size:max(var(--fs-input),var(--fs-3))}}
 /* B-572 (D-393): the empty state as the reference: her stage folds away while she greets; the greeting sits in the top
    third (her Arc beside the hello, the summary under it, then Next up) and the composer stays anchored at the bottom */
 /* (her stage's fold lives beside the stage's own rules in legacy-carry.css, which out-ranks this file) */
@@ -258,7 +258,7 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .dots{display:inline-flex;gap:5px;padding:6px 0}
 .dots i{width:6px;height:6px;border-radius:var(--r-round);background:var(--soft);animation:pulse var(--dur-pulse) infinite}
 .dots i:nth-child(2){animation-delay:var(--dur-3)}
-.dots i:nth-child(3){animation-delay:.36s}
+.dots i:nth-child(3){animation-delay:var(--dur-rise-toast)}
 /* opening: E.V. greets at full size, the greeting sits under the core */
 .ev-card{padding:16px 18px;gap:10px}
 .ev-card .big{font-size:var(--fs-5);letter-spacing:-.02em}
@@ -328,7 +328,7 @@ body.captions .bubble:not(.reveal) .ev-caret{opacity:0}
 /* Matt's line echoes above the composer for about 3 s; Back to now floats over the captions. */
 /* B-452 (Matt): Back to now floats centred over the thread column, just above the composer; it covers the thread and
    moves nothing under him. */
-body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px var(--shade-4);color:var(--quiet);font:500 var(--fs-1) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:var(--r-xl);border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px var(--shade-4);color:var(--quiet);font:500 var(--fs-1) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 body.captions .cap-now:hover{background:var(--hover);color:var(--text)}
 @media (max-width:599px){
   body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:var(--r-card)}
@@ -353,7 +353,7 @@ body.captions .cap-now:hover{background:var(--hover);color:var(--text)}
 .surf .passage{margin:2px 0 8px;font-size:var(--fs-4);line-height:1.5;color:var(--ink2)}
 @media (max-width:1199px){
   body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
-  body.captions #ev-surf{max-height:clamp(330px,46dvh,410px);overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-radius:var(--r-xxl) var(--r-xxl) 14px 14px}
+  body.captions #ev-surf{max-height:clamp(330px,46dvh,410px);overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-radius:var(--r-xxl) var(--r-xxl) var(--r-xl) var(--r-xl)}
   body.captions #ev-surf.folded{max-height:none;overflow:visible}
 }
 @media (min-width:1200px){
@@ -524,7 +524,7 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
   /* B-438: a writing clock paused (nothing typed for 2 minutes) dims its light and its time */
   .chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .chatp:not([hidden]){display:flex}
-  .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:auto;max-height:calc(70vh - var(--strip-h));width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px var(--shade-2),0 2px 6px var(--shade-1);font:400 var(--fs-2)/1.55 var(--sans)}
+  .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:auto;max-height:calc(70vh - var(--strip-h));width:400px;flex-direction:column;box-sizing:border-box;border-radius:var(--r-xl);background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px var(--shade-2),0 2px 6px var(--shade-1);font:400 var(--fs-2)/1.55 var(--sans)}
   .chatp.wide{width:640px;top:56px;max-height:none}
   /* B-464: on the Conversation its composer runs under the pop-up's corner; the pop-up stops above it */
   body.on-ev .chatp{bottom:calc(var(--strip-h) + 84px)}
@@ -550,7 +550,7 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
   .chatp .cin2 .crow .sp{flex:1}
   .chatp .cin2 .ctx{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-1);color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   .chatp .cin2 .ctx .ico{width:13px;height:13px}
-  .chatp .cin2 .send{width:28px;height:28px;min-height:0;border-radius:14px;border:0;background:var(--her);color:var(--on-her);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0}
+  .chatp .cin2 .send{width:28px;height:28px;min-height:0;border-radius:var(--r-xl);border:0;background:var(--her);color:var(--on-her);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0}
   .chatp .cin2 .send .ico{width:14px;height:14px;stroke-width:2}
   .chatp .hlist{flex:1;min-height:0;overflow:auto;padding:6px}
   .chatp .hlist .mhd{font:500 var(--fs-1)/1.45 var(--sans);color:var(--quiet);padding:6px 9px 4px}
