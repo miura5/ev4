@@ -10714,5 +10714,22 @@
   "board": {
    "row": "v4 B-580: On the phone, Today's Cards row lost its Start button after Start…"
   }
+ },
+ {
+  "id": "B-581",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): run.cjs studyPlanChecks crashes: the plan-tick click times out as element not stable, likely from the B-576 fold motion",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "run harness",
+  "words": "run.cjs studyPlanChecks crashes: the plan-tick click times out as element not stable, likely from the B-576 fold motion",
+  "reportedAt": "2026-10-30T10:28:10.065Z",
+  "board": {
+   "row": "v4 B-581: run.cjs studyPlanChecks crashes: the plan-tick click times out as…"
+  }
  }
 ]
