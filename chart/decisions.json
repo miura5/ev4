@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-409",
+  "date": "Oct 30",
+  "title": "Spikes: a throwaway experiment when a careful builder falls short",
+  "why": "Oct 30: a builder that ships could strip only 19 of about 734 !important overrides, because going further risked breaking things; a probe on a throwaway copy, free to break things on purpose, traced every rule and found which could go and why. Rule: the build manager sends a spike when a builder stops short of the goal for safety, when a fix keeps failing or being reverted, when an estimate rests on something unmeasured, or when two designs are plausible and the wrong one costs hours. A spike works on a throwaway worktree, never commits, pushes or writes the Chart, runs no full suites (only the measuring tools it needs), is time-boxed to about an hour, and reports causes with counts, the fix per cause, what cannot be done and why, and a build estimate; a builder then builds from that report. Budget: one spike per release without asking Matt; a second one needs a line to Matt first (D-366).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-408",
   "date": "Oct 30",
   "title": "Tiered checks: builders run only fast, targeted checks locally per change (format and its test, unit tests for touched code, pixdiff and the computed-style diff for style moves, the one harness group a behaviour change touches) and push; the full suites run off the shared machine on GitHub, once per batch, triggered by the build manager (nightly.yml's full check until a parallel checks workflow exists); failures are handed back to the builder whose step caused them, found from the step commits.",
