@@ -319,7 +319,19 @@
     function capEcho(id, text) {
       announce(id, 'You: ' + text);
     }
-    // A caption's words, each its own span (the Breath reveal), from the same paragraphs, bullets and bold fmt() makes.
+    // A caption's words, each its own span, and each word's letters their own spans (B-592: she writes letter by letter),
+    // from the same paragraphs, bullets and bold fmt() makes; a link keeps its anchor and its letters go inside it.
+    const letters = n => {
+      for (const t of [...n.childNodes]) {
+        if (t.nodeType === 1) letters(t);
+        else if (t.nodeType === 3 && t.textContent) {
+          const f = document.createDocumentFragment();
+          for (const ch of t.textContent) f.append(/\s/.test(ch) ? document.createTextNode(ch) : el('span', 'c', ch));
+          t.replaceWith(f);
+        }
+      }
+      return n;
+    };
     function capWords(frag) {
       const walk = n => {
         for (const c of [...n.childNodes]) {
@@ -329,19 +341,81 @@
             for (const w of parts) {
               if (!w) continue;
               if (/^\s+$/.test(w)) f.append(document.createTextNode(w));
-              else f.append(el('span', 'w', w));
+              else f.append(letters(el('span', 'w', w)));
             }
             c.replaceWith(f);
           } else if (c.nodeType === 1 && c.tagName !== 'A') walk(c);
           else if (c.nodeType === 1) {
             c.classList.add('w');
+            letters(c);
           }
         }
       };
       walk(frag);
       return frag;
     }
-    // The Breath reveal (D-122, paced by D-137): words fade and un-blur in, the first sentence at speech pace (about 3
+    // REVEAL: every number in how she writes (D-137, B-592), so a tweak to her typing is one edit here. The caret's
+    // look (width, colour, fade) is in page/ds/tokens.css (--caret-w, --caret-color, --caret-fade).
+    const PACE = {
+      wordMs: 230, // speech pace: each word's base time (about 3 words a second in the first sentence)
+      charMs: 14, // speech pace: added per letter, so longer words take longer
+      commaMs: 200, // the pause after a comma, semicolon, colon or dash
+      stopMs: 380, // the pause after a full stop, question or exclamation mark
+      maxMs: 6000, // the cap: the whole reply is out within 6 s; after the first sentence the pace speeds up to meet it
+      typeShare: 0.8, // the share of a word's time spent typing its letters (the rest is the gap before the next word)
+      frameMs: 16, // one frame: letters or words due faster than this come out together
+      caretGoneMs: 700, // when the faded caret is removed (just past --caret-fade)
+    };
+    // Her caret (B-592): one per line being written, after the last letter out; it fades (CSS) once the line is whole
+    // and is gone after the fade, so finished and older lines never keep one. None under reduced motion (no reveal).
+    function caretAfter(b, node) {
+      if (!b || !node) return;
+      let c = b.querySelector('.ev-caret');
+      if (!c) {
+        c = el('span', 'ev-caret');
+        c.setAttribute('aria-hidden', 'true');
+      }
+      node.after(c);
+    }
+    function caretOut(b) {
+      const c = b && b.querySelector('.ev-caret');
+      if (c) setTimeout(() => c.remove(), PACE.caretGoneMs);
+    }
+    // Typing one word's letters over its gap; a newer tick, a tap or the end shows the rest of it at once.
+    function typeFlush() {
+      clearTimeout(CAP.typer);
+      CAP.typer = null;
+      const w = CAP.typing;
+      CAP.typing = null;
+      if (!w) return;
+      w.querySelectorAll('.c').forEach(c => c.classList.add('on'));
+      w.classList.add('on');
+      const cs = w.querySelectorAll('.c');
+      if (cs.length) caretAfter(w.closest('.bubble'), cs[cs.length - 1]);
+    }
+    function typeWord(w, ms) {
+      typeFlush();
+      const cs = [...w.querySelectorAll('.c')],
+        b = w.closest('.bubble');
+      if (cs.length < 2 || ms < PACE.frameMs * 2) {
+        CAP.typing = w;
+        typeFlush();
+        return;
+      }
+      CAP.typing = w;
+      const step = Math.max(PACE.frameMs, (ms * PACE.typeShare) / cs.length);
+      let i = 0;
+      const next = () => {
+        if (CAP.typing !== w) return;
+        const per = Math.max(1, Math.round(PACE.frameMs / step));
+        for (let j = 0; j < per && i < cs.length; j++) cs[i++].classList.add('on');
+        caretAfter(b, cs[i - 1]);
+        if (i >= cs.length) typeFlush();
+        else CAP.typer = setTimeout(next, step);
+      };
+      next();
+    }
+    // The reveal (D-122, paced by D-137; B-592 writes it letter by letter, no fade, no blur): the first sentence at speech pace (about 3
     // words a second, pausing at punctuation), then faster, so the whole reply is out within 6 s; a tap on her line, a
     // scroll or a newer line shows the rest at once. Each word shown is one speak() to her core (emphasis, bold, in
     // the text colour), so her swell ends with the last word; a finished sentence is announced; the reply's gesture comes when the
@@ -351,8 +425,10 @@
         st = CAP.rv.get(id);
       if (!rec || !st) return;
       const b = rec.el.querySelector('.bubble');
+      if (CAP.queue[0] === id) typeFlush();
       const ws = b ? [...b.querySelectorAll('.w')] : [];
       ws.forEach(w => w.classList.add('on'));
+      caretOut(b);
       if (st.from < ws.length)
         announce(
           id + ':' + st.from,
@@ -377,6 +453,7 @@
         st = id && CAP.rv.get(id);
       if (!st || st.all) return;
       st.all = true;
+      typeFlush();
       clearTimeout(CAP.timer);
       CAP.timer = null;
       revealTick();
@@ -388,9 +465,6 @@
     capBox.addEventListener('keydown', e => {
       if (/^(Page|Arrow)(Up|Down)$|^(Home|End)$/.test(e.key)) revealNow();
     });
-    // The pace (D-137): a word's natural gap is its speech time; after the first sentence each gap shrinks to what is
-    // left of the 6 s over the words left, and once a gap would be under a frame, several words come out together.
-    const PACE = { wordMs: 230, charMs: 14, commaMs: 200, stopMs: 380, maxMs: 6000, frameMs: 16 };
     const naturalMs = w =>
       PACE.wordMs +
       w.length * PACE.charMs +
@@ -429,9 +503,17 @@
         }
         let word = '',
           em = false;
+        typeFlush();
         for (let i = 0; i < k; i++) {
           const w = ws[st.n++];
-          w.classList.add('on');
+          if (k === 1 && !st.all) typeWord(w, gap);
+          else {
+            w.classList.add('on');
+            if (i === k - 1) {
+              CAP.typing = w;
+              typeFlush();
+            }
+          }
           word = w.textContent;
           em = em || !!w.closest('b');
           const blk = w.closest('p, li'),
@@ -467,7 +549,12 @@
             .map(x => x.textContent)
             .join(' ')
         );
-      if (rec) rec.el.querySelector('.bubble') && rec.el.querySelector('.bubble').classList.remove('reveal');
+      typeFlush();
+      const rb = rec && rec.el.querySelector('.bubble');
+      if (rb) {
+        rb.classList.remove('reveal');
+        caretOut(rb);
+      }
       CAP.queue.shift();
       CORE.speechEnd();
       CORE.gesture(endGesture(m));

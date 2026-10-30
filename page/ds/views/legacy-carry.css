@@ -178,10 +178,12 @@ body.captions .cap-pull .arrow svg{width:14px;height:14px}
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:var(--fs-1);color:var(--soft);white-space:nowrap;overflow:hidden}
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
 /* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
-/* The Breath reveal: each word fades and un-blurs in; emphasised words are a weight, in the text colour (D-270). */
+/* B-592 (D-401): her newest line writes itself out letter by letter with a thin caret in her colour leading it; the
+   caret is steady while she writes and fades after her last letter. Emphasised words are a weight, in the text colour. */
 body.captions .w{display:inline-block}
-body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
-body.captions .reveal .w.on{opacity:1;filter:none;transform:none;transition:opacity .4s ease,filter .4s ease,transform .4s var(--ease)}
+body.captions .reveal .w:not(.on) .c:not(.on){visibility:hidden}
+body.captions .ev-caret{display:inline-block;width:var(--caret-w);height:1.15em;margin-left:var(--caret-w);vertical-align:text-bottom;background:var(--caret-color);border-radius:var(--caret-w);transition:opacity var(--caret-fade) var(--ease-in)}
+body.captions .bubble:not(.reveal) .ev-caret{opacity:0}
 /* Matt's line echoes above the composer for about 3 s; Back to now floats over the captions. */
 /* B-452 (Matt): Back to now floats centred over the thread column, just above the composer; it covers the thread and
    moves nothing under him. */

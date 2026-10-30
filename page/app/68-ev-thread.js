@@ -78,7 +78,11 @@
         const st = CAP.rv.get(m.id);
         if (st && CAP.queue.includes(m.id)) {
           b.classList.add('reveal');
-          [...b.querySelectorAll('.w')].slice(0, st.n).forEach(w => w.classList.add('on'));
+          const on = [...b.querySelectorAll('.w')].slice(0, st.n);
+          on.forEach(w => w.classList.add('on'));
+          if (CAP.typing && !b.contains(CAP.typing)) CAP.typing = null; // the word being typed was rebuilt: shown whole
+          const cs = on.length ? on[on.length - 1].querySelectorAll('.c') : [];
+          if (cs.length) caretAfter(b, cs[cs.length - 1]);
         } else if (reduced() && m.role !== 'matt' && !m.pending && (m.greeting || T.ready)) {
           announce(m.id + ':0', [...b.querySelectorAll('.w')].map(w => w.textContent).join(' '));
           if (!CAP.said.has(m.id + ':end')) {

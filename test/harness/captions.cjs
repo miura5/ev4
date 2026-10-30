@@ -491,11 +491,28 @@ async function sideBySide(browser, left, right, out, vp) {
       seen.push(
         await page.evaluate(() => {
           const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
-          return b ? [b.querySelectorAll('.w.on').length, b.querySelectorAll('.w').length] : [0, 0];
+          if (!b) return [0, 0, 0, 0];
+          const cs = [...b.querySelectorAll('.c')];
+          const vis = cs.filter(c => getComputedStyle(c).visibility === 'visible').length;
+          return [
+            b.querySelectorAll('.w.on').length,
+            b.querySelectorAll('.w').length,
+            vis,
+            b.querySelectorAll('.ev-caret').length,
+          ];
         })
       );
       await page.waitForTimeout(260);
     }
+    // B-592: she writes letter by letter with a caret leading, and never blurs
+    ok(
+      `[${scheme}] the reply writes itself letter by letter, a caret leading it (B-592)`,
+      seen.some(([, , c]) => c > 0) &&
+        seen.every(([, , c], i) => !i || c >= seen[i - 1][2]) &&
+        seen.some(([, , , k], i) => k === 1 && seen[i][2] > 0) &&
+        seen.every(([, , , k]) => k <= 1),
+      JSON.stringify(seen.map(x => [x[2], x[3]]))
+    );
     const total = seen[seen.length - 1][1];
     ok(
       `[${scheme}] the reply reveals word by word`,
@@ -518,6 +535,8 @@ async function sideBySide(browser, left, right, out, vp) {
       const log = window.EVApp.core.stats().log;
       return {
         all: b.querySelectorAll('.w.on').length === b.querySelectorAll('.w').length,
+        caret: document.querySelectorAll('#thread .ev-caret').length,
+        blur: [...b.querySelectorAll('.w, .c')].filter(x => getComputedStyle(x).filter !== 'none').length,
         speaks: log.filter(e => e.kind === 'speak').length,
         emph: log.filter(e => e.kind === 'speak' && e.detail === 'emphasis').map(e => e.name),
         settled: log.filter(e => e.kind === 'gesture').slice(-1)[0],
@@ -525,7 +544,13 @@ async function sideBySide(browser, left, right, out, vp) {
     });
     ok(
       `[${scheme}] her core spoke each word and settled`,
-      done.all && done.speaks >= 14 && done.emph.includes('stretch') && done.settled && done.settled.name === 'settle',
+      done.all &&
+        !done.caret &&
+        !done.blur &&
+        done.speaks >= 14 &&
+        done.emph.includes('stretch') &&
+        done.settled &&
+        done.settled.name === 'settle',
       JSON.stringify(done)
     );
     ok(
