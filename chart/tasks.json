@@ -9741,7 +9741,7 @@
   "milestone": "UX probe fixes",
   "status": "open",
   "depends": [],
-  "notes": "Built at 5c4038a: core/measures.mjs is the one source for open weak spots, objective state and study time; Progress's open count now matches Study (previews excluded), Today's readiness matches, a running session counts at its current time, today's ticked minutes count per course (larger of session and ticked). Staging with the next release.",
+  "notes": "Staging look on staging data at 2f50284: the views agree (Progress's day total equals Record's rows; the course split adds up), but the goal isn't met. Plan tasks ticked outside that day's list never count (Oct 29: 100 min ticked, Progress shows 2). Past days count sessions only, because Progress passes only today's list ticks. Record reads session minutes outside E.sessionMinutes (40-record.js:91). Stays open.",
   "commit": null,
   "source": "UX map probe (D-369), Oct 29",
   "words": "Counts disagree across views (weak spots 20/24, readiness), and Progress doesn't count today's ticked work or notes.",
