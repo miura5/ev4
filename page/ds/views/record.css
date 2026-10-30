@@ -79,7 +79,6 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
 /* ---- B-570: the log as the round-5 board. Day bands on a raised fill with their count at the end; rows are
    Proprietary's one-line Line: the kind's badge in a fixed column, the name, its result muted, the time in a fixed
    column. On the phone the badge drops under the name as the row's one muted line, and the toolbar stays one row. */
-#p-record #record-sessions .rec-list{padding:var(--sp-1) var(--sp-2) var(--sp-4)}
 #p-record .rec-day{display:flex;align-items:center;gap:var(--sp-2);height:var(--sp-8);margin:var(--sp-1_5) 0 var(--sp-0_5);padding:0 var(--sp-3);border-radius:var(--r-md);background:var(--raise);font:var(--fw-medium) var(--fs-2) var(--sans);color:var(--text)}
 #p-record .rec-day .n{margin-left:auto;color:var(--faint);font-weight:var(--fw-regular);font-variant-numeric:tabular-nums}
 .rec-li{position:relative}
@@ -98,3 +97,102 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
 .rec-li > .t{grid-column:2;grid-row:1/3;min-width:0}
 #record-sessions .rec-bar .rec-flab,#record-sessions .rec-bar .rec-loglab{display:none}
 }
+/* ---- B-515 lane 4a: moved from carry-notes.css in its order; they no longer outrank the rules above by the carry's raise */
+/* B-212 (D-217): skills runs and workouts follow the session: bar in the pane header, steps in the pane, list right */
+/* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
+   Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px
+   from 600 px wide; the one thing to do now keeps its box (surface, hairline); the switch is the pane header's from
+   600 px (a full-width row on the phone); the right panel's cards sit on the ground with a hairline; status is a
+   coloured word. */
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card{background:none;border:0;border-radius:0;box-shadow:none;padding:0;gap:4px}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head{font:500 var(--fs-1)/1.3 var(--sans);color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head{min-height:28px;align-items:center;display:flex;margin:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head .meta{font-size:var(--fs-1);color:var(--faint);margin:0}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{border-top:0;padding:6px 0;min-height:44px;align-items:baseline;gap:10px;font-size:var(--fs-3);box-sizing:border-box}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row .meta{font-size:var(--fs-1);color:var(--faint)}
+:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .when{font-size:var(--fs-1);color:var(--faint);min-width:4.6rem;padding:0}
+@media (min-width:600px){
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{min-height:32px;font-size:var(--fs-2)}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{padding:4px 0}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text]{min-height:32px;padding:4px 10px;border-radius:var(--r-md);font-size:var(--fs-2)}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button{min-height:32px;border-radius:var(--r-md);padding:0 12px;font-size:var(--fs-2)}
+}
+/* B-487: Today's Cards row (Today's; kept in legacy for its lane) */
+/* B-494: Today's Cards row keeps Start on a phone and on touch (it has no task panel to hold it) */
+/* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================
+   The log's toolbar (Filter and its pop-over, then the type tabs), its rows grouped by day, and the picked row's
+   detail: the right panel's card from 1200 px, under the row below that. A row is its one badge, its name, its result
+   and its time on one line: 32 px from 600 px, 44 px on the phone, where the result steps aside before the time does.
+   Session and Quiz are violet, Note blue, Workout neutral (D-270). Nothing on the view creates (C-7). */
+#record-sessions .rec-bar{padding:0 0 8px;border-bottom:0;min-height:0;gap:8px}
+#record-sessions .rec-bar > .seg{align-self:center}
+#rec-types button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
+.rec-pop .lbl{font:500 var(--fs-1) var(--sans);color:var(--quiet)}
+.rec-pop .seg{align-self:stretch;width:100%;box-sizing:border-box}
+.rec-pop .seg button{flex:1;white-space:nowrap}
+.rec-ck input{width:16px;height:16px;margin:0;accent-color:var(--text)}
+.rec-list{display:flex;flex-direction:column;gap:0}
+.rec-detail .meta{margin:0}
+.rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:var(--r-md);font:500 var(--fs-1) var(--sans)}
+@media (max-width:599px){
+  .rec-detail select.idea-kind{height:44px;min-height:44px}
+}
+/* B-339 (D-312): Record as the demo draws it. The toolbar spans the pane under a hairline, the rows run edge to edge
+   (32 px, C-1), the Filter button carries its icon, the pop-over's switches keep their own width, and the detail is
+   the right panel itself: badge, an 18 px title, the properties in a card, her line, and Quiz me for a quiz. */
+#record-sessions{margin:-18px -16px 0;gap:0}
+#record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:nowrap}
+.rec-pop .seg{align-self:flex-start;width:auto}
+.rec-pop .seg button{flex:none}
+#record-sessions .cols > .col-main{gap:0}
+#record-sessions .rec-list{gap:0}
+@media (max-width:599px){
+  #record-sessions .rec-bar{padding:10px 12px}
+}
+@media (max-width:599px){
+  #record-sessions .rec-bar > .seg{flex:0 1 auto;min-width:0;width:auto;overflow-x:auto;scrollbar-width:none}
+}
+/* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
+   One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
+   header does, and from 1200 px the right panel starts under it. The week's own line moves up into it. */
+/* ============================================================ B-350, B-359 (D-316): Record's log frame ===============
+   The log alone (Dates, Journal, Canvas and Library left the page): the toolbar strip under the header, rows edge to
+   edge grouped by day, and the picked row's detail in the panel. */
+#p-record > .panel{margin:-18px -16px 0;gap:0}
+#p-record > .panel .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:nowrap;min-height:0}
+#p-record > .panel .rec-bar > .seg{align-self:center}
+#p-record > .panel .seg button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
+#p-record > .panel .cols > .col-main{gap:0}
+#p-record .rec-list > .empty{margin:0;padding:14px 18px;color:var(--quiet);font-size:var(--fs-2)}
+@media (max-width:599px){
+  #p-record > .panel .rec-bar{padding:10px 12px}
+}
+@media (max-width:599px){
+  #p-record > .panel .rec-bar > .seg{flex:0 1 auto;min-width:0;width:auto;overflow-x:auto;scrollbar-width:none}
+  #p-record > .panel .rec-bar > .seg > button{flex:none}
+}
+@media (max-width:599px){
+  #p-record .rec-list > .empty{padding:14px 16px}
+}
+/* B-432: the phone's keyboard. Safari zooms the page on a text field under 16 px, so every field is 16 px or more here.
+   While the keyboard is up (body.kb, set from visualViewport by the composer part), the frame is the space above it
+   and the tab bar steps aside, so the header, thread and composer stay on screen with no gap and nothing past the edge. */
+@media (max-width:599px){
+  input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(16px,var(--fs-3))}
+}
+/* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
+   page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
+/* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
+   document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the
+   installed app (--app-h, set from the screen's height by the composer part) the frame and the tab bar are placed by
+   the screen's height instead. */
+/* B-432 (review): the fields whose own rules outrank the phone's 16 px floor: the New note text and Record's kind select */
+@media (max-width:599px){
+  #p-record .rec-detail select.idea-kind{font-size:max(16px,var(--fs-3))}
+}
+/* ============================================================ B-554: cheap scroll frames ===========================
+   The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
+   skip layout and paint for rows out of view (rows with no menu inside: paint containment clips one). */
+/* :is() keeps Today's .fold-line all:unset (later in views) from resetting it, as the carry's raise did */
+:is(.rec-li,#p-record .rec-day,.ti-folded>li,.ov-rows>*){content-visibility:auto;contain-intrinsic-size:auto 44px}

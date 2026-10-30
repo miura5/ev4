@@ -19,7 +19,7 @@
 #note-body .nb[data-indent="1"]{margin-left:24px}#note-body .nb[data-indent="2"]{margin-left:48px}#note-body .nb[data-indent="3"]{margin-left:72px}
 #note-body .nb[data-indent="4"]{margin-left:96px}#note-body .nb[data-indent="5"]{margin-left:120px}#note-body .nb[data-indent="6"]{margin-left:144px}
 #note-body .nb[data-t=todo][data-checked=true]{color:var(--faint);text-decoration:line-through}
-#p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
+#p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
 #p-notes .n-pick .vh{display:flex;gap:10px;align-items:flex-start;font-size:calc(13.5px * var(--ts))}
 #p-notes .n-pick .vhw{display:flex;flex-direction:column;gap:2px}
 #p-notes .n-pick .vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -84,3 +84,74 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3
 #p-notes .n-stm{width:252px}
 #p-notes .n-cmenu{width:200px}
 #p-notes .n-lkp{width:300px;gap:var(--sp-2)}
+/* ---- B-515 lane 4a: moved from carry-notes.css in its order; they no longer outrank the rules above by the carry's raise */
+/* ==== B-402 Notes: the editor (page/app/25-notes.js; the demo's AppNotes, NoteEditor and NoteStyleMenu boards) ==== */
+#p-notes .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* B-403: the list, as the NotesList board. The toolbar (course filters with counts, New note) spans the pane under a
+   hairline; rows run edge to edge, 44 px, grouped by course; Open shows on hover or focus. The picked note's preview is
+   the right panel from 1200 px, and reads under the list from 1024 to 1199 px. */
+#p-notes > .n-list{margin:-18px -16px 0;gap:0}
+#p-notes .n-list .col-main{gap:0}
+#p-notes .n-filters{align-self:center;flex:none}
+#p-notes .n-row .n-unsaved{flex:none;font-size:var(--fs-1);color:var(--urg);white-space:nowrap}
+/* B-410: refused, kept on this device */
+#p-notes .nempty span{max-width:360px}
+#p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
+#p-notes .nempty b{color:var(--text);font-size:var(--fs-4);font-weight:600}
+#p-notes .nempty .btn{margin-top:6px}
+#p-notes .n-pvt{margin:0;font:600 var(--fs-5)/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
+#p-notes .n-acts .btn{width:100%;justify-content:center}
+@media (max-width:1199px){
+  #p-notes .n-pv{display:flex;flex-direction:column;gap:14px;padding:18px;border-top:1px solid var(--line);margin-top:24px}
+}
+#p-notes .n-fbar{position:sticky;top:calc(var(--mh-h,48px) + 8px);z-index:6;display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg)}
+/* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
+   nothing of the note shows in the ground above the page while it scrolls */
+#p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--status-h,0px));padding:0 28px;box-sizing:border-box}
+/* D-361: the quiet line beside the strip's control, on its row */
+#p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
+#p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
+/* B-442: Ask E.V. on words selected in a note, under the selection */
+.n-ask{position:fixed;z-index:35;box-shadow:var(--ring),var(--shadow-1)}
+#p-notes .popover .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:var(--r-sm);border:0;background:none;width:100%;font:400 var(--fs-2) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
+#p-notes .popover .mi:hover,#p-notes .popover .mi:focus-visible,#p-notes .popover .mi.on{background:var(--hover)}
+#p-notes .popover .mi.on{font-weight:500}
+#p-notes .n-lkp .in{height:38px;border-radius:var(--r-md);border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:400 var(--fs-3) var(--sans);color:var(--text);width:100%;box-sizing:border-box}
+#p-notes .n-doc{position:relative;width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
+#p-notes .n-meta .btn{color:var(--quiet);gap:5px}
+#p-notes .n-meta .ico{width:14px;height:14px}
+/* B-437: spaces kept as typed (pre-wrap): a line holding only spaces, as Enter before a heading's trailing space
+   leaves, has its height, and the caret's place is the one he sees */
+#note-body.empty:not(.untitled)::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
+#note-body h1.nb{margin:0 0 14px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.02em;line-height:1.2}
+#note-body h2.nb{margin:28px 0 6px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
+#note-body h3.nb{margin:18px 0 4px;font-size:var(--fs-4);font-weight:600;line-height:1.4;color:var(--ink)}
+#note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
+#note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
+#note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
+#note-body .n-chk.done .ico{opacity:1}
+#note-body u{text-underline-offset:3px}
+#note-body a{color:inherit;text-decoration:underline;text-decoration-color:var(--quiet);text-underline-offset:3px}
+.mh .n-sync{order:9;display:inline-flex;align-items:center;gap:5px;margin-left:auto;font:400 var(--fs-1) var(--sans);color:var(--quiet);white-space:nowrap}
+.mh .n-sync.bad{color:var(--urg)}
+/* B-404 (D-326, NoteStates): the sync line's two-versions state, and the picker above his text */
+.mh .n-sync.warn .ico{color:var(--att)}
+#p-notes .n-pick .vh>.ico{width:16px;height:16px;flex:none;margin-top:2px;color:var(--att);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#p-notes .n-pick .vhw b{font-weight:600}
+#p-notes .n-pick .vhw span{color:var(--quiet)}
+#p-notes .n-pick .ver .btn{align-self:flex-start}
+#p-notes .n-pick .vwho b{font-weight:600}
+#p-notes .n-pick .vwho .ico{width:15px;height:15px;color:var(--quiet);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* B-418 (D-339): read-along's toggle, beside the sync line */
+.mh .n-read{order:9;margin-left:8px;gap:5px;color:var(--quiet);font-weight:400}
+.mh .n-read .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mh .n-read[aria-pressed=false]{color:var(--faint)}
+/* ==== end B-402 ==== */
+/* B-431 (UI review of 74499d4): read-along's toggle is filled only when on; on the phone the header's New sits inside
+   the 48 px header with room above and below (its tap area still 44 px), and the tab bar stays inside the screen. */
+.mh .n-read{background:transparent;box-shadow:none}
+.mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
+@media (min-width:600px){
+  #p-notes .n-fbar{top:-18px}
+  /* sticky insets count from the pane's padding edge; the editor already sits 18 px up */
+}
