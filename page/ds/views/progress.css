@@ -44,7 +44,7 @@
 .pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0!important;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer!important;box-shadow:none;min-height:0}
 .pc-bar>i{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--sem-violet)}
 .pc-bar:hover{background:none}
-.pc-bar:hover>i{filter:brightness(1.08)!important}
+.pc-bar:hover>i{filter:brightness(1.08)}
 .pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
 .pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .pc-lab{text-align:center;color:var(--quiet);font-size:calc(11.5px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}

@@ -2,15 +2,15 @@
    declaration says !important until legacy drops and they are stripped. */
 .job-title{font-weight:600!important;margin:0!important;overflow-wrap:anywhere!important}
 .result{font-size:calc(15px * var(--ts))!important;line-height:1.6!important;white-space:pre-wrap!important;margin:0!important;overflow-wrap:anywhere!important;color:var(--ink2)!important}
-.quizlet-block{font:inherit!important;font-size:calc(13px * var(--ts))!important;line-height:1.5!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;tab-size:2!important;margin:8px 0 0!important;padding:8px 10px!important;max-height:240px!important;overflow:auto!important;border-radius:8px!important;background:var(--chip)!important;color:var(--ink2)!important}
-.energy{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important}
+.quizlet-block{font:inherit!important;font-size:calc(13px * var(--ts))!important;line-height:1.5!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;tab-size:2;margin:8px 0 0!important;padding:8px 10px!important;max-height:240px!important;overflow:auto!important;border-radius:8px!important;background:var(--chip)!important;color:var(--ink2)!important}
+.energy{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px!important}
 .energy button{padding:0 4px!important;min-height:52px!important;border-radius:14px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;line-height:1.15!important}
 .energy button small{font-size:calc(11px * var(--ts))!important;color:var(--soft)!important;font-weight:500!important}
 .energy button[aria-pressed="true"]{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--accent-ink)!important}
 .energy button[aria-pressed="true"] small{color:var(--accent-ink)!important}
-.check-items{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:12px!important}
+.check-items{list-style:none;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:12px!important}
 .check-items li{display:flex!important;gap:12px!important;align-items:baseline!important;overflow-wrap:anywhere!important;font-size:calc(16.5px * var(--ts))!important;line-height:1.5!important}
-.check-kind{flex:0 0 46px!important;text-transform:capitalize!important;font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--ink2)!important}
+.check-kind{flex:0 0 46px!important;text-transform:capitalize;font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--ink2)!important}
 .check-kind.link{color:var(--plum)!important} .check-kind.gap,.check-kind.weakspot{color:var(--warn)!important}
 .sess-sec{display:flex!important;flex-direction:column!important;gap:6px!important}
 .sess-sec h3{font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--soft)!important;margin:0!important}
@@ -46,22 +46,22 @@
    patterns layer sits under legacy (D-373), so every declaration says !important until B-515 strips them. A .prep-row
    .chev rule stays in legacy: a later legacy rule shortens its transition. */
 .prep-mark{margin-left:0!important}
-.prep{align-self:stretch!important;margin-top:var(--sp-1_5)!important;border-top:0!important;text-align:left!important}
-.prep-row{appearance:none!important;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;width:100%!important;min-height:44px!important;padding:var(--sp-1_5) var(--sp-0_5)!important;border:0!important;background:none!important;color:var(--ink2)!important;font:var(--fw-medium) var(--fs-3) var(--sans)!important;text-align:left!important;cursor:pointer!important}
+.prep{align-self:stretch!important;margin-top:var(--sp-1_5)!important;border-top:0!important;text-align:left}
+.prep-row{appearance:none;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;width:100%!important;min-height:44px!important;padding:var(--sp-1_5) var(--sp-0_5)!important;border:0!important;background:none!important;color:var(--ink2)!important;font:var(--fw-medium) var(--fs-3) var(--sans)!important;text-align:left;cursor:pointer!important}
 .prep-row:hover,.prep-row:active,.prep-row:focus{background:none!important;transform:none!important}
 .prep-row:focus-visible{outline:2px solid var(--accent-edge)!important;outline-offset:2px!important}
-.prep-t{flex:1 1 auto!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.prep-t{flex:1 1 auto!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis}
 .prep.open .prep-t{white-space:normal!important}
 .prep-n{flex:none!important;color:var(--soft)!important;font-size:var(--fs-2)!important}
 .prep.done .prep-t{color:var(--soft)!important} .prep.done .prep-mark{background:rgba(var(--do-rgb),.12)!important;color:var(--do)!important}
 .prep-box[hidden]{display:none!important}
 .prep-note{margin:var(--sp-0_5) 0 var(--sp-2)!important;font-size:var(--fs-3)!important;line-height:1.45!important;color:var(--soft)!important}
-.prep-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important}
+.prep-list{list-style:none;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important}
 .prep-item{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;min-height:44px!important}
 .prep-lab{flex:1 1 auto!important;min-width:0!important;display:flex!important;align-items:flex-start!important;gap:var(--sp-3)!important;padding:var(--sp-1_5) 0!important;cursor:pointer!important}
 .pi-txt{min-width:0!important;display:flex!important;flex-direction:column!important}
 .pi-t{font-size:calc(15px * var(--ts))!important;line-height:var(--lh-ui)!important;color:var(--ink)!important}
-.prep-item.on .pi-t{color:var(--soft)!important;text-decoration:line-through!important;text-decoration-color:rgba(var(--tint),.3)!important}
+.prep-item.on .pi-t{color:var(--soft)!important;text-decoration:line-through;text-decoration-color:rgba(var(--tint),.3)}
 .pi-c{font-size:calc(12.5px * var(--ts))!important;line-height:var(--lh-ui)!important;color:var(--soft)!important;overflow-wrap:anywhere!important}
 .pi-rm{flex:none!important;min-height:36px!important}
 .prep-add{display:flex!important;gap:var(--sp-2)!important;margin:var(--sp-1_5) 0 var(--sp-1)!important}

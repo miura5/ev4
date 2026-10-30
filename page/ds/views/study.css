@@ -179,14 +179,14 @@
 /* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
 .prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform var(--dur-chev) var(--ease)}
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
-.ws-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
+.ws-line{all:unset;-webkit-user-select:auto;user-select:auto;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
 .ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
 .ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws-n{flex:none;color:var(--ink2);font-size:var(--fs-2)}
 .ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}
 .ws-item.open .ws-more{display:flex}
 .ws-more .meta{margin:0}
-button.tlink{all:unset;-webkit-user-select:auto!important;user-select:auto!important;cursor:pointer;color:var(--text);font-size:var(--fs-3);padding:4px 0;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+button.tlink{all:unset;-webkit-user-select:auto;user-select:auto;cursor:pointer;color:var(--text);font-size:var(--fs-3);padding:4px 0;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
 button.tlink:hover{text-decoration-color:currentColor}
 @media (min-width:1200px){

@@ -252,7 +252,7 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
   #today-list .ti-done > .fold-line{min-height:var(--tap);padding:0 16px}
 }
 /* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
-.wk-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
+.wk-line{all:unset;-webkit-user-select:auto;user-select:auto;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
 .fold-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;cursor:pointer;color:var(--ink2);font-size:var(--fs-3);padding:4px 0}
 .wchip:hover{background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
 .wchip:focus-visible{outline:2px solid var(--text);outline-offset:2px}
