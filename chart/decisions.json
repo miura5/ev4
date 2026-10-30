@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-401",
+  "date": "Oct 30",
+  "title": "Her reply in the Conversation types itself out behind a thin caret, replacing D-122's blurred-word fade; D-137's pacing, tap to finish, announcements and reduced motion (whole line at once) stay",
+  "why": "Matt asked for the Type-only mock-up's writing behaviour; the avatar keeps the moods, so only the text reveal changes, and only in the Conversation",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-400",
   "date": "Oct 30",
   "title": "The empty Conversation follows D-393, not D-213's stage: a greeting in the top third with her Arc beside it, a summary line and one Next up row with Start; from 1024 px her 32 px Arc sits beside her newest line, with no stage on the messages; the phone keeps its stage once a conversation starts",
