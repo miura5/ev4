@@ -11040,5 +11040,23 @@
    "outcome": "task",
    "at": "2026-10-30T16:38:24.019Z"
   }
+ },
+ {
+  "id": "B-596",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Add a Linear-style Picker to Proprietary (a chip that opens a searchable menu with coloured dots, a check on the current choice and number-key shortcuts) and rebuild the New task window as a row of Picker chips (kind, estimate, when, course), done alongside the stylesheet cleanup; changing badges on existing items is saved for later.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Add a Linear-style Picker to Proprietary (a chip that opens a searchable menu with coloured dots, a check on the current choice and number-key shortcuts) and rebuild the New task window as a row of Picker chips (kind, estimate, when, course), done alongside the stylesheet cleanup; changing badges on existing items is saved for later.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T16:50:56.348Z",
+  "board": {
+   "row": "v4 B-596: Add a Linear-style Picker to Proprietary (a chip that opens a…"
+  }
  }
 ]
