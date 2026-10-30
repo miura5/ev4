@@ -10613,9 +10613,9 @@
   "id": "B-576",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Expanding lists and folds on staging is still instant; they should open smoothly by height and opacity like Linear, as the motion work promised.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Every expandable list and fold in the app (Study plan days, objectives, Record days, Progress, Notes, E.V. cards and sessions, Today) opens by height and opacity and closes the same way, per the motion tokens; reduced motion stays instant; view switches stay instant; seen on staging at 1280.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10625,6 +10625,10 @@
   "reportedAt": "2026-10-30T09:17:26.980Z",
   "board": {
    "row": "v4 B-576: Expanding lists and folds on staging is still instant; they should…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T09:17:59.821Z"
   }
  }
 ]
