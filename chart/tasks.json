@@ -11133,9 +11133,9 @@
   "id": "B-600",
   "kind": "bug",
   "title": "Bug (reported Oct 30): In a note, Heading 1 and Heading 2 render at the same size; Heading 1 should be a clearly larger, title-sized heading as it was before.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Notes' document text has its own small type scale in Proprietary tokens (the app's 18 px cap stays for interface text): the note title, Heading 1, Heading 2, Heading 3 and body are each visibly distinct, Heading 1 title-sized as before the polish; light and dark, 1280; a notes harness check compares the heading sizes.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11145,6 +11145,10 @@
   "reportedAt": "2026-10-30T17:20:40.110Z",
   "board": {
    "row": "v4 B-600: In a note, Heading 1 and Heading 2 render at the same size; Heading 1…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T17:20:59.753Z"
   }
  }
 ]
