@@ -1,9 +1,7 @@
-    /**
-     * B-576: the Fold's motion for the folds a view draws itself. dsGrow(node, open, done) opens a node by height and
-     * opacity (--dur-fold-open, its fade --dur-fold-fade) or closes it (--dur-fold-close), then runs done (on a close
-     * with no done, it sets hidden). Nothing scales and nothing above it moves; reduced motion is instant. The node keeps
-     * its ids, classes and state; only inline styles and animations touch it while it runs.
-     */
+    // ------------------------------------------------------------ fold motion (B-576)
+    // dsGrow(node, open, done) opens a node by height and opacity (--dur-fold-open, its fade --dur-fold-fade) or closes
+    // it (--dur-fold-close), then runs done (on a close with no done, it sets hidden). Nothing scales and nothing above
+    // it moves; reduced motion is instant. Only inline styles and animations touch the node while it runs.
     function foldMs(name) {
       const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       return v.endsWith('ms') ? parseFloat(v) || 0 : v.endsWith('s') ? (parseFloat(v) || 0) * 1000 : 0;
