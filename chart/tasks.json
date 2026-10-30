@@ -10934,9 +10934,9 @@
   "id": "B-591",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Sessions with no folder fall back to the default course, so Chapter 9 (BIO 201) study counts as NUR 112 in Progress and Record, understating BIO 201's time.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A session's course comes from its content when it has no folder; staging data counts Chapter 9 sessions as BIO 201.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10945,6 +10945,10 @@
   "reportedAt": "2026-10-30T13:30:19.106Z",
   "board": {
    "row": "v4 B-591: Sessions with no folder fall back to the default course, so Chapter 9…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T13:30:22.120Z"
   }
  }
 ]
