@@ -1,6 +1,6 @@
-/* Proprietary 01 Button (B-507, D-374): today's button.btn (B-303) in tokens, styled off ARIA and native state. While
-   page/styles.css sits in @layer legacy (D-373) its rules win on every property they set, so nothing here moves a
-   pixel today (D-376); these rules take over when B-515 drops legacy. The Gallery's forced states ([data-state], which
+/* Proprietary 01 Button (B-507, D-374): today's button.btn (B-303) in tokens, styled off ARIA and native state. B-515 dropped
+   the legacy layer: the old sheet is page/ds/views/legacy-carry.css in views, so a carry rule still wins wherever it
+   sets the same property, until the component lanes fold it here. The Gallery's forced states ([data-state], which
    only the Gallery sets, D-383) say !important for that one reason and drop it at B-515. This file also holds the coded
    tones every component reads as --x (D-269). */
 :where([data-tone='ok'],[data-tone='green']){--x:var(--ok)}

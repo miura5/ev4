@@ -338,7 +338,7 @@
   };
   // B-505 (D-373): the cascade's layer order, as the published styles.css declares it first; said again here so the
   // order holds whichever sheet a page reads first.
-  var LAYERS = '@layer reset,tokens,base,components,patterns,views,legacy;';
+  var LAYERS = '@layer reset,tokens,base,components,patterns,views;';
   /** The three blocks of one theme's declarations: dark by default, light when the system says so unless the toggle
    *  says dark, and the toggle's light (D-211's three blocks, now generated). */
   var modes = function (d, l) {
@@ -353,7 +353,7 @@
     );
   };
   /** The stylesheet for one contrast. B-505 (D-373): the tokens sit in the tokens layer and the ground under html and
-   *  body in base, so legacy's own rules win over both as they did before layers. The colour scheme stays unlayered:
+   *  body in base, so every component and view rule wins over both (B-515 dropped the legacy layer). The colour scheme stays unlayered:
    *  the host document's :root{color-scheme:light} is unlayered, and a layered scheme would lose to it in dark. */
   var css = function (contrast, recipe) {
     var c = contrastOf(contrast);

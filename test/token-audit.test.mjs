@@ -120,7 +120,7 @@ test('B-505: theme.js generates the washes, lifts, ring, focus and coded tokens 
     }
   const css = theme.css(60);
   assert.ok(
-    css.startsWith('@layer reset,tokens,base,components,patterns,views,legacy;@layer tokens{:root,'),
+    css.startsWith('@layer reset,tokens,base,components,patterns,views;@layer tokens{:root,'),
     css.slice(0, 90)
   );
   // the scheme stays unlayered (the host document's own :root{color-scheme:light} is), the ground sits in base

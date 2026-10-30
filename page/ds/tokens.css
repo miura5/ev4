@@ -1,6 +1,6 @@
 /* Proprietary tokens (B-501, B-505; D-370, D-371, D-372, D-379, D-384): E.V.'s own design system, frozen at today's
-   most-used values. The build publishes this file inside @layer tokens, after the layer order and ahead of page/styles.css
-   in @layer legacy (D-373), in one styles.css. Declared, not yet read: no rule uses these names until the view moves and
+   most-used values. The build publishes this file inside @layer tokens, after the layer order, in one styles.css (D-373;
+   B-515 dropped the legacy layer: the old sheet is page/ds/views/legacy-carry.css, first in views). Declared, not yet read: no rule uses these names until the view moves and
    polish write var(--sp-3) where they touch (D-376, D-380), so nothing on screen moves. Colour is not here: page/theme.js
    generates it in LCH from base, accent and contrast (D-268) per mode, also in the tokens layer, and writes --bg,
    --chrome, --surface, --hover, --line, --line2, --text, --quiet, --faint, --her, --her2, --on-her, --av1, --av2,
@@ -75,9 +75,10 @@
   /* Kind palette (B-540, D-395, r4.css .k-*): badge and sidebar-dot colours by kind, from page/theme.js's coded
      colours at one lightness and chroma per mode; never black, white or grey text colour. Badge text is the kind mixed
      70% into the text (r4.css round 5). */
-  --kind-learn:var(--info); --kind-practice:var(--violet); --kind-review:var(--teal); --kind-graded:var(--bad);
-  --kind-skills:var(--warn); --kind-note:var(--slate); --kind-class:var(--ok); --kind-reading:var(--info);
-  --kind-quiz:var(--teal); --kind-session:var(--violet); --kind-workout:var(--ok); --kind-flash:var(--violet);
+  /* blue and violet by their generated names: base.css still greys --info and --violet for the old views */
+  --kind-learn:var(--sem-blue); --kind-practice:var(--sem-violet); --kind-review:var(--teal); --kind-graded:var(--bad);
+  --kind-skills:var(--warn); --kind-note:var(--slate); --kind-class:var(--ok); --kind-reading:var(--sem-blue);
+  --kind-quiz:var(--teal); --kind-session:var(--sem-violet); --kind-workout:var(--ok); --kind-flash:var(--sem-violet);
   --kind-dot:7px; --kind-text-mix:70%;
 }
 /* Density switches on the phone's width (today's rows, 44px under 600px) or a coarse pointer, whichever holds. */
