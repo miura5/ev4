@@ -10950,5 +10950,23 @@
    "outcome": "task",
    "at": "2026-10-30T13:30:22.120Z"
   }
+ },
+ {
+  "id": "B-592",
+  "kind": "request",
+  "title": "Request (reported Oct 30): In the Conversation view, her reply should write itself out with a caret leading it, as in his Type-only mock-up, instead of words fading in from a blur; the caret is optional but he likes it.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "In the Conversation view, her reply should write itself out with a caret leading it, as in his Type-only mock-up, instead of words fading in from a blur; the caret is optional but he likes it.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T14:07:53.454Z",
+  "board": {
+   "row": "v4 B-592: In the Conversation view, her reply should write itself out with a…"
+  }
  }
 ]
