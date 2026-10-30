@@ -10128,7 +10128,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "Dot plus coloured word, 72 px column (9a8cbe5). Progress and the sidebar match. Today's one-column bar waits on B-564, which must move the badge ahead of the title.",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
