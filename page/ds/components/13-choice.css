@@ -24,3 +24,8 @@
 .choice-o:is([data-state=correct],[data-state=revealed]) > svg{stroke:var(--sem-green)}
 .choice-o[data-state=wrong] > svg{stroke:var(--sem-red)}
 @media (hover:none){:where(.choice-o) > kbd{display:none}}
+/* B-515 lane D2b: the kit's class rules (legacy's choice look), moved from page/styles.css unchanged in
+   selector, value and order, so a class without data-ui still draws as before once legacy drops. */
+input.tick{appearance:none;flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;border:1.5px solid var(--faint);border-radius:7px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .2s,border-color .2s}
+input.tick:checked{background:var(--do);border-color:var(--do)}
+input.tick:checked::after{content:"";width:6px;height:11px;border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}

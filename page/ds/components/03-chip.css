@@ -21,3 +21,10 @@
 :where(button[data-ui='chip']):disabled{opacity:.45;cursor:default}
 /* the Gallery's forced states, over legacy's .chip until B-515 */
 button[data-ui='chip']:not([aria-pressed='true']):is([data-state='hover'],[data-state='pressed']){background:var(--wash-3)!important;color:var(--text)!important}
+/* B-515 lane D2b: the kit's class rules (legacy's chip look), moved from page/styles.css unchanged in
+   selector, value and order, so a class without data-ui still draws as before once legacy drops. */
+.chips{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:1px}
+.chip{display:inline-block;font-size:calc(11.5px * var(--ts));font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--chip);color:var(--quiet)}
+.chip.accent{background:var(--accent);color:var(--accent-ink)} .chip.ok{background:var(--accent-bg);color:var(--accent-text)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.info{background:var(--info-bg);color:var(--info)} .chip.plum{background:var(--plum-bg);color:var(--plum)}

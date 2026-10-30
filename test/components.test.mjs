@@ -23,8 +23,15 @@ test('B-285: D-285 reads coded yellow back from its colour: the generator gives 
 });
 
 test('B-285: the stylesheet holds every part, rows at 32 and 44 px, and switches styled by their picked state', () => {
+  // B-515 D2b: the kit's class rules live in Proprietary's component files; badge, toolbar, bar and field stay in legacy.
   const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
-  const set = css.slice(css.search(/B-285 \(D-274, D-2\d\d, D-269, C-1, C-15\): the component set/));
+  const dir = path.join(ROOT, 'page', 'ds', 'components');
+  const kit = fs
+    .readdirSync(dir)
+    .sort()
+    .map(f => fs.readFileSync(path.join(dir, f), 'utf8'))
+    .join('\n');
+  const set = kit + css.slice(css.search(/B-285 \(D-274, D-2\d\d, D-269, C-1, C-15\): the component set/));
   for (const part of [
     'button.btn.primary',
     'button.btn.neutral',

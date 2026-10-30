@@ -12,3 +12,19 @@
   :where([data-ui='segmented']){align-self:stretch;width:100%}
   :where([data-ui='segmented']) > button{flex:1;justify-content:center;height:var(--tap);min-height:var(--tap);min-width:var(--tap);padding:0 var(--sp-3)}
 }
+/* B-515 lane D2b: the kit's class rules (legacy's segmented look), moved from page/styles.css unchanged in
+   selector, value and order, so a class without data-ui still draws as before once legacy drops. */
+.seg{display:flex;gap:4px;background:rgba(var(--tint),.05);border:1px solid var(--line);border-radius:999px;padding:4px;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;min-height:38px;border:0;background:transparent;color:var(--quiet);font:600 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;cursor:pointer}
+.seg button:hover{background:var(--glass2)}
+.seg button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent-text)}
+@media (max-width:599px){.seg{align-self:stretch}.seg button{flex:1;padding:0 8px}}
+.seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--hover);box-shadow:none;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:24px;height:24px;padding:0 9px;border:0;border-radius:6px;background:none;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);cursor:pointer;box-sizing:border-box}
+.seg button:hover{background:var(--bg);color:var(--text)}
+.seg button:is([aria-pressed="true"],[aria-checked="true"]){background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+@media (max-width:599px){
+  .seg{align-self:stretch;width:100%}
+  .seg button{min-height:44px;height:44px;padding:0 12px;min-width:44px;justify-content:center;flex:1}
+}

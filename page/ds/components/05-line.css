@@ -46,3 +46,17 @@
 /* the Gallery's forced hover shows the hover action over legacy's .li .hov until B-515 */
 [data-ui='line'][data-state='hover'] > .hov{visibility:visible!important}
 @media (max-width:599px){:where([data-ui='line']:not([data-kind='stack'])){height:var(--tap);padding:0 var(--sp-4)}:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:visible}}
+/* B-515 lane D2b: the kit's class rules (legacy's line look), moved from page/styles.css unchanged in
+   selector, value and order, so a class without data-ui still draws as before once legacy drops. */
+.row{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid rgba(var(--tint),.06);min-width:0}
+.row:first-child{border-top:0}
+.li{display:flex;align-items:center;gap:12px;height:32px;padding:0 12px;border-bottom:1px solid var(--line);color:var(--text);font-size:calc(13.5px * var(--ts));min-width:0}
+.li:hover{background:var(--hover)}
+.li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .t{flex:none;color:var(--quiet);font-size:calc(12.5px * var(--ts));font-variant-numeric:tabular-nums}
+.li .hov{visibility:hidden}
+.li:hover .hov,.li:focus-within .hov{visibility:visible}
+@media (max-width:599px){
+  .li{height:44px;padding:0 16px}
+  .li .hov{visibility:visible}
+}

@@ -45,21 +45,11 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 /* D-159: two breakpoints, 600 and 1024 px; every width between them is the phone stack, its column centred at most 660 px. */
 @media (max-width:1023px){.wrap{max-width:660px}}
 .ptitle{font:600 calc(30px * var(--ts))/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
-.seg{display:flex;gap:4px;background:rgba(var(--tint),.05);border:1px solid var(--line);border-radius:999px;padding:4px;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.seg::-webkit-scrollbar{display:none}
-.seg button{flex:0 0 auto;min-height:38px;border:0;background:transparent;color:var(--quiet);font:600 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;cursor:pointer}
-.seg button:hover{background:var(--glass2)}
-.seg button[aria-pressed="true"]{background:var(--accent-bg);color:var(--accent-text)}
-@media (max-width:599px){.seg{align-self:stretch}.seg button{flex:1;padding:0 8px}}
 /* kit: card, row, chip, stat, table, empty */
 .panel{display:flex;flex-direction:column;gap:14px}
-.card{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.card-head{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
 /* B-117 (v4 rule 6): the Now card's lead is one line, so ticking the item it names never moves the list under it. */
 .big{font-size:calc(22px * var(--ts));font-weight:600;line-height:1.25;margin:0}
 .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.row{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid rgba(var(--tint),.06);min-width:0}
-.row:first-child{border-top:0}
 .row .grow{flex:1;min-width:0}
 .row .title{overflow-wrap:anywhere}
 .row.done .title{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(var(--tint),.2)}
@@ -77,11 +67,6 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .fold-card{padding-top:10px;padding-bottom:10px}.fold-card .fold-line{color:var(--ink)}
 .fold-line::after{content:' ›'}.fold-line[aria-expanded=true]::after{content:' ⌄'}
 .when{font:500 calc(12px * var(--ts)) var(--sans);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
-.chips{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:1px}
-.chip{display:inline-block;font-size:calc(11.5px * var(--ts));font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--chip);color:var(--quiet)}
-.chip.accent{background:var(--accent);color:var(--accent-ink)} .chip.ok{background:var(--accent-bg);color:var(--accent-text)}
-.chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
-.chip.info{background:var(--info-bg);color:var(--info)} .chip.plum{background:var(--plum-bg);color:var(--plum)}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:13px 16px;min-width:0}
 .stat b{display:block;font-size:calc(26px * var(--ts));font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2;letter-spacing:-.01em}
@@ -96,20 +81,8 @@ table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:no
 .meter{height:8px;border-radius:4px;background:rgba(var(--tint),.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--do);border-radius:4px}
 .progress{height:4px;border-radius:2px;background:rgba(var(--tint),.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--do);transition:width .2s ease}
 /* controls */
-button,.btn{font:500 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background .2s ease,border-color .2s ease,transform .1s ease}
-button:hover{background:var(--glass2)}
-button:active:not(:disabled){transform:scale(.98)}
-/* B-275 (D-270): the primary button is Ember, one of the three places her accent appears (her, primary, send). */
-button.primary{background:var(--her);border-color:var(--her);color:var(--on-her);font-weight:600}
-button.primary:hover{background:color-mix(in srgb,var(--her) 88%,var(--text));border-color:color-mix(in srgb,var(--her) 88%,var(--text))}
-button.violet{background:var(--violet);border-color:var(--violet);color:var(--violet-ink);font-weight:600}
-button:disabled{opacity:.5;cursor:default}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-input.tick{appearance:none;flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;border:1.5px solid var(--faint);border-radius:7px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .2s,border-color .2s}
-input.tick:checked{background:var(--do);border-color:var(--do)}
-input.tick:checked::after{content:"";width:6px;height:11px;border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 .fields{display:flex;gap:8px;flex-wrap:wrap}
-button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .actions .grow{flex:1;min-width:0}
 /* B-191: Back sits at the left of a question's actions, Next and the check at the right; an open set folds by its head line (D-160). */
@@ -800,24 +773,8 @@ body.captions.her-folded .hero{transition-duration:.16s}
    x-blue or x-violet, which sets --x for the part it is on; D-269 gives all five one lightness. A view uses at most one
    primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
    on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
-.x-green{--x:var(--sem-green)}.x-yellow{--x:var(--sem-yellow)}.x-red{--x:var(--sem-red)}.x-blue{--x:var(--sem-blue)}.x-violet{--x:var(--sem-violet)}.x-quiet{--x:var(--quiet)}
-/* buttons */
-button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:500 calc(13px * var(--ts)) var(--sans);white-space:nowrap;cursor:pointer;box-shadow:none;transition:background .12s ease,color .12s ease}
-button.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-button.btn.primary{background:var(--her);color:var(--on-her);font-weight:600}
-button.btn.primary:not(:disabled):hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
-button.btn.neutral{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
-button.btn.neutral:not(:disabled):hover{background:var(--hover)}
-button.btn.tint{background:color-mix(in srgb,var(--x,var(--faint)) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x,var(--faint)) 45%,var(--line2))}
-button.btn.tint svg{color:var(--x)}
-button.btn.tint:not(:disabled):hover{background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
-button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint){color:var(--quiet)}
-button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint,:disabled):hover{background:var(--hover);color:var(--text)}
-button.btn.icon{width:32px;padding:0}
-button.btn.sm{height:28px;min-height:28px;padding:0 10px;font-size:calc(12.5px * var(--ts))}
-button.btn.icon.sm{width:28px;padding:0}
-button.btn.send{border-radius:16px}
-button.btn:disabled{opacity:.45;cursor:default}
+/* B-515 D2b: the kit moved to page/ds/components; this one line stays until Study's .ov-sets .sm (lane B) stops matching a small button */
+button.btn.sm{font-size:calc(12.5px * var(--ts))}
 /* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
 .badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12px * var(--ts)) var(--sans);white-space:nowrap;flex:none}
 .badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
@@ -826,20 +783,8 @@ button.btn:disabled{opacity:.45;cursor:default}
 .title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
 /* B-380: as the demo's .seg: a flat grey fill with no outline; the picked option on the surface with a hairline */
-.seg{display:inline-flex;gap:2px;padding:2px;border:0;border-radius:8px;background:var(--hover);box-shadow:none;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.seg button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:24px;height:24px;padding:0 9px;border:0;border-radius:6px;background:none;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);cursor:pointer;box-sizing:border-box}
-.seg button:hover{background:var(--bg);color:var(--text)}
-.seg button:is([aria-pressed="true"],[aria-checked="true"]){background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
 /* card */
-.ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
-.ui-card>h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
 /* row: the name, then at most one badge, the time, and actions that show on hover or focus */
-.li{display:flex;align-items:center;gap:12px;height:32px;padding:0 12px;border-bottom:1px solid var(--line);color:var(--text);font-size:calc(13.5px * var(--ts));min-width:0}
-.li:hover{background:var(--hover)}
-.li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.li .t{flex:none;color:var(--quiet);font-size:calc(12.5px * var(--ts));font-variant-numeric:tabular-nums}
-.li .hov{visibility:hidden}
-.li:hover .hov,.li:focus-within .hov{visibility:visible}
 /* toolbar: a view's tabs, its switches and its one primary */
 .toolbar{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .toolbar .sp{flex:1}
@@ -852,12 +797,6 @@ button.btn:disabled{opacity:.45;cursor:default}
 .field :is(input,textarea){flex:1;min-width:0;min-height:0;height:auto;margin:0;padding:14px 0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 calc(14.5px * var(--ts)) var(--sans);resize:none;outline:none}
 .field ::placeholder{color:var(--faint)}
 @media (max-width:599px){
-  button.btn,button.btn.sm{height:44px;min-height:44px}
-  button.btn.icon,button.btn.icon.sm{width:44px}
-  .seg{align-self:stretch;width:100%}
-  .seg button{min-height:44px;height:44px;padding:0 12px;min-width:44px;justify-content:center;flex:1}
-  .li{height:44px;padding:0 16px}
-  .li .hov{visibility:visible}
   .toolbar{padding:8px 12px}
   .field{min-height:56px;padding:0 6px 0 16px}
 }
