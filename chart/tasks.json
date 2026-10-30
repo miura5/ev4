@@ -11195,5 +11195,22 @@
    "outcome": "task",
    "at": "2026-10-30T18:38:25.104Z"
   }
+ },
+ {
+  "id": "B-603",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): spec.ui.look.layout and spec.ui.look.theme still describe the retired dark top-bar look; no prompt reads them yet, but they are stale truth in the spec.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-602 builder",
+  "words": "spec.ui.look.layout and spec.ui.look.theme still describe the retired dark top-bar look; no prompt reads them yet, but they are stale truth in the spec.",
+  "reportedAt": "2026-10-30T19:12:27.849Z",
+  "board": {
+   "row": "v4 B-603: spec.ui.look.layout and spec.ui.look.theme still describe the retired…"
+  }
  }
 ]
