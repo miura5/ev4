@@ -61,6 +61,7 @@ export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, vi
 // [layer, file or folder/]: a folder is read in name order, its *.css files each one block of that layer.
 export const STYLE_LAYERS = [
   ['tokens', 'page/ds/tokens.css'],
+  ['base', 'page/ds/base.css'],
   ['components', 'page/ds/components/'],
   ['patterns', 'page/ds/patterns/'],
   ['views', 'page/ds/views/'],
@@ -79,7 +80,8 @@ export function styleParts(root = HERE, target = 'staging') {
         .filter(x => x.endsWith('.css'))
         .sort())
         out.push([layer, f + n]);
-    } else if (layer === 'legacy' || layer === 'tokens' || fs.existsSync(path.join(root, f))) out.push([layer, f]);
+    } else if (layer === 'legacy' || layer === 'tokens' || layer === 'base' || fs.existsSync(path.join(root, f)))
+      out.push([layer, f]);
   }
   return out.filter(([, f]) => target === 'staging' || !stagingOnly(f));
 }

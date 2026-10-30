@@ -1,0 +1,27 @@
+/* B-515 lane A: the element and :root rules every view stands on, moved from page/styles.css unchanged. */
+:root{color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light}}
+:root[data-theme="light"]{color-scheme:light}
+*{box-sizing:border-box}
+/* B-390: a hidden element is gone on this sheet's own word, not only the host skeleton's (a hidden panel takes no taps) */
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:calc(16px * var(--ts));line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;min-height:100vh;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--dock-h) + 28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+a{color:var(--accent-text)}
+/* B-275 (D-270): selected text is neutral, a grey wash in the text colour, never the system blue */
+::selection{background:rgba(var(--tint),.18);color:var(--text)}
+h1{font-size:calc(30px * var(--ts));font-weight:600;letter-spacing:-.02em;margin:0}
+h2{font:600 calc(13.5px * var(--ts))/1.3 var(--sans);color:var(--ink2);margin:0}
+details>summary{cursor:pointer;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
+form{display:flex;flex-direction:column;gap:10px}
+input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;min-height:44px;padding:9px 12px;border-radius:12px;border:1px solid var(--line2);background:rgba(var(--tint),.04);color:var(--ink);min-width:0;flex:1;color-scheme:dark}
+select option{background:var(--surface);color:var(--ink)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+textarea{min-height:110px;resize:vertical;line-height:1.55}
+/* Reduced motion, the system setting and E.V.'s own (B-224): in base, its !important beats every later layer's. */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+:root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{transition:none!important;animation:none!important}
+/* Legacy's grey --info and --violet, and its --warn and --bad, kept over page/theme.js's coded names (tokens layer)
+   until the neutral theme lane decides them (B-515): base wins over tokens, so nothing changes colour. */
+:root{--warn:var(--att);--bad:var(--urg);--info:var(--quiet);--violet:var(--quiet)}

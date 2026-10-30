@@ -7,31 +7,7 @@
    --att and --urg (green, yellow, red), --do-ink, and the r,g,b forms --tint, --ground, --her-rgb, --do-rgb, --att-rgb,
    --urg-rgb. The system theme follows prefers-color-scheme; the stored toggle (ev.theme, <html data-theme>) overrides
    it. Her two faces are --av1 and --av2 (D-266). */
-:root{color-scheme:dark;
-  /* The names the stylesheet already used, each now one of the tokens above (the old violet and plum names are grey). */
-  --glass:rgba(var(--tint),.04); --glass2:rgba(var(--tint),.07);
-  --ink:var(--text); --ink2:var(--quiet); --soft:var(--faint); --chip:rgba(var(--tint),.06);
-  /* B-275 (D-270): --accent is neutral (links, focus, selection, chips); done, right and progress name --do. */
-  --accent:var(--text); --accent-ink:var(--bg); --accent-text:var(--text); --accent-bg:var(--hover); --accent-edge:var(--line2);
-  --violet:var(--quiet); --violet-ink:var(--bg); --plum:var(--quiet); --plum-bg:rgba(var(--tint),.07);
-  --warn:var(--att); --warn-solid:var(--att); --warn-bg:rgba(var(--att-rgb),.13);
-  --bad:var(--urg); --bad-solid:var(--urg); --bad-bg:rgba(var(--urg-rgb),.13);
-  --info:var(--quiet); --info-bg:rgba(var(--tint),.07); --card:var(--glass);
-  --sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font; B-303: Inter (Google Fonts), the system UI font while it loads or if it can't; --mono is for code only */ --serif:var(--sans);
-  --r:22px; --tap:44px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
-}
-@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light}}
-:root[data-theme="light"]{color-scheme:light}
-*{box-sizing:border-box}
-/* B-390: a hidden element is gone on this sheet's own word, not only the host skeleton's (a hidden panel takes no taps) */
-[hidden]{display:none!important}
-html{background:var(--bg)}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:calc(16px * var(--ts));line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;min-height:100vh;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--dock-h) + 28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
-a{color:var(--accent-text)}
-/* B-275 (D-270): selected text is neutral, a grey wash in the text colour, never the system blue */
-::selection{background:rgba(var(--tint),.18);color:var(--text)}
 /* top bar */
 .top{position:sticky;top:0;z-index:8;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:calc(4px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px));
   background:rgba(var(--ground),.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(var(--tint),.06)}
@@ -69,9 +45,6 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 /* D-159: two breakpoints, 600 and 1024 px; every width between them is the phone stack, its column centred at most 660 px. */
 @media (max-width:1023px){.wrap{max-width:660px}}
 .ptitle{font:600 calc(30px * var(--ts))/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
-h1{font-size:calc(30px * var(--ts));font-weight:600;letter-spacing:-.02em;margin:0}
-h2{font:600 calc(13.5px * var(--ts))/1.3 var(--sans);color:var(--ink2);margin:0}
-.eyebrow{font:500 calc(12.5px * var(--ts)) var(--sans);color:var(--soft)}
 .seg{display:flex;gap:4px;background:rgba(var(--tint),.05);border:1px solid var(--line);border-radius:999px;padding:4px;align-self:flex-start;max-width:100%;overflow-x:auto;scrollbar-width:none}
 .seg::-webkit-scrollbar{display:none}
 .seg button{flex:0 0 auto;min-height:38px;border:0;background:transparent;color:var(--quiet);font:600 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;cursor:pointer}
@@ -101,14 +74,6 @@ h2{font:600 calc(13.5px * var(--ts))/1.3 var(--sans);color:var(--ink2);margin:0}
 .week-item .when{padding-top:0}
 .fold-line{all:unset;cursor:pointer;color:var(--ink2);font-size:calc(14px * var(--ts));padding:4px 0}
 /* B-118: Readiness. One lead line; one objective per line, opening in place; the other tables one line each. */
-.ready-lead{font-size:calc(20px * var(--ts));text-wrap:balance}
-.obj-item{flex-direction:column;align-items:stretch;gap:2px;padding:4px 0}
-.obj-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
-.obj-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-.obj-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.obj-n{flex:none;color:var(--ink2);font-size:calc(13px * var(--ts))}
-.obj-more{display:none;flex-direction:column;gap:4px;padding:0 0 6px}.obj-item.open .obj-more{display:flex}
-.obj-more .meta{margin:0}
 .fold-card{padding-top:10px;padding-bottom:10px}.fold-card .fold-line{color:var(--ink)}
 .fold-line::after{content:' ›'}.fold-line[aria-expanded=true]::after{content:' ⌄'}
 .when{font:500 calc(12px * var(--ts)) var(--sans);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
@@ -130,7 +95,6 @@ table.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid rgba(var(--tint),.06)
 table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .meter{height:8px;border-radius:4px;background:rgba(var(--tint),.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--do);border-radius:4px}
 .progress{height:4px;border-radius:2px;background:rgba(var(--tint),.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--do);transition:width .2s ease}
-details>summary{cursor:pointer;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
 /* controls */
 button,.btn{font:500 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background .2s ease,border-color .2s ease,transform .1s ease}
 button:hover{background:var(--glass2)}
@@ -144,12 +108,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 input.tick{appearance:none;flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;border:1.5px solid var(--faint);border-radius:7px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .2s,border-color .2s}
 input.tick:checked{background:var(--do);border-color:var(--do)}
 input.tick:checked::after{content:"";width:6px;height:11px;border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
-form{display:flex;flex-direction:column;gap:10px}
 .fields{display:flex;gap:8px;flex-wrap:wrap}
-input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;min-height:44px;padding:9px 12px;border-radius:12px;border:1px solid var(--line2);background:rgba(var(--tint),.04);color:var(--ink);min-width:0;flex:1;color-scheme:dark}
-select option{background:var(--surface);color:var(--ink)}
-input::placeholder,textarea::placeholder{color:var(--faint)}
-textarea{min-height:110px;resize:vertical;line-height:1.55}
 button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .actions .grow{flex:1;min-width:0}
@@ -157,12 +116,10 @@ button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .actions .q-back{margin-right:auto}
 .card-head .pr-fold{font-size:calc(15px * var(--ts));font-weight:600;color:var(--ink)}
 /* question runner */
-.q-head{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .stem{font-size:calc(17px * var(--ts));line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
 /* B-116: the question's stem leads at 20 px; its kind is one quiet line under it; the one count sits at the bar. */
 .q-stem{font-size:calc(17px * var(--ts));line-height:1.5} /* B-245: one size everywhere, her line's with a card open */
 .q-tags{margin:2px 0 4px}
-.bar-row{display:flex;align-items:center;gap:10px}.bar-row .progress{flex:1}.bar-row .meta{flex:none;font-variant-numeric:tabular-nums}
 .more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
 #more-btn{flex:none}
 .opts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0;min-width:0}
@@ -224,12 +181,9 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .msg-cards:empty{display:none}
 .msg-meta{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .msg-meta button{min-height:32px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans);letter-spacing:0;text-transform:none;color:var(--quiet)}
-.list .daysep-row{font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft);padding:16px 0 4px;border:0;min-height:0}
-.daysep{align-self:center;font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft);padding:4px 12px;border-radius:999px;background:rgba(var(--tint),.05)}
 .dots{display:inline-flex;gap:5px;padding:6px 0} .dots i{width:6px;height:6px;border-radius:50%;background:var(--soft);animation:pulse 1.1s infinite}
 .dots i:nth-child(2){animation-delay:.18s} .dots i:nth-child(3){animation-delay:.36s}
 /* opening: E.V. greets at full size, the greeting sits under the core */
-body.opening .thread.today-only .daysep{display:none}
 body.opening .msg.greet{flex-direction:column;align-items:center;text-align:center;gap:0}
 body.opening .msg.greet>.ev-av,body.opening .msg.greet>.av-slot,body.opening .msg.greet .msg-meta{display:none}
 body.opening .msg.greet .msg-body{align-self:stretch;align-items:center;padding-top:0}
@@ -297,7 +251,6 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .rise{animation:rise .3s var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes pulse{50%{opacity:.35}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:calc(14px * var(--ts));padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
 .sk-sheet{display:flex;flex-direction:column;gap:0;background:rgba(var(--ground),.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--accent-edge);border-radius:var(--r);overflow:hidden}
@@ -403,8 +356,6 @@ body.captions .msg-cards,body.captions.opening .msg.greet .msg-cards{display:fle
 body.captions .msg-cards:empty{display:none}
 /* Until B-78's surfaces: one card under her line (five rows and a more that opens its tab; never scrolling inside
    itself), the rest of the reply's cards as one tappable line that swaps the next card in. */
-body.captions .cap-cards-more{align-self:center;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:none;font-size:calc(13px * var(--ts));color:var(--soft)}
-body.captions .cap-cards-more:hover{color:var(--ink)}
 .card-more{align-self:flex-start;min-height:36px;padding:0 12px;font-size:calc(13px * var(--ts))}
 /* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
    and no dot; an action sits at a line's end as a small button. */
@@ -416,18 +367,9 @@ body.captions .cap-cards-more:hover{color:var(--ink)}
 .chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform .25s var(--ease)}
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:calc(12.5px * var(--ts));color:var(--soft);white-space:nowrap;overflow:hidden}
-.sread .sr-where{flex:0 0 auto}
-@media (max-width:599px){.sread .sr-nm{display:none}}
-.sread .sr-line{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink);font-weight:500}
 .cap-quote{margin:2px 0 0;font-size:calc(12.5px * var(--ts));color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
-.card-line{appearance:none;align-self:center;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:0 4px;border:0;border-radius:8px;background:none;color:var(--ink2);font:500 calc(14.5px * var(--ts)) var(--sans);text-align:left;cursor:pointer}
-.card-line:hover,.card-line:active,.card-line:focus{background:none;color:var(--ink);transform:none}
-.card-line .cl-t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:underline;text-decoration-color:rgba(var(--tint),.18);text-underline-offset:4px}
-.card-line:hover .cl-t{text-decoration-color:currentColor}
-.card-line .cl-go{flex:none;display:flex;align-items:center;color:var(--soft)}
-.card-line .cl-go svg{width:14px;height:14px}
 body.captions .msg-cards{gap:8px}
 /* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
 #qchips:empty{display:none}
@@ -514,14 +456,12 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 .ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
 .sk-pfold{color:var(--ink);font-weight:600}.sk-panel.folded{gap:0}
 /* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
-.ws-lead{margin:0 0 2px}
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
 .ws-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
 .ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws-n{flex:none;color:var(--ink2);font-size:calc(13px * var(--ts))}
 .ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}.ws-item.open .ws-more{display:flex}.ws-more .meta{margin:0}.ws-more .actions{margin:0}
-#weak-card>.fold-line{display:block}
 button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14px * var(--ts));padding:4px 0}button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 /* B-126 (D-165): Study answered and done. The counter is the set's fold line; one line per question under it, beside
    the question from 1024 px; the verdict one line under the stem; a finished set's lines open in place. */
@@ -529,9 +469,8 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .fold-line.flat{cursor:default;pointer-events:none}.fold-line.flat::after{content:''}
 .set-list{margin:2px 0 8px}
 .set-q,.sum-line{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;cursor:pointer;color:var(--ink);font-size:calc(14.5px * var(--ts))}
-.set-q:focus-visible,.sum-line:focus-visible,.next-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.set-q:focus-visible,.sum-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .set-list .row,.sum-list .row,#pr-body .row{padding:4px 0}
-.sq-n{flex:none;color:var(--soft);font-variant-numeric:tabular-nums;min-width:1.6em}
 .sq-t,.sum-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sq-s,.sum-k{flex:none;color:var(--soft);font-size:calc(13px * var(--ts))}.sq-s.ok{color:var(--do)}
 .set-item.current .sq-t{color:var(--accent-text)}
@@ -542,25 +481,11 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .why-fold{align-self:flex-start}
 .sum-h{margin:6px 0 0}
 .sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
-.next-line{all:unset;cursor:pointer;color:var(--ink2);font-size:calc(14.5px * var(--ts));padding:8px 0 2px;display:block}.next-line::after{content:' ›'}
 #more-card:not(.card){padding:4px 0}
 .plan-lead{margin:2px 0 0}
 
 /* B-48 (D-105): readiness over time. Thin line, recessive grid; the night-before prediction a ring of its own. */
-.trend-wrap{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}
-.trend{width:100%;max-width:400px;height:auto;display:block;overflow:visible}
-.trend-grid{stroke:var(--line);stroke-width:1}
-.trend-axis{fill:var(--soft);font:calc(11px * var(--ts)) var(--sans)}
-.trend-line{fill:none;stroke:var(--do);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
-.trend-link{stroke:var(--violet);stroke-width:1.5;stroke-dasharray:3 3}
-.trend-pt{fill:var(--do);stroke:var(--bg);stroke-width:2}
-.trend-pt.week{fill:var(--bg);stroke:var(--do)}
-.trend-pred{fill:var(--bg);stroke:var(--violet);stroke-width:2}
-.trend-label{fill:var(--ink2);font:600 calc(11px * var(--ts)) var(--sans)}
-.trend-cap{margin:0}
 /* B-72 (D-120): the week's three lines. */
-.ins-list{margin:0}
-.ins-line{padding:6px 0;line-height:1.4}
 /* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
 /* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
@@ -572,7 +497,6 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
    width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
-:root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px;--panel-top:calc(8px + var(--mh-h))}
 html{background:var(--bg)}
 body{background:transparent}
 /* B-332 (D-312, superseding D-225's 680 px): lists, cards and grids span the pane; only her message column keeps 680 px */
@@ -853,7 +777,6 @@ button.tlink:hover{text-decoration-color:currentColor}
 body.captions .msg-body,body.captions.opening .msg.greet{align-items:flex-start;text-align:left}
 body.captions .msg.matt .msg-body{align-items:flex-end;text-align:right}
 body.captions .msg-meta{justify-content:flex-start}
-body.captions .cap-cards-more{align-self:flex-start}
 
 /* ============================================================ B-340 (D-312): E.V.'s view as in the demo =============
    The Conversation board: her lines in a 600 px column (24 px in), the past ones small and faint, his to the right
@@ -942,22 +865,18 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
   #ev-dates .wk-line::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--quiet);flex:none}
   #ev-dates .wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:inherit}
   #ev-dates .when{order:2;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
-  #ev-dates .bi-prep,#ev-dates .wk-k{display:none}
 }
 
 /* ============================================================ B-224 (D-229): System's Preferences ====================
    Text size: every font size is calc(N px * var(--ts)); Larger is one step up. Reduce motion On gives the end states the
    system's reduced-motion setting gives. Both are this device's own, set before first paint by the page's head script. */
-:root{--ts:1}
-:root[data-text="larger"]{--ts:1.125}
-:root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{transition:none!important;animation:none!important}
 :root[data-motion="reduce"] body.captions .reveal .w{opacity:1;filter:none;transform:none}
 :root[data-motion="reduce"] body.captions.side-on #p-ev>#ev-side{animation:none}
 
 /* ============================================================ B-225 (D-271): folds open in 0.28 s and close in 0.16 s ==
    A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
 .chev,.prep-row .chev{transition-duration:.16s}
-.open>.brief-row .chev,.brief-item.open .chev,.prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:.28s}
+.prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:.28s}
 .sk-tog::after{transition-duration:.16s}
 .sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
 body.captions.her-folded .hero{transition-duration:.16s}
@@ -1093,7 +1012,6 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-list .ti-fold{display:flex;align-items:center;min-height:32px;margin-top:4px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
 #today-list .ti-fold:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 #today-list .ti-folded .row{min-height:32px;padding:0 4px 0 30px;align-items:center;color:var(--quiet)}
-#today-list .ti-folded .row.ti-hint{color:var(--faint);font-size:calc(12px * var(--ts))}
 @media (max-width:599px){
   #today-list .li{padding:0 2px;gap:8px}
   #today-list .li .tk{width:44px;height:44px;margin:0 -13px}
@@ -1116,8 +1034,6 @@ button.btn:disabled{opacity:.45;cursor:default}
 #today-budget .tb-done-line{margin:0;font-variant-numeric:tabular-nums}
 #p-today .tb-over:not(.pbar){color:color-mix(in srgb,var(--sem-yellow) 70%,var(--text))}
 #today-budget .tb-over-line{margin:0}
-#today-list .card-head .tb-short{margin-left:auto;font-variant-numeric:tabular-nums}
-@media (min-width:1200px){#today-list .card-head .tb-short{display:none}}
 /* ============================================================ B-294: E.V.'s changes today ============================
    Under the budget card in the side column (the right panel from 1200 px): one row per list edit she made today, its
    time in grey under it and a ghost Undo at its end. Absent while she has changed nothing (D-151). */
@@ -1129,10 +1045,8 @@ button.btn:disabled{opacity:.45;cursor:default}
    "Proposed" badge and labelled Accept and Keep. No dashed ring and no x. */
 #today-list .card-head{gap:8px}
 #today-list .card-head .ti-rest{margin-left:auto}
-#today-list .card-head .tb-short+.ti-rest{margin-left:0}
 #today-list .ti-review{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 6px;padding:8px 10px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
 #today-list .ti-review-t{flex:1 1 16rem;margin:0;color:var(--text);font-size:calc(13px * var(--ts));line-height:1.4}
-#today-list .li .ti-gap{cursor:default}
 #today-list .li.ti-prop .nm{cursor:default}
 #today-list .li.ti-prop .nm:hover .ti-t{text-decoration:none}
 @media (max-width:599px){
@@ -1196,8 +1110,6 @@ button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:
 #today-date .wd-props .prop-v{text-align:left;min-width:0;color:var(--text);overflow-wrap:anywhere}
 #today-date .wd-acts{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 #today-date .wd-acts .btn{height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
-#today-task .wk-props .prop,#today-date .wk-props .prop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;border-bottom:1px solid var(--line);font-size:calc(13px * var(--ts))}
-#today-task .wk-props .prop:last-child,#today-date .wk-props .prop:last-child{border-bottom:0}
 #today-task .prop-k,#today-date .prop-k{color:var(--quiet)}
 #today-task .prop-v,#today-date .prop-v{text-align:right;min-width:0}
 #today-task .wk-acts,#today-date .wk-acts{display:flex;flex-wrap:wrap;gap:6px}
@@ -1293,7 +1205,7 @@ button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:
 #today-list .ti-folded{margin:0 -16px}
 #today-list .ti-folded>.li{min-height:44px;height:auto;padding:0 18px;gap:12px}
 #today-list .ti-folded .row{padding:0 18px 0 46px}
-#today-list>.empty,#today-list>.ti-live{padding:14px 2px}
+#today-list>.empty{padding:14px 2px}
 #today-list .ti-review{margin:0 -16px;border-radius:0;padding:9px 18px;background:var(--chrome);box-shadow:none;border-bottom:1px solid var(--line)}
 #today-budget{background:var(--surface);border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:14px;gap:10px}
 #p-today #today-budget>h2{min-height:0;font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
@@ -1503,8 +1415,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .ov-detail .od-ws .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ov-detail .od-ws .st{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
 .ov-detail .od-q{align-self:flex-start}
-.ov-detail .od-task{height:30px;margin:-8px 0}
-.ov-detail .od-task .sn{line-height:1.4}
 .ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
 .ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
 .ov:last-child > .ov-detail{border-bottom:0}

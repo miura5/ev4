@@ -9,7 +9,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const css = fs.readFileSync(path.join(ROOT, 'page/styles.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = ['page/ds/base.css', 'page/styles.css']
+  .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
+  .join('\n')
+  .replace(/\/\*[\s\S]*?\*\//g, '');
 const HER = '60-ev-conversation.js';
 const appFiles = fs
   .readdirSync(path.join(ROOT, 'page/app'))
