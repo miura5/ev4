@@ -11023,9 +11023,9 @@
   "id": "B-595",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Selecting text in the New task title by dragging closes the dialog when the drag ends outside it; what he typed is kept when he reopens it.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A dialog, sheet or popover closes on an outside tap only when the press both starts and ends outside it; dragging to select text from inside out (or outside in) never closes it; Esc and Cancel still close; applies to every DS.sheet and DS.popover; a harness check drags a selection out of the New task title and the dialog stays open.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11035,6 +11035,10 @@
   "reportedAt": "2026-10-30T16:38:06.388Z",
   "board": {
    "row": "v4 B-595: Selecting text in the New task title by dragging closes the dialog…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T16:38:24.019Z"
   }
  }
 ]
