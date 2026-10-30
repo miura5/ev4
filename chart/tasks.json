@@ -10701,9 +10701,9 @@
   "id": "B-580",
   "kind": "bug",
   "title": "Bug (reported Oct 30): On the phone, Today's Cards row lost its Start button after Start moved into each row's menu (49cb12d); the Cards row should keep Start.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The run harness check B-494 passes at phone width.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10713,6 +10713,10 @@
   "reportedAt": "2026-10-30T10:17:31.162Z",
   "board": {
    "row": "v4 B-580: On the phone, Today's Cards row lost its Start button after Start…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T10:28:28.072Z"
   }
  },
  {
