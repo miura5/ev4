@@ -6381,5 +6381,28 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.21"
+ },
+ {
+  "target": "staging",
+  "commit": "6a6c6d8",
+  "time": "2026-10-30T19:06:35.810Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "7475963",
+  "tasks": [
+   "B-577",
+   "B-595",
+   "B-593",
+   "B-515",
+   "B-599",
+   "B-594",
+   "B-601",
+   "B-596"
+  ],
+  "summary": "On Study at a wide window, the exam plan's summary (draft, rubric…; Selecting text in the New task title by dragging closes the dialog…; A small native tooltip repeating the label pops up on hover over the…; Proprietary cleanup and token lint; A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and…; Kind badges in Study's plan rows and on Today use different colours…; While taking notes with E.V. on BIO 201, she adds NCLEX framing;…; Add a Linear-style Picker to Proprietary (a chip that opens a…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
