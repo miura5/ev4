@@ -10639,7 +10639,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "Reopened: still broken on live v4.5.21 (Matt, Oct 30). NUR 112's ATI Proctored Dosage Assessment plan IS an exam plan (its exam card shows Mon 2 Nov, 'No objectives yet'), so 7b82ee7's own-plan theory was wrong. Wide: the summary and the button row leave the card and the panel stays empty; ~1150 px: inline. BIO 201 works. I marked it done on Matt's 'perfect', which was about the typing reveal; my error. Next: reproduce on Matt's real data before fixing.",
+  "notes": "Not reproduced on live's real data (read only, writes blocked) at 1100-1440 in 20 px steps, nine common sizes at DPR 1 and 2, resizes and clicks: the panel holds NUR 112's summary at 1200 px and up. Suspects: a stale service-worker copy, or a saved ui.study setting other than 'objectives' that hides objPanel (05-question-runner.js:43-72). Matt will quit and reopen and report back. Per Matt (Oct 30), small fixes ride with the cleanup release.",
   "commit": "7b82ee7",
   "source": "build chat",
   "words": "On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
