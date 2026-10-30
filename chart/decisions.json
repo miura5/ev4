@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-400",
+  "date": "Oct 30",
+  "title": "The empty Conversation follows D-393, not D-213's stage: a greeting in the top third with her Arc beside it, a summary line and one Next up row with Start; from 1024 px her 32 px Arc sits beside her newest line, with no stage on the messages; the phone keeps its stage once a conversation starts",
+  "why": "Matt approved the greeting with Next up (D-393) and asked that her avatar no longer sit low on an empty page; D-213's stage sizes and B-358/B-368's no-button rule for the empty thread are retired there, and their checks are rewritten to the new rule",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-399",
   "date": "Oct 29",
   "title": "Neutral-theme token decisions: Proprietary's token budget is about 160 (was about 120 in D-378) for the kind palette, raise/sel surface steps and motion tokens; r4's faint text colour is held just dark or light enough to pass the 4.5:1 floor (accessibility wins over the mock-up's exact hex); the warning colour follows r4's --warn",
