@@ -11085,5 +11085,22 @@
    "outcome": "task",
    "at": "2026-10-30T16:51:35.638Z"
   }
+ },
+ {
+  "id": "B-598",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): run.cjs:2558 (B-450 tick click in studyPlanChecks) sometimes fails with element not attached to the DOM, stopping the rest of the run; other runs pass all 522.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "run harness",
+  "words": "run.cjs:2558 (B-450 tick click in studyPlanChecks) sometimes fails with element not attached to the DOM, stopping the rest of the run; other runs pass all 522.",
+  "reportedAt": "2026-10-30T16:56:35.372Z",
+  "board": {
+   "row": "v4 B-598: run.cjs:2558 (B-450 tick click in studyPlanChecks) sometimes fails…"
+  }
  }
 ]
