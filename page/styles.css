@@ -1427,35 +1427,28 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 #record-sessions .rec-bar{padding:0 0 8px;border-bottom:0;min-height:0;gap:8px}
 #record-sessions .rec-bar > .seg{align-self:center}
 #rec-types button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
-.rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16)}
-.rec-pop[hidden]{display:none}
 .rec-pop .lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
 .rec-pop .seg{align-self:stretch;width:100%;box-sizing:border-box}
 .rec-pop .seg button{flex:1;white-space:nowrap}
-.rec-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:calc(13.5px * var(--ts));cursor:pointer}
 .rec-ck input{width:16px;height:16px;margin:0;accent-color:var(--text)}
-.rec-pop-foot{display:flex;justify-content:space-between;gap:8px}
 .rec-list{display:flex;flex-direction:column;gap:0}
 .rec-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
-.rec-li .r{flex:0 1 auto;min-width:0;max-width:40%;color:var(--quiet);font-size:calc(12.5px * var(--ts));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rec-li .t{min-width:62px;text-align:right}
 .rec-li.sel{background:var(--hover)}
-.rec-list .rec-detail{padding:10px 12px 14px 108px;border-bottom:1px solid var(--line)}
-.rec-detail{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-.rec-detail[hidden]{display:none}
 .rec-detail .meta{margin:0}
-.rec-detail .idea-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:8px;font:500 calc(12.5px * var(--ts)) var(--sans)}
 @media (max-width:599px){
   #record-sessions .rec-bar{flex-wrap:wrap}
+}
+@media (max-width:599px){
   #record-sessions .rec-bar > .seg{flex:1 1 auto;width:auto}
-  .rec-pop{width:min(320px,calc(100vw - 24px))}
+}
+@media (max-width:599px){
   .rec-pop .seg button{min-height:44px}
-  .rec-ck{min-height:44px}
+}
+@media (max-width:599px){
   .rec-li{padding:0 4px}
-  .rec-li .r{display:none}
-  .rec-li .t{min-width:0}
-  .rec-list .rec-detail{padding:10px 4px 14px}
+}
+@media (max-width:599px){
   .rec-detail select.idea-kind{height:44px;min-height:44px}
 }
 /* B-339 (D-312): Record as the demo draws it. The toolbar spans the pane under a hairline, the rows run edge to edge
@@ -1463,9 +1456,7 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
    the right panel itself: badge, an 18 px title, the properties in a card, her line, and Quiz me for a quiz. */
 #record-sessions{margin:-18px -16px 0;gap:0}
 #record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
-.rec-fbtn{gap:7px}
 .rec-fbtn .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.rec-pop{width:260px;top:calc(100% + 8px);gap:10px}
 .rec-pop .seg{align-self:flex-start;width:auto}
 .rec-pop .seg button{flex:none}
 #record-sessions .cols > .col-main{gap:0}
@@ -1473,38 +1464,33 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 .rec-li{padding:0 18px}
 .rec-li.sel{background:var(--chrome)}
 .rec-li:hover{background:var(--chrome)}
-.rec-li .r{color:var(--faint)}
-.rec-detail{gap:14px}
-.rec-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
-.rec-list .rec-detail{padding:14px 18px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
-@media (min-width:1200px){
-  section.panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
-}
 @media (max-width:599px){
   #record-sessions .rec-bar{padding:10px 12px}
+}
+@media (max-width:599px){
   #record-sessions .rec-bar > .seg{flex:none;width:auto}
+}
+@media (max-width:599px){
   .rec-li{padding:0 16px}
-  .rec-list .rec-detail{padding:14px 16px 18px}
 }
 /* B-356 (D-314): the demo's rows. 44 px at every size; the result sits before the time; on the phone a row wraps as
    the demo's does (badge and name on the first line, the result and time after them or on a second line), and a
    long name wraps in full rather than losing its result. */
 .rec-li{height:auto;min-height:44px;box-sizing:content-box}
 .rec-li .nm{flex:0 1 auto}
-.rec-li .r{flex:none;max-width:none}
 @media (max-width:599px){
   .rec-li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px;min-height:44px;box-sizing:border-box}
+}
+@media (max-width:599px){
   .rec-li .nm{flex:0 1 auto;min-height:44px;white-space:normal;overflow:visible;display:flex;align-items:center;line-height:1.35;overflow-wrap:anywhere}
-  .rec-li .r{display:inline;max-width:none;white-space:nowrap}
-  .rec-li .t{min-width:0;white-space:nowrap}
 }
 /* B-379 (D-312): under 600 px a row is two lines, as the Record phone board: the badge and name on the first, the
    result and the time on the second, both from the row's left edge. The name's tap area covers the whole row. */
 @media (max-width:599px){
   .rec-li{position:relative;row-gap:2px;padding:8px 16px}
+}
+@media (max-width:599px){
   .rec-li .nm{min-height:24px;position:static}
-  .rec-li .r,.rec-li .t{text-align:left;font-size:calc(12.5px * var(--ts));line-height:1.35}
-  .rec-li .r:empty{display:none}
 }
 
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
@@ -1535,7 +1521,11 @@ body.has-line #today-week .wk-her{display:none}
 #p-record .rec-list > .empty{margin:0;padding:14px 18px;color:var(--quiet);font-size:calc(13.5px * var(--ts))}
 @media (max-width:599px){
   #p-record > .panel .rec-bar{padding:10px 12px}
+}
+@media (max-width:599px){
   #p-record > .panel .rec-bar > .seg{flex:none;width:auto}
+}
+@media (max-width:599px){
   #p-record .rec-list > .empty{padding:14px 16px}
 }
 
@@ -1657,7 +1647,9 @@ body.has-line #today-week .wk-her{display:none}
 }
 /* ==== B-402 Notes: the editor (page/app/25-notes.js; the demo's AppNotes, NoteEditor and NoteStyleMenu boards) ==== */
 #tab-notes[hidden],#p-notes[hidden]{display:none!important}
-@media (max-width:1023px){#tab-notes,#p-notes{display:none!important}}
+@media (max-width:1023px){
+  #tab-notes,#p-notes{display:none!important}
+}
 #p-notes .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 /* B-403: the list, as the NotesList board. The toolbar (course filters with counts, New note) spans the pane under a
    hairline; rows run edge to edge, 44 px, grouped by course; Open shows on hover or focus. The picked note's preview is
@@ -1671,15 +1663,12 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-row .nm:focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:-2px;border-radius:4px}
 #p-notes .n-row .hov{visibility:hidden}
 #p-notes .n-row:hover .hov,#p-notes .n-row:focus-within .hov{visibility:visible}
-#p-notes .n-row .nk,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;text-align:right}
 #p-notes .n-row .n-unsaved{flex:none;font-size:calc(12.5px * var(--ts));color:var(--urg);white-space:nowrap} /* B-410: refused, kept on this device */
-#p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
 #p-notes .nempty span{max-width:360px}
 #p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
 #p-notes .nempty b{color:var(--text);font-size:calc(15px * var(--ts));font-weight:600}
 #p-notes .nempty .btn{margin-top:6px}
 #p-notes .n-pvt{margin:0;font:600 calc(17px * var(--ts))/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
-#p-notes .n-outline .si{height:30px;padding:0 10px;font-size:calc(13px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
 #p-notes .n-acts .btn{width:100%;justify-content:center}
 @media (max-width:1199px){
   #p-notes .n-pv{display:flex;flex-direction:column;gap:14px;padding:18px;border-top:1px solid var(--line);margin-top:24px}
@@ -1688,9 +1677,6 @@ body.has-line #today-week .wk-her{display:none}
 /* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
    nothing of the note shows in the ground above the page while it scrolls */
 #p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--line-h,0px));padding:0 28px;box-sizing:border-box}
-@media (min-width:600px){
-  body:has(#notes-editor:not([hidden])) .mh::before{content:"";position:absolute;left:-1px;right:-1px;top:-8px;height:8px;background:var(--sunken);pointer-events:none}
-}
 .estrip .sug.plain,.estrip .sug:disabled{cursor:default;background:none;color:var(--quiet)}
 /* D-361: the quiet line beside the strip's control, on its row */
 .estrip #ev-uncounted:not([hidden]){display:inline-flex;align-items:center;flex:0 1 auto;color:var(--faint)}
@@ -1709,24 +1695,13 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-doc{position:relative;width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
 #p-notes .n-meta .btn{color:var(--quiet);gap:5px}
 #p-notes .n-meta .ico{width:14px;height:14px}
-#note-body{outline:none;min-height:50vh;white-space:pre-wrap;overflow-wrap:anywhere;font-size:calc(15.5px * var(--ts));line-height:1.65;counter-reset:nol}
 /* B-437: spaces kept as typed (pre-wrap): a line holding only spaces, as Enter before a heading's trailing space
    leaves, has its height, and the caret's place is the one he sees */
 #note-body.empty:not(.untitled)::before{content:attr(data-placeholder);position:absolute;pointer-events:none;color:var(--faint);max-width:620px}
-/* B-440: an empty first heading 1 reads a grey "Untitled"; under it, while the note is empty, the hint */
-#note-body .nb{margin:6px 0}
 #note-body h1.nb{margin:0 0 14px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #note-body h2.nb{margin:28px 0 6px;font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
 #note-body h3.nb{margin:18px 0 4px;font-size:16px;font-weight:600;line-height:1.4;color:var(--ink)}
 #note-body p.nb{margin:6px 0}
-#note-body .nb[data-t=ul],#note-body .nb[data-t=ol],#note-body .nb[data-t=todo]{position:relative;margin:1px 0;padding-left:28px}
-/* B-474: Safari fills a selection's left gap from the editor's edge to the text, a band under the bullets, numbers and
-   checkboxes; an identity transform makes each list line its own selection root, so the fill starts at its text */
-#note-body .nb[data-t=ol]{counter-increment:nol}
-#note-body .nb[data-t=ol]::before{content:counter(nol) ".";position:absolute;left:0;width:22px;text-align:right;color:var(--faint);font-size:14px;font-variant-numeric:tabular-nums}
-#note-body .nb[data-indent="1"]{margin-left:24px}#note-body .nb[data-indent="2"]{margin-left:48px}#note-body .nb[data-indent="3"]{margin-left:72px}
-#note-body .nb[data-indent="4"]{margin-left:96px}#note-body .nb[data-indent="5"]{margin-left:120px}#note-body .nb[data-indent="6"]{margin-left:144px}
-#note-body .nb[data-t=todo][data-checked=true]{color:var(--faint);text-decoration:line-through}
 #note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
 #note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
 #note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
@@ -1737,27 +1712,12 @@ body.has-line #today-week .wk-her{display:none}
 .mh .n-sync.bad{color:var(--urg)}
 /* B-404 (D-326, NoteStates): the sync line's two-versions state, and the picker above his text */
 .mh .n-sync.warn .ico{color:var(--att)}
-#p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
-#p-notes .n-pick .vh{display:flex;gap:10px;align-items:flex-start;font-size:calc(13.5px * var(--ts))}
 #p-notes .n-pick .vh>.ico{width:16px;height:16px;flex:none;margin-top:2px;color:var(--att);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#p-notes .n-pick .vhw{display:flex;flex-direction:column;gap:2px}
 #p-notes .n-pick .vhw b{font-weight:600}
 #p-notes .n-pick .vhw span{color:var(--quiet)}
-#p-notes .n-pick .vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#p-notes .n-pick .ver{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);min-width:0}
 #p-notes .n-pick .ver .btn{align-self:flex-start}
-#p-notes .n-pick .vrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
-#p-notes .n-pick .vwho{display:flex;align-items:center;gap:7px;font-size:calc(13.5px * var(--ts))}
 #p-notes .n-pick .vwho b{font-weight:600}
 #p-notes .n-pick .vwho .ico{width:15px;height:15px;color:var(--quiet);fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#p-notes .n-pick .vx{display:flex;flex-direction:column;gap:1px;font-size:calc(13.5px * var(--ts));line-height:1.55;min-width:0}
-#p-notes .n-pick .vt{font-weight:600;font-size:calc(14px * var(--ts));margin-bottom:2px;overflow-wrap:anywhere}
-#p-notes .n-pick .vl{display:flex;gap:8px;padding:1px 6px;margin-left:-6px;border-radius:5px;overflow-wrap:anywhere}
-#p-notes .n-pick .vl::before{content:"•";color:var(--faint)}
-#p-notes .n-pick .only{background:var(--tint);box-shadow:inset 0 0 0 1px var(--line2)}
-#p-notes .n-pick .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-#p-notes .n-pick .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:18px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(13px * var(--ts))}
-#p-notes .n-pick .endline .sp{flex:1;min-width:220px}
 /* B-418 (D-339): read-along's toggle, beside the sync line */
 .mh .n-read{order:9;margin-left:8px;gap:5px;color:var(--quiet);font-weight:400}
 .mh .n-read .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

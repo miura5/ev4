@@ -1,69 +1,116 @@
 /* ---- Record and New's layout (B-513, D-376, D-380, D-391): the rules of page/styles.css scoped to Record and New (.rec-*, #rec-*,
-   #record-*, .new-*, #new-*) that no other legacy rule fights on the same element, moved as written. The views layer sits under legacy
-   (D-373), so every declaration here says !important until B-515 retires legacy; B-515 strips the !important. The Record
+   #record-*, .new-*, #new-*) that no other legacy rule fights on the same element, moved as written. B-515 (lane C) stripped the !important and moved here every rule a legacy rule does not meet on the same element (checked by computed style on the synthetic record). The Record
    and New rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
-   synthetic record does not paint uses; B-515 moves them with the shared rules. Raw values left have no token. */
-.mh .new-wrap{position:relative!important;order:10!important;flex:0 0 auto!important}
-.new-wrap .menu button.btn.mi svg{color:var(--quiet)!important}
-.new-wrap .menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans)!important;color:var(--quiet)!important;padding:var(--sp-1_5) 9px var(--sp-1)!important}
-.new-dlg{width:min(560px,calc(100vw - 24px))!important;max-width:none!important;max-height:calc(100dvh - 122px)!important;margin:110px auto auto!important;padding:0!important;border:0!important;border-radius:var(--r-lg)!important;background:var(--surface)!important;color:var(--text)!important;box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)!important}
-.new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)!important}
+   synthetic record does not paint uses; Lane D moves them when legacy goes. Raw values left have no token. */
+/* ---- B-515 lane C: moved from page/styles.css in their legacy order; the rules after them were already here */
+.rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16)}
+.rec-pop[hidden]{display:none}
+.rec-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:calc(13.5px * var(--ts));cursor:pointer}
+.rec-pop-foot{display:flex;justify-content:space-between;gap:8px}
+.rec-li .r{flex:0 1 auto;min-width:0;max-width:40%;color:var(--quiet);font-size:calc(12.5px * var(--ts));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-li .t{min-width:62px;text-align:right}
+.rec-list .rec-detail{padding:10px 12px 14px 108px;border-bottom:1px solid var(--line)}
+.rec-detail{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.rec-detail[hidden]{display:none}
+.rec-detail .idea-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:599px){
+  .rec-pop{width:min(320px,calc(100vw - 24px))}
+}
+@media (max-width:599px){
+  .rec-ck{min-height:44px}
+}
+@media (max-width:599px){
+  .rec-li .r{display:none}
+}
+@media (max-width:599px){
+  .rec-li .t{min-width:0}
+}
+@media (max-width:599px){
+  .rec-list .rec-detail{padding:10px 4px 14px}
+}
+.rec-fbtn{gap:7px}
+.rec-pop{width:260px;top:calc(100% + 8px);gap:10px}
+.rec-li .r{color:var(--faint)}
+.rec-detail{gap:14px}
+.rec-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
+.rec-list .rec-detail{padding:14px 18px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+@media (min-width:1200px){
+  section.panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+}
+@media (max-width:599px){
+  .rec-list .rec-detail{padding:14px 16px 18px}
+}
+.rec-li .r{flex:none;max-width:none}
+@media (max-width:599px){
+  .rec-li .r{display:inline;max-width:none;white-space:nowrap}
+}
+@media (max-width:599px){
+  .rec-li .t{min-width:0;white-space:nowrap}
+}
+@media (max-width:599px){
+  .rec-li .r,.rec-li .t{text-align:left;font-size:calc(12.5px * var(--ts));line-height:1.35}
+}
+@media (max-width:599px){
+  .rec-li .r:empty{display:none}
+}
+.mh .new-wrap{position:relative;order:10;flex:0 0 auto}
+.new-wrap .menu button.btn.mi svg{color:var(--quiet)}
+.new-wrap .menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:var(--sp-1_5) 9px var(--sp-1)}
+.new-dlg{width:min(560px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:var(--r-lg);background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
+.new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)}
 @media (prefers-color-scheme:dark){
-:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)!important}
+:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}
 }
 @media (max-width:599px){
-.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto!important;max-height:calc(100dvh - 60px)!important}
+.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}
 }
-.new-dlg{font:var(--fw-regular) var(--fs-3)/1.45 var(--sans)!important}
-.new-hdr{display:flex!important;align-items:center!important;gap:10px!important;padding:14px var(--sp-4)!important;border-bottom:1px solid var(--line)!important}
-.new-hdr svg{width:16px!important;height:16px!important;flex:none!important;fill:none!important;stroke:var(--quiet)!important;stroke-width:1.7!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-.new-body{display:flex!important;flex-direction:column!important;gap:14px!important;padding:var(--sp-4)!important}
-.new-fields .lbl{color:var(--quiet)!important;font:var(--fw-regular) var(--fs-2) var(--sans)!important}
-.new-fields .seg{min-width:0!important}
-.new-fields .seg button{white-space:nowrap!important}
-.new-body #new-warn:empty{display:none!important}
-.new-foot{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;padding:var(--sp-3) var(--sp-4)!important;border-top:1px solid var(--line)!important;flex-wrap:wrap!important}
-.rec-fwrap{position:relative!important;flex:none!important}
-.rec-day{padding:14px var(--sp-3) var(--sp-1)!important;color:var(--faint)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important}
-.rec-day:first-child{padding-top:4px!important}
-.rec-li .badge{min-width:84px!important;justify-content:flex-start!important}
-.rec-detail .rec-title{margin:0!important;font:var(--fw-semibold) calc(15px * var(--ts))/1.35 var(--sans)!important;color:var(--text)!important;overflow-wrap:anywhere!important}
-.rec-props{align-self:stretch!important;display:flex!important;flex-direction:column!important}
-.rec-props .prop{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:var(--sp-3)!important;min-height:32px!important;border-bottom:1px solid var(--line)!important;font-size:var(--fs-2)!important}
-.rec-props .prop:last-child{border-bottom:0!important}
-.rec-props .prop-k{color:var(--quiet)!important}
-.rec-props .prop-v{text-align:right!important;min-width:0!important;overflow-wrap:anywhere!important}
-.rec-detail .rec-desc{margin:0!important;font-size:calc(13.5px * var(--ts))!important;line-height:1.5!important;color:var(--text)!important}
+.new-dlg{font:var(--fw-regular) var(--fs-3)/1.45 var(--sans)}
+.new-hdr{display:flex;align-items:center;gap:10px;padding:14px var(--sp-4);border-bottom:1px solid var(--line)}
+.new-hdr svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.new-body{display:flex;flex-direction:column;gap:14px;padding:var(--sp-4)}
+.new-fields .lbl{color:var(--quiet);font:var(--fw-regular) var(--fs-2) var(--sans)}
+.new-fields .seg{min-width:0}
+.new-fields .seg button{white-space:nowrap}
+.new-body #new-warn:empty{display:none}
+.new-foot{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line);flex-wrap:wrap}
+.rec-fwrap{position:relative;flex:none}
+.rec-day{padding:14px var(--sp-3) var(--sp-1);color:var(--faint);font:var(--fw-medium) var(--fs-1) var(--sans)}
+.rec-day:first-child{padding-top:4px}
+.rec-li .badge{min-width:84px;justify-content:flex-start}
+.rec-detail .rec-title{margin:0;font:var(--fw-semibold) calc(15px * var(--ts))/1.35 var(--sans);color:var(--text);overflow-wrap:anywhere}
+.rec-props{align-self:stretch;display:flex;flex-direction:column}
+.rec-props .prop{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:32px;border-bottom:1px solid var(--line);font-size:var(--fs-2)}
+.rec-props .prop:last-child{border-bottom:0}
+.rec-props .prop-k{color:var(--quiet)}
+.rec-props .prop-v{text-align:right;min-width:0;overflow-wrap:anywhere}
+.rec-detail .rec-desc{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
 @media (max-width:599px){
-.rec-li .badge{min-width:0!important}
-.rec-day{padding:14px var(--sp-1) var(--sp-1)!important}
-.rec-props .prop{min-height:44px!important}
+.rec-li .badge{min-width:0}
+.rec-day{padding:14px var(--sp-1) var(--sp-1)}
+.rec-props .prop{min-height:44px}
 }
-.rec-day{padding:14px 18px var(--sp-1_5)!important;color:var(--quiet)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important}
-.rec-day:first-child{padding-top:14px!important}
-.rec-li .badge{min-width:74px!important}
-.rec-detail .rec-title{font:var(--fw-semibold) var(--fs-5)/1.3 var(--sans)!important;margin:0!important}
-.rec-props .prop{display:grid!important;grid-template-columns:92px 1fr!important;justify-content:stretch!important;gap:var(--sp-2)!important;min-height:34px!important;border-bottom:0!important}
-.rec-props .prop-v{text-align:left!important}
-.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts))!important;line-height:1.6!important;color:var(--quiet)!important}
-.rec-detail .rec-quiz{align-self:flex-start!important;max-width:100%!important}
+.rec-day{padding:14px 18px var(--sp-1_5);color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans)}
+.rec-day:first-child{padding-top:14px}
+.rec-li .badge{min-width:74px}
+.rec-detail .rec-title{font:var(--fw-semibold) var(--fs-5)/1.3 var(--sans);margin:0}
+.rec-props .prop{display:grid;grid-template-columns:92px 1fr;justify-content:stretch;gap:var(--sp-2);min-height:34px;border-bottom:0}
+.rec-props .prop-v{text-align:left}
+.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts));line-height:1.6;color:var(--quiet)}
+.rec-detail .rec-quiz{align-self:flex-start;max-width:100%}
 @media (max-width:599px){
-.rec-li .badge{min-width:0!important}
-.rec-day{padding:14px var(--sp-4) var(--sp-1_5)!important}
-.rec-props .prop{min-height:34px!important}
+.rec-li .badge{min-width:0}
+.rec-day{padding:14px var(--sp-4) var(--sp-1_5)}
+.rec-props .prop{min-height:34px}
 }
-.rec-li .sp{flex:1 1 0!important;min-width:0!important}
+.rec-li .sp{flex:1 1 0;min-width:0}
 @media (max-width:599px){
-.rec-li .badge{min-width:74px!important}
-.rec-li .nm::after{content:""!important;position:absolute!important;inset:0!important}
-.rec-li .sp{flex:0 0 100%!important;height:0!important}
+.rec-li .badge{min-width:74px}
+.rec-li .nm::after{content:"";position:absolute;inset:0}
+.rec-li .sp{flex:0 0 100%;height:0}
 }
 @media (min-width:1200px){
-section.panel > .panel > .cols > .col-side .rec-detail{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
 }
 @media (max-width:599px){
-.mh #new-btn::after{content:""!important;position:absolute!important;inset:-5px 0!important}
+.mh #new-btn::after{content:"";position:absolute;inset:-5px 0}
 }
-/* D-391's lesson 2: an !important here outranks legacy's own [hidden]{display:none!important}, so a hidden element
-   stays hidden by this rule, written heavy enough (2,3,0, the :not(#_) adding an id each) to outrank every display rule above; B-515 drops it. */
-[hidden][hidden][hidden]:not(#_):not(#_){display:none!important}
