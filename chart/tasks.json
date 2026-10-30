@@ -10198,7 +10198,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "DS.group is built (0f772e7). It is met once the view lanes put Today's toolbar and the other control rows into it. Backlog: an icon without a name shows a blank menu item.",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
