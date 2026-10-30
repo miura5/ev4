@@ -518,13 +518,17 @@ async function main() {
         return r.fulfill({ body: JSON.stringify(stubAnswer(body)), contentType: 'application/json' });
       });
       if (PLANT === 'page-error')
-        await context.route(origin + '/app.js', async r => {
-          const res = await r.fetch();
-          const body =
-            (await res.text()) +
-            "\n;setTimeout(() => { throw new Error('planted page error (smoke:pwa --plant page-error)'); }, 300);\n";
-          return r.fulfill({ response: res, body });
-        });
+        // the shell loads app.js with a version query (app.js?v=...): match the path, not the exact URL
+        await context.route(
+          u => u.origin === origin && u.pathname === '/app.js',
+          async r => {
+            const res = await r.fetch();
+            const body =
+              (await res.text()) +
+              "\n;setTimeout(() => { throw new Error('planted page error (smoke:pwa --plant page-error)'); }, 300);\n";
+            return r.fulfill({ response: res, body });
+          }
+        );
       let { page, errors } = await open(context, origin);
 
       // 1. Boots: the shim hands the page its record from D1 and the page connects.

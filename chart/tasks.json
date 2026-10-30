@@ -10564,5 +10564,27 @@
    "outcome": "task",
    "at": "2026-10-29T23:37:16.732Z"
   }
+ },
+ {
+  "id": "B-574",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): The smoke workflow has been red on main for 25+ commits: the smoke-pwa planted page error step stays green because the plant no longer fires.",
+  "dod": "smoke.yml green on main, with each plant (page-error, broken-tab, smoke-pwa page-error) still turning its run red with its FAIL line",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "smoke workflow",
+  "words": "The smoke workflow has been red on main for 25+ commits: the smoke-pwa planted page error step stays green because the plant no longer fires.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T06:48:42.554Z",
+  "board": {
+   "row": "v4 B-574: The smoke workflow has been red on main for 25+ commits: the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T06:49:03.782Z"
+  }
  }
 ]
