@@ -84,7 +84,8 @@
       };
       const item = it => {
         const due = it.tag === 'GRADED' ? gradedDue(it) : null;
-        const dot = 'k-' + (DS.kind(BADGE[it.tag] ? BADGE[it.tag][0] : catOf(it) === 'study' ? 'Study' : 'Class') || 'class'); // B-540
+        const dot =
+          'k-' + (DS.kind(BADGE[it.tag] ? BADGE[it.tag][0] : catOf(it) === 'study' ? 'Study' : 'Class') || 'class'); // B-540
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
         const b = row(
           dot,

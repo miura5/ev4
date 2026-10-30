@@ -110,6 +110,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-570 | Record view: opens on Notes, with a Notes / Sessions / Quizzes / Everything switch (Matt's OK); a fixed time column; the detail pane; fits 390 with the course filter as an icon Done when: No overprint and no sideways scroll at 390 | B-515 | UI polish | open | Behaviour part pushed 5c2d92f: Record always opens on Notes; switch Notes / Sessions / Quizzes / Everything (Everything is the old All); detail pane kept; Progress's open-in-Record still goes to Everything. Look part waits for the view lanes. |
 | B-571 | Progress day panel: badge column, one-line titles with a muted second line, and a total that includes the running session Done when: The panel's total matches Record and Today for the day | B-515, B-522 | UI polish | open |  |
 | B-572 | Conversation empty state and E.V. window: a greeting block in the top third with Next up and the composer under it; Coming up kept in the side pane; from 1024 px E.V. floats as a window that sizes to its content; below that it is a sheet (Matt's OK) Done when: The avatar never sits low on an empty thread; the window has no empty space below a short answer | B-515 | UI polish | open |  |
+| B-575 | Bug (reported Oct 30): npm test on main has failed since 9c6fea4 because page/app/01-ui-02-badge.js and page/app/90-render.js are not prettier-formatted (B-64). Done when: npm run format on page/app; only formatting changes; npm test green on main | — | UI polish | open |  |
 
 ## Your turn
 

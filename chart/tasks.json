@@ -10586,5 +10586,27 @@
    "outcome": "task",
    "at": "2026-10-30T06:49:03.782Z"
   }
+ },
+ {
+  "id": "B-575",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): npm test on main has failed since 9c6fea4 because page/app/01-ui-02-badge.js and page/app/90-render.js are not prettier-formatted (B-64).",
+  "dod": "npm run format on page/app; only formatting changes; npm test green on main",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "npm test on main",
+  "words": "npm test on main has failed since 9c6fea4 because page/app/01-ui-02-badge.js and page/app/90-render.js are not prettier-formatted (B-64).",
+  "reworded": true,
+  "reportedAt": "2026-10-30T08:18:42.597Z",
+  "board": {
+   "row": "v4 B-575: npm test on main has failed since 9c6fea4 because…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T08:19:01.069Z"
+  }
  }
 ]

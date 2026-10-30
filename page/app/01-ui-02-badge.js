@@ -26,11 +26,30 @@
         .trim()
         .toLowerCase();
       const K = {
-        learn: 'learn', practice: 'practice', study: 'practice', drill: 'practice', review: 'review',
-        'ati review': 'review', graded: 'graded', exam: 'graded', 'skills prep': 'skills', skills: 'skills',
-        clinical: 'skills', 'clinical prep': 'skills', validation: 'skills', 'validation prep': 'skills',
-        note: 'note', notes: 'note', canvas: 'note', class: 'class', reading: 'reading', quiz: 'quiz',
-        session: 'session', workout: 'workout', flashcards: 'flash', deck: 'flash',
+        learn: 'learn',
+        practice: 'practice',
+        study: 'practice',
+        drill: 'practice',
+        review: 'review',
+        'ati review': 'review',
+        graded: 'graded',
+        exam: 'graded',
+        'skills prep': 'skills',
+        skills: 'skills',
+        clinical: 'skills',
+        'clinical prep': 'skills',
+        validation: 'skills',
+        'validation prep': 'skills',
+        note: 'note',
+        notes: 'note',
+        canvas: 'note',
+        class: 'class',
+        reading: 'reading',
+        quiz: 'quiz',
+        session: 'session',
+        workout: 'workout',
+        flashcards: 'flash',
+        deck: 'flash',
       };
       return K[w] || '';
     }
