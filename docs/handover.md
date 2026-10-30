@@ -6,6 +6,23 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 30, afternoon Central): release card #2 sent, waiting on Matt (read this first)
+
+- **Live:** v4.5.19 at ceba846. **Staging:** GREEN at 2f50284 (v4.5.19+184), the release candidate. npm test, smoke, all 11 harnesses, the whole-release code review (no blockers) and the UI review (76/100) are done. No agents are running.
+- **Waiting on Matt:**
+  - the one real run: he presses Make a plan or Remake on staging and reports the time, which also sets B-549's "usually" line;
+  - "ship 2f50284". Then run `ship live` with a running-sessions query and pwa-live.yml (he approves in the GitHub live environment).
+- **Next after release, in order:**
+  1. B-522: ticked plan minutes off the day's list and on past days don't count (staging data, Oct 29: 100 min ticked, Progress shows 2); Record bypasses E.sessionMinutes.
+  2. The course fallback for sessions with no folder (Chapter 9 counts as NUR 112).
+  3. The UI review fixes and the review's backlog lines (suggestion chips, Undo toast at 390, Cards row alignment, wide Today rows, draft Put away on own exams, Undo for the latest tick only).
+  4. B-577: not reproduced; ask Matt for the width and course if he sees it again.
+- **Lessons today:**
+  - Builders pushed unformatted code four times. The ev-builder skill now formats and runs the format test before every push (B-586).
+  - Skipping heavy checks let 2 breaks through (B-579, B-580). Run the full harness pass before a card.
+  - Synthetic data missed drafts and real minutes, so check the staging data before every card.
+  - A builder hand-edited chart/tasks.json for B-586's milestone. Tell builders never to do that.
+
 ## Update (Oct 30, early morning Central): staging look done, view lanes running (read this first)
 
 - **Live:** v4.5.19 at ceba846. Matt is asleep. Nothing waits on him until release card #2.
