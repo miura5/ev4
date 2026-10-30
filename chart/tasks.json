@@ -10823,5 +10823,27 @@
    "outcome": "task",
    "at": "2026-10-30T12:39:55.828Z"
   }
+ },
+ {
+  "id": "B-586",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): Main fails npm test because a line in page/app/21-study-plan.js from B-582 is not as the formatter writes it.",
+  "dod": "page/app/21-study-plan.js formatted; node --test test/format.test.mjs and CI npm test green on main",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "Formatted the Remake disabled line B-582 left at 125 columns.",
+  "commit": null,
+  "source": "npm test on main",
+  "words": "Main fails npm test because a line in page/app/21-study-plan.js from B-582 is not as the formatter writes it.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T13:09:19.637Z",
+  "board": {
+   "row": "v4 B-586: Main fails npm test because a line in page/app/21-study-plan.js from…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T13:09:24.274Z"
+  }
  }
 ]

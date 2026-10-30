@@ -107,6 +107,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-583 | Bug (reported Oct 30): In a draft plan's ⋯, Put away is hidden for his own exams (!ex.own); the old draft row always offered it. Done when: Fixed and seen on staging. | — | UI polish | open |  |
 | B-584 | Bug (reported Oct 30): Only the latest tick carries Undo; ticking a second row replaces the first one's Undo. Done when: Fixed and seen on staging. | — | UI polish | open |  |
 | B-585 | Bug (reported Oct 30): In the review surface, the card's question (18 px) reads larger than her line above it (17 px); the card question must be no larger than her line (captions harness, surfaces 390/735/1280) Done when: Her current line uses the --fs-5 token (18 px, r4's heading step) in place of a hand 17 px, so the card question is no larger than her line and its options smaller; captions surfaces 390/735/1280 green | — | UI polish | open |  |
+| B-586 | Bug (reported Oct 30): Main fails npm test because a line in page/app/21-study-plan.js from B-582 is not as the formatter writes it. Done when: page/app/21-study-plan.js formatted; node --test test/format.test.mjs and CI npm test green on main | — | UI polish | open | Formatted the Remake disabled line B-582 left at 125 columns. |
 
 ## Your turn
 
