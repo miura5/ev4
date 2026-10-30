@@ -25,6 +25,10 @@
   --track-display:-.01em; /* the 18px heading (r4.css .t-h); smaller text keeps 0 */
   --tnum:tabular-nums; /* times and counts */
   --fs-input:16px; /* a phone text input: 16px stops iOS zooming in on focus; not a scale step, and never scaled */
+  /* B-600: the note's document text has its own small scale, apart from the interface's 18px cap: the title (its
+     first heading 1) at the size Heading 1 had before the polish, then Heading 1, 2, 3 and the body, each a step apart. */
+  --doc-fs-title:calc(30px * var(--ts)); --doc-fs-h1:calc(26px * var(--ts)); --doc-fs-h2:calc(21px * var(--ts));
+  --doc-fs-h3:calc(18px * var(--ts)); --doc-fs-body:calc(16px * var(--ts));
 
   /* Space: a 4px grid, with 2 and 6 kept for density. */
   --sp-0_5:2px; --sp-1:4px; --sp-1_5:6px; --sp-2:8px; --sp-3:12px; --sp-4:16px;

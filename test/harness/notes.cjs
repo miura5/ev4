@@ -179,6 +179,50 @@ const openNoteId = page =>
     .catch(() => chromium.launch());
   const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
 
+  // ---- B-600: the note's own type scale at 1280: title, Heading 1, 2, 3 and body each a step apart, the title as
+  // large as Heading 1 was before the polish (30 px). EV_NOTES_ONLY=headings runs this check alone.
+  {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 headings]';
+    await page.click('#tab-notes');
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#note-body');
+    for (const [i, t] of [
+      '# Fluids lecture',
+      '# Heading one',
+      '## Heading two',
+      '### Heading three',
+      'Body words',
+    ].entries()) {
+      if (i) await page.keyboard.press('Enter');
+      await page.keyboard.type(t);
+    }
+    await settle(page);
+    const sizes = await page.evaluate(() =>
+      [...document.querySelectorAll('#note-body > .nb')].map(b => [b.tagName, parseFloat(getComputedStyle(b).fontSize)])
+    );
+    const px = sizes.map(s => s[1]);
+    ok(
+      `${tag} the title, Heading 1, 2, 3 and the body each read a step smaller than the one before, the title at 30 px`,
+      sizes.map(s => s[0]).join() === 'H1,H1,H2,H3,P' &&
+        px[0] === 30 &&
+        px.every((v, i) => i === 0 || px[i - 1] - v >= 2),
+      JSON.stringify(sizes)
+    );
+    for (const scheme of ['light', 'dark']) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.screenshot({ path: path.join(shots, `notes-headings-1280-${scheme}.png`) });
+    }
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+  if (process.env.EV_NOTES_ONLY === 'headings') {
+    await browser.close();
+    for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '\n      ' + d : ''}`);
+    process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
+
   // ---- 1280
   {
     const { page, errors } = await open(browser, { width: 1280, height: 860 });
