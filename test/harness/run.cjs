@@ -4924,6 +4924,20 @@ async function tap(page, locator, name) {
     // Record
     await page.click('#tab-record');
     await page.waitForTimeout(100);
+    // B-570 (D-393): Record opens on Notes, its switch Notes / Sessions / Quizzes / Everything; the checks below read
+    // every kind, so they pick Everything first (this line used to assume Record opened on All)
+    {
+      const sw = await page.$$eval('#rec-types [data-v]', bs =>
+        bs.map(b => [b.dataset.v, b.getAttribute('aria-pressed')])
+      );
+      ok(
+        'Record opens on Notes, its switch Notes, Sessions, Quizzes, Everything (B-570)',
+        sw.map(x => x[0]).join() === 'note,session,quiz,all' && sw[0][1] === 'true',
+        JSON.stringify(sw)
+      );
+      await page.click('#rec-types [data-v="all"]');
+      await page.waitForTimeout(60);
+    }
     // B-302: the log's helpers. A note's detail opens from its row (the right panel from 1200 px, under the row below).
     const recRow = (kind, text) =>
       page
@@ -5989,6 +6003,7 @@ async function tap(page, locator, name) {
         );
         await wp.click('#tab-record');
         await wp.waitForTimeout(200);
+        await wp.click('#rec-types [data-v="all"]'); // B-570: Record opens on Notes
         const wl = await wp.textContent('#rec-list'); // B-302: workouts are rows in the log
         ok(
           `[${label}] Record lists both workouts with their results`,
@@ -6559,6 +6574,7 @@ async function tap(page, locator, name) {
       await (async () => {
         await ss.click('#tab-record');
         await ss.waitForTimeout(150);
+        await ss.click('#rec-types [data-v="all"]'); // B-570: Record opens on Notes
         const t = await ss.textContent('#rec-list'); // B-302: the log
         await ss.click('#tab-ev');
         return /Study session/.test(t);

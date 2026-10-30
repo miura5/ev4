@@ -2024,6 +2024,8 @@ const openNoteId = page =>
     );
     await page.click('#tab-record');
     await page.waitForTimeout(200);
+    await page.click('#rec-types [data-v="all"]'); // B-570: Record opens on Notes; this checks a session row
+    await page.waitForTimeout(60);
     const shown = async () =>
       page.evaluate(i => !!document.querySelector(`#rec-list [data-part=row][data-key="${i}"]`), SID);
     const pick = async v => {
@@ -2846,6 +2848,7 @@ const openNoteId = page =>
     const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, SID, 30000);
     const mins = await page.evaluate(i => window.__db.sessions[i].minutes, SID);
     await page.click('#tab-record');
+    await page.click('#rec-types [data-v="all"]'); // B-570: Record opens on Notes; this reads a session row
     await page.waitForTimeout(300);
     const row = await page.evaluate(
       i => (document.querySelector(`#rec-list [data-part=row][data-key="${i}"] .r`) || {}).textContent || '',

@@ -3,11 +3,12 @@
     const MATT_KINDS = ['learning', 'general']; // B-531: the Kind menu's choices; feature is E.V.'s own (save_idea)
     // B-302 (C-1, C-7, C-13): Record's log, the first of its views. Everything he logged, newest first and grouped by
     // day, one row each (32 px from 600 px, 44 px on the phone): its one badge (Session, Quiz, Note or Workout), its
-    // name, its result and its time, all on the row's line. The type tabs (All, Sessions, Quizzes, Notes) and the
+    // name, its result and its time, all on the row's line. The type switch (Notes, Sessions, Quizzes, Everything;
+    // B-570, D-393: it opens on Notes on every load, the type is never restored) and the
     // filter (course, when, Show workouts) narrow it. The picked row's detail is the right panel from 1200 px and opens
     // under its row below that. The log creates nothing: New in the header makes a note (C-7). Notes carry no course,
     // so a course in the filter leaves them out, as it leaves out workouts. The filter is this device's (store).
-    const REC_TYPES = { all: 'All', session: 'Sessions', quiz: 'Quizzes', note: 'Notes' };
+    const REC_TYPES = { note: 'Notes', session: 'Sessions', quiz: 'Quizzes', all: 'Everything' };
     const REC_BADGE = {
       session: ['Session', 'x-violet'],
       quiz: ['Quiz', 'x-violet'],
@@ -29,7 +30,7 @@
         f = JSON.parse(store.get('rec.filter') || '{}') || {};
       } catch {}
       return {
-        type: REC_TYPES[f.type] ? f.type : 'all',
+        type: 'note', // B-570: Record opens on Notes
         course: typeof f.course === 'string' ? f.course : 'any',
         when: REC_WHEN[f.when] ? f.when : 'all',
         workouts: f.workouts !== false,
