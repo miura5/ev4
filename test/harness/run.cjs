@@ -1105,7 +1105,7 @@ async function flashcardsChecks(page, scheme) {
       JSON.stringify(rate)
     );
   }
-  await writtenLearnChecks(page, scheme, deckId, openIt, cardsOf);
+  await group('writtenLearnChecks', () => writtenLearnChecks(page, scheme, deckId, openIt, cardsOf));
   // + New card and Retire are marks on the deck; nothing is deleted
   await openIt();
   await page.locator('#fc-dlg .fc-lh .btn', { hasText: 'New card' }).click();
@@ -1189,7 +1189,7 @@ async function flashcardsChecks(page, scheme) {
     );
     await page.evaluate(() => document.getElementById('fc-dlg') && document.getElementById('fc-dlg').close());
   }
-  await importChecks(page, scheme);
+  await group('importChecks', () => importChecks(page, scheme));
 }
 // B-489: Import from Quizlet takes pasted export text, previews the first cards and makes a deck of them (no model call,
 // nothing sent to Quizlet); a line with no separator is skipped and said so.
@@ -2024,6 +2024,25 @@ async function todayTick(page, key) {
   }
   await box.click();
 }
+// B-598: tick a plan task without holding a handle across a render. Settle the folds, name the first unchecked box by
+// its aria-label (its task's own words, stable across redraws), then act through a fresh, auto-retrying locator
+async function planTick(page, scope) {
+  await foldSettled(page);
+  const label = await page.locator(`${scope} input.tick:not(:checked)`).first().getAttribute('aria-label');
+  const box = page.locator(`${scope} input.tick[aria-label="${label.replace(/"/g, '\\"')}"]`).first();
+  await box.click();
+  return box;
+}
+// B-598: one check group's crash is a FAIL naming it, and the run goes on to the next group
+const crashedGroups = [];
+async function group(name, fn) {
+  try {
+    await fn();
+  } catch (e) {
+    crashedGroups.push(name);
+    results.push(['FAIL', `${name} crashed (B-598)`, String(e.message || e).split('\n')[0]]);
+  }
+}
 async function studyPlanChecks(page) {
   const pickCourse = async c => {
     await page.$eval(`#study-course button[aria-label="${c}"]`, b => b.click());
@@ -2604,10 +2623,7 @@ async function studyPlanChecks(page) {
     // B-581: the fold's close (B-576) moves the plan below it; wait for every animation and transition to finish
     await foldSettled(page);
   }
-  const tick = page
-    .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
-    .first();
-  await (await tick.elementHandle()).click();
+  await planTick(page, '#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t');
   await page.waitForTimeout(250);
   const d1 = await done();
   ok(
@@ -2622,11 +2638,7 @@ async function studyPlanChecks(page) {
       window.__writeDelayMs = 300;
       window.__writeFail = 'permission_denied';
     });
-    const box = await page
-      .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
-      .first()
-      .elementHandle();
-    await box.click();
+    const box = await planTick(page, '#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t');
     await page.waitForTimeout(120);
     const mid = await box.evaluate(b => b.closest('.pl-t').classList.contains('done'));
     await page.waitForTimeout(700);
@@ -3041,7 +3053,7 @@ async function tap(page, locator, name) {
   }
   if (process.env.EV_ONLY === 'stale') {
     // B-577: only the kept-state checks (EV_ONLY=stale), for a quick run while working on them
-    await staleStateChecks(browser);
+    await group('staleStateChecks', () => staleStateChecks(browser));
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
@@ -3304,12 +3316,12 @@ async function tap(page, locator, name) {
       await practiceNav(page, scheme); // B-191
       await page.click('#tab-ev');
       await page.waitForTimeout(150);
-      await buildAskChecks(page, scheme); // B-180
-      await workLineChecks(page, scheme); // B-227
-      await quizMeChecks(page, scheme); // B-297
-      await practiceSetsChecks(page, scheme); // B-482
-      await flashcardsChecks(page, scheme); // B-487
-      await inPlaceChecks(page, scheme); // B-517
+      await group('buildAskChecks', () => buildAskChecks(page, scheme)); // B-180
+      await group('workLineChecks', () => workLineChecks(page, scheme)); // B-227
+      await group('quizMeChecks', () => quizMeChecks(page, scheme)); // B-297
+      await group('practiceSetsChecks', () => practiceSetsChecks(page, scheme)); // B-482
+      await group('flashcardsChecks', () => flashcardsChecks(page, scheme)); // B-487
+      await group('inPlaceChecks', () => inPlaceChecks(page, scheme)); // B-517
       await page.close();
       continue;
     }
@@ -3614,7 +3626,7 @@ async function tap(page, locator, name) {
       );
       await surf.first().screenshot({ path: `${shots}/builder-job-${id.split('-')[2]}.png` });
     }
-    await buildAskChecks(page, scheme); // B-180
+    await group('buildAskChecks', () => buildAskChecks(page, scheme)); // B-180
     // B-194: a plan card's Open the plan shows that plan; B-450: in Study's overview, where every plan in force shows.
     {
       // The worker's reply to a plan job, as it lands: one message carrying the plan's card.
@@ -4600,10 +4612,10 @@ async function tap(page, locator, name) {
       window.__sampleFn = null;
     });
     // Study > Review: the migrated set, all answered
-    await quizMeChecks(page, scheme); // B-297
-    await practiceSetsChecks(page, scheme); // B-482
-    await flashcardsChecks(page, scheme); // B-487
-    await inPlaceChecks(page, scheme); // B-517
+    await group('quizMeChecks', () => quizMeChecks(page, scheme)); // B-297
+    await group('practiceSetsChecks', () => practiceSetsChecks(page, scheme)); // B-482
+    await group('flashcardsChecks', () => flashcardsChecks(page, scheme)); // B-487
+    await group('inPlaceChecks', () => inPlaceChecks(page, scheme)); // B-517
     await studyView(page, 'review'); // B-297 (D-283): today's review opens from Today
     await page.waitForTimeout(100);
     const rv = await page.textContent('#rv-body');
@@ -4885,9 +4897,8 @@ async function tap(page, locator, name) {
       const before = await page.evaluate(
         () => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length
       );
-      const firstUnchecked = open.locator('input.tick:not(:checked)').first();
-      // One element, resolved once: check() on the :not(:checked) locator re-resolves after the re-render
-      await (await firstUnchecked.elementHandle()).click();
+      // B-598: a fresh locator by the task's label, never a handle held across the re-render
+      await planTick(page, '#ov-plans [data-ui=card][data-key="E4"] .pl-day.open .pl-t');
       await page.waitForTimeout(150);
       const after = await page.evaluate(() => Object.keys(((window.__db.planedits || {}).E4 || {}).ticks || {}).length);
       ok(
@@ -4897,7 +4908,7 @@ async function tap(page, locator, name) {
       );
       await page.screenshot({ path: `${shots}/plan.png`, fullPage: true });
     }
-    await studyPlanChecks(page); // B-450
+    await group('studyPlanChecks', () => studyPlanChecks(page)); // B-450
     // Progress
     await page.click('#tab-progress');
     await page.waitForTimeout(100);
@@ -5598,7 +5609,7 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(200);
       await page.setViewportSize({ width: 390, height: 844 });
     }
-    await workLineChecks(page, scheme); // B-227: last, since its links leave a set open in Study
+    await group('workLineChecks', () => workLineChecks(page, scheme)); // B-227: last, since its links leave a set open in Study
     ok('no page errors after interactions', errors.length === 0, errors.join(' | '));
     // Visitor
     const v = await browser.newPage({ viewport: { width: 390, height: 700 } });
@@ -7196,7 +7207,7 @@ async function tap(page, locator, name) {
   }
   delete seed.idchecks;
   delete seed.system.yourturn;
-  await staleStateChecks(browser);
+  await group('staleStateChecks', () => staleStateChecks(browser));
   // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with one
   // segment lit at twelve (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
   for (const [tag, vp, arc] of [
@@ -7339,6 +7350,7 @@ async function tap(page, locator, name) {
   }
   await browser.close();
   for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+  if (crashedGroups.length) console.log('CRASHED GROUPS (B-598): ' + crashedGroups.join(', '));
   const failed = results.filter(r => r[0] === 'FAIL').length;
   console.log(failed ? `SOME FAILED: ${failed} of ${results.length}` : `ALL PASSED: ${results.length} checks`);
   process.exit(failed ? 1 : 0);
