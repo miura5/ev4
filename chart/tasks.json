@@ -11128,5 +11128,23 @@
    "outcome": "task",
    "at": "2026-10-30T17:00:56.049Z"
   }
+ },
+ {
+  "id": "B-600",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): In a note, Heading 1 and Heading 2 render at the same size; Heading 1 should be a clearly larger, title-sized heading as it was before.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "In a note, Heading 1 and Heading 2 render at the same size; Heading 1 should be a clearly larger, title-sized heading as it was before.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T17:20:40.110Z",
+  "board": {
+   "row": "v4 B-600: In a note, Heading 1 and Heading 2 render at the same size; Heading 1…"
+  }
  }
 ]
