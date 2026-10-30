@@ -1207,8 +1207,7 @@
         tk,
         DS.badge({ text: 'Study', cls: 'x-violet' }),
         nm,
-        st,
-        ...rowMenu('Cards', [['Start', () => startDueCards()]]),
+        st, // B-494: the Cards row keeps Start on the phone too; it has no ⋯ menu
         el('span', 't', '')
       );
       return li;
