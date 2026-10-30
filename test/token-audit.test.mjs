@@ -36,7 +36,8 @@ test('B-502, B-515: the audit of the page/ds stylesheets runs and returns every 
   const json = JSON.parse(execFileSync(process.execPath, [tool, '--json'], { encoding: 'utf8' }));
   assert.equal(json.file, ALL);
   assert.deepEqual(Object.keys(json.families), FAMILIES);
-  for (const k of FAMILIES) assert.ok(json.families[k].distinct > 0, k);
+  // a family may read zero once every ds file takes it from tokens (B-515 lane 4b: font sizes did)
+  for (const k of FAMILIES) assert.equal(typeof json.families[k].distinct, 'number', k);
   assert.equal(typeof json.counts.important, 'number');
   const text = execFileSync(process.execPath, [tool], { encoding: 'utf8' });
   assert.match(text, /font sizes: \d+ distinct, \d+ uses/);
