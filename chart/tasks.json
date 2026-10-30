@@ -10744,9 +10744,9 @@
   "id": "B-582",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Remake stays tappable while its job is being written (21-study-plan.js remakeBtn ignores planStarting); startJob dedupes per course and day, so a second tap rewrites the same job at worst.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Fixed and seen on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10755,6 +10755,10 @@
   "reportedAt": "2026-10-30T11:33:55.889Z",
   "board": {
    "row": "v4 B-582: Remake stays tappable while its job is being written…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T11:34:11.312Z"
   }
  },
  {
