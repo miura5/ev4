@@ -29,7 +29,7 @@ const LEFT = new Map([
   ['page/ds/patterns/sessions.css', [0, 3, 2, 3]],
   ['page/ds/patterns/shell.css', [3, 38, 28, 4]],
   ['page/ds/patterns/triage.css', [1, 3, 2, 0]],
-  ['page/ds/views/ev.css', [9, 26, 13, 14]],
+  ['page/ds/views/ev.css', [9, 26, 18, 15]], // B-515 lane 2: the carry's 14, 15 and 3 px radii and .36s, until the snap
   ['page/ds/views/notes.css', [0, 17, 4, 0]],
   ['page/ds/views/progress.css', [0, 7, 3, 0]],
   ['page/ds/views/record.css', [3, 7, 2, 0]],

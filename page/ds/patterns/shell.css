@@ -325,3 +325,5 @@ html{-webkit-tap-highlight-color:transparent!important}
 @media (min-width:600px){
   .wrap{scrollbar-gutter:stable!important}
 }
+/* Read-only (B-320): no composer and no New, moved from the carry (B-515 lane 2). */
+[data-readonly] #composer,[data-readonly] #new-wrap{display:none!important}

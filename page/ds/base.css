@@ -41,3 +41,19 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rise{animation:rise var(--dur-rise) var(--ease) both}
 a,button,input,select,textarea,label,summary,[role="tab"],[role="button"],[role="menuitem"]{touch-action:manipulation}
+/* B-515 lane 2: moved from the carry: every control's cursor (B-552) and the captions reveal and side pane under
+   reduced motion (the setting and E.V.'s own), important here so animation and the reveal's fade never win. */
+@media (prefers-reduced-motion:reduce){
+  body.captions .reveal .w{opacity:1!important;filter:none!important;transform:none!important}
+  body.captions.side-on #p-ev>#ev-side{animation:none!important}
+}
+/* ============================================================ B-224 (D-229): System's Preferences ====================
+   Text size: every font size is calc(N px * var(--ts)); Larger is one step up. Reduce motion On gives the end states the
+   system's reduced-motion setting gives. Both are this device's own, set before first paint by the page's head script. */
+:root[data-motion="reduce"] body.captions .reveal .w{opacity:1!important;filter:none!important;transform:none!important}
+:root[data-motion="reduce"] body.captions.side-on #p-ev>#ev-side{animation:none!important}
+/* ============================================================ B-552: a native baseline ============================
+   No grey tap flash, no double-tap zoom wait, no text selection or long-press callout on controls, the arrow cursor on
+   the app's chrome (a pointer only on real links), and a pane scrollbar that never shifts the layout. Hover itself is
+   gated by (hover:hover) at build time (tools/hover-gate.mjs). His words, notes and E.V.'s lines stay selectable. */
+button,[role="tab"],[role="button"],[role="menuitem"],summary,.seg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
