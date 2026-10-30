@@ -89,15 +89,8 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     p['build.ev4-builder'],
     "You are an E.V. v4 build session. Your first step is node tools/guard.mjs --mark (this session is the builder, B-179). Then follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs and Builder runs sections. This run was fired with a message that says what it is for: 'Job <id>', words to file (starting bug:, idea: or request:), or 'continue'. It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
   );
-  // B-187: the builder waits for its fired text as the worker does, and docs/builder-runs.md (moved from CLAUDE.md,
-  // B-611) re-fires it with words it waits for.
-  const runs = fs.readFileSync(path.join(ROOT, 'docs', 'builder-runs.md'), 'utf8');
-  const claude = runs.replace(/\s+/g, ' ');
-  assert.match(
-    claude,
-    /fire the builder again through the Claude Code Remote `fire_trigger` tool with the text `continue`/
-  );
-  assert.match(claude, /its prompt ends its first turn until that arrives, B-187/);
+  // B-611 moved the Builder runs section to docs/builder-runs.md; B-425 keeps tests off docs/, so only the prompt
+  // and CLAUDE.md's pointer to it are pinned here.
   // B-179 lint: the rendered builder prompt writes the marker first, and CLAUDE.md has the section it names.
   assert.match(
     p['build.ev4-builder'],
@@ -110,15 +103,6 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     /\n## Builder runs\n[^#]*docs\/builder-runs\.md/,
     'CLAUDE.md points the section at docs/builder-runs.md'
   );
-  const section = runs.split('\n## Builder runs\n')[1].split('\n## ')[0].replace(/\s+/g, ' ');
-  assert.match(section, /`node tools\/guard\.mjs --mark`, which writes \/tmp\/ev\/builder-run/);
-  for (const step of [
-    /report bug\|request --from-chat --job <id>/,
-    /log <task> --note --from-job <id> --waiting-on none/,
-    /trace --job <id> --record/,
-    /the live watchdog's `last_run` from `list_triggers`/,
-  ])
-    assert.match(section, step);
 });
 
 test("no prompt clones, unpacks or attaches code, or names the page-only collection; the one fetch is the gate's", () => {
