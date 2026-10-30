@@ -1950,6 +1950,28 @@ const skeleton = b =>
 // B-450 (D-354, D-357): the study plan in Study's overview at 1280 and 390, on two planted drafts in B-449's shape: E4's
 // (the next exam: its objectives fold to one line, its tasks carry badges, one has none) and E5's (a later exam, with
 // E.V.'s one question). Then the plan settings, Approve, a tick and the done count. Ends with E4's plan as it was.
+// B-581: wait until every finite animation and transition (a fold's motion, B-576) has finished; an endless one (a
+// progress sweep) never does and is not waited on
+async function foldSettled(page) {
+  await page.waitForFunction(
+    () =>
+      document
+        .getAnimations()
+        .every(a => a.playState !== 'running' || !a.effect || a.effect.getTiming().iterations === Infinity),
+    null,
+    { timeout: 5000 }
+  );
+}
+// B-581: a Today row ticked done moves into Today's closed Done fold; open it, as he would, before its tick is clicked
+async function todayTick(page, key) {
+  const box = page.locator(`#today-list [data-ui=line][data-key="${key}"] input.tick`);
+  if (!(await box.isVisible())) {
+    const line = page.locator('#today-list .ti-done .fold-line[aria-expanded="false"]');
+    if (await line.count()) await line.first().click();
+    await foldSettled(page);
+  }
+  await box.click();
+}
 async function studyPlanChecks(page) {
   const pickCourse = async c => {
     await page.$eval(`#study-course button[aria-label="${c}"]`, b => b.click());
@@ -2527,7 +2549,8 @@ async function studyPlanChecks(page) {
       JSON.stringify({ f0, qs })
     );
     if (await q.count()) await q.first().click();
-    await page.waitForTimeout(100);
+    // B-581: the fold's close (B-576) moves the plan below it; wait for every animation and transition to finish
+    await foldSettled(page);
   }
   const tick = page
     .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day.today .pl-t input.tick:not(:checked)')
@@ -2628,11 +2651,11 @@ async function studyPlanChecks(page) {
     const h1 = async () => !!((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h1;
     const g0 = await todayRows();
     const p0 = await h1();
-    await page.locator('#today-list [data-ui=line][data-key="plan-h1"] input.tick').click();
+    await todayTick(page, 'plan-h1');
     await page.waitForTimeout(300);
     const p1 = await h1();
     const g1 = await todayRows();
-    await page.locator('#today-list [data-ui=line][data-key="plan-h1"] input.tick').click(); // and back, for what follows
+    await todayTick(page, 'plan-h1'); // and back, for what follows
     await page.waitForTimeout(300);
     const p2 = await h1();
     const g2 = await todayRows();
