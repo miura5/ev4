@@ -1,1 +1,234 @@
-/* B-515 lane 3: empty; every rule moved to runner.css, study.css or today.css. */
+/* B-515 lane 1: the carry's Study and Today rules (lane 3), after carry-ev.css; see carry-ev.css. */
+/* B-117 (v4 rule 6): the Now card's lead is one line, so ticking the item it names never moves the list under it. */
+/* B-117: Today's lines. One line each; the rest opens in place. */
+.wk-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
+.fold-line{all:unset;cursor:pointer;color:var(--ink2);font-size:var(--fs-3);padding:4px 0}
+/* B-118: Readiness. One lead line; one objective per line, opening in place; the other tables one line each. */
+/* controls */
+/* B-191: Back sits at the left of a question's actions, Next and the check at the right; an open set folds by its head line (D-160). */
+.actions .q-back{margin-right:auto}
+/* question runner */
+.stem{font-size:var(--fs-5);line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
+/* B-116: the question's stem leads at 20 px; its kind is one quiet line under it; the one count sits at the bar. */
+/* B-245: one size everywhere, her line's with a card open */
+.q-tags{margin:2px 0 4px}
+.more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
+#more-btn{flex:none}
+.opts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0;min-width:0}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;font-size:var(--fs-4);border:1px solid rgba(var(--tint),.10);border-radius:14px;cursor:pointer;background:rgba(var(--tint),.02);min-height:var(--tap);transition:border-color .2s,background .2s}
+.opt:hover{border-color:var(--accent-edge)}
+.opt input{flex:0 0 auto;margin-top:3px;accent-color:var(--accent);width:18px;height:18px}
+.opt.right{border-color:var(--do);background:rgba(var(--do-rgb),.10)}
+.opt.wrong{border-color:var(--bad-solid);background:rgba(var(--urg-rgb),.10)}
+/* B-43 (D-100): a numeric answer: the number and its unit on one line, the worked steps a short list under the verdict. */
+.num-row{display:flex;align-items:center;gap:10px;margin:0}
+.num-in{flex:0 0 9rem;width:9rem;max-width:9rem;min-height:var(--tap);font-size:var(--fs-5);padding:8px 12px;border:1px solid rgba(var(--tint),.14);border-radius:12px;background:rgba(var(--tint),.03);color:inherit}
+.num-row.right .num-in{border-color:var(--do)}
+.num-row.wrong .num-in{border-color:var(--bad-solid)}
+.num-unit{font-size:var(--fs-4);color:var(--soft)}
+.num-answer{margin:0;font-weight:600}
+/* B-75 (D-132, D-165): an open answer: his words, then each key point as a line, hit or missed. */
+.open-in{display:block;width:100%;box-sizing:border-box;min-height:calc(var(--tap) * 2);font:inherit;font-size:var(--fs-4);line-height:1.45;padding:10px 12px;border:1px solid rgba(var(--tint),.14);border-radius:12px;background:rgba(var(--tint),.03);color:inherit;resize:vertical}
+.open-given{margin:0;padding-left:10px;border-left:2px solid rgba(var(--tint),.18);color:var(--soft);white-space:pre-wrap}
+.open-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.open-points li.hit{color:var(--do)}
+.open-points li.miss{color:var(--bad)}
+.open-added{margin:0;color:var(--soft)}
+.num-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;color:var(--soft)}
+.why{display:block;font-size:var(--fs-3);color:var(--quiet);margin-top:4px;line-height:1.45}
+.verdict{font-weight:600;font-size:var(--fs-5);margin:0}
+.verdict.ok{color:var(--do)}
+.verdict.no{color:var(--bad)}
+/* With the skills or workout panel open on desktop (B-51), her captions still fill their row and scroll. */
+/* B-104 (D-143, D-144): the calm Prep marker (quiet grey; never the red of urgent) and the prep
+   check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
+.prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform .25s var(--ease)}
+/* B-121 (D-158): from 1024 px Today, Study, Progress, Record and System are two columns: the lead and the list he acts
+   in on the left, the folded detail on the right. Below it the columns are one stack, in the same order. */
+/* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
+/* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
+.ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
+.ws-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
+.ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-n{flex:none;color:var(--ink2);font-size:var(--fs-2)}
+.ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}
+.ws-item.open .ws-more{display:flex}
+.ws-more .meta{margin:0}
+button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:var(--fs-3);padding:4px 0}
+button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* B-126 (D-165): Study answered and done. The counter is the set's fold line; one line per question under it, beside
+   the question from 1024 px; the verdict one line under the stem; a finished set's lines open in place. */
+.fold-line.flat{cursor:default;pointer-events:none}
+.set-q:focus-visible,.sum-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}
+.q-main{display:flex;flex-direction:column;gap:12px;min-width:0}
+.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
+.verdict{margin:0}
+.why-fold{align-self:flex-start}
+.sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}
+.sum-more p{margin:0}
+/* B-211 (D-217): the session bar sits in the pane header; answers carry their key number */
+/* B-303: the session line's Break, +5 and End stay one quiet 28 px line, at every width */
+.opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
+@media (hover:none){
+  .opt kbd.opt-n{display:none}
+}
+/* D-270: a text link is text with an underline, neutral */
+button.tlink{color:var(--text);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+button.tlink:hover{text-decoration-color:currentColor}
+@media (min-width:1200px){
+  body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 8px)}
+}
+/* ============================================================ B-225 (D-271): folds open in 0.28 s and close in 0.16 s ==
+   A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
+.chev,.prep-row .chev{transition-duration:.16s}
+/* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
+/* ============================================================ B-285 (D-274, D-278, D-269, C-1, C-15): the component set
+   Every part a view is built from: five kinds of button (primary, neutral, coded tint, ghost, icon; .sm is the small
+   size of any), the badge, the segmented switch, the card, the row, the toolbar, the progress bar and the composer.
+   Every colour is a token of the generator (page/theme.js). A coded colour is one class, x-green, x-yellow, x-red,
+   x-blue or x-violet, which sets --x for the part it is on; D-269 gives all five one lightness. A view uses at most one
+   primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
+   on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
+/* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
+/* B-303: a kit row's one badge, after its name */
+/* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
+/* B-380: as the demo's .seg: a flat grey fill with no outline; the picked option on the surface with a hairline */
+/* card */
+/* row: the name, then at most one badge, the time, and actions that show on hover or focus */
+/* toolbar: a view's tabs, its switches and its one primary */
+/* progress bar: green is done (D-270); a coded class gives another meaning */
+/* composer: the field and send, the one place besides her and the primary that carries her colour (D-270) */
+/* ============================================================ B-287 (C-4, C-7): the header and New ==================
+   The pane's 48 px header names the view ("E.V." on hers) and ends with New, the page's one way to create: a menu of
+   Task for Today and Note, each a modal dialog. The way out is Esc or a tap outside (D-160). */
+/* a view's switch scrolls inside itself before New leaves the header */
+/* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
+/* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
+   header an icon and the kind, the page dimmed behind it, Cancel beside Add */
+/* B-380: the demo's modal type: 14 px text, its header line at 1.45, the footer hint at 13 px */
+/* B-373: the note's words as the demo's textarea, one plain focus ring on every field */
+/* B-308 (C-7): a task's fields, one row each: its label, then its choices; under 600 px the label sits above them. */
+/* B-465: an exam's Date, a field in the row's rhythm (the title's look at the switch buttons' height) */
+/* ============================================================ B-291 (C-1, C-13, D-270, D-276): Today's list ===========
+   One row per item on the component set's row: the tick, the name, at most one badge, Start on the first startable row,
+   the time. 32 px from 600 px and 44 px on the phone, where the time stays on the row's line and the tick is a 44 px
+   target around its 18 px box. Done, Deferred and Taken off today fold under the list. */
+/* ============================================================ B-292 (C-5): Today's budget ==========================
+   What's left against the time left ("55 min left · 60 free"), the bar (done, then left) and the done minutes on their
+   own line, from planDay's budget. Over budget the left part and its words take the attention yellow (D-270: red is
+   for exams, graded work due and errors), the words' ink mixed toward the text so they keep 4.5:1. The list head
+   carries the short line below 1200 px, where the card reads under the list. It holds no control: the hand-off's C-5
+   asks for a card he reads, excused from D-147 in spec.ui.tenets. */
+/* ============================================================ B-294: E.V.'s changes today ============================
+   Under the budget card in the side column (the right panel from 1200 px): one row per list edit she made today, its
+   time in grey under it and a ghost Undo at its end. Absent while she has changed nothing (D-151). */
+/* ============================================================ B-293 (C-9, D-243): Plan the rest ====================
+   The list head ends with Plan the rest. Its proposal is one line under the head (what E.V. suggests, Accept all and
+   Reject) and standard rows: an addition is a row with no tick yet, a take-off keeps its row; each carries the one
+   "Proposed" badge and labelled Accept and Keep. No dashed ring and no x. */
+/* ============================================================ B-295 (C-6, C-13, C-16): Today's week ================
+   List and Week switch the view. The week is seven days from today: seven columns from 1200 px, one row per day below
+   it (the day's name, then its chips), and one stacked column on the phone. A chip is a date's title on one line and
+   its kind in grey under it; red only for graded work due today or tomorrow (D-270). The picked date's panel is the
+   right panel from 1200 px and reads under the days below it. */
+/* two words: in the header the status line gives way, never the switch */
+.wchip:hover{background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
+.wchip:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.wchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--text)}
+.wchip.exam .wc-t{font-weight:600}
+.wchip .wc-s.urgent{color:var(--urg)}
+.wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
+.wchip.wk-load.done .wc-t{color:var(--quiet)}
+/* B-419: a day's head opens its panel; a task added to a day is a card on it, struck through when done; the day's
+   panel lists its tasks in one card, as the date panel's properties. */
+button.wk-h:hover b{text-decoration:underline}
+button.wk-h:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:600}
+.wchip.wk-task .wc-t{color:var(--ink2,var(--text))}
+/* B-349 (D-312): the picked date's panel as the demo's TodayWeek board: no card around it, the badge, an 18 px title,
+   When / Course / Readiness in one card in a 92 px label column, the actions stacked at their own width. */
+/* ============================================================ B-296 (C-10, D-282): the task's panel ================
+   A row's name opens its task in the side column (the right panel from 1200 px, under the pane below it): the name and
+   Close, then the properties as the date panel lays them out, "Where it came from" in grey, and the actions: Start the
+   one primary when it can start, Snooze to tomorrow and Remove from today. The open row is marked on the list. */
+/* B-336 (D-312): as the demo's 'a task opened' board: the panel holds only the task; its properties sit in one card in
+   a 92 px label column, Status is a To do / Done switch, the actions are full-width buttons with the grey note under them. */
+.col-side>.tk-away,.col-main>.tk-away{display:none!important}
+/* B-355 (D-314): as the TaskDetail board: the tick beside the title (a 16 px rounded square, green when done), the
+   description in quiet 14 px, then Where it came from as rows with a grey dot and the time on the right, above the card. */
+/* ============================================================ B-335 (D-312): Today as in the demo ===============
+   One toolbar row across the pane under the header: in the list the All / Classes / Study filter with its counts,
+   List / Week and Plan the rest; in the week List / Week, back / Today / forward and the range. Rows span the pane,
+   44 px, hairline between. The budget's figure is large, with On the list and Done as rows. The week fills the pane. */
+#p-today{gap:0}
+#today-list>.empty{padding:14px 2px}
+/* B-354 (D-314): the demo's row is 44 px with its hairline under it (45 in all); a week title wraps between words only,
+   a column widening to its longest word; the grid ends at the pane's foot under E.V.'s line; on the phone a long title
+   wraps in its own column and keeps its badge and time on the row's line. */
+@media (min-width:1200px){
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - 8px - 53px)}
+}
+/* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
+   "Today" (no line under it), the head row (breadcrumb, N of M, up and down) across the pane, the 22 px title with its
+   tick, the description and Where it came from in a 720 px column; the right panel (under it below 1200 px) holds the
+   properties card, Start and Snooze full width and the grey note. The list and its toolbar step aside until it closes. */
+button.btn.mh-back{display:none}
+body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;place-items:center;width:28px;height:28px;min-height:0;padding:0;margin-left:-8px;border:0;background:none;color:var(--quiet);flex:0 0 28px;border-radius:6px}
+body[data-view="today"].task-open .mh button.btn.mh-back:hover{background:var(--hover);color:var(--text)}
+.mh .mh-back svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* B-373: the board's task view carries her line only for graded work (taskLine); the panel starts under it */
+body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--status-h, 0px))}
+/* B-517: a practice task's quiz, in place under its description */
+@media (max-width:599px){
+  body[data-view="today"].task-open .mh button.btn.mh-back{width:44px;height:44px;margin-left:-12px;color:var(--text)}
+  .mh .mh-back svg{width:18px;height:18px}
+}
+/* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
+   The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
+   32 px row per objective (44 px on the phone): its state badge, its words, its weak spots and Quiz me on hover or
+   focus. On the phone the toolbar is one row: the course codes and Start session's icon, and Quiz me sits in the
+   objective's detail, which a tap on its words opens in place. */
+/* B-337 (D-312): as the demo's Study overview. The toolbar is a strip across the pane with a hairline under it; the exam
+   card spans the pane with its 10 px bar and 44 px objective rows; Coming up in the course sits under it. From 1200 px
+   the picked objective fills the right panel; below that it opens under its row. */
+#p-study .sbar-study{flex-wrap:nowrap;min-height:0;margin:-18px -16px 0;padding:12px 18px;border-bottom:1px solid var(--line);gap:8px}
+#p-study .sbar-study:not(:has(> :not([hidden],.sp,#seg-study))){display:none}
+/* B-351 (D-313): no view tabs, as the StudyOverview board; Plan and Weak spots open from the card and the strip */
+#seg-study{display:none!important}
+#p-study .sbar-study .seg{align-self:center}
+#study-course .code{display:none}
+#study-objectives{display:flex;flex-direction:column;gap:12px;padding:2px 2px 18px}
+.ov-card[hidden]{display:none}
+.ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
+.ov:last-child .obj{border-bottom:0}
+.obj .nm{flex:1;min-width:0;min-height:0;border:0;background:none;padding:0;font:inherit;line-height:1.45;color:inherit;cursor:pointer;text-align:left}
+.obj .nm:hover{text-decoration:underline;text-underline-offset:3px}
+.obj.on .nm{font-weight:600}
+.obj .ow{font-size:var(--fs-1);color:var(--quiet);white-space:nowrap}
+.obj .oq{visibility:hidden}
+.obj:hover .oq,.obj:focus-within .oq{visibility:visible}
+.ov-detail .od-name{font:600 var(--fs-4)/1.3 var(--sans);color:var(--text)}
+.ov-detail .od-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ov-detail .od-ws .st{font-size:var(--fs-1);color:var(--quiet)}
+.ov-detail .od-q{align-self:flex-start}
+.ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
+.ov:last-child > .ov-detail{border-bottom:0}
+.ov.open:has(> .ov-detail) .obj{border-bottom:0}
+.ov-grid:empty{display:none}
+.ov-grid > :only-child{grid-column:1 / -1}
+.ov-grid > .ov-up[hidden] ~ .ov-quiz{grid-column:1 / -1}
+.ov-card .ov-none{margin:4px 0 0;padding:8px 0;text-align:left}
+/* B-465: the exam card's no-exam line with Add exam beside it; the pane's Add exam sits under its No exam yet row */
+.ov-card .ov-none-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ov-card .ov-none-row .ov-none{flex:1;min-width:200px;margin:0}
+.ov-detail .od-add{align-self:flex-start;margin-top:-6px}
+/* B-482: Practice sets in this course, a full row under Coming up and the mini quiz */
+.ov-sets .st:hover{background:var(--hover)}
+.ov-sets span.sm,.ov-sets .sd{color:var(--quiet);font-size:var(--fs-1);white-space:nowrap}
+.ov-sets .fold-line{padding:8px 6px;color:var(--quiet);font-size:var(--fs-1)}
+.pl-t .pl-set{flex:none}
+@media (min-width:1200px){
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - var(--strip-h) - 53px)}
+}

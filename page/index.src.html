@@ -181,10 +181,8 @@
       <textarea id="new-text" rows="4" aria-label="Note" placeholder="What did you learn, in your words?" hidden></textarea>
       <!-- B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit; a note's Course (B-373) -->
       <div class="new-fields" id="new-fields" hidden>
-        <div class="frow" id="new-kind-row"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" data-ui="segmented" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
-        <div class="frow" id="new-est-row"><span class="lbl" id="new-est-lbl">Estimate</span><div class="seg" data-ui="segmented" id="new-est" role="group" aria-labelledby="new-est-lbl"></div></div>
-        <div class="frow" id="new-when-row"><span class="lbl" id="new-when-lbl">When</span><div class="seg" data-ui="segmented" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
-        <div class="frow"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" data-ui="segmented" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
+        <div class="new-chips" id="new-chips" role="group" aria-label="Kind, estimate, when and course"></div>
+        <div class="frow" id="new-course-row"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" data-ui="segmented" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
         <!-- B-465: an exam's Date and Kind (its kind as the title says until he picks one) -->
         <div class="frow" id="new-date-row" hidden><label class="lbl" for="new-date">Date</label><input type="date" id="new-date"></div>
         <div class="frow" id="new-ekind-row" hidden><span class="lbl" id="new-ekind-lbl">Kind</span><div class="seg" data-ui="segmented" id="new-ekind" role="group" aria-labelledby="new-ekind-lbl"></div></div>

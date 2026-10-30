@@ -1007,19 +1007,50 @@ const statusShown = page =>
         const before = await planned();
         await page.click('#new-btn');
         await page.click('#new-menu [data-new="task"]');
-        const shape = await page.evaluate(() => ({
-          fields: !document.getElementById('new-fields').hidden,
-          kinds: [...document.querySelectorAll('#new-kind button')].map(b => b.textContent),
-          ests: [...document.querySelectorAll('#new-est button')].map(b => b.textContent),
-          whens: [...document.querySelectorAll('#new-when button')].map(b => b.textContent),
-          courses: [...document.querySelectorAll('#new-course button')].map(b => b.textContent),
-        }));
+        // B-596: the task's Kind, Estimate, When and Course are one row of Picker chips; a chip opens its list
+        const chip = key => `#new-chips [data-ui="chip"][data-key="${key}"]`;
+        const pickIn = async (key, value) => {
+          await page.click(chip(key));
+          await page.click(`#new-chips :popover-open [data-ui="line"][data-key="${value}"]`);
+        };
+        const chipText = () =>
+          page.evaluate(() =>
+            Object.fromEntries(
+              [...document.querySelectorAll('#new-chips [data-ui="chip"]')].map(b => [b.dataset.key, b.textContent])
+            )
+          );
+        const listOf = async key => {
+          await page.click(chip(key));
+          const v = await page.evaluate(() =>
+            [...document.querySelectorAll('#new-chips :popover-open [data-ui="line"]')].map(r => r.dataset.key)
+          );
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(60);
+          return v.concat(
+            await page.evaluate(() => (document.getElementById('new-dlg').open ? [] : ['dialog closed']))
+          );
+        };
+        const shape = {
+          fields: await page.evaluate(() => !document.getElementById('new-chips').hidden),
+          noCategory: await page.evaluate(() => !document.getElementById('new-course-row').offsetParent),
+          kinds: await listOf('kind'),
+          ests: await listOf('minutes'),
+          whens: await listOf('when'),
+          courses: await listOf('course'),
+        };
+        await page.click('#new-title');
         await page.keyboard.type('Harness reading chapter 12');
-        // B-361 (D-316): the demo's categories (Classes, Study) and Estimate chips (5, 15, 30, 45)
-        await page.click('#new-kind [data-v="review"]');
-        await page.click('#new-est [data-v="30"]');
+        await pickIn('kind', 'review');
+        // a typed estimate: 25 in the search line, then Enter
+        await page.click(chip('minutes'));
+        await page.waitForFunction(
+          () => document.activeElement && document.activeElement.matches('#new-chips :popover-open input')
+        );
+        await page.keyboard.type('25');
+        await page.keyboard.press('Enter');
         const course = shape.courses[shape.courses.length - 1];
-        await page.click(`#new-course [data-v="${course}"]`);
+        await pickIn('course', course);
+        const picked = await chipText();
         await page.click('#new-save');
         await page.waitForTimeout(150);
         // B-296 (C-10): its course reads in the task's panel, which the row's name opens
@@ -1051,12 +1082,10 @@ const statusShown = page =>
         const after = await planned();
         await page.click('#new-btn');
         await page.click('#new-menu [data-new="task"]');
-        const reset = await page.evaluate(() => ({
-          min: (document.querySelector('#new-est [aria-pressed="true"]') || {}).textContent,
-          when: (document.querySelector('#new-when [aria-pressed="true"]') || {}).textContent,
-        }));
+        const reset = await chipText();
+        await page.click('#new-title');
         await page.keyboard.type('Harness tomorrow task');
-        await page.click('#new-when [data-v="tomorrow"]');
+        await pickIn('when', '1');
         await page.click('#new-save');
         await page.waitForTimeout(150);
         const tom = await page.evaluate(() => {
@@ -1071,25 +1100,29 @@ const statusShown = page =>
           return { written: !!w, onToday };
         });
         ok(
-          `${tag} New task's Category, Estimate, When and Course: 30 min of Study lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list (B-308, B-361)`,
+          `${tag} New task's Picker chips (B-596): every kind, 5 to 45 min or typed, today and the next days, each course; Review with a typed 25 min lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list`,
           shape.fields &&
-            shape.kinds.join('|') === 'Classes|Study' &&
-            shape.ests.join('|') === '5 min|15|30|45' &&
-            shape.whens.join('|') === 'Today|Tomorrow' &&
+            shape.noCategory &&
+            shape.kinds.join('|') === 'todo|reading|practice|review|notes|graded' &&
+            shape.ests.join('|') === '5|15|30|45' &&
+            shape.whens.join('|') === '0|1|2|3|4' &&
             shape.courses.length > 0 &&
+            picked.kind === 'Review' &&
+            picked.minutes === '25 min' &&
             !!added.w &&
             added.w.kind === 'review' &&
-            added.w.minutes === 30 &&
+            added.w.minutes === 25 &&
             added.w.course === course &&
             !!added.badge &&
-            added.time === '30 min' &&
+            added.time === '25 min' &&
             String(added.more).includes(course) &&
-            (before == null || after === before + 30) &&
-            reset.min === '15' &&
+            (before == null || after === before + 25) &&
+            reset.kind === 'Class' &&
+            reset.minutes === '15 min' &&
             reset.when === 'Today' &&
             tom.written &&
             !tom.onToday,
-          JSON.stringify({ shape, added, before, after, reset, tom })
+          JSON.stringify({ shape, picked, added, before, after, reset, tom })
         );
         const creates = [];
         for (const v of ['ev', 'today', 'study', 'progress', 'record', 'system']) {

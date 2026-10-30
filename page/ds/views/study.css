@@ -165,7 +165,6 @@
 #ov-sets .st span.sm{text-align:left}
 #ov-sets .sd,#ov-sets .ss{text-align:right}
 #ov-sets .st span.sm,#ov-sets .sd,#ov-sets .ss{color:var(--quiet);font-size:var(--fs-2);white-space:nowrap;font-variant-numeric:tabular-nums}
-#ov-sets .st span.sm,#ov-sets .sd{font-size:var(--fs-1)}
 #ov-sets .ss.fin{font-weight:var(--fw-medium);color:color-mix(in srgb,var(--x) var(--kind-text-mix),var(--text))}
 #ov-sets .sx{width:auto;display:flex;justify-content:flex-end}
 #ov-sets .sx .btn{color:var(--text)}
@@ -176,53 +175,3 @@
   #ov-sets .st span.sm,#ov-sets .sd,#ov-sets .ss{text-align:left}
   #ov-sets .st span.sm::after,#ov-sets .ss::after{content:"·";margin-left:var(--sp-1_5);color:var(--faint);font-weight:var(--fw-regular)}
 }
-/* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
-.prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform var(--dur-chev) var(--ease)}
-.ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
-.ws-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
-.ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
-.ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ws-n{flex:none;color:var(--ink2);font-size:var(--fs-2)}
-.ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}
-.ws-item.open .ws-more{display:flex}
-.ws-more .meta{margin:0}
-button.tlink{all:unset;-webkit-user-select:auto!important;user-select:auto!important;cursor:pointer;color:var(--text);font-size:var(--fs-3);padding:4px 0;text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
-button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
-button.tlink:hover{text-decoration-color:currentColor}
-@media (min-width:1200px){
-  body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 8px)}
-}
-.chev,.prep-row .chev{transition-duration:var(--dur-tick)}
-#p-study .sbar-study{flex-wrap:nowrap;min-height:0;margin:-18px -16px 0;padding:12px 18px;border-bottom:1px solid var(--line);gap:8px}
-#p-study .sbar-study:not(:has(> :not([hidden],.sp,#seg-study))){display:none}
-#seg-study{display:none!important}
-#p-study .sbar-study .seg{align-self:center}
-#study-course .code{display:none}
-#study-objectives{display:flex;flex-direction:column;gap:12px!important;padding:2px 2px 18px}
-.ov-card[hidden]{display:none}
-.ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
-.ov:last-child .obj{border-bottom:0}
-.obj .nm{flex:1;min-width:0;min-height:0;border:0;background:none;padding:0;font:inherit;line-height:1.45;color:inherit;cursor:pointer;text-align:left}
-.obj .nm:hover{text-decoration:underline;text-underline-offset:3px}
-.obj.on .nm{font-weight:600}
-.obj .ow{font-size:var(--fs-1);color:var(--quiet);white-space:nowrap}
-.obj .oq{visibility:hidden}
-.obj:hover .oq,.obj:focus-within .oq{visibility:visible}
-.ov-detail .od-name{font:600 var(--fs-4)/1.3 var(--sans);color:var(--text)}
-.ov-detail .od-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ov-detail .od-ws .st{font-size:var(--fs-1);color:var(--quiet)}
-.ov-detail .od-q{align-self:flex-start}
-.ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
-.ov:last-child > .ov-detail{border-bottom:0}
-.ov.open:has(> .ov-detail) .obj{border-bottom:0}
-.ov-grid:empty{display:none}
-.ov-grid > :only-child{grid-column:1 / -1}
-.ov-grid > .ov-up[hidden] ~ .ov-quiz{grid-column:1 / -1}
-.ov-card .ov-none{margin:4px 0 0;padding:8px 0;text-align:left}
-.ov-card .ov-none-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.ov-card .ov-none-row .ov-none{flex:1;min-width:200px;margin:0}
-.ov-detail .od-add{align-self:flex-start;margin-top:-6px}
-.ov-sets .st:hover{background:var(--hover)}
-.ov-sets span.sm,.ov-sets .sd{color:var(--quiet);font-size:var(--fs-1);white-space:nowrap}
-.ov-sets .fold-line{padding:8px 6px;color:var(--quiet);font-size:var(--fs-1)}
-.pl-t .pl-set{flex:none}

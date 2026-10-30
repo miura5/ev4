@@ -60,7 +60,14 @@
         const d = { ArrowDown: 1, ArrowUp: -1 }[e.key];
         if (d && shown.length) ((at = (at + d + shown.length) % shown.length), draw(), e.preventDefault());
         else if (e.key === 'Enter' && shown[at]) (pick(shown[at]), e.preventDefault());
-        else if (/^[1-9]$/.test(e.key) && !q.value && shown[e.key - 1]) (pick(shown[e.key - 1]), e.preventDefault());
+        else if (e.key === 'Enter' && o.free) {
+          // B-596: a value typed in the search line (a task's own minutes), when the picker takes one; such a picker's digits
+          // type into the search line instead of picking a row
+          const p = o.free(q.value.trim());
+          if (p) (opts.some(x => x.value === p.value) || opts.push(p), pick(p));
+          e.preventDefault();
+        } else if (/^[1-9]$/.test(e.key) && !q.value && !o.free && shown[e.key - 1])
+          (pick(shown[e.key - 1]), e.preventDefault());
       });
       pop.addEventListener('toggle', e => e.newState === 'open' && ((q.value = ''), (at = 0), draw(), q.focus()));
       if (o.inline && o.query) q.value = o.query;

@@ -208,6 +208,9 @@ body.captions.on-ev .wrap{max-width:680px}
 .new-body #new-warn{margin:0;color:var(--att)}
 .new-fields{display:flex;flex-direction:column;gap:14px}
 .new-fields[hidden]{display:none}
+/* B-596: the task's Kind, Estimate, When and Course, one row of Picker chips that wraps on a narrow window */
+.new-chips{display:flex;flex-wrap:wrap;gap:var(--sp-1_5);align-items:center}
+.new-chips[hidden]{display:none}
 .new-fields .frow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;min-width:0}
 .new-fields .seg{justify-self:start;align-self:center;width:max-content;max-width:100%}
 .new-fields .seg button{min-height:24px;height:24px;padding:0 9px;font-size:var(--fs-1)}

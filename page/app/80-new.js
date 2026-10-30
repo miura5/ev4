@@ -37,30 +37,36 @@
     let newKind = null;
     const drafts = { task: '', note: '', exam: '' },
       noteDraft = { body: '', course: '' };
-    // B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit (kind, minutes, date,
-    // course), so it counts against that day's budget. Category is the list's own kinds; a To-do has no badge (B-291).
-    // B-361: the demo's two categories: Classes is a plain to-do, Study a review item (it counts under Today's Study).
+    // B-308 (C-7), B-596: a task's Kind, Estimate, When and Course, one row of Picker chips under the title, written
+    // through the list edit (kind, minutes, date, course), so it counts against that day's budget. The kinds are the
+    // list's own, each with its dot from the one kind map (B-594); Today's Classes or Study follows from the kind (a
+    // class to-do is Classes; reading, practice, review and notes are Study), so there is no Category to pick.
     const TASK_KINDS = [
-      ['todo', 'Classes'],
-      ['review', 'Study'],
+      ['todo', 'Class'],
+      ['reading', 'Reading'],
+      ['practice', 'Practice'],
+      ['review', 'Review'],
+      ['notes', 'Notes'],
+      ['graded', 'Graded'],
     ];
-    const TASK_ESTS = [
-      [5, '5 min'],
-      [15, '15'],
-      [30, '30'],
-      [45, '45'],
-    ];
+    const TASK_ESTS = [5, 15, 30, 45];
     const ICON = {
       task: 'M5 5h14v14H5zM9 12l2 2 4-4',
       note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6',
       exam: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5', // B-465: a calendar day
     };
-    const TASK_WHENS = [
-      ['today', 'Today'],
-      ['tomorrow', 'Tomorrow'],
-    ];
+    // When: today, tomorrow or one of the next few days (0 to 4 days on), by its weekday
+    const TASK_WHENS = () =>
+      [0, 1, 2, 3, 4].map(n => [
+        n,
+        n === 0
+          ? 'Today'
+          : n === 1
+            ? 'Tomorrow'
+            : new Date(E.addDays(today, n) + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }),
+      ]);
     const taskCourses = () => E.activeCourses().sort((a, b) => (b === E.defaultCourse()) - (a === E.defaultCourse()));
-    const taskDefaults = () => ({ kind: 'todo', minutes: 15, when: 'today', course: taskCourses()[0] || '' });
+    const taskDefaults = () => ({ kind: 'todo', minutes: 15, when: 0, course: taskCourses()[0] || '' });
     let taskOpts = taskDefaults();
     // B-465: an exam's course, date and kind; kind null means as the title says (core examKindFor)
     const EXAM_KIND_WORDS = { unit: 'Unit', lab: 'Lab', final: 'Final', dosage: 'Dosage', ati: 'ATI' };
@@ -104,7 +110,8 @@
     // B-465: an exam has a Title, its Course, its Date and its Kind.
     function newFields(kind) {
       $('new-fields').hidden = false;
-      for (const id of ['new-kind-row', 'new-est-row', 'new-when-row']) $(id).hidden = kind !== 'task';
+      $('new-chips').hidden = kind !== 'task';
+      $('new-course-row').hidden = kind === 'task';
       for (const id of ['new-date-row', 'new-ekind-row']) $(id).hidden = kind !== 'exam';
       if (kind === 'note') {
         if (noteDraft.course && !taskCourses().includes(noteDraft.course)) noteDraft.course = '';
@@ -126,13 +133,45 @@
         return;
       }
       if (!taskCourses().includes(taskOpts.course)) taskOpts.course = taskCourses()[0] || '';
-      segPaint('new-kind', TASK_KINDS, 'kind');
-      segPaint('new-est', TASK_ESTS, 'minutes');
-      segPaint('new-when', TASK_WHENS, 'when');
-      segPaint(
-        'new-course',
-        taskCourses().map(c => [c, c]),
-        'course'
+      taskChips();
+    }
+    /** B-596: the task's four Picker chips, each on taskOpts; Estimate also takes minutes typed in its search line. */
+    function taskChips() {
+      const pk = (key, label, options, extra) =>
+        DS.picker({
+          key,
+          label,
+          value: taskOpts[key],
+          options,
+          onPick: p => (taskOpts[key] = p.value),
+          ...extra,
+        });
+      const est = m => ({ value: m, label: m + ' min' });
+      const ests = TASK_ESTS.map(est);
+      if (!TASK_ESTS.includes(taskOpts.minutes)) ests.push(est(taskOpts.minutes));
+      $('new-chips').replaceChildren(
+        pk(
+          'kind',
+          'Kind',
+          TASK_KINDS.map(([v, n]) => ({ value: v, label: n, kind: v === 'todo' ? 'class' : v }))
+        ),
+        pk('minutes', 'Estimate', ests, {
+          search: 'Pick or type minutes…',
+          free: t => {
+            const m = Math.round(Number(t));
+            return m > 0 && m <= 240 ? est(m) : null;
+          },
+        }),
+        pk(
+          'when',
+          'When',
+          TASK_WHENS().map(([v, n]) => ({ value: v, label: n }))
+        ),
+        pk(
+          'course',
+          'Course',
+          taskCourses().map(c => ({ value: c, label: c }))
+        )
       );
     }
     const saveSync = () => {
@@ -192,7 +231,7 @@
       const nd = { body, course: noteDraft.course };
       if (kind === 'note') noteDraft.body = '';
       const o = kind === 'exam' ? { ...examOpts } : { ...taskOpts },
-        tomorrow = kind === 'task' && o.when === 'tomorrow';
+        later = kind === 'task' ? Number(o.when) || 0 : 0;
       if (kind === 'task') taskOpts = taskDefaults();
       if (kind === 'exam') examOpts = examDefaults();
       guard(
@@ -200,7 +239,7 @@
         async () => {
           if (kind === 'task') {
             const edit = { action: 'add', text: t, kind: o.kind, minutes: o.minutes, course: o.course };
-            const r = await editList(tomorrow ? E.addDays(today, 1) : today, edit, 'Matt');
+            const r = await editList(E.addDays(today, later), edit, 'Matt');
             if (r.note) toast('Already on the list');
           } else if (kind === 'exam') {
             // B-465: his exam, through core's composer (D-200); the kind he picked, else as the title says
@@ -214,7 +253,7 @@
               E.noteIdea(t, { at: now(), date: today, body: nd.body, course: nd.course, existing: S.ideas || [] })
             );
         },
-        tomorrow ? 'Added to tomorrow' : NEW[kind].ok,
+        later === 1 ? 'Added to tomorrow' : later ? 'Added to ' + TASK_WHENS()[later][1] : NEW[kind].ok,
         () => newOpen(kind, t, kind === 'task' || kind === 'exam' ? o : nd)
       );
     }
@@ -239,6 +278,7 @@
       if (!newMenu.hidden && !e.target.closest('#new-wrap')) newMenuOpen(false);
     });
     dlg.addEventListener('keydown', e => {
+      if (dlg.querySelector(':popover-open')) return; // a chip's open list keeps its own keys (B-596)
       if (e.key === 'Escape') {
         e.preventDefault();
         newClose();
@@ -256,6 +296,9 @@
       }
     });
     dlg.addEventListener('cancel', e => e.preventDefault()); // Esc is the keydown's, so focus goes back to New
+    // B-596: and the browser never closes it on its own Esc (it may, once, without a tap between): Esc in a chip's open
+    // list closes only that list
+    dlg.setAttribute('closedby', 'none');
     outsideTap(dlg, t => t === dlg, newClose); // a tap on the backdrop (B-595)
     $('new-cancel').addEventListener('click', newClose);
     for (const id of ['new-title', 'new-text', 'new-date']) $(id).addEventListener('input', saveSync);
