@@ -1,5 +1,19 @@
 [
  {
+  "id": "D-399",
+  "date": "Oct 29",
+  "title": "Neutral-theme token decisions: Proprietary's token budget is about 160 (was about 120 in D-378) for the kind palette, raise/sel surface steps and motion tokens; r4's faint text colour is held just dark or light enough to pass the 4.5:1 floor (accessibility wins over the mock-up's exact hex); the warning colour follows r4's --warn",
+  "why": "Tokens lane (Oct 29): the polish design adds about 30 tokens, and two of r4's quiet text values fail the contrast floor; the old yellow pin belonged to the warm theme",
+  "status": "accepted",
+  "supersedes": [
+   "D-269"
+  ],
+  "amends": [
+   "D-378"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-398",
   "date": "Oct 29",
   "title": "Proprietary's patterns budget is about 800 lines (was 500 in D-386/D-388); the JS and component budgets stand",
@@ -1431,7 +1445,7 @@
   "date": "Oct 23",
   "title": "Coded colours share one lightness and chroma (L52 C54 light, L72 C48 dark) at hues green 145, yellow 82, red 28, blue 265, violet 305, with the meanings in this doc's colour table; in light they colour icons, dots, bars and tinted lines, never body text.",
   "why": "One lightness means no colour outshouts another, and 4.1:1 on light surfaces is enough for marks but not for reading.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan UpaXAj6qMmWqkAbmN9P7Jy P-5"
