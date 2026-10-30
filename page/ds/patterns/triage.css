@@ -3,42 +3,40 @@
    retires legacy and strips them. Raw values left are those with no token. */
 /* B-347 (D-312): Weak spots as the demo's StudyWeak board: the strip with a hairline under it, then full-width rows
    (18 px sides, a hairline between) under quiet section heads; Drill and Mark solid at the row's end. */
-#study-weak:not([hidden]){display:flex!important;flex-direction:column!important;gap:0!important;margin:-18px -16px 0!important}
-#study-weak .wk-bar{display:flex!important;align-items:center!important;gap:var(--sp-2)!important;padding:var(--sp-3) 18px!important;border-bottom:1px solid var(--line)!important;min-height:56px!important;box-sizing:border-box!important}
-#study-weak .wk-bar .ico{width:14px!important;height:14px!important}
-#study-weak .mini{font-size:calc(12.5px * var(--ts))!important;color:var(--quiet)!important}
-#study-weak .sp{flex:1!important}
+#study-weak:not([hidden]){display:flex!important;flex-direction:column!important;gap:0!important;margin:-18px -16px 0}
+#study-weak .wk-bar{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) 18px;border-bottom:1px solid var(--line);min-height:56px;box-sizing:border-box}
+#study-weak .wk-bar .ico{width:14px;height:14px}
+#study-weak .mini{font-size:calc(12.5px * var(--ts));color:var(--quiet)}
+#study-weak .sp{flex:1}
 .wk-list{display:flex!important;flex-direction:column!important}
-.wk-list .dayh{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important;padding:14px 18px var(--sp-1_5)!important}
-.wk-list .wl{display:flex!important;align-items:center!important;gap:var(--sp-3)!important;padding:10px 18px!important;border-bottom:1px solid var(--line)!important;flex-wrap:wrap!important}
-.wk-list .wl .dot{width:7px!important;height:7px!important;border-radius:4px!important;background:var(--x,var(--line2))!important;flex:none!important}
-.wk-list .wt{flex:1!important;min-width:0!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important}
-.wk-list .wn{font-size:calc(13.5px * var(--ts))!important;color:var(--text)!important}
-.wk-list .wl.quiet .wn{color:var(--quiet)!important}
-.wk-list .wl-all{border-bottom:0!important;padding:var(--sp-2) 18px var(--sp-1)!important;gap:var(--sp-2)!important}
-.wk-list .wl-all + .dayh{border-top:1px solid var(--line)!important;margin-top:var(--sp-2)!important}
-.wk-list .wl-note{color:var(--quiet)!important}
+.wk-list .dayh{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet);padding:14px 18px var(--sp-1_5)}
+.wk-list .wl{display:flex;align-items:center;gap:var(--sp-3);padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wk-list .wl .dot{width:7px;height:7px;border-radius:4px;background:var(--x,var(--line2));flex:none}
+.wk-list .wt{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-0_5)}
+.wk-list .wn{font-size:calc(13.5px * var(--ts));color:var(--text)}
+.wk-list .wl.quiet .wn{color:var(--quiet)}
+.wk-list .wl-all{border-bottom:0;padding:var(--sp-2) 18px var(--sp-1);gap:var(--sp-2)}
+.wk-list .wl-all + .dayh{border-top:1px solid var(--line);margin-top:var(--sp-2)}
+.wk-list .wl-note{color:var(--quiet)}
 /* B-407: a To review row, the demo's trow: its topic and where it came from, then Accept, Join, Not now, Decline */
-.wk-list .trow{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important;padding:var(--sp-3) 18px!important;border-bottom:1px solid var(--line)!important;background:var(--bg)!important}
-.wk-list .trow .tt{flex:1!important;min-width:200px!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important}
-.wk-list .trow .tt .wn{font-weight:var(--fw-medium)!important;overflow-wrap:anywhere!important}
-.wk-list .trow .acts{display:flex!important;gap:var(--sp-1_5)!important;flex-wrap:wrap!important}
+.wk-list .trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:var(--sp-3) 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.wk-list .trow .tt{flex:1!important;min-width:200px!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)}
+.wk-list .trow .tt .wn{font-weight:var(--fw-medium);overflow-wrap:anywhere}
+.wk-list .trow .acts{display:flex;gap:var(--sp-1_5);flex-wrap:wrap}
 /* B-455: Pick an objective in place of a greyed Accept: the New menu's look, under its button, inside the screen */
-.wk-list .pick-wrap{position:relative!important}
-.wk-list .pick-menu{position:absolute!important;left:0;top:calc(100% + 6px)!important;z-index:30!important;width:min(320px,calc(100vw - 32px))!important;max-height:min(320px,60dvh)!important;overflow-y:auto!important;padding:5px!important;border-radius:10px!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14)!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important}
-.wk-list .pick-menu[hidden]{display:none!important}
+.wk-list .pick-wrap{position:relative}
+.wk-list .pick-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:min(320px,calc(100vw - 32px));max-height:min(320px,60dvh);overflow-y:auto;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;box-sizing:border-box}
 .wk-list .pick-menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans)!important;color:var(--quiet)!important;padding:var(--sp-1_5) 9px var(--sp-1)!important}
-.wk-list .pick-menu button.btn.mi{justify-content:flex-start!important;width:100%!important;height:auto!important;min-height:30px!important;padding:var(--sp-1_5) 9px!important;color:var(--text)!important;font-weight:400!important;text-align:left!important;white-space:normal!important;flex:none!important}
+.wk-list .pick-menu button.btn.mi{justify-content:flex-start!important;width:100%!important;height:auto!important;min-height:30px!important;padding:var(--sp-1_5) 9px!important;color:var(--text)!important;font-weight:400!important;text-align:left!important;white-space:normal;flex:none!important}
 @media (max-width:599px){.wk-list .pick-menu button.btn.mi{min-height:44px!important}}
-.wk-list .empty{padding:40px 18px!important;text-align:center!important}
-#weak-quizlet{display:contents!important}
-#weak-quizlet[hidden]{display:none!important}
-#study-side .wk-side .od-ws{color:var(--text)!important;height:auto!important;min-height:30px!important;margin:0!important;padding:var(--sp-1) 10px!important}
-#study-side .wk-side .od-ws .sn{white-space:normal!important}
+.wk-list .empty{padding:40px 18px!important;text-align:center}
+#weak-quizlet{display:contents}
+#study-side .wk-side .od-ws{color:var(--text);height:auto;min-height:30px;margin:0;padding:var(--sp-1) 10px}
+#study-side .wk-side .od-ws .sn{white-space:normal}
 #study-side .wk-side .od-ws .dot{background:var(--quiet)!important}
 /* the phone (from the runner block, kept after the rules above as in legacy's order) */
 @media (max-width:599px){
-  #study-weak .wk-bar{padding:10px var(--sp-3)!important}
-  .wk-list .wl{padding:var(--sp-2) var(--sp-4)!important}
-  .wk-list .dayh{padding:14px var(--sp-4) var(--sp-1_5)!important}
+  #study-weak .wk-bar{padding:10px var(--sp-3)}
+  .wk-list .wl{padding:var(--sp-2) var(--sp-4)}
+  .wk-list .dayh{padding:14px var(--sp-4) var(--sp-1_5)}
 }

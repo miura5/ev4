@@ -9,22 +9,14 @@
    it. Her two faces are --av1 and --av2 (D-266). */
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
 /* top bar */
-
 .top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .28s ease,transform .28s var(--ease),width .28s var(--ease),flex-basis .28s var(--ease),margin .28s var(--ease)}
 body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
-
 /* Matt, Oct 20 (B-125, D-163): the status lights are steady; the word beside them says what E.V. is doing. */  
-
 /* B-85, D-159: the Live line only from 1024 px; boot and error lines always, on their own row under 1024 */
-
 /* the five tabs: icons in the top bar beside System, their names from 1024 px (B-85, D-159; was a floating dock) */
-
 .panel .card{scroll-margin-top:calc(var(--top-h) + 12px)}
-
 /* page */
-
 /* D-159: two breakpoints, 600 and 1024 px; every width between them is the phone stack, its column centred at most 660 px. */
-
 .ptitle{font:600 calc(30px * var(--ts))/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
 /* kit: card, row, chip, stat, table, empty */
 .panel{display:flex;flex-direction:column;gap:14px}
@@ -68,11 +60,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .actions .grow{flex:1;min-width:0}
 /* B-191: Back sits at the left of a question's actions, Next and the check at the right; an open set folds by its head line (D-160). */
 .actions .q-back{margin-right:auto}
-.card-head .pr-fold{font-size:calc(15px * var(--ts));font-weight:600;color:var(--ink)}
 /* question runner */
 .stem{font-size:calc(17px * var(--ts));line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
 /* B-116: the question's stem leads at 20 px; its kind is one quiet line under it; the one count sits at the bar. */
-.q-stem{font-size:calc(17px * var(--ts));line-height:1.5} /* B-245: one size everywhere, her line's with a card open */
+ /* B-245: one size everywhere, her line's with a card open */
 .q-tags{margin:2px 0 4px}
 .more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}
 #more-btn{flex:none}
@@ -109,41 +100,12 @@ table.mx input{width:20px;height:20px;accent-color:var(--accent)}
 body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom,0px))}
 /* B-272 (D-265, D-266): her avatar, the Dial Arc. One SVG of 12 segments; a solid front in --av1, a halftone back in
    --av2 over an underlay in the ground colour (both faces from the theme generator); at 24 px the back is drawn flat. */
-
-
-
 /* E.V.: opening hero, thread, composer */
 .hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .28s var(--ease),opacity .28s ease,margin .28s var(--ease)}
 body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .dots{display:inline-flex;gap:5px;padding:6px 0} .dots i{width:6px;height:6px;border-radius:50%;background:var(--soft);animation:pulse 1.1s infinite}
 .dots i:nth-child(2){animation-delay:.18s} .dots i:nth-child(3){animation-delay:.36s}
 /* opening: E.V. greets at full size, the greeting sits under the core */
-
-
-
-
-
-
 .ev-card{padding:16px 18px;gap:10px}
 .ev-card .big{font-size:calc(30px * var(--ts));letter-spacing:-.02em}
 /* B-479: a flashcards job's Quizlet import text, as Copy copies it */
@@ -151,24 +113,14 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
 .chart svg{width:100%;height:auto;display:block}
 .chart .bar{fill:var(--do)} .chart .base{fill:rgba(var(--tint),.05)} .chart text{font:500 calc(9px * var(--ts)) var(--sans);fill:var(--soft)} .chart .pct{fill:var(--ink);font-weight:600}
-
-
-
-
-
-
 .qchip.go svg{width:13px;height:13px}
-
-
 .compose-row textarea{border:0;background:transparent;min-height:44px;height:44px;max-height:140px;resize:none;padding:11px 0;border-radius:0;outline:none;flex:1;min-width:0;font-size:calc(16px * var(--ts));line-height:1.4}
 .compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:50%;padding:0;display:grid;place-items:center}
 .compose-row button svg{width:18px;height:18px}
-
 #p-ev.drop .compose-row{border-color:var(--accent)}
 .fine{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */
-
 .ev-card.check{background:var(--glass);border-color:var(--line2)}
 .ev-card.check.done{background:var(--glass);border-color:var(--line)}
 .ev-card textarea{min-height:72px}
@@ -184,7 +136,6 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:calc(14px * var(--ts));padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
 /* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
-
 /* D-108: the workout card */
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
@@ -214,64 +165,24 @@ body.captions #p-ev>#ev-side:empty{display:none}
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .28s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
 body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:transform .28s var(--ease)}
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
-
-
-
-
-
 body.captions .cap-pull svg.r{position:absolute;inset:0}
-
-
-
 body.captions .cap-pull .arrow svg{width:14px;height:14px}
-
-
-
 /* No bubbles: her lines are captions; his earlier lines are small and grey. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Until B-78's surfaces: one card under her line (five rows and a more that opens its tab; never scrolling inside
    itself), the rest of the reply's cards as one tappable line that swaps the next card in. */
 /* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
    and no dot; an action sits at a line's end as a small button. */
-
 /* B-368: the card, then her grey summary line, the thread's gap apart */
 .chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform .25s var(--ease)}
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:calc(12.5px * var(--ts));color:var(--soft);white-space:nowrap;overflow:hidden}
-
-
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
-
 /* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
-
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are a weight, in the text colour (D-270). */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
 body.captions .reveal .w.on{opacity:1;filter:none;transform:none;transition:opacity .4s ease,filter .4s ease,transform .4s var(--ease)}
 /* Matt's line echoes above the composer for about 3 s; Back to now floats over the captions. */
-
-
-
-
 /* B-452 (Matt): Back to now floats centred over the thread column, just above the composer; it covers the thread and
    moves nothing under him. */
 body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.18);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -280,14 +191,10 @@ body.captions .cap-now svg{width:13px;height:13px}
 @media (max-width:599px){body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:22px}}
 body.captions .cap-now[hidden]{display:none}
 body:not(.on-ev) .cap-now{display:none}
-
-
 @media (min-width:1024px){
-
   body.captions .hero{--stage-h:370px}
   /* Nothing beside her: her stage centres in the window. Something beside her: the column slides in from the right
      and her stage re-centres in what is left. */
-
   /* D-247: the direction C prototype's sizes (D-122 had 16 and 24) */
   
   
@@ -314,7 +221,6 @@ body:not(.on-ev) .cap-now{display:none}
 .surf .ev-card>.card-head:first-child>h2,.surf .ev-card.check>.check-head{display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
 .surf .passage{margin:2px 0 8px;font-size:calc(15px * var(--ts));line-height:1.5;color:var(--ink2)}
-
 @media (max-width:1199px){
   body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
   body.captions #p-ev>.composer{grid-row:5}
@@ -333,7 +239,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 @media (max-width:1023px){.ptitle{display:none}}
 /* B-121 (D-158): from 1024 px Today, Study, Progress, Record and System are two columns: the lead and the list he acts
    in on the left, the folded detail on the right. Below it the columns are one stack, in the same order. */
-
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
 /* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
@@ -347,13 +252,8 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
    the question from 1024 px; the verdict one line under the stem; a finished set's lines open in place. */
 .set-count{flex:none;font-variant-numeric:tabular-nums;color:var(--ink2);font-size:calc(13.5px * var(--ts))}
 .fold-line.flat{cursor:default;pointer-events:none}.fold-line.flat::after{content:''}
-.set-list{margin:2px 0 8px}
-.set-q,.sum-line{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;min-height:36px;cursor:pointer;color:var(--ink);font-size:calc(14.5px * var(--ts))}
 .set-q:focus-visible,.sum-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-.set-list .row,.sum-list .row,#pr-body .row{padding:4px 0}
-.sq-t,.sum-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sq-s,.sum-k{flex:none;color:var(--soft);font-size:calc(13px * var(--ts))}.sq-s.ok{color:var(--do)}
-.set-item.current .sq-t{color:var(--accent-text)}
+.sq-s.ok{color:var(--do)}
 .q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}
 .q-main{display:flex;flex-direction:column;gap:12px;min-width:0}.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
 .verdict{margin:0}
@@ -362,46 +262,30 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 .sum-h{margin:6px 0 0}
 .sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
 #more-card:not(.card){padding:4px 0}
-.plan-lead{margin:2px 0 0}
-
 /* B-48 (D-105): readiness over time. Thin line, recessive grid; the night-before prediction a ring of its own. */
 /* B-72 (D-120): the week's three lines. */
 /* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
 /* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
-
-
-
 /* ============================================================ B-208 (D-210, D-225): the shell in direction C ==========
    Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
    the E.V. tab. 600 to 1199 px: a dim sidebar (her, the five sections, System at its foot) beside the raised pane.
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
    width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
-
 /* B-332 (D-312, superseding D-225's 680 px): lists, cards and grids span the pane; only her message column keeps 680 px */
-
 /* the pane's header: the view's name, and the page's one status line */
-
 /* D-151: the status line speaks only of a problem or a note; Live stays off the header. */
-
 /* B-332: the header holds only the title, the view's switch and New; health and status live in System (B-341) */
-
 /* B-357: a boot that stops says why: the refusal is the one line he can read */
-
 /* B-381: a System problem is one quiet line in the header and the sidebar; a tap opens #system */
-
 .ptitle{display:none}
 /* the sidebar's rows */
-
 .side .top-av{width:24px;height:24px;flex:0 0 24px}
 body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av,body.captions.on-ev .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
-
 /* Under 600 px: the tab bar at the bottom; her 24 px avatar is the E.V. tab; System sits at the header's end, 44 px
    like every tab (B-288). */
 @media (max-width:599px){
-
   /* B-361: the demo's tab bar: five icon tabs (E.V.'s is the speech bubble), the active one on a grey ground */
-
    /* B-361: New sits flush right, as in the demo */
   /* the surface sheet gives the tab bar its height back, so her line keeps its room */
   body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
@@ -410,24 +294,17 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
      scrolled it: the header slid under the status bar and a band opened over the tab bar. Here the document is
      exactly the screen and never scrolls; the thread (and the surface sheet) scroll inside it. Other views still
      scroll the document. */
-
   
   /* The views that do scroll the document hold the header under the status bar's band, not beneath it; the shadow
      fills the band above the header so lines scroll away under it. Without insets (the artifact page) both are 0. */
-
    /* on E.V. the body is the frame, and it starts below the band already */
 }
 /* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
 @media (min-width:600px){
-
   /* B-332: the header spans the window, over the right panel too */
-
 }
-
 /* Below 1200 px the view's side column reads under its main column, inside the 680 px column. */
-
 /* From 1200 px: the details panel on the right holds the view's side column, while the view has one. */
-
 /* ============================================================ B-209 (D-213): the E.V. tab in C =================
    Her stage is one size per layout (104, 112 or 128, 140 or 168 px; 70% in a session), set in px by the page. While he
    is under 560 px tall, it folds and she is the 24 px Dial Arc in the header (B-452: no longer while he reads back). */
@@ -440,55 +317,34 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* the send: a quiet circle that fills in Ember when he types (D-270) */
 .compose-row #ev-send{background:var(--raised);border:0;box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);width:36px;height:36px;min-height:36px;flex:0 0 36px;align-self:center}
 .compose-row #ev-send.on{background:var(--her);color:var(--on-her);box-shadow:none}
-
 /* ============================================================ B-221: the shade, the pane, the sidebar's sections ======
    (Matt's staging look, Oct 22.) The sidebar's Today section, one 32 px row each, absent while empty (B-286: no Working). */
-
 /* B-334 (D-312): the sidebar's Today as in the demo: "Today" and "n left", then up to five open items, each with an 8 px
    dot coloured by its type, its name and its minutes or day; it shows on every view. */
-
 /* B-407: the review row's "· 1 to review" sits on a second line, so the sidebar never cuts it off */
-
 /* B-286 (C-4, C-14, C-15, D-291): the sidebar's foot holds Theme and Contrast above System; "n more in Today" is quiet;
    her dial sits on the sidebar's own ground. The phone's tab bar has no foot. */
 .side .ev-av .under{fill:var(--sunken)}
-
 /* B-334 (D-312): the foot is one Preferences row; it opens a popover above it with Theme, Contrast and System. Under
    600 px the button is the header's last icon and the popover drops from it. */
-
 @media (max-width:599px){
    /* B-352: no Preferences on the phone header, as the demo */
-
 }
 /* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
-
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
-
-
-
-
-
-
 /* ============================================================ B-210 (D-209, D-210): surfaces, jobs and Your turn in C ==
    Below 1200 px a surface is the sheet over the composer; from 1200 px it is the details panel on the right (the same
    fixed column as a view's side column), and the pane gives it room. Her captions stay one column at most 680 px. */
-
 @media (min-width:1200px){
   body.captions.on-ev.side-on{--pane-r:calc(var(--right-w) + 8px)}
   body.captions.side-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
   body.captions:not(.on-ev) #ev-side{display:none}
 }
-
 /* B-211 (D-217): the session bar sits in the pane header; answers carry their key number */
-
  /* B-303: the session line's Break, +5 and End stay one quiet 28 px line, at every width */
-
-.opt kbd.opt-n{flex:0 0 22px;width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);background:none;box-shadow:inset 0 0 0 1px var(--line2)}
 .opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
 @media (hover:none){.opt kbd.opt-n{display:none}}
-
 /* B-212 (D-217): skills runs and workouts follow the session: bar in the pane header, steps in the pane, list right */
-
 /* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
    Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px
    from 600 px wide; the one thing to do now keeps its box (surface, hairline); the switch is the pane header's from
@@ -516,7 +372,6 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button{min-height:32px;border-radius:8px;padding:0 12px;font-size:calc(13px * var(--ts))}
 }
 /* the switch is a part of the component set (B-285, at the end of this sheet); here only where it sits */
-
 /* the right panel's cards: on the ground, a hairline, 32 px rows */
 @media (min-width:1200px){
   section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:6px 10px 10px;gap:0}
@@ -525,22 +380,17 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* D-270: a text link is text with an underline, neutral */
 button.tlink{color:var(--text);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
 button.tlink:hover{text-decoration-color:currentColor}
-
 /* B-214: System in C; the theme switch */
 /* B-217, B-275 (D-270): the session chip is grey like every chip (green is done or right only); the chips wrap, never clip */
-
-
-
 /* ============================================================ B-223 (D-245, D-228): one right panel, each thing once ==
    From 1200 px every view has the right panel while it has something to show: Today, Progress, Record and System their
    side column; Study the open set's questions; the Conversation the dates after today, or what is beside her (an open
    surface, a session's set). Its cards sit on the ground with a hairline, one shade on every tab and in both themes. */
-#study-side{display:none}
 #ev-dates{display:none}
 @media (max-width:1199px){body.captions:not(.side-on) #p-ev>#ev-side{display:none}}
 @media (min-width:1200px){
   body:has(#p-study:not([hidden]) > #study-side:not([hidden])){--pane-r:calc(var(--right-w) + 8px)}
-  #study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}
+  
   body.captions.on-ev.ev-rest-on{--pane-r:calc(var(--right-w) + 8px)}
   body.captions.ev-rest-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin}
   body.captions:not(.side-on) #ev-dates{display:flex}
@@ -548,17 +398,13 @@ button.tlink:hover{text-decoration-color:currentColor}
   #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
   #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
   #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
-  #study-side .set-list{margin:0}
+  
 }
 /* A surface's own head line carries its title, count and state; the card under it never says them again (D-228). */
 .surf .ev-card>.card-head:first-child>:is(.meta,.chip){display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2,.meta,.chip))){display:none}
 /* B-223 (Matt, Oct 23), B-264: at every width her greeting and her lines read left-aligned, as in direction C; his lines
    sit to the right; her flower stays centred above them. */
-
-
-
-
 /* ============================================================ B-340 (D-312): E.V.'s view as in the demo =============
    The Conversation board: her lines in a 600 px column (24 px in), the past ones small and faint, his to the right
    under a small You, her newest at 17 px; the daily check-in card under her until he answers it today; five outlined
@@ -574,32 +420,13 @@ body.captions #p-ev>#ev-side{grid-row:6}
   body.captions #p-ev>.composer{grid-row:6}
 }
 /* B-362 (D-316): her newest line's one action, as the demo's row of small neutral buttons under the thread */
-
-
-
-
-
-
-
-
-
 /* B-360 (Matt, Oct 25): the chips are one row at every size, scrolling sideways when they don't fit; centred when
    they do (auto margins, so an overflowing row still starts at its first chip). */
-
-
-
-
-
-
 /* B-383 (D-316, Matt's one-row rule): from 600 px the chips wrap onto centred rows as the demo, every word whole; on the
    phone they stay one row that scrolls sideways and comes to rest on a whole chip. */
-
-
-
 .compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:calc(14.5px * var(--ts))}
 .compose-row textarea::placeholder{color:var(--faint)}
 .compose-row textarea:placeholder-shown{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
 .compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
 .compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
 @media (max-width:599px){
@@ -623,20 +450,17 @@ body.captions #p-ev>#ev-side{grid-row:6}
   #ev-dates .wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:inherit}
   #ev-dates .when{order:2;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
 }
-
 /* ============================================================ B-224 (D-229): System's Preferences ====================
    Text size: every font size is calc(N px * var(--ts)); Larger is one step up. Reduce motion On gives the end states the
    system's reduced-motion setting gives. Both are this device's own, set before first paint by the page's head script. */
 :root[data-motion="reduce"] body.captions .reveal .w{opacity:1;filter:none;transform:none}
 :root[data-motion="reduce"] body.captions.side-on #p-ev>#ev-side{animation:none}
-
 /* ============================================================ B-225 (D-271): folds open in 0.28 s and close in 0.16 s ==
    A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
 .chev,.prep-row .chev{transition-duration:.16s}
 .prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:.28s}
 body.captions.her-folded .hero{transition-duration:.16s}
 /* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
-
 /* ============================================================ B-285 (D-274, D-278, D-269, C-1, C-15): the component set
    Every part a view is built from: five kinds of button (primary, neutral, coded tint, ghost, icon; .sm is the small
    size of any), the badge, the segmented switch, the card, the row, the toolbar, the progress bar and the composer.
@@ -644,8 +468,6 @@ body.captions.her-folded .hero{transition-duration:.16s}
    x-blue or x-violet, which sets --x for the part it is on; D-269 gives all five one lightness. A view uses at most one
    primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
    on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
-/* B-515 D2b: the kit moved to page/ds/components; this one line stays until Study's .ov-sets .sm (lane B) stops matching a small button */
-button.btn.sm{font-size:calc(12.5px * var(--ts))}
 /* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
 .badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12px * var(--ts)) var(--sans);white-space:nowrap;flex:none}
 .badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
@@ -674,351 +496,87 @@ button.btn.sm{font-size:calc(12.5px * var(--ts))}
 /* ============================================================ B-287 (C-4, C-7): the header and New ==================
    The pane's 48 px header names the view ("E.V." on hers) and ends with New, the page's one way to create: a menu of
    Task for Today and Note, each a modal dialog. The way out is Esc or a tap outside (D-160). */
-
  /* a view's switch scrolls inside itself before New leaves the header */
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
-
 /* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
    header an icon and the kind, the page dimmed behind it, Cancel beside Add */
-
 /* B-380: the demo's modal type: 14 px text, its header line at 1.45, the footer hint at 13 px */
-
 /* B-373: the note's words as the demo's textarea, one plain focus ring on every field */
-
 /* B-308 (C-7): a task's fields, one row each: its label, then its choices; under 600 px the label sits above them. */
-
 /* B-465: an exam's Date, a field in the row's rhythm (the title's look at the switch buttons' height) */
-
 /* ============================================================ B-291 (C-1, C-13, D-270, D-276): Today's list ===========
    One row per item on the component set's row: the tick, the name, at most one badge, Start on the first startable row,
    the time. 32 px from 600 px and 44 px on the phone, where the time stays on the row's line and the tick is a 44 px
    target around its 18 px box. Done, Deferred and Taken off today fold under the list. */
-#today-list .ti-list,#today-list .ti-folded{gap:0}
-#today-list .li{padding:0 4px;gap:10px;box-sizing:border-box}
-#today-list .li .tk{flex:none;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;cursor:pointer}
-#today-list .li input.tick{flex:none;width:16px;height:16px;margin:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2)}
-#today-list .li input.tick:checked{background:var(--sem-green);box-shadow:none}
-#today-list .li input.tick:checked::after{width:3px;height:7px;border:solid var(--do-ink);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
-#today-list .li .nm{all:unset;flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.3}
-#today-list .li .nm:hover .ti-t{text-decoration:underline;text-underline-offset:3px}
-#today-list .li .nm:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
-#today-list .li.done .ti-t{color:var(--faint);text-decoration:line-through}
-#today-list .li .t{min-width:3.5em;text-align:right;white-space:nowrap}
-#today-list .ti-fold{display:flex;align-items:center;min-height:32px;margin-top:4px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
-#today-list .ti-fold:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
-#today-list .ti-folded .row{min-height:32px;padding:0 4px 0 30px;align-items:center;color:var(--quiet)}
-@media (max-width:599px){
-  #today-list .li{padding:0 2px;gap:8px}
-  #today-list .li .tk{width:44px;height:44px;margin:0 -13px}
-  #today-list .li input.tick{width:18px;height:18px}
-  #today-list .li .badge{max-width:40%;overflow:hidden;text-overflow:ellipsis}
-  #today-list .li .ti-start{display:none} /* the demo's phone: the time keeps its line; Start is in the task's panel */
-  #today-list .ti-folded .row{min-height:44px}
-  #today-list .ti-fold{min-height:44px}
-}
 /* ============================================================ B-292 (C-5): Today's budget ==========================
    What's left against the time left ("55 min left · 60 free"), the bar (done, then left) and the done minutes on their
    own line, from planDay's budget. Over budget the left part and its words take the attention yellow (D-270: red is
    for exams, graded work due and errors), the words' ink mixed toward the text so they keep 4.5:1. The list head
    carries the short line below 1200 px, where the card reads under the list. It holds no control: the hand-off's C-5
    asks for a card he reads, excused from D-147 in spec.ui.tenets. */
-#today-budget{gap:6px}
-#today-budget .tb-big{margin:0;font:600 calc(15px * var(--ts))/1.3 var(--sans);color:var(--text);font-variant-numeric:tabular-nums}
-#today-budget .tb-bar{margin:2px 0}
-#today-budget .tb-bar>i.tb-neutral{background:var(--quiet)}
-#today-budget .tb-done-line{margin:0;font-variant-numeric:tabular-nums}
-#p-today .tb-over:not(.pbar){color:color-mix(in srgb,var(--sem-yellow) 70%,var(--text))}
-#today-budget .tb-over-line{margin:0}
 /* ============================================================ B-294: E.V.'s changes today ============================
    Under the budget card in the side column (the right panel from 1200 px): one row per list edit she made today, its
    time in grey under it and a ghost Undo at its end. Absent while she has changed nothing (D-151). */
-#today-changes .row{align-items:center}
-#today-changes .row .title{overflow-wrap:anywhere}
 /* ============================================================ B-293 (C-9, D-243): Plan the rest ====================
    The list head ends with Plan the rest. Its proposal is one line under the head (what E.V. suggests, Accept all and
    Reject) and standard rows: an addition is a row with no tick yet, a take-off keeps its row; each carries the one
    "Proposed" badge and labelled Accept and Keep. No dashed ring and no x. */
-#today-list .card-head{gap:8px}
-#today-list .card-head .ti-rest{margin-left:auto}
-#today-list .ti-review{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 6px;padding:8px 10px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
-#today-list .ti-review-t{flex:1 1 16rem;margin:0;color:var(--text);font-size:calc(13px * var(--ts));line-height:1.4}
-#today-list .li.ti-prop .nm{cursor:default}
-#today-list .li.ti-prop .nm:hover .ti-t{text-decoration:none}
-@media (max-width:599px){
-  #today-list .ti-review{padding:8px 12px}
-  #today-list .ti-review-t{flex-basis:100%} /* B-369: as the demo, the line, then Accept all and Reject at their width */
-}
 /* ============================================================ B-295 (C-6, C-13, C-16): Today's week ================
    List and Week switch the view. The week is seven days from today: seven columns from 1200 px, one row per day below
    it (the day's name, then its chips), and one stacked column on the phone. A chip is a date's title on one line and
    its kind in grey under it; red only for graded work due today or tomorrow (D-270). The picked date's panel is the
    right panel from 1200 px and reads under the days below it. */
-#p-today .wk-away{display:none!important}
-#p-today>#seg-today{margin:0 0 10px}
-.mh #seg-today{flex:none} /* two words: in the header the status line gives way, never the switch */
-#today-week{gap:8px}
-#today-week .wk-her{margin:0;color:var(--quiet);font-size:calc(13px * var(--ts));line-height:1.4}
-.wk-days{display:flex;flex-direction:column;border-radius:10px;box-shadow:0 0 0 1px var(--line);overflow:hidden}
-.wk-day{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-top:1px solid var(--line);min-width:0}
-.wk-day:first-child{border-top:0}
-.wk-day.today{background:var(--chrome)}
-.wk-h{flex:0 0 88px;display:flex;align-items:baseline;gap:5px;padding-top:6px;color:var(--quiet);font-size:calc(12px * var(--ts))}
-.wk-h b{color:var(--text);font-size:calc(14px * var(--ts));font-weight:600}
-.wk-day.today .wk-h b{color:var(--bg);background:var(--text);border-radius:6px;padding:0 6px}
-.wk-chips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
-.wchip{all:unset;box-sizing:border-box;flex:0 1 220px;min-width:0;display:flex;flex-direction:column;gap:1px;padding:5px 8px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);cursor:pointer;font-size:calc(12.5px * var(--ts));line-height:1.3;color:var(--text)}
+ /* two words: in the header the status line gives way, never the switch */
 .wchip:hover{background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
 .wchip:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .wchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--text)}
 .wchip.exam .wc-t{font-weight:600}
-.wchip .wc-t,.wchip .wc-s{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wchip .wc-s{color:var(--quiet);font-size:calc(11.5px * var(--ts))}
 .wchip .wc-s.urgent{color:var(--urg)}
 .wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
-.wchip.wk-list .wc-t{color:var(--quiet)}
 .wchip.wk-load.done .wc-t{color:var(--quiet)}
-#today-date{scroll-margin-top:calc(var(--top-h, 0px) + 12px)}
 /* B-419: a day's head opens its panel; a task added to a day is a card on it, struck through when done; the day's
    panel lists its tasks in one card, as the date panel's properties. */
-button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:left;cursor:pointer;border-radius:6px}
 button.wk-h:hover b{text-decoration:underline}
 button.wk-h:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:600}
 .wchip.wk-task .wc-t{color:var(--ink2,var(--text))}
-.wchip.wk-task.done .wc-t,#today-date .wd-task.done .wd-tt{color:var(--faint);text-decoration:line-through}
-#today-date .wd-tasks{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;display:flex;flex-direction:column}
-#today-date .wd-task{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-top:1px solid var(--line);min-width:0}
-#today-date .wd-task:first-child{border-top:0}
-#today-date .wd-tt{font-size:calc(13px * var(--ts));color:var(--text);overflow-wrap:anywhere}
-#today-date .wd-tasks>.mini{padding:8px 0}
-#today-date .wd-cal{display:flex;flex-direction:column;gap:6px}
-#today-date .wd-cal .wchip{flex:none;width:100%}
 /* B-349 (D-312): the picked date's panel as the demo's TodayWeek board: no card around it, the badge, an 18 px title,
    When / Course / Readiness in one card in a 92 px label column, the actions stacked at their own width. */
-#today-date.wk-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
-#today-date[hidden]{display:none}
-#today-date .wd-badge{align-self:flex-start}
-#today-date .wd-title{font:600 calc(18px * var(--ts))/1.3 var(--sans);color:var(--text);overflow-wrap:anywhere}
-#today-date .wd-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
-#today-date .wd-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
-#today-date .wd-props .prop-k{color:var(--quiet)}
-#today-date .wd-props .prop-v{text-align:left;min-width:0;color:var(--text);overflow-wrap:anywhere}
-#today-date .wd-acts{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
-#today-date .wd-acts .btn{height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
-#today-task .prop-k,#today-date .prop-k{color:var(--quiet)}
-#today-task .prop-v,#today-date .prop-v{text-align:right;min-width:0}
-#today-task .wk-acts,#today-date .wk-acts{display:flex;flex-wrap:wrap;gap:6px}
-@media (min-width:1200px){
-  .wk-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-  .wk-day{flex-direction:column;align-items:stretch;border-top:0;border-left:1px solid var(--line);min-height:240px;padding:8px 6px}
-  .wk-day:first-child{border-left:0}
-  .wk-h{flex:none;padding:0 2px 4px}
-  .wk-chips{flex-direction:column;flex-wrap:nowrap}
-  .wchip{flex:none;width:100%}
-}
-@media (max-width:599px){
-  .wk-day{flex-direction:column;align-items:stretch;padding:8px 12px}
-  .wk-h{flex:none;padding-top:0}
-  .wk-chips{flex-direction:column;flex-wrap:nowrap}
-  .wchip{flex:none;width:100%;min-height:44px;justify-content:center}
-  #today-date .wd-props .prop{min-height:44px}
-  #today-date .wd-acts .btn{min-height:44px;height:44px}
-  button.wk-h{min-height:44px;align-items:center}
-}
 /* ============================================================ B-296 (C-10, D-282): the task's panel ================
    A row's name opens its task in the side column (the right panel from 1200 px, under the pane below it): the name and
    Close, then the properties as the date panel lays them out, "Where it came from" in grey, and the actions: Start the
    one primary when it can start, Snooze to tomorrow and Remove from today. The open row is marked on the list. */
-#today-list .li.sel{background:var(--hover);border-radius:6px}
-#today-task{gap:8px}
-#today-taskmain .tp-from{display:flex;flex-direction:column;gap:2px;font-size:calc(13px * var(--ts))}
-#today-task .wk-acts{flex-direction:column;align-items:stretch}
-#today-taskmain .tp-from .meta,#today-task .tp-note{margin:0;color:var(--faint);font-size:calc(12.5px * var(--ts));line-height:1.4}
 /* B-336 (D-312): as the demo's 'a task opened' board: the panel holds only the task; its properties sit in one card in
    a 92 px label column, Status is a To do / Done switch, the actions are full-width buttons with the grey note under them. */
-#today-task.tp-panel{display:flex;flex-direction:column;gap:14px;min-width:0}
-#today-task[hidden]{display:none}
 .col-side>.tk-away,.col-main>.tk-away{display:none!important}
-#today-task .tp-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px}
-#today-task .tp-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts));border:0}
-#today-task .tp-props .prop-k{color:var(--quiet)}
-#today-task .tp-props .prop-v{text-align:left;min-width:0;color:var(--text);overflow-wrap:anywhere}
-#today-task .tp-seg{display:inline-flex;padding:2px;border-radius:8px;background:var(--hover);gap:2px;vertical-align:middle}
-#today-task .tp-seg button{all:unset;box-sizing:border-box;height:24px;padding:0 9px;border-radius:6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);cursor:pointer;display:inline-flex;align-items:center}
-#today-task .tp-seg button:hover{color:var(--text);background:var(--bg)}
-#today-task .tp-seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
-#today-task .tp-seg button:focus-visible{outline:2px solid var(--text);outline-offset:1px}
-#today-task .wk-acts{display:flex;flex-direction:column;align-items:stretch;gap:10px}
-#today-task .wk-acts .btn{width:100%;min-height:32px;height:32px;border-radius:8px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans)}
-#today-task .tp-note{line-height:1.5}
-#today-taskmain .tp-from{gap:4px}
-#today-taskmain .tp-from .prop-k{font-size:calc(12px * var(--ts));font-weight:500;color:var(--quiet)}
 /* B-355 (D-314): as the TaskDetail board: the tick beside the title (a 16 px rounded square, green when done), the
    description in quiet 14 px, then Where it came from as rows with a grey dot and the time on the right, above the card. */
-#today-taskmain .tp-chk{flex:none;width:16px;height:16px;min-height:0;margin-top:4px;padding:0;border:0;border-radius:5px;background:none;box-shadow:inset 0 0 0 1.5px var(--line2);color:var(--bg);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-#today-taskmain .tp-chk svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;opacity:0}
-#today-taskmain .tp-chk:hover{background:none}
-#today-taskmain .tp-chk:not(.done):hover svg{opacity:.5;color:var(--quiet)}
-#today-taskmain .tp-chk.done{background:var(--sem-green);box-shadow:none}
-#today-taskmain .tp-chk.done svg{opacity:1}
-#today-taskmain .tp-chk:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-#today-taskmain .tp-desc{margin:0;color:var(--quiet);font-size:calc(14px * var(--ts));line-height:1.6;overflow-wrap:anywhere;white-space:pre-line}
-#today-taskmain .tp-from{gap:8px;padding-bottom:14px;border-bottom:1px solid var(--line)}
-#today-taskmain .tp-act{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--ts));color:var(--quiet);min-width:0}
-#today-taskmain .tp-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--faint)}
-#today-taskmain .tp-what{flex:1;min-width:0;overflow-wrap:anywhere}
-#today-taskmain .tp-when{flex:none;font-size:calc(12px * var(--ts));color:var(--faint)}
-@media (max-width:599px){
-  #today-task .tp-props .prop{min-height:44px}
-  #today-task .tp-seg button{height:44px;min-width:44px;padding:0 12px;justify-content:center}
-  #today-task .wk-acts .btn{min-height:44px;height:44px}
-}
 /* ============================================================ B-335 (D-312): Today as in the demo ===============
    One toolbar row across the pane under the header: in the list the All / Classes / Study filter with its counts,
    List / Week and Plan the rest; in the week List / Week, back / Today / forward and the range. Rows span the pane,
    44 px, hairline between. The budget's figure is large, with On the list and Done as rows. The week fills the pane. */
-#p-today>.today-bar{margin:-16px -16px 0;padding:12px 18px;min-height:0;gap:8px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-#p-today>.today-bar .seg{flex:none;background:var(--hover);box-shadow:none;align-self:center;width:auto}
-#p-today>.today-bar .seg button{min-height:24px;height:24px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);box-sizing:border-box}
-#p-today>.today-bar .seg button:hover{color:var(--text);background:var(--bg)}
-#p-today>.today-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
-#p-today>.today-bar .seg button i{font-style:normal;color:var(--quiet);font-weight:400}
-#p-today>.today-bar svg.ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#p-today>.today-bar .wk-nav{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
-#p-today>.today-bar .wk-range{margin-left:6px;white-space:nowrap;color:var(--faint);font-size:calc(12.5px * var(--ts))}
-#p-today>.today-bar .sp{flex:1}
 #p-today{gap:0}
 #p-today>.cols{margin-top:0}
-#today-list{gap:0}
-#today-list .ti-list{margin:0 -16px}
-#today-list .ti-list>.li{height:auto;min-height:44px;padding:0 18px;gap:12px;font-size:calc(13.5px * var(--ts))}
-#today-list .ti-list>.li:hover{background:var(--chrome)}
-#today-list .li .t{min-width:70px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
-#today-list .li .nm{flex:0 1 auto}
-#today-list .li>.badge,#today-list .li>.nm:not(:has(+ .badge)){margin-right:auto}
-#today-list .ti-fold{margin:0 -16px;padding:14px 18px 6px;min-height:32px;font-size:calc(12px * var(--ts));font-weight:500}
-#today-list .ti-folded{margin:0 -16px}
-#today-list .ti-folded>.li{min-height:44px;height:auto;padding:0 18px;gap:12px}
-#today-list .ti-folded .row{padding:0 18px 0 46px}
 #today-list>.empty{padding:14px 2px}
-#today-list .ti-review{margin:0 -16px;border-radius:0;padding:9px 18px;background:var(--chrome);box-shadow:none;border-bottom:1px solid var(--line)}
-#today-budget{background:var(--surface);border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:14px;gap:10px}
-#p-today #today-budget>h2{min-height:0;font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
-#today-budget .tb-big{font:600 30px/1.1 var(--sans);letter-spacing:-.02em;font-variation-settings:"opsz" 32;margin:0}
-#today-budget .tb-bar{height:6px;margin:0}
-#today-budget .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;min-height:34px;font-size:calc(13px * var(--ts))}
-#today-budget .prop .prop-k{color:var(--faint);font-size:calc(12.5px * var(--ts))}
-#today-week .wk-her{display:none}
-#today-week{gap:0}
-#today-week .wk-days{margin:0 -16px;border-radius:0;box-shadow:none}
-@media (min-width:1200px){
-  #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - 8px - 53px)}
-  #today-week .wk-day{min-height:0;padding:10px 8px;gap:6px}
-  #today-week .wk-chips{gap:6px}
-  #today-week .wchip{padding:6px 8px;gap:2px}
-  #today-week .wchip .wc-t{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;hyphens:auto}
-  #today-week .wk-h{font-size:calc(12px * var(--ts))}
-  #today-week .wk-h b{font-size:calc(15px * var(--ts))}
-}
-@media (min-width:600px) and (max-width:1199px){
-  #today-week .wchip .wc-t{white-space:normal}
-}
-@media (max-width:599px){
-  #p-today>.today-bar{padding:10px 16px}
-  #p-today>.today-bar .seg button{height:44px;min-height:44px;padding:0 12px;min-width:44px;justify-content:center}
-  #today-list .ti-list>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}
-  #today-list .ti-folded>.li{padding:6px 16px}
-  #today-list .li .t{min-width:0}
-  #today-list .ti-list>.li .nm{max-width:calc(100% - 40px);white-space:normal}
-  #today-list .ti-list>.li .nm .ti-t{white-space:normal;overflow:visible}
-  #today-list .ti-fold{padding:14px 16px 6px}
-  #today-week .wchip .wc-t{white-space:normal}
-}
 /* B-354 (D-314): the demo's row is 44 px with its hairline under it (45 in all); a week title wraps between words only,
    a column widening to its longest word; the grid ends at the pane's foot under E.V.'s line; on the phone a long title
    wraps in its own column and keeps its badge and time on the row's line. */
-#today-list .ti-list>.li,#today-list .ti-folded>.li{min-height:45px}
-#today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
-@media (max-width:1199px){#p-today #today-budget{margin-top:16px}#p-today #today-changes{margin-top:16px}}
 @media (min-width:1200px){
-  #today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}
+  
   body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - 8px - 53px)}
-}
-@media (max-width:599px){
-  #today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:nowrap;align-items:center;padding:6px 16px;gap:12px}
-  #today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:1 1 auto;min-width:0;max-width:none;white-space:normal;display:flex;align-items:center}
-  #today-list .li .nm .ti-t{white-space:normal;overflow:visible;overflow-wrap:break-word}
-  #today-list .li>.badge{flex:none;max-width:none;margin-right:0}
-  #today-list .li>.nm:not(:has(+ .badge)){margin-right:0}
-  #today-list .li .t{flex:none;min-width:0;text-align:right}
 }
 /* B-363 (D-312): wave 2, as the TodayList and TodayWeek boards. + Add ends the toolbar; Done is the demo's group with
    its chevron; a week card is its title and a dot with its time, a picked card filled grey with the dark ring; with
    nothing picked the panel holds Next exam and the Next 7 days counts. */
-#p-today>.today-bar .ti-add{gap:6px}
-#today-list .grp{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 -16px;padding:14px 18px 6px;min-height:32px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans)}
-#today-list .grp svg.ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#today-list .grp:focus-visible{outline:2px solid var(--text);outline-offset:-2px;border-radius:4px}
-#today-week .wchip .wc-s{display:flex;align-items:center;gap:6px;color:var(--quiet);font-size:calc(11.5px * var(--ts));font-weight:400;white-space:nowrap;overflow:hidden}
-#today-week .wchip .dot{flex:none;width:6px;height:6px;border-radius:3px;background:var(--quiet)}
-#today-week .wchip.past .wc-t{color:var(--quiet)}
-#today-week .wchip.wk-list .wc-t{color:var(--text)}
-#today-week .wchip[aria-pressed="true"]{background:var(--hover);box-shadow:inset 0 0 0 1.5px var(--text)}
-#today-date .wd-next{display:flex;flex-direction:column;gap:10px}
-#today-date .lab{font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
-#today-date .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-#today-date .wd-nx{font-weight:600;font-size:calc(13.5px * var(--ts));color:var(--text);overflow-wrap:anywhere}
-#today-date .hb{height:10px;border-radius:5px;background:var(--hover);overflow:hidden;display:flex}
-#today-date .hb>i{display:block;height:100%}
-#today-date .wd-sum{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:calc(13px * var(--ts));color:var(--text)}
-#today-date .wd-sum-l{display:flex;align-items:center;gap:8px;min-width:0}
-#today-date .wd-sum .dot{flex:none;width:8px;height:8px;border-radius:4px;background:var(--quiet)}
-@media (max-width:599px){#today-list .grp{min-height:44px;padding:14px 16px 6px}}
 /* B-369 (D-312): wave 3, as TodayPhone, TodayProposal and TodayWeek. On the phone a row wraps as the demo's: the badge
    follows the name and the time drops to the next line when the line is full. Plan the rest's proposed addition is the
    demo's dashed card, a take-off keeps its row struck through, each with "Proposed" or why, a tick and a cross. The
    week's seven columns are equal. */
-#today-list .li svg.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#today-list .li>svg.ico{color:var(--quiet)}
-#today-list .li .sp{flex:1}
-#today-list .li:has(>.sp)>.badge{margin-right:0}
-#today-list .li .pmark{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
-#today-list .ti-list>.li.ti-padd{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);border-bottom:0;margin:4px 12px;border-radius:8px;outline:1px dashed var(--line2);outline-offset:-4px;padding:0 6px 0 18px}
-#today-list .ti-list>.li.ti-padd:hover{background:var(--bg)}
-#today-list .li.ti-off .ti-t{text-decoration:line-through;color:var(--quiet)}
-@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(0,1fr))}}
-#today-week .wchip .wc-t{overflow-wrap:break-word}
-@media (max-width:599px){
-  #today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}
-  #today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:0 1 auto;max-width:calc(100% - 30px);display:block}
-  #today-list .li>.badge{margin-right:auto}
-  #today-list .ti-list>.li.ti-padd{padding:6px 6px 6px 16px}
-}
 /* B-374 (D-312): wave 4. A week title wraps between words only: the columns stay equal and a column widens to its
    longest word; "N on today's list" and "Open the list" fit whole. E.V.'s changes today is the demo's label and rows
    under the budget, always shown, with "Nothing yet today." when she changed nothing. */
-@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}}
-#today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
-#today-week .wchip.wk-list .wc-s{overflow:visible}
-#today-list .li .ti-start{gap:6px;padding:0 12px}
-#today-list .li .ti-start svg.ico{width:14px;height:14px;color:inherit}
-#today-changes{display:flex;flex-direction:column;gap:0}
-#today-changes[hidden]{display:none}
-#today-changes .lab{font:500 calc(12px * var(--ts))/1.3 var(--sans);color:var(--quiet)}
-#today-changes .chg{display:flex;align-items:flex-start;gap:10px;font-size:calc(13px * var(--ts));padding:10px 0;border-bottom:1px solid var(--line)}
-#today-changes .chg .dot{flex:none;width:8px;height:8px;border-radius:4px;margin-top:6px;background:var(--sem-blue)}
-#today-changes .chg-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-#today-changes .ct{color:var(--text);overflow-wrap:break-word}
-#today-changes .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-#today-changes .chg-none{padding-top:8px}
 /* B-382 (D-317): the rubric wave. The week's seven columns are equal widths whatever the titles; a card's title wraps
    between words (a word longer than the column is hyphenated) and stops at three lines with an ellipsis (its full title on hover). The whole task row opens it. */
-@media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(0,1fr))}}
-#today-week .wchip .wc-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;white-space:normal;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;-webkit-hyphens:auto;hyphens:auto}
-#today-week .wchip.wk-list .wc-t{-webkit-line-clamp:2;line-clamp:2}
-#today-week .wchip.wk-list .wc-s{white-space:normal;align-items:baseline}
-#today-week .wchip.wk-list .wc-s .dot{transform:translateY(-1px)}
-#today-list .ti-list>.li.today-item:not(.ti-off),#today-list .ti-folded>.li.today-item{cursor:pointer}
 /* Coming up in her panel: each day ends at the card's right edge, as the demo's (the day's box is wider than it) */
 #ev-dates .wk-line .when{text-align:right}
 /* B-364 (D-312): an opened task is the TaskDetail board's full view at every size: the header's back arrow before
@@ -1031,41 +589,19 @@ body[data-view="today"].task-open .mh button.btn.mh-back:hover{background:var(--
 .mh .mh-back svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* B-373: the board's task view carries her line only for graded work (taskLine); the panel starts under it */
 body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--status-h, 0px))}
-#p-today.tk-open>#today-bar{display:none!important}
-#today-taskmain[hidden]{display:none}
-#today-taskmain{display:flex;flex-direction:column;min-width:0;margin:-18px -16px 0}
-#today-taskmain .tvh{display:flex;align-items:center;gap:8px;min-height:53px;padding:0 18px;box-sizing:border-box;border-bottom:1px solid var(--line)}
-#today-taskmain .tvh .sp{flex:1}
-#today-taskmain .tvh .mini{color:var(--quiet);font-size:calc(12.5px * var(--ts))}
-#today-taskmain .tvh-pos{margin-right:6px;font-variant-numeric:tabular-nums}
-#today-taskmain .tvh .btn.icon{width:28px;height:28px;min-height:0;padding:0;border:0;background:none;color:var(--quiet);display:inline-grid;place-items:center}
-#today-taskmain .tvh .btn.icon:hover{background:var(--hover);color:var(--text)}
-#today-taskmain .tvh .btn.icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#today-taskmain .tvb{display:flex;flex-direction:column;gap:16px;max-width:720px;padding:26px 40px;box-sizing:border-box}
-#today-taskmain .tvb-title{display:flex;align-items:flex-start;gap:12px}
-#today-taskmain .tvb-title h2{flex:1;min-width:0;margin:0;color:var(--text);font:600 calc(22px * var(--ts))/1.3 var(--sans);letter-spacing:-.01em;overflow-wrap:anywhere}
-#today-taskmain .tp-chk{margin-top:8px}
-#today-taskmain .tp-desc{font-size:calc(14.5px * var(--ts))}
-#today-taskmain .tp-from{gap:10px;padding-bottom:0;border-bottom:0}
-#today-taskmain .tp-from .prop-k{font-size:calc(12.5px * var(--ts));font-weight:500;color:var(--text)}
-#today-taskmain .tp-gone{color:var(--quiet)}
 /* B-517: a practice task's quiz, in place under its description */
-#today-taskmain .tv-quiz{max-width:720px;margin:0 40px 26px;box-sizing:border-box}
-@media (max-width:1199px){
-  #p-today.tk-open #today-task{padding-top:16px;border-top:1px solid var(--line);margin:0 -16px;padding-left:16px;padding-right:16px}
-}
 @media (max-width:599px){
   body[data-view="today"].task-open .mh button.btn.mh-back{width:44px;height:44px;margin-left:-12px;color:var(--text)}
   .mh .mh-back svg{width:18px;height:18px}
-  #today-taskmain .tvh{min-height:68px;padding:0 4px 0 18px}
-  #today-taskmain .tvh .btn.icon{width:44px;height:44px}
-  #today-taskmain .tvb{padding:18px 16px}
-  #today-taskmain .tv-quiz{margin:0 16px 18px}
-  #today-taskmain .tp-chk{width:44px;height:44px;min-height:44px;margin:-6px -12px 0 -14px;box-shadow:none;background:none;position:relative}
-  #today-taskmain .tp-chk::before{content:"";position:absolute;width:18px;height:18px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2)}
-  #today-taskmain .tp-chk.done{background:none}
-  #today-taskmain .tp-chk.done::before{background:var(--sem-green);box-shadow:none}
-  #today-taskmain .tp-chk svg{position:relative;z-index:1}
+  
+  
+  
+  
+  
+  
+  
+  
+  
 }
 /* ============================================================ B-297 (D-283, C-1, C-8, C-13): Study's overview ========
    The toolbar (the view tabs sit beside the title from 600 px), then the exam header with its readiness bar and one
@@ -1085,11 +621,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 #study-objectives[hidden]{display:none}
 .ov-card{gap:10px}
 .ov-card[hidden]{display:none}
-.ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.ov-head .ov-ex{font:600 calc(14px * var(--ts)) var(--sans);color:var(--text)}
-.ov-head .meta{font-size:calc(12.5px * var(--ts));color:var(--faint);margin:0}
-.ov-bar.pbar{height:10px;border-radius:5px}
-.ov-rows{display:flex;flex-direction:column;margin-top:4px}
 .ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:calc(13.5px * var(--ts));color:var(--text)}
 .ov:last-child .obj{border-bottom:0}
 .obj .badge{min-width:64px;justify-content:center;box-sizing:border-box}
@@ -1100,63 +631,29 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 .obj .ow{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
 .obj .oq{visibility:hidden}
 .obj:hover .oq,.obj:focus-within .oq{visibility:visible}
-.ov-detail{display:flex;flex-direction:column;gap:14px;min-width:0}
-.ov-detail .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
 .ov-detail .od-name{font:600 calc(16px * var(--ts))/1.3 var(--sans);color:var(--text)}
 .ov-detail .od-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.ov-detail .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-.ov-detail .od-note{line-height:1.5}
-.ov-detail .od-ws{box-sizing:border-box;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;margin:-8px 0;font-size:calc(13px * var(--ts));color:var(--quiet)}
-.ov-detail .od-ws .sn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ov-detail .od-ws .st{font-size:calc(11.5px * var(--ts));color:var(--quiet)}
 .ov-detail .od-q{align-self:flex-start}
-.ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
 .ov > .ov-detail{padding:14px 4px 16px;border-bottom:1px solid var(--line)}
 .ov:last-child > .ov-detail{border-bottom:0}
 .ov.open:has(> .ov-detail) .obj{border-bottom:0}
-#study-side .ov-detail{gap:14px}
-.ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
 .ov-grid:empty{display:none}
 .ov-grid > :only-child{grid-column:1 / -1}
 .ov-grid > .ov-up[hidden] ~ .ov-quiz{grid-column:1 / -1}
-.ov-quiz{gap:12px}
-.ov-quiz .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ov-quiz .mq-q{font:500 calc(17px * var(--ts))/1.35 var(--sans);color:var(--text)}
-.ov-quiz .mini{font-size:calc(12.5px * var(--ts));color:var(--faint);line-height:1.45}
-.ov-quiz .mq-row{display:flex;gap:8px}
 .ov-card .ov-none{margin:4px 0 0;padding:8px 0;text-align:left}
 /* B-465: the exam card's no-exam line with Add exam beside it; the pane's Add exam sits under its No exam yet row */
 .ov-card .ov-none-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .ov-card .ov-none-row .ov-none{flex:1;min-width:200px;margin:0}
 .ov-detail .od-add{align-self:flex-start;margin-top:-6px}
 /* B-482: Practice sets in this course, a full row under Coming up and the mini quiz */
-.ov-grid > .ov-sets{grid-column:1 / -1;gap:4px}
 .ov-sets[hidden]{display:none}
-.ov-sets .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
-.ov-sets .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ov-sets .up-head .mini{font-size:calc(12px * var(--ts));color:var(--faint)}
-.ov-sets .st-list{display:flex;flex-direction:column}
-.ov-sets .st-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
-.ov-sets .st-row:last-child{border-bottom:0}
-.ov-sets .st{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto 76px;align-items:center;gap:12px;padding:8px 6px;border:0;background:none;text-align:left;cursor:pointer;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);border-radius:6px;min-height:0}
 .ov-sets .st:hover{background:var(--hover)}
-.ov-sets .sn{display:flex;align-items:baseline;gap:8px;min-width:0}
-.ov-sets .stt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.ov-sets .sm,.ov-sets .sd{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap}
-.ov-sets .sd{text-align:right}
-.ov-sets .ss{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
-.ov-sets .ss.fin{color:var(--text)}
+.ov-sets span.sm,.ov-sets .sd{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap}
 .ov-sets .fold-line{padding:8px 6px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
-.ov-sets .sx{flex:none;width:64px;display:flex;justify-content:flex-end}
 .pl-t .pl-set{flex:none}
 /* B-487: Today's Cards row (Today's; kept in legacy for its lane) */
-#today-list .li .fc-nm{all:unset;flex:1;min-width:0;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;line-height:1.3}
-#today-list .li .fc-nm:hover .ti-t{text-decoration:underline;text-underline-offset:3px}
-#today-list .li .fc-nm:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 /* B-494: Today's Cards row keeps Start on a phone and on touch (it has no task panel to hold it) */
-@media (max-width:599px),(hover:none){
-  #today-list .li.ti-cards .ti-start{display:inline-flex;visibility:visible}
-}
 /* ============================================================ B-302 (C-1, C-7, C-13): Record's log ================
    The log's toolbar (Filter and its pop-over, then the type tabs), its rows grouped by day, and the picked row's
    detail: the right panel's card from 1200 px, under the row below that. A row is its one badge, its name, its result
@@ -1230,13 +727,10 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 @media (max-width:599px){
   .rec-li .nm{min-height:24px;position:static}
 }
-
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
    header does, and from 1200 px the right panel starts under it. The week's own line moves up into it. */
-
 body.has-line #today-week .wk-her{display:none}
-
 /* ============================================================ B-350, B-359 (D-316): Record's log frame ===============
    The log alone (Dates, Journal, Canvas and Library left the page): the toolbar strip under the header, rows edge to
    edge grouped by day, and the picked row's detail in the panel. */
@@ -1255,19 +749,15 @@ body.has-line #today-week .wk-her{display:none}
 @media (max-width:599px){
   #p-record .rec-list > .empty{padding:14px 16px}
 }
-
 /* B-353 (D-314): a running session as the demo's strip under the header (ConversationPhone): under 600 px on every
    view, and on her view under 1200 px where her panel is hidden. The topic in bold, the minutes, Break and End. */
-
 /* B-383: the strip takes its height from her view, so the composer stays above the tab bar during a session. */
 @media (max-width:599px){
   body.captions:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 53px)}
-
 }
 @media (min-width:600px) and (max-width:1199px){
   body.captions.on-ev:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 41px)}
 }
-
 /* B-320 (D-306): the claude.ai live page after the cutover: one line at the top, and nothing offered that would write */
 .ro-banner{position:sticky;top:0;z-index:50;margin:0;padding:8px 16px;background:var(--surface);color:var(--text);font-size:13px;text-align:center;border-bottom:1px solid var(--line)}
 [data-readonly] #composer,[data-readonly] #new-wrap{display:none!important}
@@ -1279,13 +769,9 @@ body.has-line #today-week .wk-her{display:none}
    Below 1024 px none of it shows: the phone layout is unchanged. */
 .chatp{display:none}
 @media (min-width:1024px){
-
   #study-side:not([hidden]),body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
-
   /* B-406 (D-325): a Notes session's controls, as the AppNotes board's strip: the time left, what it is on, Break, End */
-
   /* B-438: a writing clock paused (nothing typed for 2 minutes) dims its light and its time */
-
   .chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .chatp:not([hidden]){display:flex}
   .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:30vh;width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);font:400 calc(13.5px * var(--ts))/1.55 var(--sans)}
@@ -1326,7 +812,7 @@ body.has-line #today-week .wk-her{display:none}
   .chatp .hlist .hnone{padding:6px 9px;color:var(--faint);font-size:calc(12.5px * var(--ts))}
 }
 @media (min-width:1200px){
-  #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - var(--strip-h) - 53px)}
+  
   body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - var(--strip-h) - 53px)}
 }
 /* ==== B-402 Notes: the editor (page/app/25-notes.js; the demo's AppNotes, NoteEditor and NoteStyleMenu boards) ==== */
@@ -1361,9 +847,7 @@ body.has-line #today-week .wk-her{display:none}
 /* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
    nothing of the note shows in the ground above the page while it scrolls */
 #p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--status-h,0px));padding:0 28px;box-sizing:border-box}
-
 /* D-361: the quiet line beside the strip's control, on its row */
-
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
 #p-notes .menu{position:absolute;z-index:30;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box;display:flex;flex-direction:column}
@@ -1415,21 +899,17 @@ body.has-line #today-week .wk-her{display:none}
   input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(16px,calc(14.5px * var(--ts)))}
   /* the panel's height is the frame's (--fh): the visible viewport, with the home bar's inset handed back as the keyboard covers it */
-
   body.captions.kb #p-ev{min-height:0}
-
 }
 /* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
    page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
 @media (max-width:599px){
   .rec-li .r{white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
-
 }
 /* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
    document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the
    installed app (--app-h, set from the screen's height by the composer part) the frame and the tab bar are placed by
    the screen's height instead. */
-
 /* B-432 (review): the fields whose own rules outrank the phone's 16 px floor: the New note text and Record's kind select */
 @media (max-width:599px){
   #p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
@@ -1438,35 +918,28 @@ body.has-line #today-week .wk-her{display:none}
    the 48 px header with room above and below (its tap area still 44 px), and the tab bar stays inside the screen. */
 .mh .n-read{background:transparent;box-shadow:none}
 .mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
-
 /* ============================================================ B-553: the desktop scroll pane =======================
    From 600 px the window never scrolls. The header and her band are fixed to the top of the raised pane, the side
    panels stay fixed columns beside it, and only the centre (.wrap) scrolls, with a thin themed scrollbar inside the
    pane, as Linear does. Its top follows the header and her band (--status-h); its foot is the pane's foot (8 px, or the
    strip from 1024 px). Phone layout (under 600 px) is unchanged: the document still scrolls there. */
 @media (min-width:600px){
-
   body.captions.on-ev .wrap>#p-ev{width:100%;max-width:680px;margin-inline:auto}
-
   #p-notes .n-fbar{top:-18px} /* sticky insets count from the pane's padding edge; the editor already sits 18 px up */
 }
-
 /* ============================================================ B-554: cheap scroll frames ===========================
    The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
    skip layout and paint for rows out of view (rows with no menu inside: paint containment clips one). */
 .top{-webkit-backdrop-filter:none;backdrop-filter:none}
 .rec-li,#p-record .rec-day,.ti-folded>li,.ov-rows>*{content-visibility:auto;contain-intrinsic-size:auto 44px}
-
 /* ============================================================ B-552: a native baseline ============================
    No grey tap flash, no double-tap zoom wait, no text selection or long-press callout on controls, the arrow cursor on
    the app's chrome (a pointer only on real links), and a pane scrollbar that never shifts the layout. Hover itself is
    gated by (hover:hover) at build time (tools/hover-gate.mjs). His words, notes and E.V.'s lines stay selectable. */
-
 a,button,input,select,textarea,label,summary,[role="tab"],[role="button"],[role="menuitem"]{touch-action:manipulation}
 button,[role="tab"],[role="button"],[role="menuitem"],summary,.seg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button,[role="tab"],[role="button"],[role="menuitem"],summary,label,.seg{cursor:default!important}
 a[href],a[href] *{cursor:pointer!important}
-
 /* B-556: on a cold open of her view, its frame stays unpainted until her first lines and her stage have their sizes
    (02-navigation lifts it), so nothing in it moves once it shows. The header, sidebar and tab bar paint at once. */
 body.ev-booting #p-ev{opacity:0}

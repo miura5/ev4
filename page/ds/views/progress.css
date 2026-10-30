@@ -8,70 +8,68 @@
    bar ahead; by course and exam readiness side by side from 1000 px; the day panel (the right panel from 1200 px) is
    its date, the big total and that day's sessions, each with its Session badge. Absent while empty (D-151). */
 /* B-366: the demo's heights, her line 49 px with its hairline, the toolbar 53 px (12 px round a 28 px switch) */
-#progress-readiness .prog-bar{padding:var(--sp-3) 18px!important;margin:-14px -16px var(--sp-1)!important;border-bottom:1px solid var(--line)!important;min-height:53px!important;box-sizing:border-box!important;display:flex!important;align-items:center!important}
-#progress-readiness .prog-line[hidden]+.prog-bar{margin-top:-18px!important}
+#progress-readiness .prog-bar{padding:var(--sp-3) 18px!important;margin:-14px -16px var(--sp-1);border-bottom:1px solid var(--line)!important;min-height:53px!important;box-sizing:border-box;display:flex!important;align-items:center!important}
+#progress-readiness .prog-line[hidden]+.prog-bar{margin-top:-18px}
 /* B-342: E.V.'s line above the switch, the demo's strip: her mark and one sentence on a hairline */
-#progress-readiness .prog-line{display:flex!important;align-items:center!important;gap:10px!important;min-height:49px!important;padding:var(--sp-1) var(--sp-3) var(--sp-1) 18px!important;margin:-18px -16px 0!important;box-sizing:border-box!important;border-bottom:1px solid var(--line)!important;font-size:var(--fs-2)!important;color:var(--text)!important}
-#progress-readiness .prog-line[hidden]{display:none!important}
-#progress-readiness .prog-line .ico{width:16px!important;height:16px!important;flex:none!important;fill:none!important;stroke:var(--quiet)!important;stroke-width:1.7!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-#progress-readiness .prog-line .et{flex:1!important;min-width:0!important}
+#progress-readiness .prog-line{display:flex;align-items:center;gap:10px;min-height:49px;padding:var(--sp-1) var(--sp-3) var(--sp-1) 18px;margin:-18px -16px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
+#progress-readiness .prog-line .ico{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#progress-readiness .prog-line .et{flex:1;min-width:0}
 /* from 1200 px her line runs under the header across the window, as the demo's, and the day panel starts below it */
 @media (min-width:1200px){
-  #progress-readiness .prog-line{margin-right:calc(-16px - var(--right-w))!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  #progress-readiness .prog-line .et{overflow:hidden!important;text-overflow:ellipsis!important}
-  body:has(#p-progress:not([hidden]) #prog-line:not([hidden])) #progress-readiness>.cols>.col-side{top:calc(var(--panel-top) + 49px)!important}
+  #progress-readiness .prog-line{margin-right:calc(-16px - var(--right-w));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #progress-readiness .prog-line .et{overflow:hidden;text-overflow:ellipsis}
+  body:has(#p-progress:not([hidden]) #prog-line:not([hidden])) #progress-readiness>.cols>.col-side{top:calc(var(--panel-top) + 49px)}
 }
-#progress-readiness .prog-bar .seg{align-self:center!important;flex:none!important;width:auto!important;background:var(--hover)!important;box-shadow:none!important;border-radius:var(--r-md)!important;padding:var(--sp-0_5)!important;gap:var(--sp-0_5)!important}
-#progress-readiness .prog-bar .seg button{min-height:24px!important;height:24px!important;padding:0 9px!important;display:inline-flex!important;align-items:center!important;color:var(--quiet)!important;font:var(--fw-medium) var(--fs-1) var(--sans)!important;box-sizing:border-box!important}
+#progress-readiness .prog-bar .seg{align-self:center;flex:none;width:auto;background:var(--hover);box-shadow:none;border-radius:var(--r-md);padding:var(--sp-0_5);gap:var(--sp-0_5)}
+#progress-readiness .prog-bar .seg button{min-height:24px;height:24px;padding:0 9px;display:inline-flex;align-items:center;color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);box-sizing:border-box}
 #progress-readiness .prog-bar .seg button:hover{color:var(--text)!important;background:var(--bg)!important}
-#progress-readiness .prog-bar .seg button[aria-pressed="true"]{background:var(--surface)!important;color:var(--text)!important;box-shadow:0 0 0 1px var(--line)!important}
+#progress-readiness .prog-bar .seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
 /* the demo's 18 px inset for the cards (the pane gives 16) */
-#progress-readiness .col-main>.prog-props,#progress-readiness .col-main>#prog-chart-card,#progress-readiness .col-main>.prog-grid{margin-left:var(--sp-0_5)!important;margin-right:var(--sp-0_5)!important}
-#progress-readiness .col-main{gap:var(--sp-3)!important}
-#p-progress .lab{font-size:var(--fs-1)!important;color:var(--quiet)!important;font-weight:var(--fw-medium)!important}
-#p-progress .mini{font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important}
-.prog-props{display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important;padding:14px!important}
-.prog-props .prop{display:grid!important;grid-template-columns:92px 1fr!important;align-items:center!important;gap:var(--sp-2)!important;min-height:34px!important;font-size:var(--fs-2)!important;border:0!important}
-.prog-props .prop-k{color:var(--quiet)!important}
-.prog-props .prop-v{min-width:0!important}
-.prog-props .prop-v b{font-weight:var(--fw-semibold)!important;color:var(--text)!important}
+#progress-readiness .col-main>.prog-props,#progress-readiness .col-main>#prog-chart-card,#progress-readiness .col-main>.prog-grid{margin-left:var(--sp-0_5);margin-right:var(--sp-0_5)}
+#progress-readiness .col-main{gap:var(--sp-3)}
+#p-progress .lab{font-size:var(--fs-1);color:var(--quiet);font-weight:var(--fw-medium)}
+#p-progress .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.prog-props{display:flex;flex-direction:column;gap:var(--sp-0_5);padding:14px}
+.prog-props .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:var(--sp-2);min-height:34px;font-size:var(--fs-2);border:0}
+.prog-props .prop-k{color:var(--quiet)}
+.prog-props .prop-v{min-width:0}
+.prog-props .prop-v b{font-weight:var(--fw-semibold);color:var(--text)}
 .prog-props .prop-v .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important}
-#prog-chart-card{gap:var(--sp-1_5)!important}
-.prog-chart-head{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:var(--sp-2)!important;flex-wrap:wrap!important}
-.prog-chart-head h3{margin:0!important;font:var(--fw-semibold) calc(13.5px * var(--ts)) var(--sans)!important}
+#prog-chart-card{gap:var(--sp-1_5)}
+.prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);flex-wrap:wrap}
+.prog-chart-head h3{margin:0;font:var(--fw-semibold) calc(13.5px * var(--ts)) var(--sans)}
 .prog-chart-head .meta{margin:0!important;color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important}
-.prog-chart{display:flex!important;align-items:flex-end!important;gap:10px!important;height:194px!important;padding:var(--sp-6) var(--sp-1) 0!important;box-sizing:border-box!important}
-.pc-col{flex:1 1 0!important;min-width:0!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:stretch!important;gap:var(--sp-1)!important;height:100%!important}
-.pc-bar{flex:1!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:center!important;margin:0!important;padding:0!important;border:0!important;border-radius:var(--r-sm)!important;background:none!important;cursor:pointer!important;box-shadow:none!important;min-height:0!important}
-.pc-bar>i{display:block!important;width:40px!important;max-width:100%!important;border-radius:3px!important;background:var(--sem-violet)!important}
-.pc-bar:hover{background:none!important}
+.prog-chart{display:flex;align-items:flex-end;gap:10px;height:194px;padding:var(--sp-6) var(--sp-1) 0;box-sizing:border-box}
+.pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:var(--sp-1);height:100%}
+.pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0!important;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer!important;box-shadow:none;min-height:0}
+.pc-bar>i{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--sem-violet)}
+.pc-bar:hover{background:none}
 .pc-bar:hover>i{filter:brightness(1.08)!important}
-.pc-bar>.pc-ahead{display:block!important;width:40px!important;max-width:100%!important;height:6px!important;border-radius:3px!important;box-shadow:inset 0 0 0 1px var(--line2)!important}
-.pc-bar:focus-visible{outline:2px solid var(--text)!important;outline-offset:2px!important}
-.pc-lab{text-align:center!important;color:var(--quiet)!important;font-size:calc(11.5px * var(--ts))!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important}
-.pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text)!important;font-weight:var(--fw-semibold)!important}
-.prog-grid{display:grid!important;grid-template-columns:1fr!important;gap:var(--sp-3)!important}
-@media (min-width:1000px){.prog-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-.prog-grid .ui-card[hidden]{display:none!important}
-.prog-grid .ui-card{gap:10px!important}
-.prog-hb{display:flex!important;flex-direction:column!important;gap:5px!important}
-.prog-hb-top{display:flex!important;justify-content:space-between!important;gap:var(--sp-2)!important;font-size:calc(13.5px * var(--ts))!important}
-.prog-hb-top .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important;margin:0!important;white-space:nowrap!important}
-.prog-hb .gauge{height:10px!important;border-radius:5px!important}
-#prog-day{display:flex!important;flex-direction:column!important;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
-#prog-day .prog-day-total{margin:0!important;font-size:30px!important;font-weight:var(--fw-semibold)!important;letter-spacing:-.02em!important;line-height:1.1!important;color:var(--text)!important}
-#prog-day .prog-sessions{margin:0!important;padding:0!important;list-style:none!important;display:flex!important;flex-direction:column!important;gap:14px!important}
-#prog-day .prog-s{display:flex!important;flex-wrap:nowrap!important;align-items:flex-start!important;gap:var(--sp-2)!important;padding:0!important;min-height:0!important;border:0!important;font-size:var(--fs-2)!important}
-#prog-day .prog-s-t{display:flex!important;flex-direction:column!important;gap:1px!important;min-width:0!important}
+.pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
+.pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.pc-lab{text-align:center;color:var(--quiet);font-size:calc(11.5px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text);font-weight:var(--fw-semibold)}
+.prog-grid{display:grid;grid-template-columns:1fr;gap:var(--sp-3)}
+@media (min-width:1000px){.prog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.prog-grid .ui-card{gap:10px}
+.prog-hb{display:flex;flex-direction:column;gap:5px}
+.prog-hb-top{display:flex;justify-content:space-between;gap:var(--sp-2);font-size:calc(13.5px * var(--ts))}
+.prog-hb-top .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important;margin:0!important;white-space:nowrap}
+.prog-hb .gauge{height:10px;border-radius:5px}
+#prog-day{display:flex;flex-direction:column;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+#prog-day .prog-day-total{margin:0;font-size:30px;font-weight:var(--fw-semibold);letter-spacing:-.02em;line-height:1.1;color:var(--text)}
+#prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+#prog-day .prog-s{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
+#prog-day .prog-s-t{display:flex;flex-direction:column;gap:1px;min-width:0}
 #prog-day .prog-s .nm{min-height:0!important;height:auto!important;line-height:22px!important;padding:0!important;border:0!important;background:none!important;color:var(--text)!important;font:inherit!important;text-align:left!important;cursor:pointer!important}
 #prog-day .prog-s .nm:hover{text-decoration:underline!important;text-decoration-color:var(--line2)!important;text-underline-offset:3px!important}
 @media (max-width:599px){
-  .prog-chart{gap:var(--sp-0_5)!important}
-  .pc-col{min-width:44px!important}
-  .pc-bar>i,.pc-bar>.pc-ahead{width:44px!important}
+  .prog-chart{gap:var(--sp-0_5)}
+  .pc-col{min-width:44px}
+  .pc-bar>i,.pc-bar>.pc-ahead{width:44px}
   #progress-readiness .prog-bar{padding:10px var(--sp-3)!important;min-height:69px!important}
-  #progress-readiness .prog-bar .seg{align-self:center!important;width:auto!important}
-  #progress-readiness .prog-line{padding:var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4)!important;flex-wrap:wrap!important}
-  #progress-readiness .prog-bar .seg button{flex:none!important;height:44px!important;min-height:44px!important;padding:0 var(--sp-3)!important;min-width:44px!important;justify-content:center!important}
-  #progress-readiness .col-main>#prog-chart-card{margin-left:-8px!important;margin-right:-8px!important} /* the demo's chart card sits 8 px from the edge on a phone */
+  #progress-readiness .prog-bar .seg{align-self:center;width:auto}
+  #progress-readiness .prog-line{padding:var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4);flex-wrap:wrap}
+  #progress-readiness .prog-bar .seg button{flex:none;height:44px;min-height:44px;padding:0 var(--sp-3);min-width:44px;justify-content:center}
+  #progress-readiness .col-main>#prog-chart-card{margin-left:-8px;margin-right:-8px} /* the demo's chart card sits 8 px from the edge on a phone */
 }
