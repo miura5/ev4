@@ -284,6 +284,38 @@
       '@layer base{:where(html,body){background:var(--bg);color:var(--text)}}'
     );
   };
+  /** B-558: the window's title-bar colour is the sidebar's ground (--sunken) in each mode: one theme-color meta for the
+   *  system's light and one for its dark, or both the chosen mode's when the toggle picked one. theme.js keeps them in
+   *  step when data-theme changes. The wrapper's single static meta gives way to these. */
+  var metaState = { contrast: null, recipe: null };
+  var metas = function (doc, contrast, recipe) {
+    if (!doc || !doc.head) return;
+    metaState.contrast = contrast;
+    metaState.recipe = recipe;
+    var c = contrastOf(contrast),
+      pick = doc.documentElement.getAttribute('data-theme'),
+      col = { light: genTheme('light', c, recipe).chrome, dark: genTheme('dark', c, recipe).chrome };
+    var old = doc.head.querySelectorAll('meta[name="theme-color"]:not([data-ev])');
+    for (var i = 0; i < old.length; i++)
+      (old[i].setAttribute('content', col.light), old[i].setAttribute('media', 'not all'));
+    ['light', 'dark'].forEach(function (m) {
+      var el = doc.head.querySelector('meta[data-ev="' + m + '"]');
+      if (!el) {
+        el = doc.createElement('meta');
+        el.setAttribute('name', 'theme-color');
+        el.setAttribute('data-ev', m);
+        el.setAttribute('media', '(prefers-color-scheme: ' + m + ')');
+        doc.head.appendChild(el);
+      }
+      el.setAttribute('content', col[pick === 'light' || pick === 'dark' ? pick : m]);
+    });
+    if (!doc.__evMetaWatch && typeof MutationObserver === 'function') {
+      doc.__evMetaWatch = new MutationObserver(function () {
+        metas(doc, metaState.contrast, metaState.recipe);
+      });
+      doc.__evMetaWatch.observe(doc.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    }
+  };
   /** Paints the theme for a contrast (and a tuner's recipe, B-506) now: one style element, placed after the stylesheet
    *  link the first time. */
   var apply = function (doc, contrast, after, recipe) {
@@ -295,6 +327,7 @@
       else (doc.head || doc.documentElement).appendChild(el);
     }
     el.textContent = css(contrast, recipe);
+    metas(doc, contrast, recipe);
     if (contrastOf(contrast) === 60) doc.documentElement.removeAttribute('data-contrast');
     else doc.documentElement.setAttribute('data-contrast', String(contrastOf(contrast)));
     return el;

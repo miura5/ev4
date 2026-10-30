@@ -573,7 +573,7 @@
         // pane read as blank, the list above the view)
         const top = () => {
           window.scrollTo(0, 0);
-          for (const e of [document.scrollingElement, nList, nScroll, ...nList.querySelectorAll('*')])
+          for (const e of [document.scrollingElement, pane(), nList, nScroll, ...nList.querySelectorAll('*')])
             if (e && e.scrollTop) e.scrollTop = 0;
         };
         top();
@@ -609,7 +609,7 @@
       void _drop;
       loadNote(id, data);
       nScroll.scrollTop = 0;
-      window.scrollTo(0, 0);
+      paneTo(0);
       const last = NOTE.blocks.length - 1;
       body.focus();
       setNoteSel({ a: { b: last, o: E.noteText(NOTE.blocks[last]).length } });

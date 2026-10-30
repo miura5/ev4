@@ -42,10 +42,23 @@
       if (due === today) return 'Today';
       return new Date(due + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' });
     }
+    // B-561: the Dock icon carries the count still open today, where the browser offers a badge; none at zero
+    let badgeN = -1;
+    function dockBadge(n) {
+      if (n === badgeN) return;
+      badgeN = n;
+      try {
+        if (n > 0 && navigator.setAppBadge) navigator.setAppBadge(n).catch(() => {});
+        else if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
+      } catch (e) {
+        /* a browser without badges, or one that refuses: nothing to show */
+      }
+    }
     function renderSide() {
       const t = $('side-today');
       if (!t) return;
       const open = sideOpen();
+      dockBadge(open.length);
       const row = (dot, text, when, go, cls = 'si') => {
         const b = el('button', cls);
         b.type = 'button';

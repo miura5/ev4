@@ -431,6 +431,59 @@ async function open(browser, viewport) {
       JSON.stringify(chipPaint)
     );
 
+    // B-552: the native baseline, read back as computed styles: no tap flash, touch-action manipulation, no selection or
+    // callout on controls, the arrow cursor on chrome; from 600 px the pane keeps a stable gutter. B-553: from 600 px the
+    // window never scrolls, only the pane.
+    const native = await page.evaluate(() => {
+      const cs = sel => getComputedStyle(document.querySelector(sel));
+      const tab = cs('#tab-today'),
+        wrap = cs('.wrap'),
+        se = document.scrollingElement;
+      return {
+        tap: cs('html').webkitTapHighlightColor,
+        touch: tab.touchAction,
+        select: tab.userSelect || tab.webkitUserSelect,
+        cursor: tab.cursor,
+        text: cs('#ev-input').userSelect,
+        gutter: wrap.scrollbarGutter,
+        doc: se.scrollHeight - innerHeight,
+        pane: wrap.overflowY,
+      };
+    });
+    const wide = scheme !== '390';
+    ok(
+      `${tag} the native baseline: no tap flash, no selection or callout on controls, the arrow cursor (B-552)` +
+        (wide ? '; only the pane scrolls (B-553)' : ''),
+      /rgba\(0, 0, 0, 0\)|transparent/.test(native.tap) &&
+        native.touch === 'manipulation' &&
+        native.select === 'none' &&
+        native.cursor === 'default' &&
+        native.text !== 'none' &&
+        (!wide || (native.gutter === 'stable' && native.doc <= 0 && native.pane === 'auto')),
+      JSON.stringify(native)
+    );
+    // B-559: the Mac's keys at the desk: Cmd-2 opens Today, / goes to the message box, Cmd-K opens the menu, Esc closes it
+    if (wide) {
+      await page.keyboard.press('Meta+2');
+      const two = await page.evaluate(() => document.getElementById('tab-today').getAttribute('aria-selected'));
+      await page.evaluate(() => document.activeElement && document.activeElement.blur());
+      await page.keyboard.press('/');
+      const slash = await page.evaluate(() => document.activeElement && document.activeElement.id);
+      await page.evaluate(() => document.activeElement && document.activeElement.blur());
+      await page.keyboard.press('Meta+k');
+      const menu = await page.evaluate(() => {
+        const m = document.getElementById('cmdk');
+        return !!m && m.matches(':popover-open') && m.querySelectorAll('.popover-i').length;
+      });
+      await page.keyboard.press('Escape');
+      const closed = await page.evaluate(() => !document.querySelector('#cmdk:popover-open'));
+      ok(
+        `${tag} Cmd-2 opens Today, / the message box, Cmd-K the menu and Esc closes it (B-559)`,
+        two === 'true' && slash === 'ev-input' && menu >= 6 && closed,
+        JSON.stringify({ two, slash, menu, closed })
+      );
+    }
+
     await page.screenshot({ path: `${shots}/smoke-${scheme}.png` });
     ok(`${tag} no page errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.close();

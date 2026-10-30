@@ -2,6 +2,7 @@
 // B-501 (D-372, D-379): Proprietary's frozen tokens reach the published stylesheet ahead of today's rules.
 // B-505 (D-373): the published sheet declares the layer order first and wraps today's rules in legacy; page/theme.js
 // generates the washes, lifts, ring, focus and coded tokens per mode and contrast, in the tokens layer.
+import { gateHover } from '../tools/hover-gate.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -64,8 +65,9 @@ test('B-502: the audit counts distinct values per family and ignores comments', 
 test('B-501, B-505: the published styles.css is the layer order, page/ds/tokens.css in tokens, page/styles.css in legacy; the tokens declare every scale', () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
   const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
-  const tokens = fs.readFileSync(path.join(ROOT, 'page', 'ds', 'tokens.css'), 'utf8');
-  const styles = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+  // B-552: each file as written, its :hover rules gated by (hover:hover) (tools/hover-gate.mjs)
+  const tokens = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'ds', 'tokens.css'), 'utf8'));
+  const styles = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8'));
   assert.equal(LAYER_ORDER, '@layer reset, tokens, base, components, patterns, views, legacy;');
   for (const target of ['live', 'staging']) {
     const out = pages[target]['styles.css'];
@@ -124,4 +126,14 @@ test('B-505: theme.js generates the washes, lifts, ring, focus and coded tokens 
   const outside = css.replace(/@layer tokens\{[\s\S]*?\}\}:root\[data-theme="light"\]\{[^}]*\}\}/, '');
   assert.match(outside, /^@layer [^{]+;:root,:root\[data-theme="dark"\]\{color-scheme:dark\}/);
   assert.match(css, /@layer base\{:where\(html,body\)\{background:var\(--bg\);color:var\(--text\)\}\}$/);
+});
+
+test('B-552: hover rules are gated by (hover:hover); a mixed selector list keeps its other parts everywhere', () => {
+  const out = gateHover(
+    '.a:hover,.b:focus{color:red}@media (min-width:1px){.c:hover{x:y}.d{x:y}}.e{content:"{:hover}"}'
+  );
+  assert.equal(
+    out,
+    '.b:focus{color:red}@media (hover:hover){.a:hover{color:red}}@media (min-width:1px){@media (hover:hover){.c:hover{x:y}}.d{x:y}}.e{content:"{:hover}"}'
+  );
 });

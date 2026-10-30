@@ -222,10 +222,17 @@ const statusShown = page =>
             side.left === 0 && side.top === 0 && side.height === innerHeight && side.width >= 180 && side.width <= 240,
           right: !!rr && getComputedStyle(right).position === 'fixed' && rr.left >= wrap.right,
           wrapW: Math.round(wrap.width),
+          // B-553: from 600 px the column is the scroll pane itself, from the sidebar's edge to the pane's (or the panel's)
           centred:
-            Math.abs(
-              wrap.left - pane - (innerWidth - parseFloat(getComputedStyle(document.body).paddingRight) - wrap.right)
-            ) <= 2,
+            innerWidth >= 600
+              ? Math.abs(wrap.left - side.right) <= 2 &&
+                wrap.right <= innerWidth - 8 + 1 &&
+                (!rr || getComputedStyle(right).position !== 'fixed' || wrap.right <= rr.left + 1)
+              : Math.abs(
+                  wrap.left -
+                    pane -
+                    (innerWidth - parseFloat(getComputedStyle(document.body).paddingRight) - wrap.right)
+                ) <= 2,
           topBar: !!document.querySelector('header.top'),
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };

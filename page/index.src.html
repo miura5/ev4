@@ -3,10 +3,10 @@
 <meta name="color-scheme" content="light dark">
 <meta name="ev-release" content="{{RELEASE}}">
 <meta name="ev-target" content="{{TARGET}}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
 <script>/* B-204 (D-211), B-224 (D-229): this device's theme, text size and motion, before first paint; without them the page follows the system. */try{var d=document.documentElement,t=localStorage.getItem('ev.theme');if(t==='light'||t==='dark')d.setAttribute('data-theme',t);if(localStorage.getItem('ev.text')==='larger')d.setAttribute('data-text','larger');if(localStorage.getItem('ev.motion')==='reduce')d.setAttribute('data-motion','reduce')}catch(e){}</script>
 <script>{{THEME}}</script>
+<script>/* B-556: her view's frame from the first paint (app.js sets the same classes once it runs), so nothing jumps when it does */try{var h=(location.hash||'').slice(1),l=localStorage.getItem('ev3-tab');if(!h&&(!l||l==='ev'))document.body.classList.add('captions','on-ev','opening','ev-booting');else document.body.classList.add('captions')}catch(e){document.body.classList.add('captions','on-ev','opening','ev-booting')}</script>
 
 <!-- B-208 (D-210, D-225): direction C. A dim sidebar (her, the sections, Theme and Contrast, System) beside the raised pane from 600 px; under
      600 px the sections are a tab bar at the bottom whose E.V. tab is her. The pane opens on its header. -->
@@ -62,7 +62,7 @@
       <div class="qchips" id="qchips" role="group" aria-label="Quick asks"></div>
       <form class="compose-row" id="ev-form" autocomplete="off">
         <input type="file" id="ev-file" hidden accept=".pdf,.docx,.pptx,.txt,.md,application/pdf,text/plain,image/*">
-        <textarea id="ev-input" rows="1" placeholder="Ask E.V., or “note: …” to log something" aria-label="Message E.V."></textarea>
+        <textarea id="ev-input" rows="1" enterkeyhint="send" placeholder="Ask E.V., or “note: …” to log something" aria-label="Message E.V."></textarea>
         <button class="primary" type="submit" id="ev-send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </form>
     </div>
@@ -167,6 +167,8 @@
       <!-- B-214, B-271, B-224: Theme, Contrast, Text size and Reduce motion, this device's own; B-303: built by the System part (50) -->
       <p class="meta" id="theme-note">On this device only.</p></div>
     <p class="meta sys-foot" id="versions"></p>
+    <!-- B-563: desktop Safari only; the page shows it -->
+    <p class="meta sys-foot" id="sys-safari" hidden>For a cleaner window in Safari: E.V. &gt; Settings, turn off Show navigation controls and turn on Show color in title bar.</p>
     <p class="meta sys-foot" id="sys-privacy"><span id="sys-note">E.V. logs your conversations to your record. Only you can read it.</span> <span id="sys-staging" hidden>Staging copy. Jobs here run the staging worker on the staging record.</span></p>
     </div></div>
   </section>

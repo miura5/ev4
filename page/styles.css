@@ -1805,3 +1805,48 @@ body.has-line #today-week .wk-her{display:none}
   .side{box-sizing:border-box}
 }
 
+
+/* ============================================================ B-553: the desktop scroll pane =======================
+   From 600 px the window never scrolls. The header and her band are fixed to the top of the raised pane, the side
+   panels stay fixed columns beside it, and only the centre (.wrap) scrolls, with a thin themed scrollbar inside the
+   pane, as Linear does. Its top follows the header and her band (--line-h); its foot is the pane's foot (8 px, or the
+   strip from 1024 px). Phone layout (under 600 px) is unchanged: the document still scrolls there. */
+@media (min-width:600px){
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{min-height:0;padding:0}
+  .mh,#evline{position:fixed;left:var(--pane-l);right:8px;margin:0}
+  .mh{top:8px}
+  #evline{top:calc(8px + var(--mh-h))}
+  .wrap .evline{top:-18px}
+  .wrap{position:fixed;top:calc(8px + var(--mh-h) + var(--line-h,0px));bottom:var(--strip-h,8px);left:var(--pane-l);right:var(--pane-r);
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:18px 16px 28px;margin:0;
+    scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+  body.on-ev .wrap{padding-bottom:0}
+  body.captions.on-ev .wrap{max-width:none}
+  body.captions.on-ev .wrap>#p-ev{width:100%;max-width:680px;margin-inline:auto}
+  .wrap::-webkit-scrollbar{width:8px}
+  .wrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px;border:2px solid transparent;background-clip:content-box}
+  .wrap::-webkit-scrollbar-track{background:transparent}
+  #p-notes .n-fbar{top:-18px} /* sticky insets count from the pane's padding edge; the editor already sits 18 px up */
+}
+
+/* ============================================================ B-554: cheap scroll frames ===========================
+   The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
+   skip layout and paint for rows out of view (rows with no menu inside: paint containment clips one). */
+.top,.mh{-webkit-backdrop-filter:none;backdrop-filter:none}
+.rec-li,#p-record .rec-day,.ti-folded>li,.ov-rows>*{content-visibility:auto;contain-intrinsic-size:auto 44px}
+
+/* ============================================================ B-552: a native baseline ============================
+   No grey tap flash, no double-tap zoom wait, no text selection or long-press callout on controls, the arrow cursor on
+   the app's chrome (a pointer only on real links), and a pane scrollbar that never shifts the layout. Hover itself is
+   gated by (hover:hover) at build time (tools/hover-gate.mjs). His words, notes and E.V.'s lines stay selectable. */
+html{-webkit-tap-highlight-color:transparent}
+a,button,input,select,textarea,label,summary,[role="tab"],[role="button"],[role="menuitem"]{touch-action:manipulation}
+button,[role="tab"],[role="button"],[role="menuitem"],summary,.side,.mh,.seg,.estrip,.tabs{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button,[role="tab"],[role="button"],[role="menuitem"],summary,label,.side,.mh,.seg,.estrip{cursor:default!important}
+a[href],a[href] *{cursor:pointer!important}
+@media (min-width:600px){.wrap{scrollbar-gutter:stable}}
+
+/* B-556: on a cold open of her view, its frame stays unpainted until her first lines and her stage have their sizes
+   (02-navigation lifts it), so nothing in it moves once it shows. The header, sidebar and tab bar paint at once. */
+body.ev-booting #p-ev{opacity:0}

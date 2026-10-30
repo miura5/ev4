@@ -7,6 +7,7 @@
 //   system/environments.json spec.environments as the record holds it
 // Fails, writing nothing, when the spec and the schema registry disagree or a system document does not validate.
 // Usage: node tools/build.mjs [--root <repo>] [--out <dir>] [--now <ISO>]
+import { gateHover } from './hover-gate.mjs'; // B-552
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -85,13 +86,31 @@ export function styleParts(root = HERE, target = 'staging') {
   }
   return out.filter(([, f]) => target === 'staging' || !stagingOnly(f));
 }
+/** B-557: Inter from the page's own files (page/fonts/, @fontsource/inter 5.1.0, OFL), inlined in the stylesheet so
+ *  it arrives with it: no Google Fonts request, nothing extra to precache, and no swap on a cold open. */
+export function fontFaces(root = HERE) {
+  const dir = path.join(root, 'page/fonts');
+  if (!fs.existsSync(dir)) return '';
+  return fs
+    .readdirSync(dir)
+    .filter(f => /^inter-latin-\d00-normal\.woff2$/.test(f))
+    .sort()
+    .map(
+      f =>
+        `@font-face{font-family:Inter;font-style:normal;font-display:block;font-weight:${f.match(/\d00/)[0]};` +
+        `src:url(data:font/woff2;base64,${fs.readFileSync(path.join(dir, f)).toString('base64')}) format("woff2")}`
+    )
+    .join('');
+}
 export function stylesheet(root = HERE, target = 'staging') {
   return (
     [
       "/* E.V.'s stylesheet, built by tools/build.mjs (B-505, D-373): Proprietary's layers, then today's sheet in legacy. */",
       LAYER_ORDER,
+      fontFaces(root),
       ...styleParts(root, target).map(
-        ([layer, f]) => `@layer ${layer}{\n/* ---- ${f} */\n${fs.readFileSync(path.join(root, f), 'utf8')}\n}`
+        ([layer, f]) =>
+          `@layer ${layer}{\n/* ---- ${f} */\n${gateHover(fs.readFileSync(path.join(root, f), 'utf8'))}\n}`
       ),
     ].join('\n') + '\n'
   );

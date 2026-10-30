@@ -173,7 +173,15 @@ const SIZES = [
       const fb = await page.evaluate(() => {
         const a = document.querySelector('#p-notes .n-fbar').getBoundingClientRect();
         const m = document.getElementById('mh').getBoundingClientRect();
-        return [Math.round(a.left - m.left), Math.round(a.width - m.width), Math.round(a.top - m.bottom), a.height];
+        // B-553: the pane's scrollbar gutter sits beside the bar, inside the page
+        const w = document.querySelector('.wrap'),
+          gutter = w.offsetWidth - w.clientWidth;
+        return [
+          Math.round(a.left - m.left),
+          Math.round(a.width - m.width + gutter),
+          Math.round(a.top - m.bottom),
+          a.height,
+        ];
       });
       ok(`${tag} the format bar spans the page under the header, 44 px high`, JSON.stringify(fb) === '[0,0,0,44]', fb);
       const sug0 = (await geo(page)).sug;

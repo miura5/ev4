@@ -185,18 +185,18 @@
     // header's back arrow before "Today" closes it and returns to the list where it was (B-343 on the phone).
     const phone = () => innerWidth < 600;
     function openTask(id) {
-      if (!(ui.taskSel && !ui.taskGone)) ui.taskScroll = window.scrollY;
+      if (!(ui.taskSel && !ui.taskGone)) ui.taskScroll = paneY();
       ui.taskSel = id;
       ui.taskGone = null;
       render();
-      window.scrollTo(0, 0);
+      paneTo(0);
     }
     function closeTask() {
       ui.taskQuiz = null; // B-517: its quiz closes with it (every answer is already written)
       ui.taskSel = null;
       ui.taskGone = null;
       render();
-      window.scrollTo(0, ui.taskScroll || 0);
+      paneTo(ui.taskScroll || 0);
       ui.taskScroll = 0;
     }
     const taskBack = (() => {

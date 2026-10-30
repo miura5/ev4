@@ -2206,17 +2206,27 @@ const openNoteId = page =>
       JSON.stringify({ reopened, tapped })
     );
     const pickId = want[0];
-    await page.click(pickSel);
-    await page.click(`#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu [data-obj="${pickId}"]`);
-    const accepted = await until(
-      page,
-      id =>
-        Object.values((window.__db.weakspots['ws-harness-noobj'] || {}).events || {}).some(
-          e => e.type === 'accept' && e.objective === id && e.by === 'owner'
-        ),
-      pickId,
-      4000
-    );
+    // a record update landing now redraws the list and closes the menu (talk/memory, written 2 s behind a reply): open
+    // it again until the pick lands
+    const isAccepted = () =>
+      until(
+        page,
+        id =>
+          Object.values((window.__db.weakspots['ws-harness-noobj'] || {}).events || {}).some(
+            e => e.type === 'accept' && e.objective === id && e.by === 'owner'
+          ),
+        pickId,
+        1500
+      );
+    let accepted = false;
+    for (let i = 0; i < 4 && !accepted; i++) {
+      if (!(await page.locator(pickSel).count())) break;
+      await page.click(pickSel);
+      await page.waitForTimeout(150);
+      const item = page.locator(`#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu [data-obj="${pickId}"]`);
+      if (await item.isVisible()) await item.click({ timeout: 2000 }).catch(() => {});
+      accepted = await isAccepted();
+    }
     await page.waitForTimeout(300);
     const st = await page.evaluate(() => {
       const C = window.EVCore,

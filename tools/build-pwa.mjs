@@ -37,7 +37,10 @@ export const HEAD =
   '<link rel=icon href="favicon.svg" type="image/svg+xml"><link rel=icon href="favicon-32.png" sizes="32x32">' +
   `<meta name=apple-mobile-web-app-title content="${NAME}"><meta name=application-name content="${NAME}">` +
   '<meta name=apple-mobile-web-app-capable content=yes><meta name=mobile-web-app-capable content=yes>' +
-  '<meta name=apple-mobile-web-app-status-bar-style content=black-translucent><meta name=theme-color content="#1c1a17">' +
+  '<meta name=apple-mobile-web-app-status-bar-style content=black-translucent>' +
+  // B-558: the sidebar's ground in each mode at the default contrast; page/theme.js keeps them in step after it runs
+  '<meta name=theme-color data-ev=light media="(prefers-color-scheme: light)" content="#f3eee9">' +
+  '<meta name=theme-color data-ev=dark media="(prefers-color-scheme: dark)" content="#1a1713">' +
   '<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>' +
   '<script type=importmap>{"imports":{"node:fs":"./node-fs.mjs","node:path":"./node-path.mjs","node:url":"./node-url.mjs"}}</script>' +
   '<script src="bridge.js"></script></head><body>';

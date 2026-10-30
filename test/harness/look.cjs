@@ -299,12 +299,12 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           return e ? getComputedStyle(e).fontFamily : '';
         })
       );
+      // B-557: Inter now comes with the stylesheet: no Google Fonts request, and the face is loaded, not swapped in
+      const loaded = await page.evaluate(() => document.fonts.check('500 14px Inter'));
       ok(
-        `[${width}] Inter is the computed font, asked for from Google Fonts, the system font its fallback (B-303)`,
-        fontAsks.some(u => /family=Inter\b/.test(u)) &&
-          f.every(x => /^"?Inter"?,/.test(x)) &&
-          f.every(x => /system-ui/.test(x)),
-        JSON.stringify({ fontAsks, f })
+        `[${width}] Inter is the computed font, from the page's own stylesheet, the system font its fallback (B-303, B-557)`,
+        fontAsks.length === 0 && loaded && f.every(x => /^"?Inter"?,/.test(x)) && f.every(x => /system-ui/.test(x)),
+        JSON.stringify({ fontAsks, loaded, f })
       );
     }
     for (const view of VIEWS) {

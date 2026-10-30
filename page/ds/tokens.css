@@ -126,7 +126,7 @@
   --warn-solid:var(--att); --warn-bg:rgba(var(--att-rgb),.13);
   --bad-solid:var(--urg); --bad-bg:rgba(var(--urg-rgb),.13);
   --info-bg:rgba(var(--tint),.07); --card:var(--glass);
-  --sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font; B-303: Inter (Google Fonts), the system UI font while it loads or if it can't; --mono is for code only */ --serif:var(--sans);
+  --sans:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; /* B-89: one font; B-303, B-557: Inter (self-hosted in the stylesheet), the system UI font while it loads or if it can't; --mono is for code only */ --serif:var(--sans);
   --r:22px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 :root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px;--panel-top:calc(8px + var(--mh-h))}
