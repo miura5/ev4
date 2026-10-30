@@ -10180,12 +10180,12 @@
   "title": "Flat check: 16 px on the desk and 20 px on the phone, solid green with a white tick, no shading; dark uses green at 62% over the surface",
   "dod": "The Gallery shows rest, checked and focus in both modes",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Flat check: 16/20 px, solid --ok with the --do-ink tick, 62% in dark; the carry tick rules are gone. npm test 1020, smoke 31, components 58.",
+  "commit": "08f4f1d",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
