@@ -216,7 +216,11 @@ if (require.main === module) {
         ? r.fulfill({ body: fs.readFileSync(f), contentType: TYPES[path.extname(name)] || 'application/octet-stream' })
         : r.fulfill({ status: 404, body: 'not published' });
     });
-    await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
+    // EV_CONTRAST=30|60|100 opens the Gallery at that contrast (B-539: both modes at 3 contrasts).
+    const cst = process.env.EV_CONTRAST
+      ? `try{localStorage.setItem('ev.contrast',${JSON.stringify(process.env.EV_CONTRAST)})}catch(e){};`
+      : '';
+    await page.addInitScript(cst + 'window.__db=' + JSON.stringify(seed) + ';' + stub);
     await page.goto(ORIGIN + '/gallery');
     await page
       .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 })
@@ -234,7 +238,7 @@ if (require.main === module) {
         [390, 844],
         [1280, 900],
       ]) {
-        const tag = `[${w} ${mode}]`;
+        const tag = `[${w} ${mode}${process.env.EV_CONTRAST ? ' c' + process.env.EV_CONTRAST : ''}]`;
         const { ctx, page, errors } = await open(browser, dir, w, h, mode);
         const got = await page.evaluate(measure).catch(e => ({ error: e.message }));
         ok(
