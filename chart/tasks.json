@@ -11280,5 +11280,23 @@
    "outcome": "task",
    "at": "2026-10-30T20:07:42.446Z"
   }
+ },
+ {
+  "id": "B-607",
+  "kind": "request",
+  "title": "Request (reported Oct 30): The New task Kind menu should offer the same full list of kinds that study plans and the Canvas run use, so a kind means the same thing however a task was created.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "The New task Kind menu should offer the same full list of kinds that study plans and the Canvas run use, so a kind means the same thing however a task was created.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T21:21:13.151Z",
+  "board": {
+   "row": "v4 B-607: The New task Kind menu should offer the same full list of kinds that…"
+  }
  }
 ]
