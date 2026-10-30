@@ -7,6 +7,7 @@
 //   system/environments.json spec.environments as the record holds it
 // Fails, writing nothing, when the spec and the schema registry disagree or a system document does not validate.
 // Usage: node tools/build.mjs [--root <repo>] [--out <dir>] [--now <ISO>]
+import { carry } from './carry.mjs';
 import { gateHover } from './hover-gate.mjs'; // B-552
 import fs from 'node:fs';
 import path from 'node:path';
@@ -54,20 +55,21 @@ export function appSource(root = HERE, target = 'staging') {
  * B-505 (D-373), D-388: the published styles.css. The layer order first, then each of Proprietary's files wrapped in
  * its own layer block under its `/* ---- path *\/` header: tokens, then the components, patterns and views layers, each
  * read from its folder (page/ds/components/, page/ds/patterns/, page/ds/views/) in name order, the Gallery's
- * stylesheet last in views; and today's page/styles.css wrapped whole in legacy, so its rules still win wherever they
- * apply and nothing on screen moves while views move out of it. No file declares its own layer; the files stay as
- * written, so a change to page/styles.css never touches the wrapping. A folder not there yet adds nothing.
+ * stylesheet; page/ds/views/legacy-carry.css opens views (B-515 D2c: what was left of the old page/styles.css, once the
+ * legacy layer, built through tools/carry.mjs so it still wins as legacy did; consolidation retires it). No file declares its own layer. A folder not there yet adds nothing.
  */
-export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, views, legacy;';
+export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, views;';
 // [layer, file or folder/]: a folder is read in name order, its *.css files each one block of that layer.
+export const CARRY = 'page/ds/views/legacy-carry.css';
 export const STYLE_LAYERS = [
   ['tokens', 'page/ds/tokens.css'],
   ['base', 'page/ds/base.css'],
   ['components', 'page/ds/components/'],
   ['patterns', 'page/ds/patterns/'],
+  // B-515 D2c: what is left of the old page/styles.css, first in views, its legacy precedence kept (tools/carry.mjs).
+  ['views', CARRY],
   ['views', 'page/ds/views/'],
   ['views', 'page/ds/gallery.css'],
-  ['legacy', 'page/styles.css'],
 ];
 /** The stylesheet's parts in order, [layer, path], for a target: folders expanded, missing ones and live's skips out. */
 export function styleParts(root = HERE, target = 'staging') {
@@ -78,14 +80,18 @@ export function styleParts(root = HERE, target = 'staging') {
       if (!fs.existsSync(dir)) continue;
       for (const n of fs
         .readdirSync(dir)
-        .filter(x => x.endsWith('.css'))
+        .filter(x => x.endsWith('.css') && !(f + x === CARRY))
         .sort())
         out.push([layer, f + n]);
-    } else if (layer === 'legacy' || layer === 'tokens' || layer === 'base' || fs.existsSync(path.join(root, f)))
-      out.push([layer, f]);
+    } else if (layer === 'tokens' || layer === 'base' || fs.existsSync(path.join(root, f))) out.push([layer, f]);
   }
   return out.filter(([, f]) => target === 'staging' || !stagingOnly(f));
 }
+/** B-515 D2c: every source stylesheet joined in published order (staging's set), for the tests that read the CSS. */
+export const sourceStyles = (root = HERE) =>
+  styleParts(root)
+    .map(([, f]) => fs.readFileSync(path.join(root, f), 'utf8'))
+    .join('\n');
 /** B-557: Inter from the page's own files (page/fonts/, @fontsource/inter 5.1.0, OFL), inlined in the stylesheet so
  *  it arrives with it: no Google Fonts request, nothing extra to precache, and no swap on a cold open. */
 export function fontFaces(root = HERE) {
@@ -105,12 +111,12 @@ export function fontFaces(root = HERE) {
 export function stylesheet(root = HERE, target = 'staging') {
   return (
     [
-      "/* E.V.'s stylesheet, built by tools/build.mjs (B-505, D-373): Proprietary's layers, then today's sheet in legacy. */",
+      "/* E.V.'s stylesheet, built by tools/build.mjs (B-505, D-373): Proprietary's layers. */",
       LAYER_ORDER,
       fontFaces(root),
       ...styleParts(root, target).map(
         ([layer, f]) =>
-          `@layer ${layer}{\n/* ---- ${f} */\n${gateHover(fs.readFileSync(path.join(root, f), 'utf8'))}\n}`
+          `@layer ${layer}{\n/* ---- ${f} */\n${gateHover((f === CARRY ? carry : String)(fs.readFileSync(path.join(root, f), 'utf8')))}\n}`
       ),
     ].join('\n') + '\n'
   );

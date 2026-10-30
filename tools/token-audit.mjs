@@ -2,11 +2,12 @@
 // B-502 (D-370, D-372): the Proprietary token audit. It counts the distinct values per token family in a stylesheet
 // (comments stripped), so polish and consolidation can say "21 -> 7 font sizes". A report, never a gate: it always
 // exits 0 and no test holds its numbers.
-//   node tools/token-audit.mjs                 page/styles.css, as text
+//   node tools/token-audit.mjs                 every page/ds stylesheet but tokens.css and the Gallery, as text (B-515)
 //   node tools/token-audit.mjs <file> --json   any stylesheet, as JSON
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { styleParts } from './build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -14,6 +15,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COLOUR =
   /(#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|color-mix|lch|oklch)\((?:[^()]|\([^()]*\))*\)|var\(--(?:bg|chrome|surface|hover|line2?|text|quiet|faint|her2?|on-her|av[12]|sem-\w+|sunken|raised|do|do-ink|att|urg|glass2?|ink2?|soft|chip|accent[\w-]*|violet[\w-]*|plum[\w-]*|warn[\w-]*|bad[\w-]*|info[\w-]*|card|focus)\))/g;
 
+// B-515 D2c: the default is the page's own CSS, every published stylesheet but the token sheet and the Gallery's.
+export const ALL = 'page/ds (all but tokens.css and gallery.css)';
+export const viewCss = (root = ROOT) =>
+  styleParts(root)
+    .map(([, f]) => f)
+    .filter(f => f !== 'page/ds/tokens.css' && f !== 'page/ds/gallery.css')
+    .map(f => fs.readFileSync(path.join(root, f), 'utf8'))
+    .join('\n');
 const tally = () => new Map();
 const add = (m, k, n = 1) => m.set(k, (m.get(k) || 0) + n);
 const family = m => {
@@ -101,7 +110,7 @@ const LABELS = {
 };
 
 /** The audit as text: one line per family with its counts, then its values by use. */
-export function report(a, { file = 'page/styles.css', top = 12 } = {}) {
+export function report(a, { file = ALL, top = 12 } = {}) {
   const lines = [`Token audit of ${file} (a report, never a gate)`];
   for (const [k, label] of Object.entries(LABELS)) {
     const fam = a.families[k];
@@ -120,7 +129,7 @@ export function report(a, { file = 'page/styles.css', top = 12 } = {}) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  const file = args.find(a => !a.startsWith('--')) || 'page/styles.css';
-  const a = audit(fs.readFileSync(path.resolve(ROOT, file), 'utf8'));
+  const file = args.find(a => !a.startsWith('--')) || ALL;
+  const a = audit(file === ALL ? viewCss() : fs.readFileSync(path.resolve(ROOT, file), 'utf8'));
   console.log(args.includes('--json') ? JSON.stringify({ file, ...a }, null, 1) : report(a, { file }));
 }

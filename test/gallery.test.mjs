@@ -30,7 +30,7 @@ test('B-506: the Gallery is in staging’s app.js and styles.css and in none of 
     'page/app/90-render.js',
     'page/ds/components/01-button.css',
     'page/ds/views/today.css',
-    'page/styles.css',
+    'page/ds/views/legacy-carry.css',
   ])
     assert.ok(!stagingOnly(p), p);
   assert.ok(pages.staging['app.js'].includes('const GALLERY = '), 'staging carries the Gallery');

@@ -9,8 +9,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ROOT } from './helpers.mjs';
-import { audit } from '../tools/token-audit.mjs';
-import { buildPages, loadSchemas, LAYER_ORDER } from '../tools/build.mjs';
+import { audit, ALL } from '../tools/token-audit.mjs';
+import { buildPages, loadSchemas, LAYER_ORDER, CARRY } from '../tools/build.mjs';
+import { carry } from '../tools/carry.mjs';
 import { createRequire } from 'node:module';
 const theme = createRequire(import.meta.url)('./harness/contrast.cjs').load(); // page/theme.js as the shell runs it
 
@@ -30,10 +31,10 @@ const FAMILIES = [
   'mediaQueries',
 ];
 
-test('B-502: the audit of page/styles.css runs and returns every family, as text and as --json', () => {
+test('B-502, B-515: the audit of the page/ds stylesheets runs and returns every family, as text and as --json', () => {
   const tool = path.join(ROOT, 'tools', 'token-audit.mjs');
   const json = JSON.parse(execFileSync(process.execPath, [tool, '--json'], { encoding: 'utf8' }));
-  assert.equal(json.file, 'page/styles.css');
+  assert.equal(json.file, ALL);
   assert.deepEqual(Object.keys(json.families), FAMILIES);
   for (const k of FAMILIES) assert.ok(json.families[k].distinct > 0, k);
   assert.equal(typeof json.counts.important, 'number');
@@ -62,13 +63,13 @@ test('B-502: the audit counts distinct values per family and ignores comments', 
   assert.equal(a.counts.important, 1);
 });
 
-test('B-501, B-505: the published styles.css is the layer order, page/ds/tokens.css in tokens, page/styles.css in legacy; the tokens declare every scale', () => {
+test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/tokens.css in tokens, the carry opening views; the tokens declare every scale', () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
   const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
   // B-552: each file as written, its :hover rules gated by (hover:hover) (tools/hover-gate.mjs)
   const tokens = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'ds', 'tokens.css'), 'utf8'));
-  const styles = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8'));
-  assert.equal(LAYER_ORDER, '@layer reset, tokens, base, components, patterns, views, legacy;');
+  const styles = gateHover(carry(fs.readFileSync(path.join(ROOT, CARRY), 'utf8')));
+  assert.equal(LAYER_ORDER, '@layer reset, tokens, base, components, patterns, views;');
   for (const target of ['live', 'staging']) {
     const out = pages[target]['styles.css'];
     // nothing but a comment ahead of the order, and no rule outside a layer
@@ -82,10 +83,10 @@ test('B-501, B-505: the published styles.css is the layer order, page/ds/tokens.
     );
     const t = out.indexOf(tokens),
       l = out.indexOf(styles);
-    assert.ok(t > 0 && l > t, target + ': tokens, then legacy, each as written');
+    assert.ok(t > 0 && l > t, target + ': tokens, then the carry');
     assert.match(out.slice(0, t), /@layer tokens\{\n\/\* ---- page\/ds\/tokens\.css \*\/\n$/);
-    assert.match(out.slice(0, l), /@layer legacy\{\n\/\* ---- page\/styles\.css \*\/\n$/);
-    assert.equal(out.slice(l + styles.length), '\n}\n', target + ': legacy closes the file');
+    assert.match(out.slice(0, l), /\n\}\n@layer views\{\n\/\* ---- page\/ds\/views\/legacy-carry\.css \*\/\n$/);
+    assert.ok(!/@layer legacy\b/.test(out.replace(/\/\*[\s\S]*?\*\//g, '')), target + ': no legacy layer');
   }
   for (const name of ['--fs-1', '--fs-7', '--sp-3', '--r-md', '--elev-3', '--z-overlay', '--line-h', '--pad-card'])
     assert.match(tokens, new RegExp(name + ':'), name);

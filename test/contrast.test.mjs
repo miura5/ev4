@@ -1,5 +1,6 @@
 // B-271 (D-268, D-269, D-273): every colour comes from the LCH generator; at contrast 60 it gives the hand-off's tables
 // to the hex, and every contrast in both modes holds D-273's floors. B-204's system-following toggle stays (D-211).
+import { sourceStyles } from '../tools/build.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +10,7 @@ import { ROOT, flatSource } from './helpers.mjs';
 
 const C = createRequire(import.meta.url)('./harness/contrast.cjs');
 const T = C.load();
-const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+const css = sourceStyles(ROOT);
 
 test("B-271: at contrast 60 the generator gives hand-off 1's token and colour tables to the hex", () => {
   const want = {

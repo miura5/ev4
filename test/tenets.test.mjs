@@ -1,4 +1,5 @@
 // B-115: the UI tenets' checks (test/harness/tenets.cjs), held to planted reads without a browser.
+import { sourceStyles } from '../tools/build.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -48,14 +49,14 @@ test('B-125 (D-271): the motion check fails a planted long move, a view still mo
 });
 
 test('B-125 (D-271): the stylesheet has no staggered rise and no growth of bars on a tab switch', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+  const css = sourceStyles(ROOT);
   assert.doesNotMatch(css, /grow-[xy]/);
   assert.doesNotMatch(css, /\.panel\.enter>:nth-child/);
   assert.doesNotMatch(css, /\.panel\.enter\{animation/, 'B-225 (D-271): a view switch is a cut, no fade');
 });
 
 test('B-125 (D-271, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
-  const css = ['page/styles.css', 'page/ds/patterns/shell.css'] // B-515: the shell's lights moved
+  const css = ['page/ds/views/legacy-carry.css', 'page/ds/patterns/shell.css'] // B-515: the shell's lights moved
     .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
     .join('\n');
   const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];

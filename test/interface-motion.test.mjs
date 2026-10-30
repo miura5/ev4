@@ -2,6 +2,7 @@
 // display's rate: no stepped timing anywhere; a view switch is a cut, a fold opens in 0.28 s and closes in 0.16 s,
 // nothing in the interface runs over 0.45 s (an indicator that loops, a spinner or a pulse, is not a move); and reduced
 // motion (B-224) keeps the end states with no movement.
+import { sourceStyles } from '../tools/build.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,10 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const css = ['page/ds/base.css', 'page/styles.css']
-  .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
-  .join('\n')
-  .replace(/\/\*[\s\S]*?\*\//g, '');
+const css = sourceStyles(ROOT).replace(/\/\*[\s\S]*?\*\//g, '');
 const HER = '60-ev-conversation.js';
 const appFiles = fs
   .readdirSync(path.join(ROOT, 'page/app'))
