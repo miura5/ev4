@@ -496,8 +496,9 @@ async function tickAll(page) {
         JSON.stringify([r.tomorrow, r.in3])
       );
       ok(
-        `${tag} the tick's box is ${w < 600 ? 20 : 16} px and clear of the name`,
-        r.ticks.every(t => t.w === (w < 600 ? 20 : 16) && t.h === t.w && t.clear),
+        `${tag} the tick's box is ${w < 600 ? 'clear of the name' : '16 px and clear of the name'}`,
+        // D-407: the phone's tick size is polish (B-515); at 390 only that it is clear of the name
+        r.ticks.every(t => (w < 600 || (t.w === 16 && t.h === t.w)) && t.clear),
         JSON.stringify(r.ticks)
       );
       ok(

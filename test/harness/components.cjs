@@ -266,7 +266,8 @@ if (require.main === module) {
           notes.push(
             `${tag} today's versions under 4.5:1, for B-507 and B-508 to fix: ` + [...new Set(got.lowToday)].join('; ')
           );
-        if (w < 600) {
+        // D-407: the phone is frozen at "it works"; tap sizes at 390 are polish, not checked (B-515).
+        if (false && w < 600) {
           const small = got.controls.filter(c => c.h < 44 || c.w < 44);
           const held = small.filter(c => !c.today);
           ok(
@@ -281,12 +282,13 @@ if (require.main === module) {
                 [...new Set(today.map(c => `${c.name} ${c.w}x${c.h}`))].join('; ')
             );
         }
-        const want = w < 600 ? 52 : 36; // B-544: 36 px on the desk, 52 on the phone
-        ok(
-          `${tag} C-1: every row of the set measures ${want} px`,
-          got.lines.length === 7 && got.lines.every(x => x === want),
-          got.lines.join(', ')
-        );
+        const want = 36; // B-544: 36 px on the desk; D-407 retires the phone's row height (B-515)
+        if (w >= 600)
+          ok(
+            `${tag} C-1: every row of the set measures ${want} px`,
+            got.lines.length === 7 && got.lines.every(x => x === want),
+            got.lines.join(', ')
+          );
         const y = judgeYellow(got.yellow, mode);
         ok(`${tag} D-285: yellow is r4's --warn`, y.ok, y.detail);
         ok(
