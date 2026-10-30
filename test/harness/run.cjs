@@ -2908,18 +2908,28 @@ async function tap(page, locator, name) {
     await page.screenshot({ path: `${shots}/ev-${scheme}.png`, fullPage: false });
     ok(`[${scheme}] opens on E.V.`, (await page.isVisible('#p-ev')) && !(await page.isVisible('#p-today')));
     ok(
-      `[${scheme}] opening: her stage above the greeting, her 24 px Arc kept in the sidebar (D-213)`,
+      `[${scheme}] opening (D-400): no stage, the greeting in the top third with her Arc beside it, her 24 px Arc kept in the sidebar`,
       ...(await page.evaluate(() => {
+        const h = document.querySelector('#thread .msg.greet [data-part=greet-head]');
         const v = {
           opening: document.body.classList.contains('opening'),
-          arc: !!document.querySelector('#hero svg.fl'),
           stage: Math.round(document.querySelector('#hero').getBoundingClientRect().height),
+          arc: !!(h && h.querySelector('.ev-av svg')),
+          // the empty state's block (a check-in card may sit above her hello) starts in the top third
+          top: Math.round(
+            (document.querySelector('#thread .cap-in > :not(.cap-pull)') || h || document.body).getBoundingClientRect()
+              .top
+          ),
+          third: Math.round(innerHeight / 3),
           av: Math.round(
             (document.querySelector('#top-av svg.fl') || { getBoundingClientRect: () => ({}) }).getBoundingClientRect()
               .width || 0
           ),
         };
-        return [v.opening && v.arc && v.stage >= 100 && (innerWidth < 600 || v.av >= 20), JSON.stringify(v)];
+        return [
+          v.opening && v.stage === 0 && v.arc && v.top >= 0 && v.top <= v.third && (innerWidth < 600 || v.av >= 20),
+          JSON.stringify(v),
+        ];
       }))
     );
     ok(
@@ -2990,7 +3000,10 @@ async function tap(page, locator, name) {
         head: ((((window.__db.talk || {}).memory || {}).headlines || []).slice(-1)[0] || {}).text || '',
         shown: !!g.querySelector('.bubble'),
         lines: [...g.querySelectorAll('.brief .brief-line')].map(x => x.textContent),
-        buttons: g.querySelectorAll('.brief button').length,
+        // D-400: one Next up row with its Start is allowed; any other button is not
+        nextUp: g.querySelectorAll('.brief [data-part=next-up]').length,
+        buttons: g.querySelectorAll('.brief button:not(.nu-go)').length,
+        starts: g.querySelectorAll('.brief [data-part=next-up] button').length,
         cards: g.querySelectorAll('.ev-card').length,
       };
     });
@@ -3002,8 +3015,14 @@ async function tap(page, locator, name) {
       gb.head
     );
     ok(
-      `[${scheme}] on screen only its summary line of today's list: no large line, no line per item, no button, no card (B-358, B-368)`,
-      gb.lines.length === 1 && /on today’s list/.test(gb.lines[0]) && !gb.buttons && !gb.cards && !gb.shown,
+      `[${scheme}] on screen its summary line of today's list and at most one Next up row with Start: no large line, no line per item, no other button, no card (D-400)`,
+      gb.lines.length === 1 &&
+        /on today’s list/.test(gb.lines[0]) &&
+        gb.nextUp <= 1 &&
+        gb.starts <= gb.nextUp &&
+        !gb.buttons &&
+        !gb.cards &&
+        !gb.shown,
       JSON.stringify(gb)
     );
     // B-452 (Matt) retired B-358's five chips at rest: no quick-ask pills under the composer
@@ -3187,8 +3206,15 @@ async function tap(page, locator, name) {
       );
     }
     ok(
-      'one live core, her stage: none on the messages',
-      (await page.locator('#thread .ev-av svg').count()) === 0 && (await page.locator('#hero svg.fl').count()) === 1
+      'one live core on the phone, her stage: none on the messages, only the greeting keeps its Arc (D-400)',
+      (await page.evaluate(
+        () =>
+          [...document.querySelectorAll('#thread .msg:not(.greet) .ev-av')].filter(
+            e => e.getBoundingClientRect().width > 0
+          ).length
+      )) === 0 &&
+        (await page.locator('#thread .msg.greet .ev-av svg').count()) <= 1 &&
+        (await page.locator('#hero svg.fl').count()) === 1
     );
     // Chat that starts a background job through the page tools and the Claude Code Remote connector
     await page.evaluate(() => {
