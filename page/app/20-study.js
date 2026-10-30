@@ -1618,7 +1618,10 @@
             if (s.n >= 2 && (!weakest || s.right / s.n < weakest.r / weakest.n)) weakest = { id, r: s.right, n: s.n };
         const formats = M.models.filter(w => w.kind === 'format' && w.derived.status === 'open').map(w => w.topic);
         const prompt = [
-          'You write NCLEX-style practice questions for Matt, a first-semester ADN nursing student (' +
+          // B-601: NCLEX framing only for a nursing course; another course's questions follow its own exams
+          'You write ' +
+            E.examFrame(opt.course || E.defaultCourse()).style +
+            ' practice questions for Matt, a first-semester ADN nursing student (' +
             (opt.course || E.defaultCourse()) +
             '). Return JSON only.',
           ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
@@ -1641,7 +1644,7 @@
               String(opt.topic).slice(0, 200) +
               '. Keep every question on that topic; use a matching weak spot id only when it truly matches.'
             : '',
-          'Rules: ' + (EV_SPEC.items.writingGuide || []).join(' '),
+          'Rules: ' + E.frameText((EV_SPEC.items.writingGuide || []).join(' '), opt.course || E.defaultCourse()),
           EV_SPEC.items.calcGuide || '', // B-481
           'Write exactly 5 questions. "single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
             JSON.stringify(E.CJ_STEPS) +

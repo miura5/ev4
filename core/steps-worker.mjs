@@ -99,6 +99,9 @@ export const CODE_STEPS = {
         (db.settings || []).find(d => d.id === 'study-plan'),
         spec
       );
+      // B-601: the default brief's NCLEX lines hold for a nursing course only
+      if (instructions.from === 'default')
+        instructions.text = EV.frameText(instructions.text, job.course || context.course || null);
     }
     if (kind === 'clinical-prep') {
       // D-103 (B-46): the clinical the brief names by date, else the next one, and its read set (core.clinicalReadSet).
@@ -205,7 +208,8 @@ export const CODE_STEPS = {
         ...(job.course ? { course: job.course } : {}),
         ...(job.revise ? { revise: job.revise } : {}),
       },
-      guide: kinds[kind] ? (edit ? kinds[kind].edit.guide : kinds[kind].guide) : '',
+      // B-601: NCLEX framing only for a nursing course; another course's guide frames by its own exams
+      guide: EV.frameText(kinds[kind] ? (edit ? kinds[kind].edit.guide : kinds[kind].guide) : '', job.course || null),
       today: ctx.date,
       context,
       ...(instructions ? { instructions } : {}),

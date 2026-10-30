@@ -1,5 +1,6 @@
     // ---------------------------------------------------------------- talking with Claude
-    function evContext() {
+    function evContext(course) {
+      const frame = E.examFrame(course); // B-601: the course in context frames teaching by its exams
       const { day, items, isDone, skipped: skippedToday } = dayState();
       const { left, total } = reviewState();
       const L = [];
@@ -13,7 +14,7 @@
 - His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, say so and mark the answer "(check your materials)".
 - His daily list is yours to keep: put study tasks he asks for or agrees to on it with edit_list (today, or a day in the next week), take items off or bring them back the same way when he asks, and tick them off with tick_item. Graded work, exams, clinicals and validations stay.
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
-- Teaching: the rule, why it works, one memory hook, and when it shows up on the NCLEX. Mark anything not from his course materials "(check your materials)".
+- Teaching: the rule, why it works, one memory hook, and ${course ? 'when it shows up on ' + frame.exam + (frame.nursing ? '' : ' (this is ' + course + ': no NCLEX or nursing-board tips)') : "when it shows up on his exams (NCLEX framing only for a nursing course's content)"}. Mark anything not from his course materials "(check your materials)".
 - No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
 - Which objectives aren't solid, or how ready he is: answer about the course's next exam (the Next exam lines below), never a past exam. When its objectives are not in the record, say so in one line and answer from its open weak spots and plan. Name a past exam as past if you mention it.
@@ -260,6 +261,7 @@
       return {
         id,
         title: (doc && doc.title) || E.noteTitleOf(blocks) || 'Untitled',
+        course: (doc && doc.course) || null,
         text: blocks.map(b => E.noteText(b)).join('\n'),
       };
     }
@@ -1204,7 +1206,7 @@
               role: 'user',
               content:
                 (plan && !inApp ? plan.prefix + '\n\n' : '') +
-                evContext() +
+                evContext(nn ? nn.course : null) +
                 (o.view ? `\nHe is asking in the side chat over the ${o.view} view; that view is what he sees.` : '') +
                 (plan
                   ? '\nHis note is whole at the top of this conversation, as you last read it; what changed since comes with his latest message. Answer from those; no lookup of it is needed.'

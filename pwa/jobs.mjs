@@ -88,7 +88,7 @@ export function prepare({ db, spec, jobId, now, release, dir }) {
   if (material.skip) return { skip: material.skip, ctx };
   const brief = clone(material);
   const kind = brief.job.kind;
-  if (kind === 'study-guide') brief.guide = STUDY_GUIDE_APP;
+  if (kind === 'study-guide') brief.guide = EV.frameText(STUDY_GUIDE_APP, brief.job.course || null); // B-601
   if (kind === 'share-set') {
     delete brief.groups; // the publish the worker run makes on claude.ai
     if (!brief.context.refused) brief.context.refused = SHARE_REFUSED;

@@ -1408,7 +1408,8 @@
  "courses": {
   "_rules": [
    "B-42 (D-099): one entry per course. Core takes every course rule from this table and names no course in code: canvasId (Canvas, read-only), status (active or done; a done course leaves search and the morning's passages by default and comes back when Matt names it), endsAfter (the exam kind after which Matt marks it done), examKinds (what its exams may be), reviewKinds (exams whose weak spots set the review load and count as the next exam), examDayKinds (exams that make the day an exam day), scoredKinds (exams whose score the page asks for and the morning predicts, D-094), calendarDayKinds (calendar entries of the course that set the day type), dayBudget (shared: its review shares the day's budget, one review set across courses), aliases (how its name is written in the record), guess (words that put an attached file in this course), default (the course a document without one belongs to), library (which Canvas module files become library materials, D-079), planModule (B-45, D-102: the module whose arrival offers a plan draft, and the exam id it names).",
-   "exams.course and materials.course must name a course here (build and lint)."
+   "exams.course and materials.course must name a course here (build and lint).",
+   "B-601: nursing (true on a nursing course) is the only course flag that gives NCLEX and next-gen framing in E.V.'s prompts; exams names a non-nursing course's own exams, which its prompts frame by instead; no course known gets neutral exam framing (examFrame and frameText in core/course-scope.mjs)."
   ],
   "NUR 112": {
    "canvasId": 199214,
@@ -1466,7 +1467,8 @@
    "planModule": {
     "module": "^exam\\s*(\\d+)\\s+content",
     "exam": "E$1"
-   }
+   },
+   "nursing": true
   },
   "BIO 201": {
    "canvasId": 199416,
@@ -1508,7 +1510,9 @@
      "kind": "course",
      "only": "syllabus"
     }
-   ]
+   ],
+   "nursing": false,
+   "exams": "BIO 201's lecture and lab exams (anatomy and physiology)"
   }
  },
  "study": {
@@ -5290,7 +5294,7 @@
    "Dry, loyal, a little corporate-AI in small doses ('Logged.', 'Noted for the record.', 'Systems nominal.'). At most one joke per reply, never at his expense.",
    "Speaks as 'I'; calls him Matt now and then; never 'as an AI'.",
    "Warm when he is tired or stressed: name it plainly, offer one concrete easing, never guilt.",
-   "Explains nursing content like a sharp classmate: the rule, why it works, one memory hook, and when it matters on the NCLEX.",
+   "Explains course content like a sharp classmate: the rule, why it works, one memory hook, and when it matters on that course's own exams.",
    "Admits uncertainty: anything not from his course materials is marked 'check your materials'.",
    "At most two unprompted suggestions a day outside the daily brief (B-14).",
    "No standing reminders (B-99, Matt Oct 19): no note about graded work and no 'made-up' patient or client wording in replies, greetings, cards or items."

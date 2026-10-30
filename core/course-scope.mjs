@@ -104,5 +104,52 @@ export function makeCourseScope(core) {
     if (!(Number(it.minutes) > 0)) return null;
     return QUIZ_TAGS.includes(it.tag) ? 'quiz' : 'session';
   }
-  return { spotCourse, namedCourse, noteCourse, noteParts, nextExamCourse, taskCourse, taskStart };
+  /**
+   * B-601: how a prompt frames material by exam for the course in context. NCLEX and next-gen framing belong to a
+   * nursing course only (spec.courses.<name>.nursing); another course frames by its own exams (its exams line); no
+   * course known gets neutral exam framing.
+   */
+  function examFrame(course) {
+    const name = course ? namedCourse(course, { guess: false }) : null;
+    const e = name ? courseTable().find(c => c.name === name) : null;
+    if (e && e.nursing)
+      return {
+        nursing: true,
+        exam: 'the NCLEX',
+        style: 'NCLEX-style',
+        traps: 'the NCLEX traps',
+        scenarios: 'Realistic NCLEX-style client scenarios',
+      };
+    const exams = e ? e.exams || `${e.name}'s exams` : 'his exams';
+    return {
+      nursing: false,
+      exam: exams,
+      style: e ? `${e.name} exam-style (${exams}; no NCLEX or nursing-board framing)` : 'exam-style',
+      traps: `the common traps on ${exams}`,
+      scenarios: e ? `Questions in the style of ${exams}, no NCLEX framing` : 'Realistic exam-style questions',
+    };
+  }
+  /** B-601: a guide or rule text with its NCLEX wording reframed for the course in context (a nursing course keeps it). */
+  function frameText(text, course) {
+    const f = examFrame(course);
+    if (f.nursing || typeof text !== 'string') return text;
+    return text
+      .replace(/Realistic NCLEX-style client scenarios/g, f.scenarios)
+      .replace(/the NCLEX traps/g, f.traps)
+      .replace(/\(NCLEX and next-gen style[^)]*\)/g, '(' + f.style + ')')
+      .replace(/NCLEX-style/g, f.style)
+      .replace(/the NCLEX/g, f.exam)
+      .replace(/NCLEX/g, f.exam);
+  }
+  return {
+    spotCourse,
+    namedCourse,
+    noteCourse,
+    noteParts,
+    nextExamCourse,
+    taskCourse,
+    taskStart,
+    examFrame,
+    frameText,
+  };
 }
