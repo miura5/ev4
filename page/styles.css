@@ -109,41 +109,41 @@ table.mx input{width:20px;height:20px;accent-color:var(--accent)}
 body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom,0px))}
 /* B-272 (D-265, D-266): her avatar, the Dial Arc. One SVG of 12 segments; a solid front in --av1, a halftone back in
    --av2 over an underlay in the ground colour (both faces from the theme generator); at 24 px the back is drawn flat. */
-.ev-av{display:inline-grid;place-items:center;width:var(--s,32px);height:var(--s,32px);flex:0 0 var(--s,32px)}
-.ev-av .fl{width:100%;height:100%;overflow:visible;display:block}
-.ev-av .c1{fill:var(--av1)} .ev-av .c2{fill:var(--av2)} .ev-av .under{fill:var(--bg)}
+
+
+
 /* E.V.: opening hero, thread, composer */
 .hero{display:flex;justify-content:center;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .28s var(--ease),opacity .28s ease,margin .28s var(--ease)}
 body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10px}
-.thread{display:flex;flex-direction:column;gap:18px;min-width:0}
-.thread>button{align-self:center;min-height:34px;font-size:calc(13px * var(--ts));color:var(--soft)}
-.msg{display:flex;gap:12px;align-items:flex-start;min-width:0;scroll-margin-top:calc(var(--top-h) + 100px);scroll-margin-bottom:220px}
-.msg.matt{justify-content:flex-end}
-.msg-body{display:flex;flex-direction:column;gap:8px;min-width:0}
-.msg.ev .msg-body{flex:1;padding-top:4px}
-.msg.matt .msg-body{max-width:min(82%,560px);align-items:flex-end}
-.av-slot{flex:0 0 32px}
-.bubble{overflow-wrap:anywhere;max-width:100%}
-.msg.ev .bubble{font-size:calc(16.5px * var(--ts));line-height:1.6;align-self:stretch}
-.msg.matt .bubble{background:rgba(var(--tint),.075);padding:11px 16px;border-radius:20px 20px 6px 20px;font-size:calc(16px * var(--ts))}
-.bubble p{margin:0} .bubble p+p,.bubble p+ul,.bubble ul+p{margin-top:8px}
-.bubble ul{margin:0;padding-left:20px} .bubble li+li{margin-top:3px}
-.bubble b{font-weight:600}
-.bubble a{color:var(--accent-text);text-underline-offset:2px}
-.msg.ev .bubble.err{background:var(--warn-bg);border:1px solid rgba(var(--att-rgb),.32);padding:10px 14px;border-radius:14px}
-.msg-cards{display:flex;flex-direction:column;gap:12px;min-width:0}
-.msg-cards:empty{display:none}
-.msg-meta{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.msg-meta button{min-height:32px;padding:0 12px;font:500 calc(13px * var(--ts)) var(--sans);letter-spacing:0;text-transform:none;color:var(--quiet)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 .dots{display:inline-flex;gap:5px;padding:6px 0} .dots i{width:6px;height:6px;border-radius:50%;background:var(--soft);animation:pulse 1.1s infinite}
 .dots i:nth-child(2){animation-delay:.18s} .dots i:nth-child(3){animation-delay:.36s}
 /* opening: E.V. greets at full size, the greeting sits under the core */
-body.opening .msg.greet{flex-direction:column;align-items:center;text-align:center;gap:0}
-body.opening .msg.greet>.ev-av,body.opening .msg.greet>.av-slot,body.opening .msg.greet .msg-meta{display:none}
-body.opening .msg.greet .msg-body{align-self:stretch;align-items:center;padding-top:0}
-body.opening .msg.greet .bubble{font-size:calc(18px * var(--ts));line-height:1.55;color:var(--quiet);max-width:620px;text-wrap:pretty}
-body.opening .msg.greet .bubble p:first-child{font-size:calc(34px * var(--ts));line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;text-wrap:balance}
-body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-self:stretch;text-align:left;margin-top:14px}
+
+
+
+
+
+
 .ev-card{padding:16px 18px;gap:10px}
 .ev-card .big{font-size:calc(30px * var(--ts));letter-spacing:-.02em}
 /* B-479: a flashcards job's Quizlet import text, as Copy copies it */
@@ -151,19 +151,19 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
 .chart svg{width:100%;height:auto;display:block}
 .chart .bar{fill:var(--do)} .chart .base{fill:rgba(var(--tint),.05)} .chart text{font:500 calc(9px * var(--ts)) var(--sans);fill:var(--soft)} .chart .pct{fill:var(--ink);font-weight:600}
-.composer::after{content:"";position:absolute;left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));top:100%;height:calc(var(--dock-h) + 40px + env(safe-area-inset-bottom,0px));background:var(--bg)}
-.composer{position:sticky;bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px));z-index:4;background:linear-gradient(to bottom,rgba(var(--ground),0),var(--bg) 18px);padding-top:18px;padding-bottom:6px;display:flex;flex-direction:column;gap:10px}
-.qchips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-width:0;padding-bottom:1px}
-.qchips::-webkit-scrollbar{display:none}
-.qchip{flex:0 0 auto;min-height:38px;border-radius:999px;padding:0 14px;font:500 calc(14px * var(--ts)) var(--sans);white-space:nowrap;border:1px solid rgba(var(--tint),.10);background:rgba(var(--tint),.03);color:var(--quiet)}
-.qchip.go{display:flex;align-items:center;gap:8px;background:var(--accent-bg);border-color:var(--accent-edge);color:var(--accent-text);font-weight:600}
+
+
+
+
+
+
 .qchip.go svg{width:13px;height:13px}
-.compose-row{display:flex;flex-direction:row;gap:4px;align-items:flex-end;background:rgba(var(--tint),.05);border:1px solid rgba(var(--tint),.12);border-radius:28px;padding:6px 6px 6px 6px;min-width:0;transition:border-color .25s}
-.compose-row:focus-within{border-color:var(--accent-edge)}
+
+
 .compose-row textarea{border:0;background:transparent;min-height:44px;height:44px;max-height:140px;resize:none;padding:11px 0;border-radius:0;outline:none;flex:1;min-width:0;font-size:calc(16px * var(--ts));line-height:1.4}
 .compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:50%;padding:0;display:grid;place-items:center}
 .compose-row button svg{width:18px;height:18px}
-.compose-row .attach{background:transparent;border-color:transparent;color:var(--soft)}.compose-row .attach:hover{color:var(--ink);background:rgba(var(--tint),.05)}
+
 #p-ev.drop .compose-row{border-color:var(--accent)}
 .fine{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
@@ -202,7 +202,7 @@ body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-templa
   height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:420px;position:relative}
 body.captions #p-ev>*{grid-column:1;min-width:0}
 /* B-112: under 560 px tall the panel gives up its floor and the composer its fade, so it fits the screen. */
-@media (max-height:559px){body.captions #p-ev{min-height:0}body.captions .composer{padding-top:10px}}
+@media (max-height:559px){body.captions #p-ev{min-height:0}}
 body.captions #p-ev>.hero{grid-row:1}
 /* B-86: the session's line sits just under her core, between her and her words. */
 body.captions #p-ev>.sbar{grid-row:2;justify-self:center;max-width:min(660px,100%);margin:-6px 0 4px;box-sizing:border-box}
@@ -214,64 +214,64 @@ body.captions #p-ev>#ev-side:empty{display:none}
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .28s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
 body.captions .hero>.ev-av{transform:scale(var(--core-scale,1));transition:transform .28s var(--ease)}
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
-body.captions .thread{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;gap:0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 20px,#000 calc(100% - 16px),transparent 100%)}
-body.captions .thread::-webkit-scrollbar{display:none}
-body.captions .cap-in{min-height:calc(100% + 160px);display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:0 8px 18px;box-sizing:border-box;text-align:left;max-width:660px;margin:0 auto;width:100%}
-body.captions .cap-pull{height:160px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding-bottom:8px;box-sizing:border-box;opacity:var(--pull-o,0);transition:opacity .15s linear}
-body.captions .cap-pull .ring{position:relative;width:34px;height:34px}
+
+
+
+
+
 body.captions .cap-pull svg.r{position:absolute;inset:0}
-body.captions .cap-pull .r .t{fill:none;stroke:rgba(var(--tint),.1);stroke-width:1.5}
-body.captions .cap-pull .r .a{fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-dasharray:94.25;stroke-dashoffset:var(--pull-dash,94.25);transform:rotate(-90deg);transform-origin:17px 17px}
-body.captions .cap-pull .arrow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent-text);transform:rotate(var(--pull-rot,0deg));transition:transform .2s var(--ease)}
+
+
+
 body.captions .cap-pull .arrow svg{width:14px;height:14px}
-body.captions .cap-pull .lbl{font-size:calc(12px * var(--ts));color:var(--soft)}
-body.captions .cap-div{align-self:stretch;display:flex;align-items:center;gap:10px;font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft)}
-body.captions .cap-div::before,body.captions .cap-div::after{content:"";flex:1;height:1px;background:rgba(var(--tint),.09)}
+
+
+
 /* No bubbles: her lines are captions; his earlier lines are small and grey. */
-body.captions .msg{display:block;width:100%;scroll-margin:0}
-body.captions .msg>.ev-av,body.captions .msg>.av-slot{display:none}
-body.captions .msg-body{align-items:center;gap:8px;padding:0}
-body.captions .msg.ev .msg-body,body.captions .msg.matt .msg-body{max-width:none;flex:none}
-body.captions .bubble,body.captions .msg.matt .bubble,body.captions.opening .msg.greet .bubble{background:none;padding:0;border-radius:0;max-width:100%;text-wrap:pretty}
-body.captions .msg.ev .bubble{font-size:calc(15px * var(--ts));line-height:1.45;color:var(--quiet);opacity:.6;transition:font-size .4s ease,opacity .4s ease,color .4s ease}
-body.captions .msg.ev.current .bubble{font-size:calc(20px * var(--ts));line-height:1.45;color:var(--ink);opacity:1}
-body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
-body.captions.opening .msg.greet .bubble p:first-child{font-size:inherit;line-height:inherit;font-weight:inherit;letter-spacing:0;color:inherit;margin:0;text-wrap:pretty}
-body.captions .msg.matt .bubble{font-size:calc(13px * var(--ts));color:var(--soft);opacity:.8}
-body.captions .msg.matt .bubble::before{content:"You · "}
-body.captions .msg.matt.last{display:none}
-body.captions .msg.earlier .bubble{opacity:.45}
-body.captions .msg.ev .bubble.err{background:none;border:0;padding:0;color:var(--warn)}
-body.captions .bubble b{font-weight:600;color:var(--ink)}
-body.captions .bubble ul{text-align:left;display:inline-block}
-body.captions .msg-meta{justify-content:center}
-body.captions .msg-meta>span{display:none}
-body.captions .msg-cards,body.captions.opening .msg.greet .msg-cards{display:flex;align-self:stretch;text-align:left;margin-top:4px}
-body.captions .msg-cards:empty{display:none}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Until B-78's surfaces: one card under her line (five rows and a more that opens its tab; never scrolling inside
    itself), the rest of the reply's cards as one tappable line that swaps the next card in. */
 /* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
    and no dot; an action sits at a line's end as a small button. */
-.brief{align-self:stretch;width:100%;margin:8px 0 0;text-align:left;display:flex;flex-direction:column;gap:4px}
-.msg.greet .brief{margin-top:0} /* B-368: the card, then her grey summary line, the thread's gap apart */
+
+/* B-368: the card, then her grey summary line, the thread's gap apart */
 .chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform .25s var(--ease)}
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:calc(12.5px * var(--ts));color:var(--soft);white-space:nowrap;overflow:hidden}
-.cap-quote{margin:2px 0 0;font-size:calc(12.5px * var(--ts));color:var(--soft);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-body.captions .msg.ev:not(.current) .cap-quote{opacity:.6}
+
+
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
-body.captions .msg-cards{gap:8px}
+
 /* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
-#qchips:empty{display:none}
+
 /* The Breath reveal: each word fades and un-blurs in; emphasised words are a weight, in the text colour (D-270). */
 body.captions .w{display:inline-block}
 body.captions .reveal .w{opacity:0;filter:blur(6px);transform:translateY(6px)}
 body.captions .reveal .w.on{opacity:1;filter:none;transform:none;transition:opacity .4s ease,filter .4s ease,transform .4s var(--ease)}
 /* Matt's line echoes above the composer for about 3 s; Back to now floats over the captions. */
-body.captions .composer{position:relative;bottom:auto;padding-top:34px;background:none}
-body.captions .composer::after{display:none}
-body.captions .cap-echo{position:absolute;left:0;right:0;top:6px;margin:0;text-align:center;font-size:calc(13.5px * var(--ts));color:var(--quiet);pointer-events:none;opacity:0;transform:translateY(-8px);transition:opacity .28s ease,transform .28s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-body.captions .cap-echo.on{opacity:1;transform:none}
+
+
+
+
 /* B-452 (Matt): Back to now floats centred over the thread column, just above the composer; it covers the thread and
    moves nothing under him. */
 body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.18);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -280,8 +280,8 @@ body.captions .cap-now svg{width:13px;height:13px}
 @media (max-width:599px){body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:22px}}
 body.captions .cap-now[hidden]{display:none}
 body:not(.on-ev) .cap-now{display:none}
-body.captions .composer>*{max-width:660px;width:100%;margin-inline:auto;box-sizing:border-box}
-body.captions .composer>.cap-echo{max-width:none}
+
+
 @media (min-width:1024px){
 
   body.captions .hero{--stage-h:370px}
@@ -289,10 +289,10 @@ body.captions .composer>.cap-echo{max-width:none}
      and her stage re-centres in what is left. */
 
   /* D-247: the direction C prototype's sizes (D-122 had 16 and 24) */
-  body.captions .msg.ev .bubble{font-size:calc(14px * var(--ts))}
-  body.captions .msg.ev.current .bubble{font-size:calc(20px * var(--ts))}
-  body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts))}
-  body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
+  
+  
+  
+  
 }
 @keyframes ev-side-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){body.captions .reveal .w{opacity:1;filter:none;transform:none}body.captions.side-on #p-ev>#ev-side{animation:none}}
@@ -314,7 +314,7 @@ body.captions .composer>.cap-echo{max-width:none}
 .surf .ev-card>.card-head:first-child>h2,.surf .ev-card.check>.check-head{display:none}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2))){display:none}
 .surf .passage{margin:2px 0 8px;font-size:calc(15px * var(--ts));line-height:1.5;color:var(--ink2)}
-body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
+
 @media (max-width:1199px){
   body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
   body.captions #p-ev>.composer{grid-row:5}
@@ -368,8 +368,8 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
 /* B-72 (D-120): the week's three lines. */
 /* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
 /* B-183: the design kickoff, a long text to paste: a short left-aligned preview fading out, the Copy chip under it. */
-.bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:calc(14px * var(--ts));line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);color:var(--soft);opacity:1}
-.copy-chip{align-self:center;margin-top:6px}
+
+
 
 /* ============================================================ B-208 (D-210, D-225): the shell in direction C ==========
    Linear's inverted L. Under 600 px: the pane is the page and the sections are a tab bar at the bottom, her flower as
@@ -411,7 +411,7 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
      exactly the screen and never scrolls; the thread (and the surface sheet) scroll inside it. Other views still
      scroll the document. */
 
-  body.on-ev .qchips{touch-action:pan-x}
+  
   /* The views that do scroll the document hold the header under the status bar's band, not beneath it; the shadow
      fills the band above the header so lines scroll away under it. Without insets (the artifact page) both are 0. */
 
@@ -463,11 +463,11 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
 
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
-body.captions .msg.matt.last{display:flex}
-body.captions .msg.matt{justify-content:flex-end;text-align:right;align-self:flex-end;max-width:80%}
-body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--quiet);opacity:1}
-body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}
-body.captions .cap-echo{display:none}
+
+
+
+
+
 
 /* ============================================================ B-210 (D-209, D-210): surfaces, jobs and Your turn in C ==
    Below 1200 px a surface is the sheet over the composer; from 1200 px it is the details panel on the right (the same
@@ -528,8 +528,8 @@ button.tlink:hover{text-decoration-color:currentColor}
 
 /* B-214: System in C; the theme switch */
 /* B-217, B-275 (D-270): the session chip is grey like every chip (green is done or right only); the chips wrap, never clip */
-.qchip.go{background:none;border-color:var(--line2);color:var(--quiet);font-weight:500}
-.qchip.go:hover{color:var(--text)}
+
+
 
 /* ============================================================ B-223 (D-245, D-228): one right panel, each thing once ==
    From 1200 px every view has the right panel while it has something to show: Today, Progress, Record and System their
@@ -555,9 +555,9 @@ button.tlink:hover{text-decoration-color:currentColor}
 .surf .ev-card>.card-head:first-child:not(:has(> :not(h2,.meta,.chip))){display:none}
 /* B-223 (Matt, Oct 23), B-264: at every width her greeting and her lines read left-aligned, as in direction C; his lines
    sit to the right; her flower stays centred above them. */
-body.captions .msg-body,body.captions.opening .msg.greet{align-items:flex-start;text-align:left}
-body.captions .msg.matt .msg-body{align-items:flex-end;text-align:right}
-body.captions .msg-meta{justify-content:flex-start}
+
+
+
 
 /* ============================================================ B-340 (D-312): E.V.'s view as in the demo =============
    The Conversation board: her lines in a 600 px column (24 px in), the past ones small and faint, his to the right
@@ -574,55 +574,43 @@ body.captions #p-ev>#ev-side{grid-row:6}
   body.captions #p-ev>.composer{grid-row:6}
 }
 /* B-362 (D-316): her newest line's one action, as the demo's row of small neutral buttons under the thread */
-.msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-body.captions .cap-in{max-width:600px;padding:0 24px 18px;gap:14px}
-body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint);opacity:1}
-body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts));line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
-body.captions .msg.matt.last{display:block}
-body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--quiet);opacity:1;max-width:80%;text-align:right}
-body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}
-body.captions .composer{padding-top:8px;gap:10px}
-body.captions .composer>*{max-width:600px}
+
+
+
+
+
+
+
+
+
 /* B-360 (Matt, Oct 25): the chips are one row at every size, scrolling sideways when they don't fit; centred when
    they do (auto margins, so an overflowing row still starts at its first chip). */
-.qchips{flex-wrap:nowrap;justify-content:flex-start;gap:6px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding:0 16px;scroll-padding-inline:16px}
-.qchips>*{flex:none;white-space:nowrap}
-.qchips>:first-child{margin-left:auto}
-.qchips>:last-child{margin-right:auto}
-.qchip,.qchip.go{height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);font:500 calc(12.5px * var(--ts)) var(--sans)}
-.qchip:hover{background:var(--hover);color:var(--text)}
+
+
+
+
+
+
 /* B-383 (D-316, Matt's one-row rule): from 600 px the chips wrap onto centred rows as the demo, every word whole; on the
    phone they stay one row that scrolls sideways and comes to rest on a whole chip. */
-@media (min-width:600px){
-  .qchips{flex-wrap:wrap;justify-content:center;overflow:visible;max-width:600px;margin:0 auto;box-sizing:border-box}
-  .qchips>:first-child{margin-left:0}
-  .qchips>:last-child{margin-right:0}
-}
-@media (max-width:599px){
-  .qchips{scroll-snap-type:x proximity;scroll-padding-inline:0;-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
-  .qchips>*{scroll-snap-align:start}
-  .qchips>:first-child{margin-left:0}
-  .qchips>:last-child{margin-right:0}
-}
-body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;margin:0 auto 18px}
-.compose-row{align-items:center;min-height:50px;gap:8px;padding:0 9px 0 16px;border:0;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
-.compose-row:focus-within{box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
+
+
+
 .compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:calc(14.5px * var(--ts))}
 .compose-row textarea::placeholder{color:var(--faint)}
 .compose-row textarea:placeholder-shown{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.compose-row .attach{width:32px;height:32px;min-height:32px;flex:0 0 32px;margin-left:-8px}
+
 .compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
 .compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
-@media (max-width:1199px){body.captions.surface-open #qchips{display:none}}
 @media (max-width:599px){
   /* B-345: the frame already gives the view its 16 px gutters, so the card, lines, chips and field run to them. */
-  .qchips{padding:0}
-  body.captions .composer>.compose-row{width:100%}
-  body.captions .cap-in{padding:0 0 12px}
-  .qchip,.qchip.go{height:44px;min-height:44px}
-  body.captions .composer>.compose-row{margin-bottom:12px;min-height:56px;padding:0 6px 0 16px}
+  
+  
+  
+  
+  
   .compose-row #ev-send,.compose-row #ev-send.on{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:22px}
-  .compose-row .attach{width:44px;height:44px;min-height:44px;flex:0 0 44px}
+  
 }
 @media (min-width:1200px){
   body.captions #ev-side>#ev-dates{background:none;box-shadow:none;border:0;padding:0}
