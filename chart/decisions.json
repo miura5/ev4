@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-403",
+  "date": "Oct 30",
+  "title": "Proprietary's component JS budget (page/app/01-ui*.js) is 1,200 lines (was 900 under D-386) for 19 blocks, the new Table, Chart and Picker included; the test is moved to the new cap; adding a block beyond these needs a build-manager decision",
+  "why": "The cleanup adds three real blocks (Table and Chart from the dry run, Picker from Matt's B-596) that replace view-local code; the 900 cap was sized for 16 blocks, and a cap that blocks consolidating code into components defeats its purpose",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-402",
   "date": "Oct 30",
   "title": "Off-step font sizes and radii snap to the nearest Proprietary token in the cleanup, so every screen is fully on the design system's values; the tiny visible differences are shown on the cleanup's release card",
