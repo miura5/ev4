@@ -453,8 +453,10 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     return t;
   }
   /** The course an attached file belongs to: the first whose guess words it holds, else the default course. */
-  const guessCourse = s =>
-    (courseTable().find(r => r.guess && new RegExp(r.guess, 'i').test(String(s || ''))) || {}).name || defaultCourse();
+  const guessCourse = s => nameCourse(s) || defaultCourse();
+  /** B-591: the course whose guess words the text holds, or null when none does (no default). */
+  const nameCourse = s =>
+    (courseTable().find(r => r.guess && new RegExp(r.guess, 'i').test(String(s || ''))) || {}).name || null;
   /** A file he attached in the conversation, as a materials document (text already extracted and read on the page). */
   function materialFromUpload(
     { title, text, fileType, pages, ocrPages, course, kind },
@@ -530,6 +532,7 @@ Return JSON: {"pages": [{"page": <page number>, "text": "<the page's text>"}]}`;
     parseOcr,
     mergeOcr,
     guessCourse,
+    nameCourse,
     materialFromUpload,
     stripHtml,
   };

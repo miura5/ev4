@@ -70,10 +70,21 @@
       const nid = noteOfSession(s);
       const doc = nid && (S.notes || []).find(n => n.id === nid);
       const nc = doc && doc.course ? E.normCourse(doc.course) : null;
-      if (nc && E.isCourse(nc)) return nc;
+      // B-591: a note's course set away from the default is his choice; the default may only be what a new note got
+      if (nc && E.isCourse(nc) && nc !== E.defaultCourse()) return nc;
       const f = E.normCourse(s.folder);
       if (E.isCourse(f)) return f;
-      return E.guessCourse([s.folder, s.topic].filter(Boolean).join(' '));
+      // B-591: else the course its own content names (its title, linked item or task, its note), else the default
+      const noteWords = doc
+        ? [doc.title, ...(doc.blocks || []).map(b => (b.runs || []).map(r => r.text || '').join(''))]
+        : [];
+      const words = [s.folder, s.topic, s.title, s.item, s.task, s.ref, ...noteWords].filter(
+        x => typeof x === 'string' && x
+      );
+      const named = E.courseNamed(words.join(' '), { exams: S.exams, plans: S.plans });
+      if (named) return named;
+      if (nc && E.isCourse(nc)) return nc;
+      return E.defaultCourse();
     }
     // The period's buckets, oldest first: {key, from, to, label, full}. The week is its seven days from Monday; the
     // month is its weeks from Monday, cut to the month; the semester is its months back to the first logged session or

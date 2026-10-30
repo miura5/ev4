@@ -108,6 +108,27 @@ export function makeMeasures(core) {
       }
     return out.filter(x => x.date && x.minutes > 0);
   }
+  /**
+   * B-591: the course a text names, or null: a course's guess words, else a chapter ('Chapter 9', 'Ch 9') that the
+   * exams or plans of exactly one course name in their titles.
+   */
+  function courseNamed(text, { exams = [], plans = [] } = {}) {
+    const t = String(text || '');
+    const g = L.nameCourse(t);
+    if (g) return g;
+    const chs = s => [...String(s || '').matchAll(/\b(?:chapter|ch)\.?\s*(\d+)\b/gi)].map(m => m[1]);
+    const want = chs(t);
+    if (!want.length) return null;
+    const hits = new Set();
+    for (const e of exams || []) if (chs(e.title).some(n => want.includes(n))) hits.add(L.courseOf(e));
+    for (const p of plans || []) {
+      if (!chs(p.title).some(n => want.includes(n))) continue;
+      const ex = (exams || []).find(e => e.id === (p.exam || p.id));
+      const c = ex ? L.courseOf(ex) : L.nameCourse([p.title, p.exam || p.id].join(' '));
+      if (c) hits.add(c);
+    }
+    return hits.size === 1 ? [...hits][0] : null;
+  }
   /** The minutes of studyTime's cells from `from` to `to` (dates, inclusive), all courses or one. */
   function minutesIn(st, from, to, course = null) {
     let t = 0;
@@ -126,5 +147,5 @@ export function makeMeasures(core) {
     }
     return out;
   }
-  return { openSpots, objectiveState, sessionMinutes, studyTime, tickedWork, minutesIn, minutesByCourse };
+  return { openSpots, objectiveState, sessionMinutes, studyTime, tickedWork, courseNamed, minutesIn, minutesByCourse };
 }

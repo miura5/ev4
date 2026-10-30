@@ -107,6 +107,23 @@ test('B-522: tasks ticked off the day list count on their tick day, plan or list
   assert.equal(E.minutesIn(st, '2026-10-30', '2026-10-30'), 0); // b4 counts the day it was ticked, not its plan day
 });
 
+test('B-591: a session with no folder takes the course its words name: guess words, or a chapter one course names', () => {
+  const spec = JSON.parse(fs.readFileSync(new URL('../spec/ev.spec.json', import.meta.url), 'utf8'));
+  E.configure(spec);
+  // made up: a lab exam names Chapter 9 in BIO 201; an NUR exam names Chapter 39
+  const exams = [
+    { id: 'X1', course: 'BIO 201', title: 'Chapter 9 lab exam' },
+    { id: 'X2', course: 'NUR 112', title: 'Exam 4: Ch 39 fluids' },
+  ];
+  assert.equal(E.courseNamed('10/26 Chapter 9', { exams }), 'BIO 201');
+  assert.equal(E.courseNamed('Ch. 39 notes', { exams }), 'NUR 112');
+  assert.equal(E.courseNamed('skeletal muscle', { exams }), 'BIO 201');
+  assert.equal(E.courseNamed('New note', { exams }), null);
+  assert.equal(E.courseNamed('Chapter 12', { exams }), null);
+  const prog = fs.readFileSync(new URL('../page/app/30-progress.js', import.meta.url), 'utf8');
+  assert.match(prog, /E\.courseNamed\(words\.join\(' '\)/);
+});
+
 test('B-522: Today, Progress and Record read study time from core', () => {
   const read = f => fs.readFileSync(new URL('../page/app/' + f, import.meta.url), 'utf8');
   assert.match(read('30-progress.js'), /E\.tickedWork\(/);
