@@ -11106,5 +11106,23 @@
    "outcome": "task",
    "at": "2026-10-30T16:56:39.495Z"
   }
+ },
+ {
+  "id": "B-599",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and terms, 32 cards) opens from the conversation, but it isn't listed under Flashcards in Study for BIO 201 or NUR 112, even after a refresh; the deck's header reads 'Course' instead of the course name.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and terms, 32 cards) opens from the conversation, but it isn't listed under Flashcards in Study for BIO 201 or NUR 112, even after a refresh; the deck's header reads 'Course' instead of the course name.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T17:00:38.314Z",
+  "board": {
+   "row": "v4 B-599: A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and…"
+  }
  }
 ]
