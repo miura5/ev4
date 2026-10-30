@@ -10871,9 +10871,9 @@
   "id": "B-588",
   "kind": "request",
   "title": "Request (reported Oct 30): At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Matches the reference at 1280 and 390 on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10882,6 +10882,10 @@
   "reportedAt": "2026-10-30T13:22:31.098Z",
   "board": {
    "row": "v4 B-588: At 390 the Undo toast covers Today's List/Week/Add toolbar while it…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T13:22:43.547Z"
   }
  },
  {
