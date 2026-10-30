@@ -10977,9 +10977,9 @@
   "id": "B-593",
   "kind": "bug",
   "title": "Bug (reported Oct 30): A small native tooltip repeating the label pops up on hover over the view tabs, every Record item, the sidebar Today list, Preferences and Conversation's Coming up list, even where the text is fully visible.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A hover tooltip shows only where a label is actually cut off with an ellipsis (it then shows the full text); none on fully visible labels in the view tabs, Record rows, the sidebar Today list, Preferences or Coming up; icon-only buttons keep their name for screen readers via aria-label; run harness green.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10989,6 +10989,10 @@
   "reportedAt": "2026-10-30T16:14:16.463Z",
   "board": {
    "row": "v4 B-593: A small native tooltip repeating the label pops up on hover over the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T16:14:37.230Z"
   }
  }
 ]
