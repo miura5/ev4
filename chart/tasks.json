@@ -10511,7 +10511,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "Behaviour part pushed 5c2d92f: Record always opens on Notes; switch Notes / Sessions / Quizzes / Everything (Everything is the old All); detail pane kept; Progress's open-in-Record still goes to Everything. Look part waits for the view lanes.",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
