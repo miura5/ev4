@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-406",
+  "date": "Oct 30",
+  "title": "The desktop target is Chrome (installed as an app); Safari desktop is not a supported target and gets no extra test lane. The iPhone app stays WebKit by Apple's rule, tested as today.",
+  "why": "Matt (Oct 30): the Study panel bug (B-577) shows only in desktop Safari and works in Chrome; he would rather use Chrome than add WebKit overhead, and Chrome's installed apps feel more native. It ends a long chase.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-405",
   "date": "Oct 30",
   "title": "E.V.'s persona is rewritten in the spirit of the film's E.V. and D-404. She is grounded and present: short and plain, answer first. Her humour is dry situational irony aimed at the moment, never at Matt, often carried by what she does (a well-chosen card or clip) rather than one-liners, and none when he is stressed. She insists once, with a reason, when something matters, then respects his call. She offers one concrete next step and acts on it with tools. She brings up his own patterns unprompted, once per reply at most, only when they change the advice and only from evidence. She asks or stays quiet when unsure, and never states a guess about him as fact. Teaching is framed by the course's own exam. No self-referential sci-fi or corporate tics. Facts about the app and her avatar are generated from the spec, never typed into her instructions.",
