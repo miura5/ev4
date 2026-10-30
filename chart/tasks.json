@@ -10639,7 +10639,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "92ecb00 adds a harness check but doesn't reproduce it when loading at 1280 or 1440. The next lead is a resize from narrow to wide without a re-render.",
   "commit": null,
   "source": "build chat",
   "words": "On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
