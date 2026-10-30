@@ -10,6 +10,8 @@
 .opt kbd.opt-n{border-radius:var(--r-sm);place-items:center}
 #study-side{display:none}
 @media (min-width:1200px){#study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 var(--r-lg) 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}}
+/* B-515 lane 4b: from the carry: from 1024 the side pane stops above the bottom strip (after the 1200 place above). */
+@media (min-width:1024px){#study-side:not([hidden]){bottom:var(--strip-h)}}
 .ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ov-head .ov-ex{font:600 var(--fs-3) var(--sans);color:var(--text)}
 .ov-head .meta{font-size:var(--fs-2)!important;color:var(--faint)!important;margin:0!important}

@@ -575,3 +575,25 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
 }
 /* B-556: on a cold open of her view, its frame stays unpainted until her first lines and her stage have their sizes
    (02-navigation lifts it), so nothing in it moves once it shows. The header, sidebar and tab bar paint at once. */
+/* B-515 lane 4b: moved from carry-ev.css, the last carry rules: the study bar read-out, the desk side cards and the E.V. dates list. */
+#sread.sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--glass);font-size:var(--fs-1);color:var(--soft);white-space:nowrap;overflow:hidden}
+@media (min-width:1200px){
+  section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:none;padding:6px 10px 10px;gap:0}
+  section.panel > .cols > .col-side .card>h2,section.panel > .panel > .cols > .col-side .card>.card-head{min-height:36px;display:flex;align-items:center;font:600 var(--fs-2) var(--sans);color:var(--text)}
+  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+  #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
+  #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 var(--fs-2) var(--sans);color:var(--text)}
+  body.captions #ev-side>#ev-dates{background:none;box-shadow:none;border:0;padding:0}
+  #ev-dates>h2{min-height:0;margin:0 0 6px;font:500 var(--fs-1) var(--sans);color:var(--quiet)}
+  #ev-dates .list{margin:0}
+  #ev-dates .week-item{border:0;padding:0}
+  #ev-dates .wk-line{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 10px;border:0;border-radius:var(--r-md);background:none;text-align:left;font:400 var(--fs-2) var(--sans);color:var(--text)}
+  #ev-dates .wk-line:hover{background:var(--hover)}
+  #ev-dates .wk-line::before{content:"";width:6px;height:6px;border-radius:var(--r-round);background:var(--quiet);flex:none}
+  #ev-dates .wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:inherit}
+  #ev-dates .when{order:2;font-size:var(--fs-1);color:var(--quiet);white-space:nowrap}
+}
+#ev-dates .wk-line .when{text-align:right}
+@media (min-width:1024px){
+  body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
+}
