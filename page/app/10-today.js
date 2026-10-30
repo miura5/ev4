@@ -283,6 +283,7 @@
       const nm = el('button', 'nm ti-nm');
       nm.type = 'button';
       nm.append(titlePart(text));
+      DS.tip(nm, text); // B-593: the full title on hover only when it is cut off
       // B-448: an earlier day's row is checked off in place; its task view (Snooze, Start) is today's
       if (!o.date) {
         nm.setAttribute('aria-controls', 'today-task');
@@ -1128,6 +1129,7 @@
       li.append(svgIcon('M12 5v14M5 12h14'));
       const nm = el('span', 'nm ti-nm');
       nm.append(titlePart(p.text));
+      DS.tip(nm, p.text);
       const tag = { practice: 'PRACTICE', review: 'REVIEW', reading: 'READING', notes: 'NOTES' }[p.kind];
       const b = (tag && BADGE[tag]) || ['Study', 'x-violet'];
       li.append(
@@ -1201,6 +1203,7 @@
       const nm = el('button', 'fc-nm'); // not a task's name: it opens the cards, never a task's view
       nm.type = 'button';
       nm.append(titlePart('Cards · ' + n + ' due'));
+      DS.tip(nm, 'Cards · ' + n + ' due');
       nm.addEventListener('click', () => startDueCards());
       const st = btn('Start', () => startDueCards(), { cls: 'btn neutral sm ti-start hov' });
       st.prepend(svgIcon('M8 5l11 7-11 7z'));
