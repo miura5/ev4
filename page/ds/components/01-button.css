@@ -9,6 +9,8 @@
 :where([data-tone='info'],[data-tone='blue'],[data-tone='proposed']){--x:var(--info)}
 :where([data-tone='violet'],[data-tone='plum']){--x:var(--violet)}
 :where([data-tone='quiet']){--x:var(--quiet)}
+/* B-515 D0: legacy's .x-* tone classes, carried over until the markup says data-tone. */
+:where(.x-green){--x:var(--sem-green)}:where(.x-yellow){--x:var(--sem-yellow)}:where(.x-red){--x:var(--sem-red)}:where(.x-blue){--x:var(--sem-blue)}:where(.x-violet){--x:var(--sem-violet)}:where(.x-quiet){--x:var(--quiet)}
 
 :where([data-ui='button']){display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);height:var(--sp-8);min-height:var(--sp-8);padding:0 var(--sp-3);border:0;border-radius:var(--r-md);background:none;box-shadow:none;color:var(--text);font:var(--fw-medium) var(--fs-2) var(--sans);white-space:nowrap;cursor:pointer;transition:background var(--dur-2) var(--ease-out),color var(--dur-2) var(--ease-out),transform var(--dur-1) var(--ease-out)}
 :where([data-ui='button']) svg{width:var(--sp-4);height:var(--sp-4);flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
