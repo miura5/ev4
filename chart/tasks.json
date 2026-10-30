@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Also rename the leftover 'flower' wording to the Dial Arc (D-265, D-266): comments in 01-ui-15-presence.js, 02-navigation.js, 60, 61, and spec.ui.look.flower (key rename with its readers). What is drawn is already the Arc; only the names are stale (Matt, Oct 29).",
+  "notes": "Lane B must fix the weak-spot 'Pick an objective' menu (notes.cjs B-455 fails on main: at 390 the menu doesn't open focused or on screen; at 1280 a tap outside doesn't close it). Likely cause, per the cleanup map: triage.css:28 left:0!important from the Study move (V2) overrides the menu's inline position. Prove with notes.cjs B-455 green.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
