@@ -10999,10 +10999,12 @@
   "id": "B-594",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Kind badges in Study's plan rows and on Today use different colours from the sidebar dots for the same kinds (Learn and Graded show grey, Skills prep olive), while the sidebar shows the intended kind colours.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "Every kind badge and every sidebar dot take their colour from one kind map (DS.kind and the --kind-* tokens): the same kind shows the same colour on Today, Study's plan rows, Progress and the sidebar, at 1280 and 390, light and dark; every word E.V. uses for a kind (Learn, Graded, Skills prep, Clinical prep, Reading and the rest) is in the map; components harness green.",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-515"
+  ],
   "notes": "",
   "commit": null,
   "source": "build chat",
@@ -11011,6 +11013,10 @@
   "reportedAt": "2026-10-30T16:34:59.618Z",
   "board": {
    "row": "v4 B-594: Kind badges in Study's plan rows and on Today use different colours…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T16:35:18.378Z"
   }
  }
 ]
