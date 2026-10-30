@@ -10862,5 +10862,22 @@
   "board": {
    "row": "v4 B-587: Conversation lacks the reference's suggestion chips under the input,…"
   }
+ },
+ {
+  "id": "B-588",
+  "kind": "request",
+  "title": "Request (reported Oct 30): At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review, release card 2",
+  "words": "At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows.",
+  "reportedAt": "2026-10-30T13:22:31.098Z",
+  "board": {
+   "row": "v4 B-588: At 390 the Undo toast covers Today's List/Week/Add toolbar while it…"
+  }
  }
 ]
