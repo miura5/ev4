@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-404",
+  "date": "Oct 30",
+  "title": "North star (Matt, Oct 30): what sets E.V. apart is the model it keeps of Matt, a long-running, holistic, inspectable picture of how he learns, his rhythms, his readiness and his wellbeing, built from his own record since day one, that predicts, is checked against what happens, and shapes every plan and nudge; productivity features serve that model, not the other way round",
+  "why": "Matt's framing of the difference between his E.V. and a productivity app (and Peter Parker's E.V.); it was discussed before but never recorded. Proposed so the review and later design rounds can weigh it; any widening of what personal or health data E.V. keeps stays Matt's decision under the hard limits",
+  "status": "proposed",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-403",
   "date": "Oct 30",
   "title": "Proprietary's component JS budget (page/app/01-ui*.js) is 1,200 lines (was 900 under D-386) for 19 blocks, the new Table, Chart and Picker included; the test is moved to the new cap; adding a block beyond these needs a build-manager decision",
