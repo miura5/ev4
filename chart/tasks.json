@@ -10994,5 +10994,23 @@
    "outcome": "task",
    "at": "2026-10-30T16:14:37.230Z"
   }
+ },
+ {
+  "id": "B-594",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): Kind badges in Study's plan rows and on Today use different colours from the sidebar dots for the same kinds (Learn and Graded show grey, Skills prep olive), while the sidebar shows the intended kind colours.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Kind badges in Study's plan rows and on Today use different colours from the sidebar dots for the same kinds (Learn and Graded show grey, Skills prep olive), while the sidebar shows the intended kind colours.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T16:34:59.618Z",
+  "board": {
+   "row": "v4 B-594: Kind badges in Study's plan rows and on Today use different colours…"
+  }
  }
 ]
