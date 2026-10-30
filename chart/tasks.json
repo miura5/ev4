@@ -11159,7 +11159,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 3eb75f1: nursing flag per course, examFrame and frameText in core/course-scope.mjs, used by the worker guides, study guides, practice questions and her teaching line (by the open note's course). npm test 1028, smoke 33. The main chat with no note open takes the selected course; that follow-up is in B-602's builder. Rides with the cleanup release.",
   "commit": null,
   "source": "build chat",
   "words": "While taking notes with E.V. on BIO 201, she adds NCLEX framing; NCLEX tips belong only to nursing courses like NUR 112, not to BIO 201.",
