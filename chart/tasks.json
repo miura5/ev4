@@ -9589,15 +9589,15 @@
   "title": "Move the E.V. window onto Proprietary, invisibly: Presence, Message, Chip, Field and Sheet in the conversation, captions, cards and composer (page/app E.V. window; test/harness/captions.cjs, test/harness/prep.cjs and test/harness/run.cjs selectors to role or data-ui)",
   "dod": "npm test, smoke and those harnesses GREEN; before and after screenshots at 390 and 1280 match; the composer stays in view with the keyboard open at 390; ship staging GREEN; a look with real data for every course",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-510",
    "B-511",
    "B-512",
    "B-513"
   ],
-  "notes": "E3 pushed c3ef570: prep checklist and Your turn rules moved to page/ds/patterns/cards.css; no markup fit a component cleanly (plain buttons and generic shared classes wait for B-515 lane D). pixdiff 0; captions, prep, run green.",
-  "commit": null,
+  "notes": "E.V. window moved invisibly in three lanes: E1 6d7afa9 (Presence in header and sidebar, thread data-keys), E3 c3ef570 (prep and Your turn rules to cards.css), E2 17edfe9 (41 skills and workout rules to sessions.css). pixdiff 0 each. Message, the composer, session bar, chips and plain buttons wait for B-515 lane D.",
+  "commit": "17edfe9",
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
  {
