@@ -10142,7 +10142,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "No outlines on cards, rows, choices and the carry side cards (08f4f1d). Borders left on segmented (04), meter (14), sheet header and footer (10), field (12), and Today's budget-card hairline from a view rule (B-564).",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
