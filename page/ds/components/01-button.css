@@ -16,7 +16,7 @@
 :where([data-ui='button']) svg{width:var(--sp-4);height:var(--sp-4);flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 :where([data-ui='button']) .n{color:var(--quiet);font-variant-numeric:tabular-nums}
 :where([data-ui='button'][data-kind='primary']){background:var(--her);color:var(--on-her);font-weight:var(--fw-semibold)}
-:where([data-ui='button'][data-kind='neutral']){background:var(--surface);box-shadow:var(--edge)}
+:where([data-ui='button'][data-kind='neutral']){background:var(--raise);box-shadow:none} /* B-542, D-392: r4's .btn fill, no border */
 :where([data-ui='button'][data-kind='tint']){background:color-mix(in srgb,var(--x,var(--faint)) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x,var(--faint)) 45%,var(--line2))}
 :where([data-ui='button'][data-kind='tint']) svg{color:var(--x)}
 :where([data-ui='button'][data-kind='ghost'],[data-ui='button'].icon:not([data-kind='primary'],[data-kind='neutral'],[data-kind='tint'])){color:var(--quiet)}
@@ -32,9 +32,11 @@
 :where([data-ui='button']:not(:disabled,[aria-busy='true'])):is(:hover,[data-state='hover'],[data-state='pressed']){background:var(--hover)}
 :where([data-ui='button'][data-kind='primary']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))}
 :where([data-ui='button'][data-kind='tint']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
+:where([data-ui='button'][data-kind='neutral']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){background:var(--sel)}
 :where([data-ui='button'][data-kind='ghost']:not(:disabled)):is(:hover,[data-state='hover'],[data-state='pressed']){color:var(--text)}
 :where([data-ui='button']:not(:disabled,[aria-busy='true'])):is(:active,[data-state='pressed']){background:var(--sel);transition-duration:var(--dur-press-in)}
 :where([data-ui='button'][data-kind='primary']:not(:disabled)):is(:active,[data-state='pressed']){background:color-mix(in srgb,var(--her) 78%,var(--text))}
+:where([data-ui='button'][data-kind='neutral']:not(:disabled)):is(:active,[data-state='pressed']){background:var(--line2)}
 :where([data-ui='button']):is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
 :where([data-ui='button']):disabled{opacity:.45;cursor:default}
 :where([data-ui='button'][aria-busy='true']){position:relative;pointer-events:none}
@@ -44,7 +46,9 @@
 @media (prefers-reduced-motion:reduce){:where([data-ui='button'][aria-busy='true'])::after{animation:none}}
 :root[data-motion='reduce'] :where([data-ui='button'][aria-busy='true'])::after{animation:none}
 /* the Gallery's forced states, over legacy's button.btn until B-515 */
-[data-ui='button']:is([data-state='hover'],[data-state='pressed']):is([data-kind='neutral'],[data-kind='ghost'],.icon){background:var(--hover)!important;color:var(--text)!important}
+[data-ui='button'][data-kind='neutral']:is([data-state='hover']){background:var(--sel)!important}
+[data-ui='button'][data-kind='neutral'][data-state='pressed']{background:var(--line2)!important}
+[data-ui='button']:is([data-state='hover'],[data-state='pressed']):is([data-kind='ghost'],.icon){background:var(--hover)!important;color:var(--text)!important}
 [data-ui='button'][data-kind='primary']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))!important}
 [data-ui='button'][data-kind='tint']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))!important}
 /* B-515 lane D2b: the kit's class rules (legacy's button look), moved from page/styles.css unchanged in
@@ -64,8 +68,9 @@ button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px
 button.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 button.btn.primary{background:var(--her);color:var(--on-her);font-weight:600}
 button.btn.primary:not(:disabled):hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
-button.btn.neutral{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
-button.btn.neutral:not(:disabled):hover{background:var(--hover)}
+button.btn.neutral{background:var(--raise);box-shadow:none}
+button.btn.neutral:not(:disabled):hover{background:var(--sel)}
+button.btn.neutral:not(:disabled):active{background:var(--line2)}
 button.btn.tint{background:color-mix(in srgb,var(--x,var(--faint)) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x,var(--faint)) 45%,var(--line2))}
 button.btn.tint svg{color:var(--x)}
 button.btn.tint:not(:disabled):hover{background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
