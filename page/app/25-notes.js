@@ -113,7 +113,6 @@
       b.type = 'button';
       b.id = 'tab-notes';
       b.dataset.tab = 'notes';
-      b.title = 'Notes';
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', 'false');
       const ic = nIcon(NI.note, '');

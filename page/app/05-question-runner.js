@@ -142,7 +142,7 @@
         // B-365: in Study the pane lists the questions themselves, as the demo's This quiz
         const words = key === 'rv' || key.startsWith('pr-') ? q.stem || q.topic : q.topic || q.stem;
         b.setAttribute('aria-label', 'Question ' + (i + 1) + ': ' + words);
-        b.title = words;
+        DS.tip(b, words);
         b.append(
           dot,
           el('span', 'sq-t', words),

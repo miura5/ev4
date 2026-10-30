@@ -47,8 +47,9 @@
         if (o.disabled) name.disabled = true;
       } else name = el(stack ? 'div' : 'span', stack ? 'title' : 'nm');
       name.append(document.createTextNode(o.title || ''));
-      // B-544: one line with an ellipsis; the full text on hover (title) and on a long press (data-full until the next)
-      if (o.title) name.title = o.title;
+      // B-544: one line with an ellipsis; the full text on a long press (data-full until the next) and, B-593, on hover
+      // only when it is cut off (dsTip)
+      if (o.title) dsTip(name, o.title);
       let press = 0;
       li.addEventListener('pointerdown', e => {
         if (e.pointerType === 'mouse') return;

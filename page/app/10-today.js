@@ -1509,7 +1509,7 @@
       c.type = 'button';
       c.dataset.id = d.id;
       c.dataset.key = d.id; // B-510 (D-387): the date it shows, for the harnesses
-      c.title = d.title || '';
+      DS.tip(c, d.title);
       c.setAttribute('aria-pressed', String(sel));
       const sub = el('span', 'wc-s');
       sub.append(el('i', 'dot'), document.createTextNode(off ? 'Taken off' : dateClock(d) || 'Any time'));
@@ -1580,7 +1580,7 @@
       c.type = 'button';
       c.dataset.task = it.id;
       c.dataset.key = it.id;
-      c.title = it.text || '';
+      DS.tip(c, it.text);
       c.setAttribute('aria-pressed', String(ui.weekSel === 'day:' + date));
       const sub = el('span', 'wc-s');
       sub.append(el('i', 'dot'), document.createTextNode(it.done ? 'Done' : taskSub(it)));

@@ -369,7 +369,7 @@
       if (o) {
         const q = btn('Quiz me on it', ev => quizObjective(o, ev.currentTarget), { cls: 'btn neutral rec-quiz' });
         q.setAttribute('aria-label', 'Quiz me on ' + (o.text || o.id));
-        q.title = o.text || o.id;
+        DS.tip(q, o.text || o.id);
         parts.push(q);
       }
       d.replaceChildren(...parts);

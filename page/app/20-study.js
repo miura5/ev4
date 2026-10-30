@@ -593,7 +593,7 @@
         d.append(el('span', 'lab', 'Weak spots in it'));
         for (const w of open.slice(0, 5)) {
           const si = el('div', 'od-ws');
-          si.title = w.topic || '';
+          DS.tip(si, w.topic);
           si.append(
             el('i', 'dot x-yellow'),
             el('span', 'sn', w.topic || w.id),
@@ -637,7 +637,7 @@
         const li = el('div', 'obj' + (on ? ' on' : ''));
         const nm = el('button', 'nm ov-nm', r.o.text || r.o.id);
         nm.type = 'button';
-        nm.title = r.o.text || r.o.id;
+        DS.tip(nm, r.o.text || r.o.id);
         nm.setAttribute('aria-expanded', String(on));
         nm.addEventListener('click', () => {
           const go = () => {
@@ -871,7 +871,7 @@
         const pct = qs.length ? Math.round((100 * right) / qs.length) : 0;
         const nm = el('span', 'stt', s.title || s.id);
         nm.dataset.part = 'title';
-        nm.title = s.title || s.id;
+        DS.tip(nm, s.title || s.id);
         const sc = el(
           'span',
           'ss' + (finished ? ' fin ' + (pct >= 80 ? 'x-green' : pct >= 60 ? 'x-yellow' : 'x-red') : ''),
@@ -1127,7 +1127,7 @@
       });
       [...menu.querySelectorAll('.popover-i')].forEach((mi, i) => {
         mi.dataset.obj = cands[i].id;
-        mi.title = cands[i].text || cands[i].id;
+        DS.tip(mi, cands[i].text || cands[i].id);
       });
       menu.prepend(el('div', 'mhd', 'Accept under'));
       menu.addEventListener('toggle', e => b.setAttribute('aria-expanded', String(e.newState === 'open')));

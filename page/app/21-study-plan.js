@@ -616,7 +616,7 @@
       const title = (ex.title || exShortOf(ex)) + ' plan';
       const t = el('div', 'pm-title', title);
       t.dataset.part = 'title';
-      t.title = title;
+      DS.tip(t, title);
       const meta = el('div', 'pm-status');
       meta.dataset.part = 'meta';
       const where = el('span', 'mini grow', `${course} · ${dayMonth(ex.date)} · `);

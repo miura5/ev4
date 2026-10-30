@@ -354,7 +354,6 @@
       const b = el('button', cls);
       b.type = 'button';
       b.setAttribute('aria-label', label);
-      b.title = label;
       b.append(svgIco(d));
       b.addEventListener('click', fn);
       return b;

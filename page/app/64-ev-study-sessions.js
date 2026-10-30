@@ -955,7 +955,7 @@
         const main = el('span', 's-main');
         main.append(el('b', 's-topic', sessName(s)), el('span', 's-clock', ''));
         bar.setAttribute('aria-label', 'Study session: ' + sessName(s));
-        bar.title = sessName(s);
+        DS.tip(bar, sessName(s));
         const acts = el('div', 's-acts');
         acts.append(...sessButtons(s, st, ending, { cls: 'btn ghost sm' })); // B-303 (D-278): ghost, the header's quiet measure
         bar.replaceChildren(led, main, acts);

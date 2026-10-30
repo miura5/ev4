@@ -24,6 +24,34 @@
         if (v != null) e.style.setProperty(k.startsWith('--') ? k : '--' + k, String(v));
       return e;
     }
+    /**
+     * B-593: the full text as a tooltip only when it is cut off. dsTip(node, text) keeps the text in data-tip; one
+     * delegated pointerover sets title when the node (or a child) overflows and clears it otherwise, so a fully visible
+     * label never shows the browser's tooltip. Icon-only buttons name themselves with aria-label, not title.
+     */
+    function dsTip(node, text) {
+      if (!node) return node;
+      if (text) node.dataset.tip = String(text);
+      else delete node.dataset.tip;
+      node.removeAttribute('title');
+      if (!dsTip.on && typeof document !== 'undefined') {
+        dsTip.on = true;
+        const cut = n => n.clientWidth > 0 && n.scrollWidth > n.clientWidth + 1; // an inline box never clips
+        document.addEventListener(
+          'pointerover',
+          e => {
+            const t = e.target && e.target.closest && e.target.closest('[data-tip]');
+            if (!t) return;
+            const kids = [...t.querySelectorAll('*')];
+            const over = cut(t) || kids.some(cut);
+            if (over) t.title = t.dataset.tip;
+            else t.removeAttribute('title');
+          },
+          true
+        );
+      }
+      return node;
+    }
     // The 16 components (B-504), each its hoisted declaration once its lane has built it: C1 (B-507) 01 to 09, C2
     // (B-508) 10 to 16.
     const DS = Object.freeze({
@@ -33,6 +61,7 @@
       chip: typeof dsChip === 'function' ? dsChip : undefined,
       segmented: typeof dsSegmented === 'function' ? dsSegmented : undefined,
       group: typeof dsGroup === 'function' ? dsGroup : undefined,
+      tip: dsTip,
       line: typeof dsLine === 'function' ? dsLine : undefined,
       fold: typeof dsFold === 'function' ? dsFold : undefined,
       grow: typeof dsGrow === 'function' ? dsGrow : (n, o, d) => (d ? d() : o || !n || (n.hidden = true)), // B-576

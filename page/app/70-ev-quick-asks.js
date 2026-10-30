@@ -280,7 +280,7 @@
       const li = el('li', 'row week-item');
       const b = el('button', 'wk-line');
       b.type = 'button';
-      b.title = d.title || '';
+      DS.tip(b, d.title);
       const dt = new Date(d.date + 'T12:00:00Z');
       b.append(el('span', 'when', UP_WD[dt.getUTCDay()] + ' ' + dt.getUTCDate()), el('span', 'wk-t', d.title || ''));
       b.addEventListener('click', () => goTo({ to: 'week', date: d.date, id: d.id }));

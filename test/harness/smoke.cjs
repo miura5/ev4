@@ -450,6 +450,32 @@ async function open(browser, viewport) {
         pane: wrap.overflowY,
       };
     });
+    // B-593: a label that fits shows no browser tooltip on hover; one cut off shows its full text; the tabs and the
+    // page's labels carry none (the shared dsTip listener the page installed)
+    const tip = await page.evaluate(() => {
+      const hov = n => n.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+      const full = 'Fluid and electrolyte balance: the long objective title';
+      const mk = w => {
+        const n = document.createElement('span');
+        n.dataset.tip = full;
+        n.textContent = full;
+        n.style.cssText = `display:block;width:${w};overflow:hidden;white-space:nowrap;position:fixed;top:0;left:0`;
+        document.body.append(n);
+        hov(n);
+        const t = n.getAttribute('title');
+        n.remove();
+        return t;
+      };
+      const short = mk('max-content'),
+        cut = mk('40px');
+      const tabs = [...document.querySelectorAll('[role=tab], #side-prefs-btn')].filter(t => t.hasAttribute('title'));
+      return { short, cut: cut === full, tips: document.querySelectorAll('[data-tip]').length, tabs: tabs.length };
+    });
+    ok(
+      `${tag} hover tooltips only on cut-off labels (B-593)`,
+      tip.short == null && tip.cut && tip.tips > 0 && !tip.tabs,
+      JSON.stringify(tip)
+    );
     const wide = scheme !== '390';
     ok(
       `${tag} the native baseline: no tap flash, no selection or callout on controls, the arrow cursor (B-552)` +
