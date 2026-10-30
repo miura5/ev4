@@ -15,9 +15,7 @@ npm test > /tmp/<name>-test.log 2>&1; grep -E "^# (tests|pass|fail)" /tmp/<name>
 
 ## The page
 
-- `npm run smoke` while working: the build, boot, greeting, each tab, a check-off, a review answer and a Your-turn reply
-  at 390 and 1280, in about 10 seconds.
-- The harness for each view touched, alone: `node tools/build.mjs`, then
+- Only the harness group your change touches (`EV_ONLY=<group>` where the harness has groups), alone: `node tools/build.mjs`, then
   `node test/harness/<name>.cjs synthetic <shots dir>` (run.cjs, prep.cjs, notes.cjs, views.cjs, shell.cjs, ...;
   `docs/trim/scan/harness.md` says which covers what).
 - Open the screenshots the harness lists with Read and look at them. A pass count does not show a cramped row or a
@@ -40,16 +38,11 @@ npm test > /tmp/<name>-test.log 2>&1; grep -E "^# (tests|pass|fail)" /tmp/<name>
   light and dark; 0 changed pixels beyond known flakes is the proof for an invisible move. A change meant to show must
   show only where intended: look at the red diff images.
 
-## npm run check -- --touched
+## Full suites (D-408)
 
-Once before reporting. It can take 30 minutes and a foreground call is cut at 10, so run it in the background:
-
-```
-npm run check -- --touched > /tmp/<name>-check.log 2>&1; echo "exit $?" >> /tmp/<name>-check.log
-```
-
-and wait for the exit line. In this sandbox the core harness's D-272 frame-budget timing check fails regardless (it is
-advisory). If the check stops there, run the touched harnesses directly as above and say so in the report.
+Not on the shared machine. `npm test` and smoke run on GitHub on every push; the full harness suite runs on GitHub once
+per batch, started by the build manager. Don't run `npm run check`, `--touched` or every harness locally, and never two
+heavy runs at once. Report what you ran locally; a batch failure comes back to you with its step.
 
 ## Model path
 

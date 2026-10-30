@@ -146,14 +146,15 @@ attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DE
    decides it and records it (`log decision`); only a large decision (Roles, D-317) is `log <id> --status blocked
    --note "<the question>" --waiting-on Matt`. A builder run blocks such a task with its question for the build
    manager and moves to the next open task. Code-level choices are yours.
-5. Prove it exactly as its definition of done says. `npm test` green first (it runs the Chart's lint). Where a
-   pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back, never a
-   hand replay. Where the page is involved, run `npm run smoke` while working (B-199: the build, then boot, greeting,
-   each tab, a check-off, a review answer and a Your-turn reply at 390 and 1280, in about 10 seconds; the smoke
-   workflow runs it on every push but bookkeeping and docs), and `npm run check -- --touched` once before ship staging (B-219, D-226: npm test,
-   the build, only the harnesses the change since the last staging deploy touched, the look pass at 390x844, 735x830,
-   1706x1240 and 2560x1240), and look at the screenshots it lists. The full `npm run check` runs nightly only; a red
-   nightly is filed as a bug and never gates a live release (R-06 is ended by D-366, B-466).
+5. Prove it exactly as its definition of done says, with tiered checks (D-408). Locally, on the shared machine, run
+   only fast, targeted checks: `npm run format` and the format test, the unit tests for the code touched, pixdiff and
+   the computed-style diff for style moves, and the one harness group a behaviour change touches (desktop only; the
+   phone is frozen at "it works", D-407). Never run full suites locally (npm test, smoke, every harness, `npm run
+   check`), and never two at once. GitHub runs `npm test` and smoke on every push; the build manager runs the full
+   harness suite on GitHub once per batch, after parallel builders' work is merged, before ship staging (nightly.yml
+   on demand until the parallel checks workflow, B-606, exists), and hands each failure back to the step that caused
+   it. Where a pipeline is involved, the proof is a scheduled task fired against staging and its `runs/<id>` read back,
+   never a hand replay. A red nightly is filed as a bug and never gates a live release (R-06 is ended by D-366, B-466).
 6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
    session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
    each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
