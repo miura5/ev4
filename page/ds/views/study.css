@@ -3,44 +3,44 @@
    retires legacy and strips them. Raw values left are those with no token. */
 /* B-487 (D-368): Flashcards in Study (the Practice sets row look) and the deck's sheet: its cards and a session */
 /* B-515 lane B: rules moved from page/styles.css, in their legacy order */
-.card-head .pr-fold{font-size:calc(15px * var(--ts))!important;font-weight:600;color:var(--ink)!important}
+.card-head .pr-fold{font-size:var(--fs-4)!important;font-weight:600;color:var(--ink)!important}
 .set-q,.sum-line{all:unset!important;box-sizing:border-box!important}
 .sq-t,.sum-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sq-s,.sum-k{flex:none}
-.opt kbd.opt-n{border-radius:6px;place-items:center}
+.opt kbd.opt-n{border-radius:var(--r-sm);place-items:center}
 #study-side{display:none}
-@media (min-width:1200px){#study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}}
+@media (min-width:1200px){#study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 var(--r-lg) 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}}
 .ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.ov-head .ov-ex{font:600 calc(14px * var(--ts)) var(--sans);color:var(--text)}
-.ov-head .meta{font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important;margin:0!important}
-.ov-bar.pbar{height:10px!important;border-radius:5px!important}
+.ov-head .ov-ex{font:600 var(--fs-3) var(--sans);color:var(--text)}
+.ov-head .meta{font-size:var(--fs-2)!important;color:var(--faint)!important;margin:0!important}
+.ov-bar.pbar{height:10px!important;border-radius:var(--r-xs)!important}
 .ov-rows{display:flex;flex-direction:column}
 .ov-detail{display:flex;flex-direction:column;gap:14px;min-width:0}
-.ov-detail .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ov-detail .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+.ov-detail .lab{font:500 var(--fs-1) var(--sans);color:var(--quiet)}
+.ov-detail .mini{font-size:var(--fs-2);color:var(--faint)}
 .ov-detail .od-note{line-height:1.5}
-.ov-detail .od-ws{box-sizing:border-box;display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--ts))}
+.ov-detail .od-ws{box-sizing:border-box;display:flex;align-items:center;gap:10px;font-size:var(--fs-2)}
 .ov-detail .od-ws .sn{flex:1;overflow:hidden;text-overflow:ellipsis}
-.ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:4px;background:var(--x,var(--quiet));flex:none}
+.ov-detail .dot,.ov-up .dot{width:8px;height:8px;border-radius:var(--r-xs);background:var(--x,var(--quiet));flex:none}
 #study-side .ov-detail{gap:14px}
 .ov-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
 .ov-quiz{gap:12px}
-.ov-quiz .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ov-quiz .mq-q{font:500 calc(17px * var(--ts))/1.35 var(--sans);color:var(--text)}
-.ov-quiz .mini{font-size:calc(12.5px * var(--ts));color:var(--faint);line-height:1.45}
+.ov-quiz .lab{font:500 var(--fs-1) var(--sans);color:var(--quiet)}
+.ov-quiz .mq-q{font:500 var(--fs-5)/1.35 var(--sans);color:var(--text)}
+.ov-quiz .mini{font-size:var(--fs-2);color:var(--faint);line-height:1.45}
 .ov-quiz .mq-row{display:flex;gap:8px}
 .ov-grid > .ov-sets{grid-column:1 / -1;gap:4px}
 .ov-sets .up-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:4px}
-.ov-sets .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ov-sets .up-head .mini{font-size:calc(12px * var(--ts));color:var(--faint)}
+.ov-sets .lab{font:500 var(--fs-1) var(--sans);color:var(--quiet)}
+.ov-sets .up-head .mini{font-size:var(--fs-1);color:var(--faint)}
 .ov-sets .st-list{display:flex;flex-direction:column}
 .ov-sets .st-row{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
 .ov-sets .st-row:last-child{border-bottom:0}
-.ov-sets .st{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto 76px;align-items:center;gap:12px;padding:8px 6px;border:0;background:none;text-align:left;cursor:pointer!important;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);border-radius:6px;min-height:0}
+.ov-sets .st{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto 76px;align-items:center;gap:12px;padding:8px 6px;border:0;background:none;text-align:left;cursor:pointer!important;font:400 var(--fs-2) var(--sans);color:var(--text);border-radius:var(--r-sm);min-height:0}
 .ov-sets .sn{display:flex;align-items:baseline;gap:8px;min-width:0}
 .ov-sets .stt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ov-sets .sd{text-align:right}
-.ov-sets .ss{color:var(--quiet);font-size:calc(12px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.ov-sets .ss{color:var(--quiet);font-size:var(--fs-1);white-space:nowrap;font-variant-numeric:tabular-nums}
 .ov-sets .ss.fin{color:var(--text)}
 .ov-sets .sx{flex:none;width:64px;display:flex;justify-content:flex-end}
 .ov-decks .fc-hr{display:flex;align-items:center;gap:var(--sp-2)}
@@ -49,7 +49,7 @@
 .fc-body{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-4) 18px 18px}
 .fc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-3)}
 .fc-ht{display:flex;flex-direction:column;gap:var(--sp-0_5);min-width:0}
-.fc-ht h2{margin:0!important;font:var(--fw-semibold) calc(16px * var(--ts))/1.3 var(--sans)!important;overflow-wrap:anywhere!important}
+.fc-ht h2{margin:0!important;font:var(--fw-semibold) var(--fs-4)/1.3 var(--sans)!important;overflow-wrap:anywhere!important}
 .fc-go{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}
 .fc-note{flex-basis:100%}
 .fc-lh{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px}
@@ -66,47 +66,47 @@
 .fc-due{font-size:var(--fs-1);min-width:3.5em;text-align:right}
 .fc-form{flex-direction:column;align-items:stretch}
 .fc-form .fc-acts{justify-content:flex-end}
-.fc-in{font:inherit;font-size:max(16px,var(--fs-3));padding:var(--sp-2) 10px;border:1px solid var(--line2);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical;width:100%;box-sizing:border-box}
-.fc-bar{height:3px;border-radius:2px;background:var(--line);overflow:hidden}
-.fc-bar i{display:block!important;height:100%!important;background:var(--text)!important;transition:width .2s}
+.fc-in{font:inherit;font-size:max(var(--fs-input),var(--fs-3));padding:var(--sp-2) 10px;border:1px solid var(--line2);border-radius:var(--r-md);background:var(--bg);color:var(--text);resize:vertical;width:100%;box-sizing:border-box}
+.fc-bar{height:3px;border-radius:var(--r-hair);background:var(--line);overflow:hidden}
+.fc-bar i{display:block!important;height:100%!important;background:var(--text)!important;transition:width var(--dur-bar)}
 .fc-card{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:var(--sp-6) 18px;border:1px solid var(--line2);border-radius:var(--r-lg);background:var(--surface);text-align:center;cursor:default}
 .fc-card[role="button"]{cursor:pointer}
 .fc-card[role="button"]:hover{background:var(--hover)}
 .fc-q{font:var(--fw-semibold) var(--fs-5)/1.35 var(--sans);overflow-wrap:anywhere}
-.fc-a{font-size:calc(15px * var(--ts));line-height:1.5;color:var(--quiet);border-top:1px solid var(--line);padding-top:14px;width:100%;overflow-wrap:anywhere}
+.fc-a{font-size:var(--fs-4);line-height:1.5;color:var(--quiet);border-top:1px solid var(--line);padding-top:14px;width:100%;overflow-wrap:anywhere}
 .fc-show{align-self:stretch;min-height:44px}
 .fc-rate{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:var(--sp-2)}
 .fc-rate .btn{display:flex!important;flex-direction:column;align-items:center!important;gap:1px!important;min-height:52px!important;padding:var(--sp-1_5) var(--sp-1)!important}
 .fc-rl{font-weight:var(--fw-semibold)}
-.fc-ri{font-size:calc(11.5px * var(--ts));color:var(--quiet);font-variant-numeric:tabular-nums}
+.fc-ri{font-size:var(--fs-1);color:var(--quiet);font-variant-numeric:tabular-nums}
 .fc-rate .again .fc-rl{color:var(--sem-red)}
 .fc-opts{display:flex;flex-direction:column;gap:var(--sp-2)}
-.fc-opt{display:flex;align-items:flex-start;gap:10px;padding:10px var(--sp-3);min-height:44px;border:1px solid var(--line2);border-radius:10px;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.fc-opt{display:flex;align-items:flex-start;gap:10px;padding:10px var(--sp-3);min-height:44px;border:1px solid var(--line2);border-radius:var(--r-md);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;overflow-wrap:anywhere}
 .fc-opt:hover:not([disabled]){background:var(--hover)}
 .fc-opt[disabled]{cursor:default}
 .fc-opt.right{border-color:var(--sem-green)!important;box-shadow:inset 0 0 0 1px var(--sem-green)}
 .fc-opt.wrong{border-color:var(--sem-red)!important;box-shadow:inset 0 0 0 1px var(--sem-red)}
-.fc-k{flex:none;width:18px;height:18px;border-radius:5px;background:var(--chip);color:var(--quiet);font-size:calc(11px * var(--ts));display:inline-flex;align-items:center;justify-content:center}
+.fc-k{flex:none;width:18px;height:18px;border-radius:var(--r-xs);background:var(--chip);color:var(--quiet);font-size:var(--fs-1);display:inline-flex;align-items:center;justify-content:center}
 .fc-why{margin:0}
 .fc-end{margin:0;color:var(--quiet)}
 /* B-488: four modes (the last one used is the primary), Written's field and verdict, Learn's progress and its end */
 .fc-go{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .fc-note{grid-column:1/-1}
 .ov-decks .sx{width:auto!important;gap:var(--sp-1_5);align-items:center}
-.ov-decks select.fc-mode{flex:none;width:auto;height:28px;min-height:28px;padding:0 var(--sp-1_5);border-radius:var(--r-md);font:var(--fw-medium) calc(12.5px * var(--ts)) var(--sans)!important}
-.fc-dq{font-size:calc(17px * var(--ts));font-weight:var(--fw-medium)}
+.ov-decks select.fc-mode{flex:none;width:auto;height:28px;min-height:28px;padding:0 var(--sp-1_5);border-radius:var(--r-md);font:var(--fw-medium) var(--fs-2) var(--sans)!important}
+.fc-dq{font-size:var(--fs-5);font-weight:var(--fw-medium)}
 .fc-wf{display:flex;flex-direction:column;gap:var(--sp-2)}
 .fc-wa{display:flex;gap:var(--sp-2);justify-content:flex-end;flex-wrap:wrap}
 .fc-wa .btn{min-height:40px!important}
-.fc-res{display:flex;flex-direction:column;gap:var(--sp-0_5);padding:10px var(--sp-3);border:1px solid var(--line2);border-radius:10px}
+.fc-res{display:flex;flex-direction:column;gap:var(--sp-0_5);padding:10px var(--sp-3);border:1px solid var(--line2);border-radius:var(--r-md)}
 .fc-res.exact,.fc-res.near{border-color:var(--sem-green);box-shadow:inset 0 0 0 1px var(--sem-green)}
 .fc-res.wrong{border-color:var(--sem-red)!important;box-shadow:inset 0 0 0 1px var(--sem-red)}
 .fc-rh{font-weight:var(--fw-semibold)}
-.fc-ans{font-size:calc(15px * var(--ts));overflow-wrap:anywhere}
+.fc-ans{font-size:var(--fs-4);overflow-wrap:anywhere}
 .fc-you{overflow-wrap:anywhere}
 .fc-lp{display:flex;flex-direction:column;gap:var(--sp-1)}
 .fc-lpn{font-size:var(--fs-1);font-variant-numeric:tabular-nums}
-.fc-stage{font-size:calc(11.5px * var(--ts));text-transform:none}
+.fc-stage{font-size:var(--fs-1);text-transform:none}
 .fc-endl{align-self:center;color:var(--quiet)}
 .fc-sum{display:flex;flex-direction:column;gap:var(--sp-1)}
 .fc-sum .lab{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
@@ -116,7 +116,7 @@
 .fc-sl li .meta{flex:none;font-size:var(--fs-1)!important}
 /* B-489: Import from Quizlet: the paste, how it splits, where it goes, and a preview of the first cards */
 .fc-ihint{margin:0}
-.fc-paste{min-height:120px;font-family:var(--mono,ui-monospace,monospace);font-size:max(16px,var(--fs-2))}
+.fc-paste{min-height:120px;font-family:var(--mono,ui-monospace,monospace);font-size:max(var(--fs-input),var(--fs-2))}
 .fc-iopts{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .fc-iopt{display:flex;flex-direction:column;gap:var(--sp-1);flex:1;min-width:180px}
 .fc-iopt .lab{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
@@ -129,7 +129,7 @@
 }
 @media (max-width:599px){
   .fc-go{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ov-decks select.fc-mode{height:44px;min-height:44px;font-size:max(16px,calc(12.5px * var(--ts)))!important}
+  .ov-decks select.fc-mode{height:44px;min-height:44px;font-size:max(var(--fs-input),var(--fs-2))!important}
   .ov-decks .st-row{flex-wrap:wrap;column-gap:0!important}
   .ov-decks .st-row .st{flex-basis:100%!important}
   .ov-decks .sx{width:100%!important;padding:0 0 var(--sp-2)}

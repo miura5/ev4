@@ -28,34 +28,34 @@
 #progress-readiness .col-main>.prog-props,#progress-readiness .col-main>#prog-chart-card,#progress-readiness .col-main>.prog-grid{margin-left:var(--sp-0_5);margin-right:var(--sp-0_5)}
 #progress-readiness .col-main{gap:var(--sp-3)}
 #p-progress .lab{font-size:var(--fs-1);color:var(--quiet);font-weight:var(--fw-medium)}
-#p-progress .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
+#p-progress .mini{font-size:var(--fs-2);color:var(--faint)}
 .prog-props{display:flex;flex-direction:column;gap:var(--sp-0_5);padding:14px}
 .prog-props .prop{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:var(--sp-2);min-height:34px;font-size:var(--fs-2);border:0}
 .prog-props .prop-k{color:var(--quiet)}
 .prog-props .prop-v{min-width:0}
 .prog-props .prop-v b{font-weight:var(--fw-semibold);color:var(--text)}
-.prog-props .prop-v .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important}
+.prog-props .prop-v .meta{color:var(--faint)!important;font-size:var(--fs-2)!important}
 #prog-chart-card{gap:var(--sp-1_5)}
 .prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);flex-wrap:wrap}
-.prog-chart-head h3{margin:0;font:var(--fw-semibold) calc(13.5px * var(--ts)) var(--sans)}
-.prog-chart-head .meta{margin:0!important;color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important}
+.prog-chart-head h3{margin:0;font:var(--fw-semibold) var(--fs-3) var(--sans)}
+.prog-chart-head .meta{margin:0!important;color:var(--faint)!important;font-size:var(--fs-2)!important}
 .prog-chart{display:flex;align-items:flex-end;gap:10px;height:194px;padding:var(--sp-6) var(--sp-1) 0;box-sizing:border-box}
 .pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:var(--sp-1);height:100%}
 .pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0!important;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer!important;box-shadow:none;min-height:0}
-.pc-bar>i{display:block;width:40px;max-width:100%;border-radius:3px;background:var(--sem-violet)}
+.pc-bar>i{display:block;width:40px;max-width:100%;border-radius:var(--r-hair);background:var(--sem-violet)}
 .pc-bar:hover{background:none}
 .pc-bar:hover>i{filter:brightness(1.08)}
-.pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
+.pc-bar>.pc-ahead{display:block;width:40px;max-width:100%;height:6px;border-radius:var(--r-hair);box-shadow:inset 0 0 0 1px var(--line2)}
 .pc-bar:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-.pc-lab{text-align:center;color:var(--quiet);font-size:calc(11.5px * var(--ts));white-space:nowrap;font-variant-numeric:tabular-nums}
+.pc-lab{text-align:center;color:var(--quiet);font-size:var(--fs-1);white-space:nowrap;font-variant-numeric:tabular-nums}
 .pc-bar[aria-pressed="true"]+.pc-lab{color:var(--text);font-weight:var(--fw-semibold)}
 .prog-grid{display:grid;grid-template-columns:1fr;gap:var(--sp-3)}
 @media (min-width:1000px){.prog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .prog-grid .ui-card{gap:10px}
 .prog-hb{display:flex;flex-direction:column;gap:5px}
-.prog-hb-top{display:flex;justify-content:space-between;gap:var(--sp-2);font-size:calc(13.5px * var(--ts))}
-.prog-hb-top .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important;margin:0!important;white-space:nowrap}
-.prog-hb .gauge{height:10px;border-radius:5px}
+.prog-hb-top{display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--fs-3)}
+.prog-hb-top .meta{color:var(--faint)!important;font-size:var(--fs-2)!important;margin:0!important;white-space:nowrap}
+.prog-hb .gauge{height:10px;border-radius:var(--r-xs)}
 #prog-day{display:flex;flex-direction:column;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
 #prog-day [data-part='total']{margin:0;font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);color:var(--text)}
 #prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}

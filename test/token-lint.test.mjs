@@ -23,15 +23,8 @@ const RAW = {
 const LEFT = new Map([
   ['page/ds/base.css', [0, 1, 0, 0]], // B-515 snap (D-402): the body's 16px is the reading size, not a half step
   ['page/ds/components/06-fold.css', [0, 0, 0, 2]],
-  ['page/ds/patterns/cards.css', [0, 20, 4, 0]],
-  ['page/ds/patterns/plan-card.css', [1, 19, 4, 0]],
-  ['page/ds/patterns/runner.css', [0, 10, 6, 0]],
-  ['page/ds/patterns/triage.css', [1, 3, 2, 0]],
   ['page/ds/views/notes.css', [0, 17, 4, 0]],
-  ['page/ds/views/progress.css', [0, 7, 3, 0]],
   ['page/ds/views/record.css', [3, 7, 2, 0]],
-  ['page/ds/views/study.css', [0, 25, 9, 1]],
-  ['page/ds/views/today.css', [0, 44, 27, 0]],
 ]);
 const raw = f => {
   const a = audit(fs.readFileSync(path.join(ROOT, f), 'utf8'));
