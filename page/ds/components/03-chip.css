@@ -16,7 +16,7 @@
 :where(button[data-ui='chip']) svg{width:var(--sp-3);height:var(--sp-3);flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:599px){:where(button[data-ui='chip']){height:var(--tap);min-width:var(--tap);justify-content:center}}
 :where(button[data-ui='chip']:not(:disabled,[aria-pressed='true'])):is(:hover,[data-state='hover'],[data-state='pressed']){background:var(--wash-3);color:var(--text)}
-:where(button[data-ui='chip']:not(:disabled)):active{transform:scale(.98)}
+:where(button[data-ui='chip']:not(:disabled)):active{background:var(--sel)}
 :where(button[data-ui='chip']):is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
 :where(button[data-ui='chip']):disabled{opacity:.45;cursor:default}
 /* the Gallery's forced states, over legacy's .chip until B-515 */
