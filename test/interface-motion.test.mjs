@@ -54,7 +54,9 @@ test('B-225 (D-271): a view switch is a cut; folds open in 0.28 s and close in 0
     'and closes in --dur-pop-in'
   );
   assert.match(css, /--dur-pop-in:160ms/, 'the token is 0.16 s');
-  assert.match(css, /\.chev,\.prep-row \.chev\{transition-duration:\.16s\}/, 'a chevron closes in 0.16 s');
+  // B-515 lane 3: the closing chevron's time is the token --dur-tick, 160 ms
+  assert.match(css, /\.chev,\.prep-row \.chev\{transition-duration:var\(--dur-tick\)\}/, 'a chevron closes in 0.16 s');
+  assert.match(css, /--dur-tick:160ms/, 'and --dur-tick is 160 ms');
   // B-515 lane 1: the open chevron's time is the token --dur-chev-open, 280 ms
   assert.match(
     css,
