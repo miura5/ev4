@@ -6215,5 +6215,26 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "ca7318b",
+  "time": "2026-10-30T09:37:48.933Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "9a8cbe5",
+  "tasks": [
+   "B-567",
+   "B-575",
+   "B-569",
+   "B-564",
+   "B-542",
+   "B-571"
+  ],
+  "summary": "Study view; npm test on main has failed since 9c6fea4 because…; Notes view; Today view; No outlines; Progress day panel",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
