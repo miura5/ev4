@@ -10639,7 +10639,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "Not reproduced on live's real data (read only, writes blocked) at 1100-1440 in 20 px steps, nine common sizes at DPR 1 and 2, resizes and clicks: the panel holds NUR 112's summary at 1200 px and up. Suspects: a stale service-worker copy, or a saved ui.study setting other than 'objectives' that hides objPanel (05-question-runner.js:43-72). Matt will quit and reopen and report back. Per Matt (Oct 30), small fixes ride with the cleanup release.",
+  "notes": "2c1d217: the resize handler validates the saved view; a summary goes to the panel only when the panel shows it, and comes back to its card otherwise; staleStateChecks pass 8/8. No stale value reproduced it on synthetic data, so the cause is still unknown, but the empty-panel state is now structurally impossible. It rides with the cleanup release; Matt checks NUR 112 at desktop width on staging.",
   "commit": "7b82ee7",
   "source": "build chat",
   "words": "On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
