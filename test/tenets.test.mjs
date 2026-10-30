@@ -56,12 +56,7 @@ test('B-125 (D-271): the stylesheet has no staggered rise and no growth of bars 
 });
 
 test('B-125 (D-271, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
-  const css = [
-    'page/ds/views/carry-ev.css',
-    'page/ds/views/carry-study.css',
-    'page/ds/views/carry-notes.css',
-    'page/ds/patterns/shell.css',
-  ] // B-515: the shell's lights moved
+  const css = ['page/ds/views/ev.css', 'page/ds/patterns/shell.css'] // B-515: the shell's lights moved
     .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
     .join('\n');
   const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];

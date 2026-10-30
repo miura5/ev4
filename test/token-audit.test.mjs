@@ -10,8 +10,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ROOT } from './helpers.mjs';
 import { audit, ALL } from '../tools/token-audit.mjs';
-import { buildPages, loadSchemas, LAYER_ORDER, CARRY } from '../tools/build.mjs';
-import { carry } from '../tools/carry.mjs';
+import { buildPages, loadSchemas, LAYER_ORDER } from '../tools/build.mjs';
 import { createRequire } from 'node:module';
 const theme = createRequire(import.meta.url)('./harness/contrast.cjs').load(); // page/theme.js as the shell runs it
 
@@ -64,12 +63,12 @@ test('B-502: the audit counts distinct values per family and ignores comments', 
   assert.equal(a.counts.important, 1);
 });
 
-test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/tokens.css in tokens, the carry opening views; the tokens declare every scale', () => {
+test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/tokens.css in tokens, ev.css opening views; the tokens declare every scale', () => {
   const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
   const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
   // B-552: each file as written, its :hover rules gated by (hover:hover) (tools/hover-gate.mjs)
   const tokens = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'ds', 'tokens.css'), 'utf8'));
-  const styles = gateHover(carry(fs.readFileSync(path.join(ROOT, CARRY[0]), 'utf8')));
+  const styles = gateHover(fs.readFileSync(path.join(ROOT, 'page/ds/views/ev.css'), 'utf8'));
   assert.equal(LAYER_ORDER, '@layer reset, tokens, base, components, patterns, views;');
   for (const target of ['live', 'staging']) {
     const out = pages[target]['styles.css'];
@@ -84,9 +83,9 @@ test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/
     );
     const t = out.indexOf(tokens),
       l = out.indexOf(styles);
-    assert.ok(t > 0 && l > t, target + ': tokens, then the carry');
+    assert.ok(t > 0 && l > t, target + ': tokens, then the views');
     assert.match(out.slice(0, t), /@layer tokens\{\n\/\* ---- page\/ds\/tokens\.css \*\/\n$/);
-    assert.match(out.slice(0, l), /\n\}\n@layer views\{\n\/\* ---- page\/ds\/views\/carry-ev\.css \*\/\n$/);
+    assert.match(out.slice(0, l), /\n\}\n@layer views\{\n\/\* ---- page\/ds\/views\/ev\.css \*\/\n$/);
     assert.ok(!/@layer legacy\b/.test(out.replace(/\/\*[\s\S]*?\*\//g, '')), target + ': no legacy layer');
   }
   for (const name of ['--fs-1', '--fs-7', '--sp-3', '--r-md', '--elev-3', '--z-overlay', '--line-h', '--pad-card'])

@@ -7,7 +7,6 @@
 //   system/environments.json spec.environments as the record holds it
 // Fails, writing nothing, when the spec and the schema registry disagree or a system document does not validate.
 // Usage: node tools/build.mjs [--root <repo>] [--out <dir>] [--now <ISO>]
-import { carry } from './carry.mjs';
 import { gateHover } from './hover-gate.mjs'; // B-552
 import fs from 'node:fs';
 import path from 'node:path';
@@ -55,20 +54,15 @@ export function appSource(root = HERE, target = 'staging') {
  * B-505 (D-373), D-388: the published styles.css. The layer order first, then each of Proprietary's files wrapped in
  * its own layer block under its `/* ---- path *\/` header: tokens, then the components, patterns and views layers, each
  * read from its folder (page/ds/components/, page/ds/patterns/, page/ds/views/) in name order, the Gallery's
- * stylesheet; the carry opens views (B-515 D2c: what was left of the old page/styles.css, once the legacy layer, built
- * through tools/carry.mjs so it still wins as legacy did; lane 1 split it in three, one per cleanup lane, in this order:
- * carry-ev, carry-study, carry-notes; consolidation retires them). No file declares its own layer. A folder not there yet adds nothing.
+ * stylesheet (B-515 lane 4b retired the carry and its raised selectors). No file declares its own layer. A folder not there yet adds nothing.
  */
 export const LAYER_ORDER = '@layer reset, tokens, base, components, patterns, views;';
 // [layer, file or folder/]: a folder is read in name order, its *.css files each one block of that layer.
-export const CARRY = ['page/ds/views/carry-ev.css', 'page/ds/views/carry-study.css', 'page/ds/views/carry-notes.css'];
 export const STYLE_LAYERS = [
   ['tokens', 'page/ds/tokens.css'],
   ['base', 'page/ds/base.css'],
   ['components', 'page/ds/components/'],
   ['patterns', 'page/ds/patterns/'],
-  // B-515 D2c: what is left of the old page/styles.css, first in views, its legacy precedence kept (tools/carry.mjs).
-  ...CARRY.map(f => ['views', f]),
   ['views', 'page/ds/views/'],
   ['views', 'page/ds/gallery.css'],
 ];
@@ -81,7 +75,7 @@ export function styleParts(root = HERE, target = 'staging') {
       if (!fs.existsSync(dir)) continue;
       for (const n of fs
         .readdirSync(dir)
-        .filter(x => x.endsWith('.css') && !CARRY.includes(f + x))
+        .filter(x => x.endsWith('.css'))
         .sort())
         out.push([layer, f + n]);
     } else if (layer === 'tokens' || layer === 'base' || fs.existsSync(path.join(root, f))) out.push([layer, f]);
@@ -117,7 +111,7 @@ export function stylesheet(root = HERE, target = 'staging') {
       fontFaces(root),
       ...styleParts(root, target).map(
         ([layer, f]) =>
-          `@layer ${layer}{\n/* ---- ${f} */\n${gateHover((CARRY.includes(f) ? carry : String)(fs.readFileSync(path.join(root, f), 'utf8')))}\n}`
+          `@layer ${layer}{\n/* ---- ${f} */\n${gateHover(fs.readFileSync(path.join(root, f), 'utf8'))}\n}`
       ),
     ].join('\n') + '\n'
   );
