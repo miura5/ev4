@@ -6236,5 +6236,27 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "f24fcc5",
+  "time": "2026-10-30T11:29:53.308Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "ca7318b",
+  "tasks": [
+   "B-576",
+   "B-578",
+   "B-579",
+   "B-580",
+   "B-577",
+   "B-581",
+   "B-572"
+  ],
+  "summary": "Expanding lists and folds on staging is still instant; they should…; On Today the checkboxes still show the old inner shading instead of…; npm test fails on main because page/app/02-fold-motion.js does not…; On the phone, Today's Cards row lost its Start button after Start…; On Study at a wide window, the exam plan's summary (draft, rubric…; run.cjs studyPlanChecks crashes: the plan-tick click times out as…; Conversation empty state and E.V. window",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
