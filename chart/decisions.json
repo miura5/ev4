@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-408",
+  "date": "Oct 30",
+  "title": "Tiered checks: builders run only fast, targeted checks locally per change (format and its test, unit tests for touched code, pixdiff and the computed-style diff for style moves, the one harness group a behaviour change touches) and push; the full suites run off the shared machine on GitHub, once per batch, triggered by the build manager (nightly.yml's full check until a parallel checks workflow exists); failures are handed back to the builder whose step caused them, found from the step commits.",
+  "why": "Oct 30: parallel builders each running 20 to 40 minutes of full suites crowded the shared machine (processes were killed for memory) and made checks the bottleneck; GitHub already runs npm test and smoke on every push. Matt agreed.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-407",
   "date": "Oct 30",
   "title": "The phone view is frozen at 'it works' (supersedes D-394's phone baseline): no phone layout or polish work, no 390 px look passes or screenshots in builds or release cards; phone checks shrink to a smoke test that it loads, a tick works and E.V. opens. Existing phone rules are carried as they are. After the consolidation, a dedicated stripped-down phone layout (Linear-mobile style, the basics Matt picks, likely Today with ticking, E.V.'s chat, flashcards and a quick note) is designed as its own round.",
