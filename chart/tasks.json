@@ -11234,5 +11234,22 @@
   "board": {
    "row": "v4 B-604: The pane header lost the view's name after the tab tooltips were…"
   }
+ },
+ {
+  "id": "B-605",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Design a dedicated, stripped-down phone layout (Linear-mobile style) with only the basics he uses on the go, after the consolidation.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, build chat Oct 30",
+  "words": "Design a dedicated, stripped-down phone layout (Linear-mobile style) with only the basics he uses on the go, after the consolidation.",
+  "reportedAt": "2026-10-30T19:45:37.596Z",
+  "board": {
+   "row": "v4 B-605: Design a dedicated, stripped-down phone layout (Linear-mobile style)…"
+  }
  }
 ]
