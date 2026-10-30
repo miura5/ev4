@@ -4766,7 +4766,7 @@ async function tap(page, locator, name) {
               const bar = document.querySelector(`#prog-chart button[data-key="${k}"]`);
               // B-342 (D-327): the demo's day panel: the day's total over what it holds in Record (sessions, quizzes, notes)
               const items = [...document.querySelectorAll('#prog-day li[data-key]')];
-              const tt = (document.querySelector('#prog-day > p') || {}).textContent || '';
+              const tt = (document.querySelector('#prog-day [data-part="total"]') || {}).textContent || '';
               const mm = /^(\d+) h(?: (\d+) m)?$/.exec(tt) || [];
               const m2 = /^(\d+) min$/.exec(tt) || [];
               const want = Object.entries(window.__db.sessions || {})
@@ -4840,7 +4840,7 @@ async function tap(page, locator, name) {
               const a = /^(\d+) h(?: (\d+) m)?$/.exec(t) || [],
                 b = /^(\d+) min$/.exec(t) || [];
               return a[1] ? 60 * Number(a[1]) + Number(a[2] || 0) : b[1] ? Number(b[1]) : NaN;
-            })((document.querySelector('#prog-day > p') || {}).textContent || ''),
+            })((document.querySelector('#prog-day [data-part="total"]') || {}).textContent || ''),
             stats: document.getElementById('prog-stats').textContent,
           };
         });

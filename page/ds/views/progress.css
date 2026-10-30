@@ -57,10 +57,13 @@
 .prog-hb-top .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important;margin:0!important;white-space:nowrap}
 .prog-hb .gauge{height:10px;border-radius:5px}
 #prog-day{display:flex;flex-direction:column;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
-#prog-day .prog-day-total{margin:0;font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);color:var(--text)}
+#prog-day [data-part='total']{margin:0;font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);color:var(--text)}
 #prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
-#prog-day .prog-s{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
-#prog-day .prog-s-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+/* B-571: the badge in one column (the Badge's 72 px), the title one line with an ellipsis, its result muted below */
+#prog-day .prog-s{display:grid!important;grid-template-columns:var(--badge-w) minmax(0,1fr);align-items:start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
+#prog-day [data-part='badge']{width:var(--badge-w)!important}
+#prog-day [data-part='text']{display:flex;flex-direction:column;gap:1px;min-width:0}
+#prog-day [data-part='title'],#prog-day [data-part='meta']{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #prog-day .prog-s .nm{min-height:0!important;height:auto!important;line-height:22px!important;padding:0!important;border:0!important;background:none!important;color:var(--text)!important;font:inherit!important;text-align:left!important;cursor:pointer!important}
 #prog-day .prog-s .nm:hover{text-decoration:underline!important;text-decoration-color:var(--line2)!important;text-underline-offset:3px!important}
 @media (max-width:599px){

@@ -378,19 +378,32 @@
         nm.type = 'button';
         nm.title = 'Open in Record';
         nm.addEventListener('click', () => openInRecord(x.id));
+        nm.dataset.part = 'title';
         const txt = el('div', 'prog-s-t');
-        txt.append(nm, el('span', 'mini', x.result || ''));
+        txt.dataset.part = 'text';
+        const sub = el('span', 'mini', x.result || '');
+        sub.dataset.part = 'meta';
+        txt.append(nm, sub);
         const [word, cls] = REC_BADGE[x.kind];
-        li.append(DS.badge({ text: word, cls }), txt);
+        // B-571: one 72 px badge column (DS.kind colours it), so titles start on one line whatever the word's width
+        const bd = DS.badge({ text: word, kind: DS.kind(word) || x.kind, cls });
+        bd.dataset.part = 'badge';
+        li.append(bd, txt);
         ul.append(li);
       }
+      // B-571: parts by data-part, not position (D-387); the total is minsIn's, sessions and ticked minutes (B-522)
+      const part = (n, k) => ((n.dataset.part = k), n);
+      ul.dataset.part = 'list';
       $('prog-day').replaceChildren(
-        el('span', 'lab prog-day-when', b.full),
-        el('p', 'prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])),
-        el(
-          'span',
-          'lab prog-day-lab',
-          list.length ? (P === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged'
+        part(el('span', 'lab prog-day-when', b.full), 'when'),
+        part(el('p', 'prog-day-total', ahead(b) ? 'Ahead' : hm(vals[pick])), 'total'),
+        part(
+          el(
+            'span',
+            'lab prog-day-lab',
+            list.length ? (P === 'week' ? 'That day in Record' : 'Recent in Record') : 'Nothing logged'
+          ),
+          'label'
         ),
         ul
       );
