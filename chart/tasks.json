@@ -10110,12 +10110,12 @@
   "title": "Kind palette: badge and sidebar-dot colours by kind at one lightness and chroma (Learn, Practice, Review, Graded, Skills prep, Note, Class, Quiz, Session, Workout)",
   "dod": "No black, white or grey kind dot anywhere; the Gallery shows every kind in both modes",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Every kind has its own colour (Reading blue, Graded red); base.css no longer greys --info/--violet; favicon neutral. npm test, smoke, components 58, look 218.",
+  "commit": "9a8cbe5",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
