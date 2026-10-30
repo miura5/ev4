@@ -10786,9 +10786,9 @@
   "id": "B-584",
   "kind": "bug",
   "title": "Bug (reported Oct 30): Only the latest tick carries Undo; ticking a second row replaces the first one's Undo.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Fixed and seen on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10797,6 +10797,10 @@
   "reportedAt": "2026-10-30T11:34:03.196Z",
   "board": {
    "row": "v4 B-584: Only the latest tick carries Undo; ticking a second row replaces the…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T11:34:17.532Z"
   }
  }
 ]
