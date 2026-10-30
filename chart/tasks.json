@@ -9596,7 +9596,7 @@
    "B-512",
    "B-513"
   ],
-  "notes": "E1 pushed 6d7afa9: header and sidebar flowers are DS.presence; thread messages carry data-key/data-kind. Message, the thread flower, the Resume chip, thread.css and the composer Field clash with legacy and go to B-515. E2 and E3 still running.",
+  "notes": "E3 pushed c3ef570: prep checklist and Your turn rules moved to page/ds/patterns/cards.css; no markup fit a component cleanly (plain buttons and generic shared classes wait for B-515 lane D). pixdiff 0; captions, prep, run green.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
