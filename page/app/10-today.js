@@ -609,14 +609,12 @@
      * the list edits D-078 already has; each leaves an Undo here that reverses what it wrote. No full-page view, no
      * previous and next, no description paragraph.
      */
-    const LIST_KIND_OF = {
-      READING: 'reading',
-      LEARN: 'reading',
-      PRACTICE: 'practice',
-      REVIEW: 'review',
-      NOTES: 'notes',
-      GRADED: 'graded',
-    };
+    // B-607: a tag back to the list kind that stores it (core's E.LIST_KINDS), so a snoozed Learn stays a Learn
+    const LIST_KIND_OF = Object.fromEntries(
+      Object.entries(E.LIST_KINDS)
+        .filter(([, tag]) => tag)
+        .map(([k, tag]) => [tag, k])
+    );
     const fixedItem = it => FIXED.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || ''));
     /** B-388: planned graded work due today (a date- id); Snooze makes no tomorrow copy of it, so it isn't offered. */
     const dueToday = it => it.tag === 'GRADED' && /^date-/.test(String(it.id || ''));

@@ -38,17 +38,11 @@
     const drafts = { task: '', note: '', exam: '' },
       noteDraft = { body: '', course: '' };
     // B-308 (C-7), B-596: a task's Kind, Estimate, When and Course, one row of Picker chips under the title, written
-    // through the list edit (kind, minutes, date, course), so it counts against that day's budget. The kinds are the
-    // list's own, each with its dot from the one kind map (B-594); Today's Classes or Study follows from the kind (a
-    // class to-do is Classes; reading, practice, review and notes are Study), so there is no Category to pick.
-    const TASK_KINDS = [
-      ['todo', 'Class'],
-      ['reading', 'Reading'],
-      ['practice', 'Practice'],
-      ['review', 'Review'],
-      ['notes', 'Notes'],
-      ['graded', 'Graded'],
-    ];
+    // through the list edit (kind, minutes, date, course), so it counts against that day's budget. B-607: the kinds are
+    // core's list kinds (E.LIST_KINDS), each worded as Today's badge for its tag and dotted from the one kind map
+    // (DS.kind), so a hand-added Learn is a plan's Learn; Today's Classes or Study follows from the tag.
+    const TASK_KINDS = () =>
+      Object.entries(E.LIST_KINDS).map(([v, tag]) => [v, tag && BADGE[tag] ? BADGE[tag][0] : 'Class']);
     const TASK_ESTS = [5, 15, 30, 45];
     const ICON = {
       task: 'M5 5h14v14H5zM9 12l2 2 4-4',
@@ -153,7 +147,7 @@
         pk(
           'kind',
           'Kind',
-          TASK_KINDS.map(([v, n]) => ({ value: v, label: n, kind: v === 'todo' ? 'class' : v }))
+          TASK_KINDS().map(([v, n]) => ({ value: v, label: n, kind: DS.kind(n) }))
         ),
         pk('minutes', 'Estimate', ests, {
           search: 'Pick or type minutes…',

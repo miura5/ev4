@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from './helpers.mjs';
+import EV from '../core/evcore.mjs';
 
 const src = f => fs.readFileSync(path.join(ROOT, 'page/app', f), 'utf8');
 const badge = src('01-ui-02-badge.js');
@@ -46,4 +47,43 @@ test('B-594: every kind word E.V. shows is in the one kind map, with no tone cla
   // and a kind's colour beats an old tone class (not :where)
   const css = fs.readFileSync(path.join(ROOT, 'page/ds/components/02-badge.css'), 'utf8');
   assert.match(css, /:is\(\.k-graded,\[data-k='graded'\]\)\{--x:var\(--kind-graded\)\}/);
+});
+
+// B-607: New task's Kind picker lists core's list kinds, worded as Today's badge, each a kind in the one map
+const todayBadge = new Function(block(src('10-today.js'), 'const BADGE = {') + '}; return BADGE;')();
+const pickerKinds = () =>
+  Object.entries(EV.LIST_KINDS).map(([v, tag]) => [v, tag && todayBadge[tag] ? todayBadge[tag][0] : 'Class']);
+
+test('B-607: the New task Kind picker is the kind map, with no list of its own', () => {
+  const nw = src('80-new.js');
+  assert.ok(
+    nw.includes("Object.entries(E.LIST_KINDS).map(([v, tag]) => [v, tag && BADGE[tag] ? BADGE[tag][0] : 'Class'])")
+  );
+  assert.ok(!nw.includes("['reading', 'Reading']"));
+  const kinds = pickerKinds();
+  for (const k of ['todo', 'reading', 'learn', 'practice', 'review', 'notes', 'graded', 'skills-prep', 'clinical-prep'])
+    assert.ok(
+      kinds.some(([v]) => v === k),
+      `the picker offers ${k}`
+    );
+  for (const [v, word] of kinds) assert.ok(dsKind(word), `${v}'s word ${word} is a kind`);
+});
+
+test('B-607: a hand-added Learn and Skills prep save their kind and show the plan badge', () => {
+  const day = { id: '2026-10-30', date: '2026-10-30', list: { items: [] } };
+  const now = new Date('2026-10-30T15:00:00Z');
+  for (const [kind, tag, word, k] of [
+    ['learn', 'LEARN', 'Learn', 'learn'],
+    ['skills-prep', 'SKILLS PREP', 'Skills prep', 'skills'],
+  ]) {
+    const a = EV.listEdit(day, null, { action: 'add', text: 'My ' + kind, kind, minutes: 15 }, { now, by: 'Matt' });
+    const it = a.doc.added[a.id];
+    assert.equal(it.kind, kind);
+    assert.equal(it.tag, tag);
+    assert.equal(todayBadge[tag][0], word);
+    assert.equal(dsKind(word), k);
+  }
+  const study = block(src('10-today.js'), 'const STUDY_TAGS = new Set([');
+  for (const t of ['LEARN', 'SKILLS PREP'])
+    assert.ok(study.includes(`'${t}'`), `${t} counts as Study, as a plan's does`);
 });

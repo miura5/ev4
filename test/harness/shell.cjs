@@ -1103,7 +1103,8 @@ const statusShown = page =>
           `${tag} New task's Picker chips (B-596): every kind, 5 to 45 min or typed, today and the next days, each course; Review with a typed 25 min lands on today with its badge and course and the budget counts it; Tomorrow lands on tomorrow's list`,
           shape.fields &&
             shape.noCategory &&
-            shape.kinds.join('|') === 'todo|reading|practice|review|notes|graded' &&
+            shape.kinds.join('|') === // B-607: the full list kinds (core LIST_KINDS)
+              'todo|reading|learn|practice|review|notes|graded|skills-prep|clinical-prep' &&
             shape.ests.join('|') === '5|15|30|45' &&
             shape.whens.join('|') === '0|1|2|3|4' &&
             shape.courses.length > 0 &&

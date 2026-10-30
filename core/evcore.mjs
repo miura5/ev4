@@ -1617,21 +1617,20 @@ const EVCore = (() => {
   //   added: {itemId: {text, tag, kind, minutes, course, at, by}}   skipped: {itemId: {at, by}}   checks: {itemId: {at}}
   // B-381: graded is Matt's Snooze carrying graded work to tomorrow; it stays GRADED there, fixed, and E.V. can't take it off.
   const LIST_KINDS = {
+    todo: null, // B-607: in the New task Kind menu's order; with the study plan's kinds, so a hand-added task is any
     reading: 'READING',
+    learn: 'LEARN',
     practice: 'PRACTICE',
     review: 'REVIEW',
     notes: 'NOTES',
-    todo: null,
     graded: 'GRADED',
+    'skills-prep': 'SKILLS PREP',
+    'clinical-prep': 'CLINICAL PREP',
   };
   const FIXED_TAGS = new Set(['GRADED', 'EXAM', 'CLINICAL', 'VALIDATION']);
   /** Graded work, exams, clinicals and validations stay on the list; everything else can be taken off for the day. */
   const isFixedItem = it => !!it && (FIXED_TAGS.has(it.tag) || /^(date|exam|soon)-/.test(String(it.id || '')));
-  /**
-   * B-374 (D-312): Matt's own Snooze may move graded work to tomorrow, as the demo; E.V. never takes it off. B-388: not
-   * planned graded work due today (a date- id): the snooze makes no tomorrow copy of it, so taking it off would lose it.
-   * A soon- item (due tomorrow, already on tomorrow's list) still moves.
-   */
+  // B-374 (D-312): his Snooze may move graded work, never E.V.; B-388: not a date- item (no tomorrow copy); soon- moves
   const mattMovesGraded = (it, by) =>
     !!it && it.tag === 'GRADED' && by === 'Matt' && !/^date-/.test(String(it.id || ''));
   /** The day's list as he sees it: planned items (minus the ones taken off), then the added ones in the order they came. */
@@ -2471,6 +2470,7 @@ const EVCore = (() => {
     buildDayList,
     nextExams,
     dayView,
+    LIST_KINDS: Object.freeze({ ...LIST_KINDS }), // B-607: the kinds a list item stores, each with its Today tag
     dayeditBase,
     listEdit,
     DATE_KINDS,
