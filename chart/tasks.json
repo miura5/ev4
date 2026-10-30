@@ -11259,5 +11259,22 @@
    "outcome": "task",
    "at": "2026-10-30T19:46:01.410Z"
   }
+ },
+ {
+  "id": "B-606",
+  "kind": "request",
+  "title": "Request (reported Oct 30): A dispatchable GitHub workflow that runs every page harness for a given commit as parallel jobs, uploads their logs and shots, and reports per-harness results, so full suites never run on the shared machine.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager, D-408",
+  "words": "A dispatchable GitHub workflow that runs every page harness for a given commit as parallel jobs, uploads their logs and shots, and reports per-harness results, so full suites never run on the shared machine.",
+  "reportedAt": "2026-10-30T20:07:38.687Z",
+  "board": {
+   "row": "v4 B-606: A dispatchable GitHub workflow that runs every page harness for a…"
+  }
  }
 ]
