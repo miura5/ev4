@@ -11200,9 +11200,9 @@
   "id": "B-603",
   "kind": "bug",
   "title": "Bug (reported Oct 30): spec.ui.look.layout and spec.ui.look.theme still describe the retired dark top-bar look; no prompt reads them yet, but they are stale truth in the spec.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "spec.ui.look.layout and .theme describe the current L-frame, sidebar and neutral themes (or are retired with their readers), and a test fails on the old top-bar words.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11211,6 +11211,10 @@
   "reportedAt": "2026-10-30T19:12:27.849Z",
   "board": {
    "row": "v4 B-603: spec.ui.look.layout and spec.ui.look.theme still describe the retired…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T19:12:33.679Z"
   }
  }
 ]
