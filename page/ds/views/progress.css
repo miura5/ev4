@@ -8,7 +8,7 @@
    bar ahead; by course and exam readiness side by side from 1000 px; the day panel (the right panel from 1200 px) is
    its date, the big total and that day's sessions, each with its Session badge. Absent while empty (D-151). */
 /* B-366: the demo's heights, her line 49 px with its hairline, the toolbar 53 px (12 px round a 28 px switch) */
-#progress-readiness .prog-bar{padding:var(--sp-3) 18px!important;margin:-14px -16px var(--sp-1);border-bottom:1px solid var(--line)!important;min-height:53px!important;box-sizing:border-box;display:flex!important;align-items:center!important}
+#progress-readiness .prog-bar{padding:var(--sp-3) 18px;margin:-14px -16px var(--sp-1);border-bottom:1px solid var(--line);min-height:53px;box-sizing:border-box;display:flex;align-items:center}
 #progress-readiness .prog-line[hidden]+.prog-bar{margin-top:-18px}
 /* B-342: E.V.'s line above the switch, the demo's strip: her mark and one sentence on a hairline */
 #progress-readiness .prog-line{display:flex;align-items:center;gap:10px;min-height:49px;padding:var(--sp-1) var(--sp-3) var(--sp-1) 18px;margin:-18px -16px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
@@ -34,11 +34,11 @@
 .prog-props .prop-k{color:var(--quiet)}
 .prog-props .prop-v{min-width:0}
 .prog-props .prop-v b{font-weight:var(--fw-semibold);color:var(--text)}
-.prog-props .prop-v .meta{color:var(--faint)!important;font-size:var(--fs-2)!important}
+.prog-props .prop-v .meta{color:var(--faint);font-size:var(--fs-2)}
 #prog-chart-card{gap:var(--sp-1_5)}
 .prog-chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);flex-wrap:wrap}
 .prog-chart-head h3{margin:0;font:var(--fw-semibold) var(--fs-3) var(--sans)}
-.prog-chart-head .meta{margin:0!important;color:var(--faint)!important;font-size:var(--fs-2)!important}
+.prog-chart-head .meta{margin:0;color:var(--faint);font-size:var(--fs-2)}
 .prog-chart{display:flex;align-items:flex-end;gap:10px;height:194px;padding:var(--sp-6) var(--sp-1) 0;box-sizing:border-box}
 .pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:stretch;gap:var(--sp-1);height:100%}
 .pc-bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;margin:0!important;padding:0;border:0;border-radius:var(--r-sm);background:none;cursor:pointer!important;box-shadow:none;min-height:0}
@@ -54,14 +54,14 @@
 .prog-grid .ui-card{gap:10px}
 .prog-hb{display:flex;flex-direction:column;gap:5px}
 .prog-hb-top{display:flex;justify-content:space-between;gap:var(--sp-2);font-size:var(--fs-3)}
-.prog-hb-top .meta{color:var(--faint)!important;font-size:var(--fs-2)!important;margin:0!important;white-space:nowrap}
+.prog-hb-top .meta{color:var(--faint);font-size:var(--fs-2);margin:0;white-space:nowrap}
 .prog-hb .gauge{height:10px;border-radius:var(--r-xs)}
-#prog-day{display:flex;flex-direction:column;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+#prog-day{display:flex;flex-direction:column;gap:14px;background:none;border:0;border-radius:0;box-shadow:none;padding:0}
 #prog-day [data-part='total']{margin:0;font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);color:var(--text)}
 #prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
 /* B-571: the badge in one column (the Badge's 72 px), the title one line with an ellipsis, its result muted below */
-#prog-day .prog-s{display:grid!important;grid-template-columns:var(--badge-w) minmax(0,1fr);align-items:start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
-#prog-day [data-part='badge']{width:var(--badge-w)!important}
+#prog-day .prog-s{display:grid;grid-template-columns:var(--badge-w) minmax(0,1fr);align-items:start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
+#prog-day [data-part='badge']{width:var(--badge-w)}
 #prog-day [data-part='text']{display:flex;flex-direction:column;gap:1px;min-width:0}
 #prog-day [data-part='title'],#prog-day [data-part='meta']{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #prog-day .prog-s .nm{min-height:0!important;height:auto!important;line-height:22px!important;padding:0!important;border:0!important;background:none!important;color:var(--text)!important;font:inherit!important;text-align:left!important;cursor:pointer!important}
@@ -70,7 +70,7 @@
   .prog-chart{gap:var(--sp-0_5)}
   .pc-col{min-width:44px}
   .pc-bar>i,.pc-bar>.pc-ahead{width:44px}
-  #progress-readiness .prog-bar{padding:10px var(--sp-3)!important;min-height:69px!important}
+  #progress-readiness .prog-bar{padding:10px var(--sp-3);min-height:69px}
   #progress-readiness .prog-bar .seg{align-self:center;width:auto}
   #progress-readiness .prog-line{padding:var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4);flex-wrap:wrap}
   #progress-readiness .prog-bar .seg button{flex:none;height:44px;min-height:44px;padding:0 var(--sp-3);min-width:44px;justify-content:center}

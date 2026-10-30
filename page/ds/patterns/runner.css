@@ -21,64 +21,64 @@
 .qz-card .qz-head .set-count:disabled{opacity:1!important;cursor:default!important} /* B-370: the demo's grey, not a faded button */
 .qz-card .qz-head .set-count.flat::after{display:none}
 .qz-card .qz-score{font-size:var(--fs-2);color:var(--faint);white-space:nowrap;flex:none}
-.qz-card .qz-bar{height:6px!important;border-radius:var(--r-hair)!important;background:var(--hover)!important;overflow:hidden!important;margin:0}
-.qz-card .qz-bar i{background:var(--sem-violet)!important;border-radius:0}
+.qz-card .qz-bar{height:6px;border-radius:var(--r-hair);background:var(--hover);overflow:hidden;margin:0}
+.qz-card .qz-bar i{background:var(--sem-violet);border-radius:0}
 .qz-card #rv-body,.qz-card #pr-body{display:flex;flex-direction:column;gap:var(--sp-4)}
-.qz-card #rv-body > *,.qz-card #pr-body > *{margin:0!important}
-.qz-card .q-stem{font-size:var(--fs-5)!important;font-weight:var(--fw-medium);letter-spacing:-.01em;line-height:1.35!important;color:var(--text)}
-.qz-card .q-tags{margin-top:-10px !important!important;font-size:var(--fs-2);color:var(--faint)}
-.qz-card .opts{display:flex!important;flex-direction:column!important;gap:var(--sp-2)!important;border:0!important;padding:0!important;margin:0!important;min-width:0!important}
-.qz-card .opt{position:relative;align-items:center!important;gap:10px!important;min-height:52px!important;padding:var(--sp-2) 14px!important;border:0!important;border-radius:var(--r-md)!important;background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line2);font-size:var(--fs-3)!important;color:var(--text);box-sizing:border-box}
+.qz-card #rv-body > *,.qz-card #pr-body > *{margin:0}
+.qz-card .q-stem{font-size:var(--fs-5);font-weight:var(--fw-medium);letter-spacing:-.01em;line-height:1.35;color:var(--text)}
+.qz-card .q-tags{margin-top:-10px;font-size:var(--fs-2);color:var(--faint)}
+.qz-card .opts{display:flex;flex-direction:column;gap:var(--sp-2);border:0;padding:0;margin:0;min-width:0}
+.qz-card .opt{position:relative;align-items:center;gap:10px;min-height:52px;padding:var(--sp-2) 14px;border:0;border-radius:var(--r-md);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);font-size:var(--fs-3);color:var(--text);box-sizing:border-box}
 .qz-card .opt:not(.locked):hover{background:var(--hover)!important}
 .qz-card .opt > .grow{flex:1;min-width:0}
-.qz-card .opt input[type=radio]{position:absolute;opacity:0;width:1px!important;height:1px!important;margin:0!important;pointer-events:none}
+.qz-card .opt input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 .qz-card .opt kbd.opt-n{display:inline-block;flex:0 0 20px;width:20px;height:auto;box-shadow:none;background:none;color:var(--quiet);font:var(--fw-medium) var(--fs-2) var(--sans);text-align:left}
 .qz-card .opt input:checked~kbd.opt-n{box-shadow:none!important;color:var(--text)!important}
 .qz-card .opt:not(.locked):has(input:checked){box-shadow:inset 0 0 0 1.5px var(--text)!important}
 .qz-card .opt:has(input:focus-visible){outline:2px solid var(--text);outline-offset:2px}
-.qz-card .opt.right{background:color-mix(in srgb,var(--sem-green) 11%,var(--surface))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-green) 40%,var(--line2))!important}
-.qz-card .opt.wrong{background:color-mix(in srgb,var(--sem-red) 11%,var(--surface))!important;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-red) 40%,var(--line2))!important}
-.qz-card .opt > .ico{width:16px!important;height:16px!important;flex:none!important;fill:none!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
-.qz-card .opt.right > .ico{stroke:var(--sem-green)!important}.qz-card .opt.wrong > .ico{stroke:var(--sem-red)!important}
-.qz-card .opt .why{display:block!important;margin-top:var(--sp-0_5)!important;font-size:var(--fs-2)!important;color:var(--quiet)!important}
-.qz-card .verdict{font:var(--fw-regular) var(--fs-3)/1.5 var(--sans)!important;color:var(--text)!important}
-.qz-card .verdict.ok,.qz-card .verdict.no{color:var(--text)!important}
-.qz-card .actions{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:var(--sp-2)!important;flex-wrap:wrap!important}
+.qz-card .opt.right{background:color-mix(in srgb,var(--sem-green) 11%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-green) 40%,var(--line2))}
+.qz-card .opt.wrong{background:color-mix(in srgb,var(--sem-red) 11%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-red) 40%,var(--line2))}
+.qz-card .opt > .ico{width:16px;height:16px;flex:none;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.qz-card .opt.right > .ico{stroke:var(--sem-green)}.qz-card .opt.wrong > .ico{stroke:var(--sem-red)}
+.qz-card .opt .why{display:block;margin-top:var(--sp-0_5);font-size:var(--fs-2);color:var(--quiet)}
+.qz-card .verdict{font:var(--fw-regular) var(--fs-3)/1.5 var(--sans);color:var(--text)}
+.qz-card .verdict.ok,.qz-card .verdict.no{color:var(--text)}
+.qz-card .actions{display:flex;align-items:center;justify-content:flex-start;gap:var(--sp-2);flex-wrap:wrap}
 .qz-card .actions > .btn.primary{order:-1}
 .qz-card .btn.primary .kbd{margin-left:var(--sp-2);font:var(--fw-medium) var(--fs-1) var(--sans);padding:1px 5px;border-radius:var(--r-xs);box-shadow:inset 0 0 0 1px currentColor}
 @media (hover:none){.qz-card .btn.primary .kbd{display:none}}
 .qz-card .set-score{font-size:var(--fs-5);font-weight:var(--fw-semibold);letter-spacing:-.02em;line-height:1.1;margin:0}
 .qz-card .set-score + .mini{margin-top:-6px;font-size:var(--fs-2);color:var(--faint)}
 .qz-card .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--sp-3);border-radius:var(--r-md);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:var(--fs-2)}
-.qz-card .endline .sp{flex:1!important;min-width:180px}
-@media (max-width:599px){.qz-card .endline .sp{flex-basis:100%!important}} /* B-376: her line over its buttons on the phone, as the demo */
+.qz-card .endline .sp{flex:1;min-width:180px}
+@media (max-width:599px){.qz-card .endline .sp{flex-basis:100%}} /* B-376: her line over its buttons on the phone, as the demo */
 .qz-card .sum-acts #more-card{display:contents}
 .qz-card .sum-acts #more-status{display:none}
-#study-side .qz-side .set-list{display:flex!important;flex-direction:column!important;margin:-6px 0 0!important;padding:0!important;list-style:none}
+#study-side .qz-side .set-list{display:flex;flex-direction:column;margin:-6px 0 0;padding:0;list-style:none}
 #study-side .qz-side .set-item{border:0!important;padding:0!important;min-height:0!important}
 #study-side .qz-side .set-q{display:flex!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:44px!important;padding:0 10px!important;border:0!important;border-radius:var(--r-md)!important;background:none!important;font:var(--fw-regular) var(--fs-2) var(--sans)!important;color:var(--text)!important;text-align:left!important;cursor:pointer!important}
 #study-side .qz-side .set-q:hover{background:var(--hover)!important}
 .set-q .sq-d{width:8px!important;height:8px!important;border-radius:var(--r-xs)!important;flex:none!important;background:var(--line2)!important}
 .set-q .sq-d.ok{background:var(--sem-green)}.set-q .sq-d.no{background:var(--sem-red)}.set-q .sq-d.now{background:var(--sem-violet)!important}
 #study-side .qz-side .sq-s{font-size:var(--fs-1);color:var(--quiet)}
-#study-side .qz-side .sq-s.ok{color:var(--quiet)!important}
+#study-side .qz-side .sq-s.ok{color:var(--quiet)}
 #study-side .qz-side .set-item.current .sq-t{color:var(--text);font-weight:400}
 /* B-370 (D-316): as the demo's results card at every width; This quiz lists each question, right or missed */
-.qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none!important}
-.plan-sum .big{font-size:var(--fs-4)!important;font-weight:var(--fw-semibold)!important;font-variant-numeric:tabular-nums;line-height:var(--lh-ui)!important;margin:0!important}
-.plan-sum .lab{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important}
-.plan-sum .mini{font-size:var(--fs-2)!important;color:var(--faint)!important;margin:0}
+.qz-card .sum-h,.qz-card .sum-list,.qz-card .sum-h ~ .fold-line,.qz-card .sum-acts ~ .fold-line{display:none}
+.plan-sum .big{font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);margin:0}
+.plan-sum .lab{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
+.plan-sum .mini{font-size:var(--fs-2);color:var(--faint);margin:0}
 @media (max-width:599px){
   #p-study .sbar-study{gap:var(--sp-2)!important;margin:-18px -16px 0!important;padding:10px var(--sp-3)!important;flex-wrap:wrap!important}
-  #p-study .sbar-study .seg{width:auto;align-self:center!important;flex:0 1 auto;min-width:0}
+  #p-study .sbar-study .seg{width:auto;align-self:center;flex:0 1 auto;min-width:0}
   #p-study .sbar-study .seg button{flex:0 0 auto;padding:0 var(--sp-3)}
   #study-objectives{padding:var(--sp-0_5) 0 18px!important}
   #study-weak:not([hidden]){margin:-18px -16px 0}
   #study-review > .qz-card,#pr-card.qz-card{width:100%;margin:var(--sp-4) 0 0;padding:26px!important}
-  .qz-card .opt{min-height:52px!important}
-  .ov .obj{flex-wrap:nowrap;padding:0!important}
+  .qz-card .opt{min-height:52px}
+  .ov .obj{flex-wrap:nowrap;padding:0}
   .obj .oq{display:none}
-  .obj .nm{min-height:44px!important;padding:var(--sp-1_5) 0!important}
+  .obj .nm{min-height:44px;padding:var(--sp-1_5) 0}
   .ov-up .up{min-height:48px!important}
   .ov-grid{grid-template-columns:1fr!important}
   .ov-sets .st{grid-template-columns:minmax(0,1fr) auto!important;min-height:48px!important;row-gap:var(--sp-0_5)!important}
@@ -90,7 +90,7 @@
    questions, Weak spots' triage card) */
 @media (max-width:1199px){
   #study-side:not([hidden]){display:flex!important;flex-direction:column;gap:14px;margin:var(--sp-4) -16px -18px;padding:var(--sp-4) 18px;border-top:1px solid var(--line);box-sizing:border-box}
-  #study-side .set-list{margin:0!important}
+  #study-side .set-list{margin:0}
 }
 /* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
 .actions .q-back{margin-right:auto}.stem{font-size:var(--fs-5);line-height:1.55;margin:2px 0 0;white-space:pre-wrap}

@@ -2,7 +2,7 @@
    (D-373), so every declaration here says  until B-515 retires legacy, which then strips it (nothing moves).
    Raw values left are those with no token. */
 /* B-119: System. One lead line; pipelines, runs and each card's list fold under one line; only exceptions are marked (yellow). B-214: the Preferences card and its switches. */
-#health .fold-line{display:block;margin-top:var(--sp-1_5)!important}
+#health .fold-line{display:block;margin-top:var(--sp-1_5)}
 .sys-lead{font-size:var(--fs-5);line-height:1.35;margin:var(--sp-1) 0 var(--sp-0_5);text-wrap:pretty}
 .sys-item{flex-direction:column;align-items:stretch;gap:var(--sp-0_5);padding:var(--sp-0_5) 0}
 .sys-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:var(--sp-2);width:100%;min-width:0;cursor:pointer;padding:var(--sp-1_5) 0;line-height:var(--lh-ui)}

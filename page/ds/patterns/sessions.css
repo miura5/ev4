@@ -3,7 +3,7 @@
 .sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform var(--dur-chev) var(--ease)}
 .sk-panel{display:none}
 body.skill-on .qchips{display:none}
-@media (max-width:1023px){body.skill-on .toast{bottom:auto!important;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))!important}}
+@media (max-width:1023px){body.skill-on .toast{bottom:auto;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))}}
 #ev-side>.sk-panel{display:none}
 @media (min-width:1200px){
   body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:var(--bg);border:0;border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}

@@ -11,9 +11,9 @@
 .pm-pop{width:320px;gap:14px;text-align:left}
 .pm-pop .pm-hd{font:var(--fw-semibold) var(--fs-2) var(--sans);color:var(--text)}
 .pm-pop .pref{display:flex;flex-direction:column;gap:var(--sp-2);margin:0}
-.pm-pop .pref > .lbl{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--quiet)!important}
-#p-study .sbar-study .pm-pop .seg{align-self:flex-start!important;width:auto!important;flex:none!important}
-#p-study .sbar-study .pm-pop .seg button{flex:none!important}
+.pm-pop .pref > .lbl{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
+#p-study .sbar-study .pm-pop .seg{align-self:flex-start;width:auto;flex:none}
+#p-study .sbar-study .pm-pop .seg button{flex:none}
 .pm-pop .mini{font-size:var(--fs-1);color:var(--faint);line-height:1.45;margin:0}
 .pm-pop .pm-sep{height:1px;background:var(--line);margin:0 -12px}
 .pm-ins{all:unset;box-sizing:border-box;display:block;border-radius:var(--r-md);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);padding:9px 11px;font:var(--fw-regular) var(--fs-2)/1.5 var(--sans);color:var(--quiet);cursor:pointer}
@@ -21,13 +21,13 @@
 .pm-ins:focus-visible{outline:2px solid var(--text);outline-offset:2px}
 .pm-ins-t{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;max-height:4.5em}
 .pm-row{display:flex;align-items:center;gap:var(--sp-1_5);flex-wrap:wrap}
-.pm-row .grow{flex:1!important;min-width:0!important}
+.pm-row .grow{flex:1;min-width:0}
 /* the instructions sheet: the New dialog, wider, the brief in one tall field */
 .pm-dlg.new-dlg{width:min(720px,calc(100vw - 24px));margin:64px auto auto;max-height:calc(100dvh - 88px)}
-.pm-dlg .new-hdr .grow{flex:1!important;margin:0;font:var(--fw-semibold) var(--fs-3) var(--sans);color:var(--text)}
+.pm-dlg .new-hdr .grow{flex:1;margin:0;font:var(--fw-semibold) var(--fs-3) var(--sans);color:var(--text)}
 .pm-dlg .new-foot{background:none}
 .pm-dlg .new-hdr .mini{font-size:var(--fs-1);color:var(--faint)}
-.pm-dlg .new-body textarea{flex:none!important;width:100%!important;height:min(440px,calc(100dvh - 280px))!important;box-sizing:border-box!important;border-radius:var(--r-md)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--line2)!important;background:var(--bg)!important;padding:var(--sp-3) 14px!important;resize:vertical!important;font:var(--fw-regular) var(--fs-3)/1.55 var(--sans)!important;color:var(--text)!important}
+.pm-dlg .new-body textarea{flex:none;width:100%;height:min(440px,calc(100dvh - 280px));box-sizing:border-box;border-radius:var(--r-md);border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:var(--sp-3) 14px;resize:vertical;font:var(--fw-regular) var(--fs-3)/1.55 var(--sans);color:var(--text)}
 .pm-dlg .new-body textarea:focus-visible{outline:none!important;box-shadow:inset 0 0 0 2px var(--focus,var(--text))!important}
 .pm-dlg .new-foot .pm-hint{flex:1;min-width:0;font-size:var(--fs-2);color:var(--faint)}
 /* the exam card: with a plan under it its objectives fold to one line */
@@ -38,7 +38,7 @@
 .pl-card{gap:0;padding:14px 14px var(--sp-1_5)}
 .pl-head{display:flex;align-items:center;gap:var(--sp-2);padding-bottom:8px;min-width:0}
 .pl-head .ov-ex{font:var(--fw-semibold) var(--fs-3) var(--sans);color:var(--text);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.pl-head .meta{font-size:var(--fs-2)!important;color:var(--faint)!important;margin:0!important;white-space:nowrap}
+.pl-head .meta{font-size:var(--fs-2);color:var(--faint);margin:0;white-space:nowrap}
 .pl-head > :not(.ov-ex,.sp){flex:none}
 .pl-head .sp{flex:1}
 .pl-card > .seg.pl-filter{margin:var(--sp-0_5) 0 var(--sp-2);align-self:flex-start;max-width:100%}
@@ -48,12 +48,12 @@
 :is(.ov-card .fold-line.pm-more,.pl-rows > .fold-line,.pl-carry .fold-line,.plan-sum .pm-rubfold)::after{margin-left:var(--sp-1)}
 .pl-rows{display:flex;flex-direction:column}
 .pl-day{border-bottom:0}
-.pl-rows > :last-child{border-bottom:0!important}
+.pl-rows > :last-child{border-bottom:0}
 .pl-dr{all:unset!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:14px 84px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:40px!important;padding:var(--sp-1)!important;cursor:pointer!important;font-size:var(--fs-3)!important;color:var(--text)!important;border-radius:var(--r-sm)!important}
 .pl-dr:hover{background:var(--hover)!important}
 .pl-dr:focus-visible{outline:2px solid var(--text)!important;outline-offset:2px!important}
-.pl-dr .chev{width:14px!important;height:14px!important;fill:none;stroke:var(--faint);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pl-day.open .pl-dr .chev{transform:rotate(90deg)!important}
+.pl-dr .chev{width:14px;height:14px;fill:none;stroke:var(--faint);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pl-day.open .pl-dr .chev{transform:rotate(90deg)}
 .pl-dr .d{color:var(--quiet);font-size:var(--fs-2);white-space:nowrap}
 .pl-dr .lb{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl-dr .c{color:var(--quiet);font-size:var(--fs-2);white-space:nowrap;display:flex;align-items:center;gap:var(--sp-1_5);font-variant-numeric:tabular-nums}
@@ -67,20 +67,20 @@
 .pl-tasks{list-style:none;margin:0 0 var(--sp-2);padding:0 0 0 28px;display:flex;flex-direction:column}
 .pl-t{display:flex;align-items:flex-start;gap:10px;padding:7px var(--sp-1);font-size:var(--fs-3)}
 .pl-tasks > .pl-t:first-child{border-top:0}
-.pl-t input.tick{margin-top:var(--sp-0_5)!important}
+.pl-t input.tick{margin-top:var(--sp-0_5)}
 .pl-t input.tick:disabled{cursor:default;opacity:.7}
 /* B-578: a plan task is a .check row: the Line tick (16 px, 4 px radius, a 1.5 px --line2 ring) over Choice's bare 22 px one */
 .pl-t.check>input.tick{flex:0 0 var(--sp-4);width:var(--sp-4);height:var(--sp-4);border:0;border-radius:var(--r-xs);box-shadow:inset 0 0 0 1.5px var(--line2)}
 .pl-t.check>input.tick:checked{background:var(--ok);box-shadow:none}
 [data-theme=dark] .pl-t.check>input.tick:checked{background:color-mix(in srgb,var(--ok) 62%,var(--surface))}
 .pl-t.check>input.tick:checked::after{width:var(--sp-1);height:var(--sp-2);border-width:0 1.75px 1.75px 0}
-.pl-t .grow{flex:1!important;min-width:0!important;display:flex;flex-direction:column;gap:var(--sp-0_5)}
-.pl-t .title{line-height:var(--lh-ui);color:var(--text)!important}
+.pl-t .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-0_5)}
+.pl-t .title{line-height:var(--lh-ui);color:var(--text)}
 .pl-t .ds{font-size:var(--fs-1);color:var(--faint);line-height:var(--lh-ui)}
 .pl-t .t{flex:none;min-width:3.2em;text-align:right;color:var(--quiet);font-size:var(--fs-2);font-variant-numeric:tabular-nums;line-height:20px}
-.pl-t.done .title{color:var(--faint)!important;text-decoration:line-through!important}
+.pl-t.done .title{color:var(--faint);text-decoration:line-through}
 .pl-carry{list-style:none}
-.pl-carry .fold-line{margin:0!important;padding:0 var(--sp-1)!important;min-height:36px!important;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;color:var(--quiet)!important;font-size:var(--fs-2)!important}
+.pl-carry .fold-line{margin:0;padding:0 var(--sp-1);min-height:36px;display:flex;align-items:center;gap:var(--sp-2);color:var(--quiet);font-size:var(--fs-2)}
 .pl-carry + .pl-t{border-top:0}
 .pl-notes{margin:0 0 var(--sp-2);padding:0 var(--sp-1) 0 46px;display:flex;flex-direction:column;gap:var(--sp-1_5);font-size:var(--fs-2);color:var(--quiet);line-height:1.45}
 .pl-notes li.gap{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
@@ -88,15 +88,15 @@
 /* E.V.'s one question */
 .pm-ask{display:flex;gap:10px;margin:var(--sp-0_5) 0 10px;padding:var(--sp-3) 14px;border-radius:var(--r-md);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2)}
 .pm-ask .el-ico{width:14px;height:14px;flex:0 0 14px;margin-top:3px;fill:none;stroke:var(--quiet);stroke-width:1.8;stroke-linejoin:round}
-.pm-ask .grow{flex:1!important;min-width:0!important;display:flex;flex-direction:column;gap:var(--sp-2)}
+.pm-ask .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-2)}
 .pm-ask .q{font:var(--fw-medium) var(--fs-3)/1.45 var(--sans);color:var(--text)}
 .pm-ask .ans{display:flex;gap:var(--sp-2);align-items:center}
-.pm-ask .ans input{flex:1!important;min-width:0!important;height:32px!important;padding:0 10px!important;border-radius:var(--r-md)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--line2)!important;background:var(--surface)!important;font:var(--fw-regular) var(--fs-2) var(--sans)!important;color:var(--text)!important}
+.pm-ask .ans input{flex:1;min-width:0;height:32px;padding:0 10px;border-radius:var(--r-md);border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--surface);font:var(--fw-regular) var(--fs-2) var(--sans);color:var(--text)}
 .ov-plans > .pm-ask{margin:0}
 /* no plan yet: one line and Make a plan */
 #study-objectives .ui-card.pl-none{flex-direction:row;align-items:center;gap:var(--sp-3);text-align:left;padding:14px}
 .pl-none .el-ico{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.8;stroke-linejoin:round}
-.pl-none .grow{flex:1!important;min-width:0!important;display:flex;flex-direction:column;gap:var(--sp-0_5)}
+.pl-none .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-0_5)}
 .pl-none .h{font:var(--fw-semibold) var(--fs-3) var(--sans);color:var(--text)}
 .pl-none .mini{font-size:var(--fs-2);color:var(--quiet);line-height:1.45}
 /* the summary: the right panel's card from 1200 px; below that a draft's heads its card, a plan's is one line */
@@ -108,7 +108,7 @@
 .plan-sum .pm-rub .od-ws{margin:0;height:26px}
 .plan-sum .pm-rub .od-ws .st{font-variant-numeric:tabular-nums}
 .plan-sum .pm-act{display:flex;gap:var(--sp-2);flex-wrap:wrap}
-.plan-sum .pm-act .btn svg{width:14px!important;height:14px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.plan-sum .pm-act .btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .plan-sum .pm-wait{font-size:var(--fs-1);color:var(--faint);margin-top:-6px}
 .plan-sum .pm-rubfold{display:none}
 .pm-line,.pl-foot{display:none}
@@ -135,14 +135,14 @@
   #p-study .sbar-study::after{content:"";order:1;flex-basis:100%;height:0}
   #study-planset{width:44px;height:44px;min-height:44px}
   .pm-dlg.new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}
-  .pm-dlg .new-body textarea{height:calc(100dvh - 300px)!important;font-size:var(--fs-4)!important}
+  .pm-dlg .new-body textarea{height:calc(100dvh - 300px);font-size:var(--fs-4)}
   .pm-dlg .new-foot .pm-hint{flex-basis:100%}
   .pm-dlg .new-foot .btn.ghost{margin-right:auto}
   .pl-dr{grid-template-columns:14px 80px minmax(0,1fr) auto!important;min-height:44px!important;gap:var(--sp-2)!important}
   /* B-464: the badge filter wraps rather than scrolling its last chips out of sight */
   #study-objectives .pl-card > .seg.pl-filter{align-self:stretch;flex-wrap:wrap;overflow:visible;border-radius:var(--r-lg)}
   #study-objectives .pl-filter button{flex:1 0 auto;padding:0 var(--sp-3)}
-  .pl-day.draft .pl-dr{grid-template-columns:14px 92px minmax(0,1fr) auto!important}
+  .pl-day.draft .pl-dr{grid-template-columns:14px 92px minmax(0,1fr) auto}
   .pl-dr .c .mn{display:none}
   .pl-tasks{padding-left:0}
   .pl-notes{padding-left:16px}
@@ -153,12 +153,12 @@
   .pl-t .t{grid-area:t}
   .pl-carry .fold-line,.pl-rows > .fold-line{min-height:44px!important}
   .pm-ask .ans{flex-wrap:wrap}
-  .pm-ask .ans input{flex-basis:100%!important;height:44px!important;font-size:var(--fs-4)!important}
+  .pm-ask .ans input{flex-basis:100%;height:44px;font-size:var(--fs-4)}
   .plan-sum .pm-rubfold{display:flex;margin:-8px 0 0;padding:0;min-height:44px;align-items:center;color:var(--quiet);font-size:var(--fs-2)}
   #study-objectives .ui-card.pl-none{flex-wrap:wrap;align-items:flex-start}
-  .pl-none .grow{flex:1 1 calc(100% - 30px)!important}
+  .pl-none .grow{flex:1 1 calc(100% - 30px)}
   .pl-none .el-ico{margin-top:var(--sp-0_5)}
-  .pl-none > .btn{margin-left:28px!important}
+  .pl-none > .btn{margin-left:28px}
 }
 /* B-568: the plan's summary as the reference: the title on the full width (one line, the whole title on hover), then
    "NUR 112 · Mon 2 Nov · on track" with the count at its end, the bar and the plan check; one button row that never
@@ -169,6 +169,6 @@
 .plan-sum .pm-status .plan-lead{flex:none;font:var(--fw-medium) var(--fs-2) var(--sans);color:var(--text);font-variant-numeric:tabular-nums}
 .plan-sum .pm-state.ok{color:color-mix(in srgb,var(--ok) var(--kind-text-mix),var(--text))}
 .plan-sum .pm-state.behind{color:color-mix(in srgb,var(--warn) var(--kind-text-mix),var(--text))}
-.plan-sum .pm-act,.pl-card .pl-foot{flex-wrap:nowrap!important;align-items:center;min-width:0}
+.plan-sum .pm-act,.pl-card .pl-foot{flex-wrap:nowrap;align-items:center;min-width:0}
 .plan-sum .pm-act .sp,.pl-foot .sp{flex:1;min-width:0}
-.plan-sum .pm-act.confirming,.pl-card .pl-foot.confirming{flex-wrap:wrap!important}
+.plan-sum .pm-act.confirming,.pl-card .pl-foot.confirming{flex-wrap:wrap}

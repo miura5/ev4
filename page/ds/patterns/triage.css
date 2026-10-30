@@ -8,7 +8,7 @@
 #study-weak .wk-bar .ico{width:14px;height:14px}
 #study-weak .mini{font-size:var(--fs-2);color:var(--quiet)}
 #study-weak .sp{flex:1}
-.wk-list{display:flex!important;flex-direction:column!important}
+.wk-list{display:flex;flex-direction:column}
 .wk-list .dayh{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet);padding:14px 18px var(--sp-1_5)}
 .wk-list .wl{display:flex;align-items:center;gap:var(--sp-3);padding:10px 18px;flex-wrap:wrap}
 .wk-list .wl .dot{width:7px;height:7px;border-radius:var(--r-xs);background:var(--x,var(--line2));flex:none}
@@ -20,20 +20,20 @@
 .wk-list .wl-note{color:var(--quiet)}
 /* B-407: a To review row, the demo's trow: its topic and where it came from, then Accept, Join, Not now, Decline */
 .wk-list .trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:var(--sp-3) 18px;background:var(--bg)}
-.wk-list .trow .tt{flex:1!important;min-width:200px!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)}
+.wk-list .trow .tt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:var(--sp-0_5)}
 .wk-list .trow .tt .wn{font-weight:var(--fw-medium);overflow-wrap:anywhere}
 .wk-list .trow .acts{display:flex;gap:var(--sp-1_5);flex-wrap:wrap}
 /* B-455: Pick an objective in place of a greyed Accept: the New menu's look, under its button, inside the screen */
 .wk-list .pick-wrap{position:relative}
 .pick-menu{width:min(320px,calc(100vw - 32px));max-height:min(320px,60dvh)}
-.pick-menu .mhd{font:var(--fw-medium) var(--fs-1)/1.45 var(--sans)!important;color:var(--quiet)!important;padding:var(--sp-1_5) 9px var(--sp-1)!important}
-.pick-menu .popover-i{justify-content:flex-start!important;width:100%!important;height:auto!important;min-height:32px!important;padding:var(--sp-1_5) 9px!important;color:var(--text)!important;font-weight:400!important;text-align:left!important;white-space:normal;flex:none!important}
-@media (max-width:599px){.pick-menu .popover-i{min-height:44px!important}}
-.wk-list .empty{padding:40px 18px!important;text-align:center}
+.pick-menu .mhd{font:var(--fw-medium) var(--fs-1)/1.45 var(--sans);color:var(--quiet);padding:var(--sp-1_5) 9px var(--sp-1)}
+.pick-menu .popover-i{justify-content:flex-start;width:100%;height:auto;min-height:32px;padding:var(--sp-1_5) 9px;color:var(--text);font-weight:400;text-align:left;white-space:normal;flex:none}
+@media (max-width:599px){.pick-menu .popover-i{min-height:44px}}
+.wk-list .empty{padding:40px 18px;text-align:center}
 #weak-quizlet{display:contents}
 #study-side .wk-side .od-ws{color:var(--text);height:auto;min-height:30px;margin:0;padding:var(--sp-1) 10px}
 #study-side .wk-side .od-ws .sn{white-space:normal}
-#study-side .wk-side .od-ws .dot{background:var(--quiet)!important}
+#study-side .wk-side .od-ws .dot{background:var(--quiet)}
 /* the phone (from the runner block, kept after the rules above as in legacy's order) */
 @media (max-width:599px){
   #study-weak .wk-bar{padding:10px var(--sp-3)}
