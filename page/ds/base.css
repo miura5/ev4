@@ -22,9 +22,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 /* Reduced motion, the system setting and E.V.'s own (B-224): in base, its !important beats every later layer's. */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 :root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{transition:none!important;animation:none!important}
-/* Legacy's grey --info and --violet, and its --warn and --bad, kept over page/theme.js's coded names (tokens layer)
-   until the neutral theme lane decides them (B-515): base wins over tokens, so nothing changes colour. */
-:root{--warn:var(--att);--bad:var(--urg);--info:var(--quiet);--violet:var(--quiet)}
+/* Legacy's --warn and --bad kept over page/theme.js's coded names until B-515; --info and --violet come from the
+   tokens now (B-540), no longer greyed. */
+:root{--warn:var(--att);--bad:var(--urg)}
 /* B-515 D0: form controls keep Inter, a focus ring and a disabled look on their own once legacy drops (it wins today). */
 :where(button,input,select,textarea){font:inherit;color:inherit}
 :where(button,a,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:2px}

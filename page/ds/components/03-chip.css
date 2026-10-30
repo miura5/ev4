@@ -27,4 +27,4 @@ button[data-ui='chip']:not([aria-pressed='true']):is([data-state='hover'],[data-
 .chip{display:inline-block;font-size:calc(11.5px * var(--ts));font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--chip);color:var(--quiet)}
 .chip.accent{background:var(--accent);color:var(--accent-ink)} .chip.ok{background:var(--accent-bg);color:var(--accent-text)}
 .chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.bad{background:var(--bad-bg);color:var(--bad)}
-.chip.info{background:var(--info-bg);color:var(--info)} .chip.plum{background:var(--plum-bg);color:var(--plum)}
+.chip.info{background:var(--info-bg);color:color-mix(in srgb,var(--info) var(--kind-text-mix),var(--text))} .chip.plum{background:var(--plum-bg);color:var(--plum)}

@@ -12,5 +12,25 @@
       const b = dsRoot('span', 'badge', Object.assign({}, o, { tone, cls: dsClasses('badge', o.cls, mod) }));
       const text = o.text != null ? o.text : o.course;
       if (text != null && text !== '') b.textContent = String(text);
+      const k = o.course != null ? '' : dsKind(o.kind || text); // B-540: a kind word paints in its kind's colour
+      if (k) b.dataset.k = k;
       return b;
+    }
+    /**
+     * B-540 (D-395): the kind a badge's word names (learn, practice, review, graded, skills, note, class, reading, quiz,
+     * session, workout, flash), or '' when it names none. The sidebar's dots read it too, so a dot and its row's badge
+     * share one colour (02-badge.css: [data-k] and .k-<kind> set --x from --kind-<kind>).
+     */
+    function dsKind(word) {
+      const w = String(word || '')
+        .trim()
+        .toLowerCase();
+      const K = {
+        learn: 'learn', practice: 'practice', study: 'practice', drill: 'practice', review: 'review',
+        'ati review': 'review', graded: 'graded', exam: 'graded', 'skills prep': 'skills', skills: 'skills',
+        clinical: 'skills', 'clinical prep': 'skills', validation: 'skills', 'validation prep': 'skills',
+        note: 'note', notes: 'note', canvas: 'note', class: 'class', reading: 'reading', quiz: 'quiz',
+        session: 'session', workout: 'workout', flashcards: 'flash', deck: 'flash',
+      };
+      return K[w] || '';
     }

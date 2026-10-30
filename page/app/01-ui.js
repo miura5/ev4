@@ -29,6 +29,7 @@
     const DS = Object.freeze({
       button: typeof dsButton === 'function' ? dsButton : undefined,
       badge: typeof dsBadge === 'function' ? dsBadge : undefined,
+      kind: typeof dsKind === 'function' ? dsKind : () => '', // B-540
       chip: typeof dsChip === 'function' ? dsChip : undefined,
       segmented: typeof dsSegmented === 'function' ? dsSegmented : undefined,
       group: typeof dsGroup === 'function' ? dsGroup : undefined,

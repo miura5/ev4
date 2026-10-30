@@ -466,10 +466,6 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
    primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
    on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
 /* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
-.badge{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:11px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 var(--fs-1) var(--sans);white-space:nowrap;flex:none}
-.badge::before{content:"";width:6px;height:6px;border-radius:3px;background:var(--x,var(--faint));flex:none}
-.badge.proposed{--x:var(--sem-blue)}
-.badge:is(.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.x-quiet,.proposed){background:color-mix(in srgb,var(--x) 13%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--x) 45%,var(--line2))}
 .title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
 /* B-380: as the demo's .seg: a flat grey fill with no outline; the picked option on the surface with a hairline */
@@ -620,9 +616,7 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 .ov-card[hidden]{display:none}
 .ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
 .ov:last-child .obj{border-bottom:0}
-.obj .badge{min-width:64px;justify-content:center;box-sizing:border-box}
 .obj .nm{flex:1;min-width:0;min-height:0;border:0;background:none;padding:0;font:inherit;line-height:1.45;color:inherit;cursor:pointer;text-align:left}
-.obj .badge:not([class*=" x-"]){background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
 .obj .nm:hover{text-decoration:underline;text-underline-offset:3px}
 .obj.on .nm{font-weight:600}
 .obj .ow{font-size:var(--fs-1);color:var(--quiet);white-space:nowrap}

@@ -137,8 +137,8 @@ body.boot-stopped .mh .status{display:block!important}
 .side-sec .si.si-rev .t{display:flex!important;flex-direction:column!important;white-space:normal!important}
 .side-sec .si.si-rev .t,.side-sec .si.si-rev .tr{overflow:visible!important;text-overflow:clip!important}
 .side-sec .si.si-rev .tr{font-size:calc(11.5px * var(--ts))!important;color:var(--faint)!important}
-.sdot{width:8px!important;height:8px!important;border-radius:4px!important;flex:0 0 8px!important;background:var(--x,var(--quiet))!important}
-.sdot.d-q{--x:var(--quiet)}
+.sdot{width:var(--kind-dot)!important;height:var(--kind-dot)!important;border-radius:50%!important;flex:0 0 var(--kind-dot)!important;background:var(--x,var(--quiet))!important}
+.sdot.d-q{--x:var(--kind-class)} /* B-540: no grey dot; a row with no kind is a class */
 .side .lab-side{display:none!important}
 @media (min-width:600px){
   .side .tabs .tab .lab-bar{display:none!important}

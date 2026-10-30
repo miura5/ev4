@@ -84,7 +84,7 @@
       };
       const item = it => {
         const due = it.tag === 'GRADED' ? gradedDue(it) : null;
-        const dot = (it.tag !== 'GRADED' && BADGE[it.tag] && BADGE[it.tag][1]) || 'd-q'; // B-361: Graded's dot is grey
+        const dot = 'k-' + (DS.kind(BADGE[it.tag] ? BADGE[it.tag][0] : catOf(it) === 'study' ? 'Study' : 'Class') || 'class'); // B-540
         const sel = ui.tab === 'today' && ui.taskSel === it.id && !ui.taskGone;
         const b = row(
           dot,
@@ -110,7 +110,7 @@
       t.replaceChildren(
         ...(open.length || own ? [head] : []),
         ...open.slice(0, SIDE_MAX).map(item),
-        ...(own ? [row(BADGE.REVIEW ? BADGE.REVIEW[1] : 'd-q', 'Weak spots · ' + nR + ' to review', '', toWeak)] : []),
+        ...(own ? [row('k-review', 'Weak spots · ' + nR + ' to review', '', toWeak)] : []),
         ...(more > 0 ? [row(null, more + ' more in Today', '', () => showTab('today'), 'si more')] : [])
       );
       t.hidden = !open.length && !own;
