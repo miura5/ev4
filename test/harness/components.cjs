@@ -34,8 +34,9 @@ function lchOf([r, g, b]) {
   if (H < 0) H += 360;
   return { L, C: Math.hypot(a, bb), H };
 }
-/** D-269's yellow in one theme, with the rounding an 8-bit hex allows. */
-const YELLOW = { light: { L: 52, C: 54, H: 82 }, dark: { L: 72, C: 48, H: 82 } };
+/** Coded yellow in one theme, with the rounding an 8-bit hex allows: r4.css's --warn (B-539, D-392 supersedes D-269's
+ *  L52 C54 / L72 C48 at hue 82). */
+const YELLOW = { light: { L: 54.7, C: 59.3, H: 78.1 }, dark: { L: 71, C: 59.9, H: 79.2 } };
 function judgeYellow(color, mode) {
   const c = rgb(color),
     want = YELLOW[mode];
@@ -44,7 +45,7 @@ function judgeYellow(color, mode) {
   const ok = Math.abs(got.L - want.L) <= 0.6 && Math.abs(got.C - want.C) <= 1 && Math.abs(got.H - want.H) <= 1;
   return {
     ok,
-    detail: `${mode}: ${color} reads L${got.L.toFixed(1)} C${got.C.toFixed(1)} H${got.H.toFixed(1)}; D-269 says L${want.L} C${want.C} H${want.H}`,
+    detail: `${mode}: ${color} reads L${got.L.toFixed(1)} C${got.C.toFixed(1)} H${got.H.toFixed(1)}; r4 says L${want.L} C${want.C} H${want.H}`,
   };
 }
 
@@ -283,7 +284,7 @@ if (require.main === module) {
           got.lines.join(', ')
         );
         const y = judgeYellow(got.yellow, mode);
-        ok(`${tag} D-285: yellow is D-269's`, y.ok, y.detail);
+        ok(`${tag} D-285: yellow is r4's --warn`, y.ok, y.detail);
         ok(
           `${tag} the yellow badge's dot is that yellow`,
           JSON.stringify(rgb(got.yellowDot)) === JSON.stringify(rgb(got.yellow)),

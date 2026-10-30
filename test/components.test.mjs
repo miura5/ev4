@@ -11,13 +11,13 @@ const require = createRequire(import.meta.url);
 const { judgeYellow, lchOf } = require('./harness/components.cjs');
 const theme = require('./harness/contrast.cjs').load(); // page/theme.js as the shell runs it
 
-test('B-285: D-285 reads coded yellow back from its colour: the generator gives D-269 in both themes; off by a step fails', () => {
+test('B-285: D-285 reads coded yellow back from its colour: the theme gives r4 --warn in both themes; off by a step fails', () => {
   for (const mode of ['light', 'dark']) {
     const y = theme.genTheme(mode, 60).sem.yellow;
     assert.equal(judgeYellow(y, mode).ok, true, judgeYellow(y, mode).detail);
   }
-  assert.equal(judgeYellow(theme.lch2hex(58, 54, 82), 'light').ok, false, 'the demo-like lighter yellow fails');
-  assert.equal(judgeYellow(theme.lch2hex(52, 54, 90), 'light').ok, false, 'another hue fails');
+  assert.equal(judgeYellow(theme.lch2hex(60, 59, 78), 'light').ok, false, 'a lighter yellow fails');
+  assert.equal(judgeYellow(theme.lch2hex(54.7, 59.3, 90), 'light').ok, false, 'another hue fails');
   const w = lchOf([255, 255, 255]);
   assert.ok(Math.abs(w.L - 100) < 0.1 && w.C < 0.5, 'white is L100 C0');
 });

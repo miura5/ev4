@@ -14,13 +14,16 @@
   --fs-1:calc(12px * var(--ts)); /* meta, badges, eyebrow, times */
   --fs-2:calc(13px * var(--ts)); /* secondary lines, controls */
   --fs-3:calc(14px * var(--ts)); /* buttons, tabs, dense UI */
-  --fs-4:calc(16px * var(--ts)); /* body, row titles, reading */
-  --fs-5:calc(18px * var(--ts)); /* lead line */
-  --fs-6:calc(22px * var(--ts)); /* card title, flashcard face */
-  --fs-7:calc(30px * var(--ts)); /* page title */
+  --fs-4:calc(15px * var(--ts)); /* titles, stats and the budget (at 600) */
+  --fs-5:calc(18px * var(--ts)); /* heading: the top of the scale */
+  /* B-543 (D-392, r4.css): the scale is 12 / 13 / 14 / 15 / 18 with no display numbers; the old display sizes fold
+     into the heading until their readers move. */
+  --fs-6:var(--fs-5);
+  --fs-7:var(--fs-5);
   --fw-regular:400; --fw-medium:500; --fw-semibold:600;
   --lh-tight:1.2; --lh-ui:1.4; --lh-read:1.5;
-  --track-display:-.02em; /* 22px and up; smaller text keeps 0 */
+  --track-display:-.01em; /* the 18px heading (r4.css .t-h); smaller text keeps 0 */
+  --tnum:tabular-nums; /* times and counts */
 
   /* Space: a 4px grid, with 2 and 6 kept for density. */
   --sp-0_5:2px; --sp-1:4px; --sp-1_5:6px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
@@ -44,27 +47,45 @@
   --elev-2:var(--ring),var(--shadow-2);      /* popover, menu */
   --elev-3:var(--ring),var(--shadow-3);      /* sheet, dialog */
 
-  /* Motion (D-379; folds per D-271: open 280ms, close 160ms; nothing over 450ms but her own gestures). */
-  --dur-1:80ms;  /* press feedback */
-  --dur-2:140ms; /* hover and colour changes */
-  --dur-3:160ms; /* fold close, exits */
-  --dur-4:280ms; /* fold open, sheet and dialog enter */
-  --dur-5:420ms; /* her presence, the success pulse */
+  /* Motion (B-547, D-394, the round-4 motion spec in docs/design/ui-polish/after/motion-*.html): view switches stay
+     instant; press is a fill change, never a scale; folds by height and opacity; menus, popovers and toasts fade and
+     rise. */
+  --dur-1:80ms;  /* press in: the fill steps to --sel */
+  --dur-2:140ms; /* press out, hover and colour changes */
+  --dur-3:180ms; /* fold close, exits */
+  --dur-4:240ms; /* fold open (grid rows 0fr to 1fr) */
+  --dur-5:420ms; /* her presence, the tick's ring */
+  --dur-press-in:var(--dur-1); --dur-press-out:var(--dur-2);
+  --dur-fold-open:var(--dur-4); --dur-fold-fade:200ms; --dur-fold-close:var(--dur-3);
+  --dur-pop-in:160ms; --dur-pop-out:120ms; --rise-pop:4px;       /* menu, popover */
+  --dur-toast:200ms; --rise-toast:6px;                            /* toast */
+  --dur-window-in:260ms; --dur-window-out:160ms; --rise-window:8px; /* E.V.'s window on the desk */
+  --dur-row:200ms; --stagger-row:40ms;                            /* new rows fade and grow to the row height */
+  --dur-tick:160ms; --dur-ring:var(--dur-5); --hold-tick:500ms;   /* tick fill, its 7px ring, the row's hold */
   --ease-out:cubic-bezier(.2,.7,.2,1); /* entering (today's --ease) */
   --ease-in:cubic-bezier(.4,0,1,1);    /* exits */
-  --ease-std:cubic-bezier(.2,0,0,1);   /* moves */
+  --ease-std:cubic-bezier(.2,0,0,1);   /* moves, presses and folds (r4.css) */
 
   /* Density (D-372): a row is 32px with a mouse and 44px on the phone or a touch screen; every tap target is 44px. */
   --line-h:32px; --tap:44px; --pad-card:var(--sp-4);
 
   /* Z: today's stack, by role. Dialogs and popovers on the browser's top layer will need none (D-375). */
   --z-raised:1; --z-panel:5; --z-sticky:8; --z-toast:20; --z-overlay:30; --z-float:35; --z-banner:50;
+
+  /* Kind palette (B-540, D-395, r4.css .k-*): badge and sidebar-dot colours by kind, from page/theme.js's coded
+     colours at one lightness and chroma per mode; never black, white or grey text colour. Badge text is the kind mixed
+     70% into the text (r4.css round 5). */
+  --kind-learn:var(--info); --kind-practice:var(--violet); --kind-review:var(--teal); --kind-graded:var(--bad);
+  --kind-skills:var(--warn); --kind-note:var(--slate); --kind-class:var(--ok); --kind-reading:var(--info);
+  --kind-quiz:var(--teal); --kind-session:var(--violet); --kind-workout:var(--ok); --kind-flash:var(--violet);
+  --kind-dot:7px; --kind-text-mix:70%;
 }
 /* Density switches on the phone's width (today's rows, 44px under 600px) or a coarse pointer, whichever holds. */
 @media (max-width:599px),(pointer:coarse){:root{--line-h:44px;--pad-card:var(--sp-3)}}
+@media (max-width:599px){:root{--kind-dot:6px}}
 /* One reduced-motion switch zeroes every duration: the system setting, or E.V.'s own Motion setting. */
-@media (prefers-reduced-motion:reduce){:root{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms}}
-:root[data-motion="reduce"]{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms}
+@media (prefers-reduced-motion:reduce){:root{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms}}
+:root[data-motion="reduce"]{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms}
 /* Alias retirement map: what each legacy name and raw value retires into, swept at cleanup (P-15), never by search
    and replace before its view moves.
    Colour aliases (page/styles.css :root):

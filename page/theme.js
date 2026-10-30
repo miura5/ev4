@@ -1,5 +1,6 @@
-/* B-271 (D-268, D-269, D-273): every colour on the page, generated in LCH from a warm-grey base, her Ember accent and a
-   contrast setting (30, 60 or 100; default 60). Ported as written from the Ember LCH theme canvas's Shipped.dc.html
+/* B-271 (D-268, D-269, D-273): every colour on the page, generated in LCH from a base, her Ember accent and a
+   contrast setting (30, 60 or 100; default 60). B-539 (D-392): the default is round 4's neutral theme, r4.css's values
+   word for word at contrast 60 (R4 below); a tuner's other recipe runs the generator. Ported as written from the Ember LCH theme canvas's Shipped.dc.html
    (lch2hex, genTheme, mixHex, the Ember variant and SEM); no hex token is stored anywhere else. The build inlines this
    file into the shell's head (index.src.html, THEME), so the page paints its theme before styles.css arrives; System's
    Contrast control runs apply() again. Light and dark stay CSS: the system's scheme, or the stored toggle (D-211). */
@@ -91,12 +92,69 @@
       [24, 60, 0.22],
     ],
   };
-  // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast.
-  var HER = { light: ['#b5530f', '#a8402f'], dark: ['#f2a35e', '#f08a78'] };
+  // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast (r4.css --av1, --av2).
+  var HER = { light: ['#b5530f', '#a8402f'], dark: ['#e0743a', '#cf5a45'] };
+  // B-539, B-540 (D-392, D-395): round 4's neutral themes, word for word from docs/design/ui-polish/r4.css, made with
+  // the recipe base {h:270, c:0.6}. They are contrast 60; 30 and 100 step the surfaces and the quiet text from these.
+  // --faint is the one value the floors move: r4's #8b8b92 (light) and #7d7d86 (dark) read under D-273's 4.6:1, so it
+  // darkens (lightens in dark) from r4's value only as far as the floor needs. Coded colours: r4's --ok, --warn, --bad,
+  // --info, --violet, --teal and --slate; the kind palette (tokens.css --kind-*) is drawn from them.
+  var R4 = {
+    light: {
+      chrome: '#f3f3f4',
+      bg: '#fbfbfb',
+      surface: '#ffffff',
+      raise: '#f4f4f5',
+      hover: '#efeff0',
+      sel: '#e9e9eb',
+      line: '#ececee',
+      line2: '#dedee1',
+      text: '#1c1c1f',
+      quiet: '#5f5f66',
+      faint: '#8b8b92',
+      her: '#b6541d',
+      onHer: '#fff',
+      ok: '#2c9a5a',
+      warn: '#a87a0c',
+      bad: '#cc4b45',
+      info: '#2f6fde',
+      violet: '#7c5cdb',
+      teal: '#1f8f8a',
+      slate: '#5a6b86',
+      wash: '12%',
+      shadowPop: '0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)',
+    },
+    dark: {
+      chrome: '#101012',
+      bg: '#151517',
+      surface: '#1b1b1e',
+      raise: '#202024',
+      hover: '#242428',
+      sel: '#2a2a2f',
+      line: '#232327',
+      line2: '#303036',
+      text: '#ececef',
+      quiet: '#a3a3ab',
+      faint: '#7d7d86',
+      her: '#e0743a',
+      onHer: '#1a0d05',
+      ok: '#4cc27e',
+      warn: '#d6a53c',
+      bad: '#ec6a62',
+      info: '#6b9cf5',
+      violet: '#a189f2',
+      teal: '#45bdb6',
+      slate: '#93a3be',
+      wash: '18%',
+      shadowPop: '0 6px 24px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05)',
+    },
+  };
+  var NEUTRAL = { h: 270, c: 0.6 };
 
   // B-506: the tuner's recipe, the inputs besides mode and contrast: the base's hue and chroma and her accent's.
   // Ember's own (D-268) when none is given; her second face follows her accent by the same turn and strength.
-  var RECIPE = { base: { h: EMBER.base.h, c: EMBER.base.c }, accent: { h: EMBER.acc.h, c: EMBER.acc.c } };
+  // B-539: the base is round 4's neutral (D-392); a tuner's other base or accent still runs the LCH generator.
+  var RECIPE = { base: { h: NEUTRAL.h, c: NEUTRAL.c }, accent: { h: EMBER.acc.h, c: EMBER.acc.c } };
   var num = function (v, lo, hi, d) {
     v = Number(v);
     return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d;
@@ -110,7 +168,64 @@
       accent: { h: num(a.h, 0, 360, RECIPE.accent.h), c: num(a.c, 0, 100, RECIPE.accent.c) },
     };
   };
-  /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100, and the tuner's recipe (Ember when none). */
+  var isR4 = function (R) {
+    return R.base.h === NEUTRAL.h && R.base.c === NEUTRAL.c && R.accent.h === EMBER.acc.h && R.accent.c === EMBER.acc.c;
+  };
+  // Step x toward (or past) its anchor from a ground by t; t 1 is the anchor itself.
+  var step = function (from, x, t) {
+    var a = chan(from),
+      b = chan(x);
+    return (
+      '#' +
+      a
+        .map(function (v, i) {
+          return Math.max(0, Math.min(255, Math.round(v + (b[i] - v) * t)))
+            .toString(16)
+            .padStart(2, '0');
+        })
+        .join('')
+    );
+  };
+  // Move a text colour toward the text until it holds the floor on every ground.
+  var hold = function (x, text, grounds, floor) {
+    for (var i = 0; i < 40; i++) {
+      var ok = grounds.every(function (g) {
+        return cratio(x, g) >= floor;
+      });
+      if (ok) return x;
+      x = mixHex(x, text, 0.05);
+    }
+    return x;
+  };
+  /** Round 4's theme (B-539): r4.css at contrast 60, the neutral steps spread or drawn in by contrast. */
+  var r4Theme = function (mode, k, accent2) {
+    var A = R4[mode],
+      dark = mode === 'dark',
+      s = k / 0.6,
+      q = 1.4 - (2 * k) / 3,
+      T = { mode: dark ? 'dark' : 'light', k: k, bg: A.bg, surface: A.surface, text: A.text };
+    ['chrome', 'raise', 'hover', 'sel', 'line', 'line2'].forEach(function (n) {
+      T[n] = k === 0.6 ? A[n] : step(A.bg, A[n], s);
+    });
+    var grounds = [T.bg, T.chrome, T.surface, T.hover, T.raise, T.sel];
+    T.quiet = hold(k === 0.6 ? A.quiet : step(A.text, A.quiet, q), A.text, grounds, 4.5);
+    T.faint = hold(k === 0.6 ? A.faint : step(A.text, A.faint, q), A.text, [T.chrome, T.surface], 4.6);
+    T.accent = A.her;
+    T.accent2 = accent2;
+    T.onAccent = A.onHer === '#fff' ? '#ffffff' : A.onHer;
+    T.sem = { green: A.ok, yellow: A.warn, red: A.bad, blue: A.info, violet: A.violet, teal: A.teal, slate: A.slate };
+    T.wash = A.wash;
+    T.shadowPop = A.shadowPop;
+    T.tintMix = dark ? 0.16 : 0.11;
+    T.tint = function (hex) {
+      return mixHex(T.surface, hex, T.tintMix);
+    };
+    T.tintLine = function (hex) {
+      return mixHex(T.line2, hex, 0.35);
+    };
+    return T;
+  };
+  /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100, and the tuner's recipe (round 4 when none). */
   var genTheme = function (mode, contrast, recipe) {
     var R = recipeOf(recipe),
       V = {
@@ -122,6 +237,12 @@
       k = Math.max(0.3, Math.min(1, (contrast || 60) / 100)),
       B = V.base,
       dark = mode === 'dark';
+    if (isR4(R))
+      return r4Theme(
+        dark ? 'dark' : 'light',
+        k,
+        dark ? lch2hex(68, V.acc2.c * 0.9, V.acc2.h) : lch2hex(47, V.acc2.c, V.acc2.h)
+      );
     var n = function (L, cm) {
         return lch2hex(L, B.c * (cm == null ? 1 : cm), B.h);
       },
@@ -164,8 +285,14 @@
       T.semC = 48;
       T.tintMix = 0.16;
     }
+    T.raise = mixHex(T.bg, T.hover, 0.7);
+    T.sel = mixHex(T.hover, T.line, 0.6);
+    T.wash = dark ? '18%' : '12%';
+    T.shadowPop = R4[T.mode].shadowPop;
     T.sem = {};
     for (var s in SEM) T.sem[s] = lch2hex(T.semL, T.semC, SEM[s]);
+    T.sem.teal = lch2hex(T.semL, T.semC * 0.8, 195);
+    T.sem.slate = lch2hex(T.semL, T.semC * 0.35, 265);
     T.tint = function (hex) {
       return mixHex(T.surface, hex, T.tintMix);
     };
@@ -182,7 +309,7 @@
     return 'rgba(' + rgb(hex) + ',' + a + ')';
   };
   // B-505: Proprietary's names for the coded colours (D-269), from the generator's hues.
-  var CODED = { ok: 'green', warn: 'yellow', bad: 'red', info: 'blue', violet: 'violet' };
+  var CODED = { ok: 'green', warn: 'yellow', bad: 'red', info: 'blue', violet: 'violet', teal: 'teal', slate: 'slate' };
   /** The page's custom properties for one theme. The generator's names, then the names styles.css already uses, each
    *  one of them (her accent is --her until B-275 sweeps the old --accent; the meanings follow D-269's hues). */
   var vars = function (T) {
@@ -191,12 +318,19 @@
     var g = T.sem,
       ink = T.onAccent,
       L = 13;
-    while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, EMBER.base.c * 1.5, EMBER.base.h);
+    while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, NEUTRAL.c * 1.5, NEUTRAL.h);
     // B-505 (D-372): Proprietary's generated tokens, per mode and contrast: --focus (the text colour, as every focus
     // ring draws today), the four washes of the text colour, the 1 px --ring on --line2, the three lifts, and the
     // coded colours under their Proprietary names with a wash each. Legacy's --warn, --bad, --info and --violet (a grey
     // alias) still win over these until cleanup sweeps them (D-373: the theme sits in the tokens layer).
-    var ds = { '--focus': T.text, '--ring': '0 0 0 1px ' + T.line2 };
+    var ds = {
+      '--focus': T.text,
+      '--ring': '0 0 0 1px ' + T.line2,
+      '--raise': T.raise,
+      '--sel': T.sel,
+      '--wash': T.wash,
+      '--shadow-pop': T.shadowPop,
+    };
     WASH.forEach(function (a, i) {
       ds['--wash-' + (i + 1)] = rgba(T.text, a);
     });
@@ -345,6 +479,7 @@
     SEM: SEM,
     CODED: CODED,
     RECIPE: RECIPE,
+    R4: R4,
     recipeOf: recipeOf,
     LAYERS: LAYERS,
   };

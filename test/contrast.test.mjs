@@ -12,46 +12,30 @@ const C = createRequire(import.meta.url)('./harness/contrast.cjs');
 const T = C.load();
 const css = sourceStyles(ROOT);
 
-test("B-271: at contrast 60 the generator gives hand-off 1's token and colour tables to the hex", () => {
-  const want = {
-    light: {
-      bg: '#fef9f4',
-      chrome: '#f3eee9',
-      surface: '#fffefc',
-      hover: '#f0ebe6',
-      line: '#e2ded9',
-      line2: '#cfcbc6',
-      text: '#26211b',
-      quiet: '#514b45',
-      faint: '#706963',
-      accent: '#b6541d',
-      accent2: '#bc4741',
-      onAccent: '#ffffff',
-    },
-    dark: {
-      bg: '#1f1c18',
-      chrome: '#1a1713',
-      surface: '#282521',
-      hover: '#2c2824',
-      line: '#34302c',
-      line2: '#433f3b',
-      text: '#f1ede9',
-      quiet: '#bdbab6',
-      faint: '#918d8a',
-      accent: '#f4905b',
-      accent2: '#f48478',
-      onAccent: '#1c1915',
-    },
-  };
-  const coded = {
-    light: { green: '#208e43', yellow: '#997613', red: '#ca5554', blue: '#0382d9', violet: '#916ac9' },
-    dark: { green: '#6bc37b', yellow: '#cfab57', red: '#ff908a', blue: '#72b6ff', violet: '#c7a0f9' },
-  };
+test("B-539: at contrast 60 the theme is r4.css's neutral round-4 tables to the hex (faint held to D-273's floor)", () => {
+  const R4 = T.R4;
   for (const mode of ['light', 'dark']) {
-    const t = T.genTheme(mode, 60);
-    for (const [k, v] of Object.entries(want[mode])) assert.equal(t[k], v, `${mode} ${k}`);
-    assert.deepEqual({ ...t.sem }, coded[mode], `${mode} coded colours`);
+    const t = T.genTheme(mode, 60),
+      v = T.vars(t),
+      A = R4[mode];
+    for (const k of ['chrome', 'bg', 'surface', 'raise', 'hover', 'sel', 'line', 'line2', 'text', 'quiet'])
+      assert.equal(t[k], A[k], `${mode} ${k}`);
+    assert.equal(t.accent, A.her, `${mode} her`);
+    for (const [n, k] of Object.entries({
+      ok: 'green',
+      warn: 'yellow',
+      bad: 'red',
+      info: 'blue',
+      violet: 'violet',
+      teal: 'teal',
+      slate: 'slate',
+    }))
+      assert.equal(v['--' + n], A[n], `${mode} --${n}`);
+    assert.ok(C.ratio(C.rgb(t.faint), C.rgb(t.chrome)) >= 4.6, `${mode} faint holds 4.6 on chrome`);
   }
+  assert.equal(T.R4.light.chrome, '#f3f3f4');
+  assert.equal(T.R4.dark.bg, '#151517');
+  assert.deepEqual(T.RECIPE.base, { h: 270, c: 0.6 });
 });
 
 test('B-271: every contrast in both modes holds D-273 (text 4.5, faint 4.6, her ink 4.5, coded 3:1 on surface)', () => {
@@ -94,8 +78,8 @@ test('B-271: both modes set the same tokens; the system scheme rules unless the 
     light = block(':root[data-theme="light"]');
   assert.deepEqual(Object.keys(dark).sort(), Object.keys(light).sort());
   assert.deepEqual(media, light, 'the media block and the stored light theme are the same values');
-  assert.equal(dark['--bg'], '#1f1c18');
-  assert.equal(light['--bg'], '#fef9f4');
+  assert.equal(dark['--bg'], '#151517');
+  assert.equal(light['--bg'], '#fbfbfb');
   const shell = flatSource('page/index.src.html');
   assert.match(shell, /localStorage\.getItem\('ev\.theme'\)/, 'the shell reads the stored toggle before first paint');
   assert.match(shell, /<script>\{\{THEME\}\}<\/script>/, 'the shell runs the generator in its head');

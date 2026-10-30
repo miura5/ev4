@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const TEXT_GROUNDS = ['--bg', '--chrome', '--surface', '--hover'];
+const TEXT_GROUNDS = ['--bg', '--chrome', '--surface', '--hover', '--raise', '--sel'];
 const TEXT = ['--text', '--quiet'];
 const FAINT_GROUNDS = ['--chrome', '--surface'];
 const CODED = ['--sem-green', '--sem-yellow', '--sem-red', '--sem-blue', '--sem-violet'];
