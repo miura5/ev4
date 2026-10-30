@@ -72,6 +72,7 @@
   /* B-515 (lane 1): her window's panes (the avatar, the hero and the side pane) move together; the typing dots pulse
      and each dot starts a stagger after the one before. */
   --dur-pane:280ms; --dur-pulse:1.1s; --stagger-dot:180ms;
+  --dur-rise:300ms; --dur-rise-toast:350ms; --dur-bar:200ms; --dur-chev:250ms; --dur-chev-open:280ms; /* B-515 lane 1 */
   --caret-w:2px; --caret-color:var(--her); --caret-fade:560ms;
   --ease-out:cubic-bezier(.2,.7,.2,1); /* entering (today's --ease) */
   --ease-in:cubic-bezier(.4,0,1,1);    /* exits */
@@ -101,8 +102,8 @@
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--wash:12%;--shadow-pop:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)}}
 :root[data-theme="light"]{--wash:12%;--shadow-pop:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)}
 /* One reduced-motion switch zeroes every duration: the system setting, or E.V.'s own Motion setting. */
-@media (prefers-reduced-motion:reduce){:root{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms;--caret-fade:0.01ms;--dur-pane:0.01ms;--dur-pulse:0.01ms;--stagger-dot:0ms}}
-:root[data-motion="reduce"]{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms;--caret-fade:0.01ms;--dur-pane:0.01ms;--dur-pulse:0.01ms;--stagger-dot:0ms}
+@media (prefers-reduced-motion:reduce){:root{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms;--caret-fade:0.01ms;--dur-pane:0.01ms;--dur-pulse:0.01ms;--stagger-dot:0ms;--dur-rise:0.01ms;--dur-rise-toast:0.01ms;--dur-bar:0.01ms;--dur-chev:0.01ms;--dur-chev-open:0.01ms}}
+:root[data-motion="reduce"]{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms;--caret-fade:0.01ms;--dur-pane:0.01ms;--dur-pulse:0.01ms;--stagger-dot:0ms;--dur-rise:0.01ms;--dur-rise-toast:0.01ms;--dur-bar:0.01ms;--dur-chev:0.01ms;--dur-chev-open:0.01ms}
 /* Alias retirement map: what each legacy name and raw value retires into, swept at cleanup (P-15), never by search
    and replace before its view moves.
    Colour aliases (page/styles.css :root):

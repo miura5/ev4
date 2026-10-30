@@ -35,3 +35,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 :where(button,input,select,textarea):disabled{opacity:.5;cursor:default}
 /* B-515 D0: icon size by default, today's .ico and button.btn svg (16px line icons). */
 :where(svg.ico,button.btn svg){width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* B-515 lane 1: moved from the carry: the screen-reader-only text, the focus ring, the rise, and every control's touch
+   action. The cursor rules stay in the carry: they still decide the cursor over the components' own. */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rise{animation:rise var(--dur-rise) var(--ease) both}
+a,button,input,select,textarea,label,summary,[role="tab"],[role="button"],[role="menuitem"]{touch-action:manipulation}

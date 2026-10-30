@@ -12,3 +12,12 @@
 :where([data-ui='fold']) > .fold-line[aria-expanded='true'] + .fold-body{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows var(--dur-fold-open) var(--ease-std),opacity var(--dur-fold-fade) var(--ease-out),visibility 0s}
 :where([data-ui='fold']) > .fold-body > .fold-in{min-height:0;overflow:hidden}
 @media (max-width:599px){[data-ui='fold'] > .fold-line{display:flex!important;align-items:center!important;min-height:var(--tap)!important;box-sizing:border-box!important}}
+/* B-515 lane 1: moved from the carry: the fold line's focus, card padding, caret and chevron. */
+.wk-line:focus-visible,.fold-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
+.fold-card{padding-top:10px;padding-bottom:10px}
+.fold-card .fold-line{color:var(--ink)}
+.fold-line::after{content:' ›'}
+.fold-line[aria-expanded=true]::after{content:' ⌄'}
+.chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform var(--dur-chev) var(--ease)}
+.fold-line.flat::after{content:''}
+.prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:var(--dur-chev-open)}

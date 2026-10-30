@@ -16,3 +16,5 @@
 .card-head{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
 .ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:12px;background:var(--surface)}
 .ui-card>h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
+/* B-515 lane 1: moved from the carry: a card scrolled to stops under the top bar. */
+.panel .card{scroll-margin-top:calc(var(--top-h) + 12px)}

@@ -28,3 +28,10 @@
 .prop[role=button]{cursor:pointer;border-radius:var(--r-sm);transition:background var(--dur-2) var(--ease-out)}
 .prop[role=button]:hover{background:var(--hover)}
 .prop[role=button]:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+/* B-515 lane 1: moved from the carry: the readiness .meter, the .progress bar and today's .pbar. */
+.meter{height:8px;border-radius:var(--r-xs);background:rgba(var(--tint),.08);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--do);border-radius:var(--r-xs)}
+.progress{height:4px;border-radius:var(--r-hair);background:rgba(var(--tint),.08);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--do);transition:width var(--dur-bar) ease}
+.pbar{display:flex;height:6px;border-radius:3px;background:var(--hover);overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--x,var(--sem-green))}

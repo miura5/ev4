@@ -12,3 +12,5 @@
 @media (max-width:599px){
   .toast,body.on-ev .toast{top:calc(var(--mh-h) + var(--sp-1) + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:var(--sp-3)!important;right:var(--sp-3)!important;transform:none!important;max-width:none!important;justify-content:space-between;border-radius:var(--r-md)!important;box-shadow:none!important}
 }
+/* B-515 lane 1: moved from the carry: the toast's place, look and entrance. */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-h) + 18px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);font-weight:600;font-size:var(--fs-3);padding:10px 18px;border-radius:var(--r-pill);max-width:calc(100% - 32px);z-index:20;box-shadow:var(--shadow-toast);animation:rise var(--dur-rise-toast) var(--ease) both}

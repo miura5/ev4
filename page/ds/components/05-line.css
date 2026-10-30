@@ -60,3 +60,16 @@
   .li{height:auto;min-height:52px;padding:0 12px}
   .li .hov{visibility:visible}
 }
+/* B-515 lane 1: moved from the carry: the kit's list, row, meta, week line, empty line and actions. */
+.big{font-size:var(--fs-5);font-weight:600;line-height:1.25;margin:0}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.row .grow{flex:1;min-width:0}
+.row.done .title{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(var(--tint),.2)}
+.meta{font-size:var(--fs-2);color:var(--soft);margin-top:2px}
+.week-item{align-items:center;padding:4px 0;min-height:0}
+.ti-t,.wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.week-item .when{padding-top:0}
+.when{font:500 var(--fs-1) var(--sans);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
+.empty{color:var(--soft);font-size:var(--fs-4);margin:0}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.actions .grow{flex:1;min-width:0}

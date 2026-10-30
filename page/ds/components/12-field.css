@@ -36,3 +36,12 @@
   border:0;transform:none;transition:translate var(--dur-2) var(--ease-std)}
 .entry[data-kind=switch] .entry-c:checked + .entry-mark{background:var(--text)}
 .entry[data-kind=switch] .entry-c:checked + .entry-mark::after{width:14px;height:14px;border:0;background:var(--bg);transform:none;translate:14px 0}
+/* B-515 lane 1: moved from the carry: the toolbar and the kit's .field. */
+.toolbar{display:flex;align-items:center;gap:8px;min-height:48px;padding:8px 16px;border-bottom:var(--hairline) solid var(--line);flex-wrap:wrap}
+.toolbar .sp{flex:1}
+.field{display:flex;flex-direction:row;align-items:center;gap:8px;min-height:50px;padding:0 9px 0 16px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--text)}
+.field :is(input,textarea){flex:1;min-width:0;min-height:0;height:auto;margin:0;padding:14px 0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 var(--fs-3) var(--sans);resize:none;outline:none}
+.field ::placeholder{color:var(--faint)}
+@media(max-width:599px){.toolbar{padding:8px 12px}}
+@media(max-width:599px){.field{min-height:56px;padding:0 6px 0 16px}}

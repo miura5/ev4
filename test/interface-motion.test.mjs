@@ -48,7 +48,13 @@ test('B-225 (D-271): a view switch is a cut; folds open in 0.28 s and close in 0
   assert.ok(hero && Number(hero[1]) === 0.28, "her stage's fold opens in 0.28 s: " + (hero && hero[1]));
   assert.match(css, /body\.captions\.her-folded \.hero\{transition-duration:\.16s\}/, 'and closes in 0.16 s');
   assert.match(css, /\.chev,\.prep-row \.chev\{transition-duration:\.16s\}/, 'a chevron closes in 0.16 s');
-  assert.match(css, /\[aria-expanded="true"\] \.chev[^{]*\{transition-duration:\.28s\}/, 'and opens in 0.28 s');
+  // B-515 lane 1: the open chevron's time is the token --dur-chev-open, 280 ms
+  assert.match(
+    css,
+    /\[aria-expanded="true"\] \.chev[^{]*\{transition-duration:var\(--dur-chev-open\)\}/,
+    'and opens in 0.28 s'
+  );
+  assert.match(css, /--dur-chev-open:280ms/, 'the token is 0.28 s');
 });
 
 test('B-216 (B-224): reduced motion stops every interface move and keeps the end states', () => {
