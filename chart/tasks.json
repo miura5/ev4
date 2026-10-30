@@ -11399,7 +11399,7 @@
   "milestone": "Tooling",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Matt OK'd this guarded-path change (tools/hooks.mjs, CLAUDE.md hook line) in the chat on Oct 30. Built in 10947bb: before 6m17s full suite, after 59s on a dry run with a changed file.",
   "commit": null,
   "source": "instructions audit Oct 30 (Stop hook)",
   "words": "The Stop hook should run only the format test and the unit tests for changed files, with a short cap, instead of every test file (up to 300 s in every builder worktree, against D-408).",
