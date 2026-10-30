@@ -74,7 +74,7 @@ read the results.
 | The task touches | Proof |
 | --- | --- |
 | Anything | `npm test` GREEN with new tests for the change; read the total (`# pass`) |
-| The page (page/) | `npm run smoke` GREEN; the harness for each view touched at 390 and 1280; screenshots looked at |
+| The page (page/) | `npm run smoke` GREEN; the harness for each view touched at 1280; screenshots looked at, desktop only. The phone is frozen at "it works" (D-407): no phone layout or polish work, no 390 look passes or screenshots; the 390 smoke and any 390 checks already in a harness still run and must pass |
 | pwa/ | `npm run smoke:pwa` GREEN; `npm run test:run-api` when the run API is touched |
 | Proprietary (page/ds, 01-ui-*) | the Gallery harness, and `node tools/pixdiff.cjs` showing nothing moved that shouldn't |
 | A model call | the tests above; the staging run is the build manager's |
