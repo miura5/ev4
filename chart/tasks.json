@@ -10152,12 +10152,12 @@
   "title": "Calm type scale: 12, 13, 14, 15 and 18 px at weights 400, 500 and 600; stats and the budget at 15 / 600; tabular numerals on times and counts",
   "dod": "The token audit shows no view size above 18 px",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Lane 4 (ca4f404): CI npm test green, smoke 31, components 58, look 218.",
+  "commit": "ca4f404",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
