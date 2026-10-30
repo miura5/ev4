@@ -448,8 +448,8 @@ async function tickAll(page) {
       await page.waitForTimeout(400);
       const r = await page.evaluate(() => {
         const box = e => e && e.getBoundingClientRect();
-        const rows = [...document.querySelectorAll('#today-list .ti-list > li.today-item')];
-        const byText = t => rows.find(li => li.querySelector('.ti-t').textContent.includes(t));
+        const rows = [...document.querySelectorAll('#today-list .ti-list > [data-ui=line]:not([data-key=cards])')];
+        const byText = t => rows.find(li => li.querySelector('[data-part=title]').textContent.includes(t));
         const badge = li => li && li.querySelector('.badge');
         return {
           heights: rows.map(li => Math.round(box(li).height)),
@@ -698,7 +698,7 @@ async function tickAll(page) {
               Object.values(x[3].added || {}).some(a => /^Read chapter 39/.test(a.text) && a.minutes === 45),
               !!(x[3].skipped || {})['p291-long'],
             ]),
-            onList: [...document.querySelectorAll('#today-list .ti-list .ti-t')].some(t =>
+            onList: [...document.querySelectorAll('#today-list .ti-list [data-part=title]')].some(t =>
               /^Read chapter 39/.test(t.textContent)
             ),
             line:
@@ -731,7 +731,7 @@ async function tickAll(page) {
               Object.values(x[3].added || {}).some(a => /^Read chapter 39/.test(a.text)),
               !!(x[3].skipped || {})['p291-long'],
             ]),
-            onList: [...document.querySelectorAll('#today-list .ti-list .ti-t')].some(t =>
+            onList: [...document.querySelectorAll('#today-list .ti-list [data-part=title]')].some(t =>
               /^Read chapter 39/.test(t.textContent)
             ),
           };
@@ -848,7 +848,7 @@ async function tickAll(page) {
         await page.screenshot({ path: `${shots}/today-budget-${name}-${w}-${scheme}.png` });
         // tick the 45-minute reading: its minutes move from left to done and the bar keeps its length
         await page
-          .locator('#today-list .ti-list li.today-item', { hasText: 'Read chapter 39' })
+          .locator('#today-list .ti-list [data-ui=line]:not([data-key=cards])', { hasText: 'Read chapter 39' })
           .locator('input.tick')
           .click();
         await page.waitForTimeout(400);
@@ -973,7 +973,7 @@ async function tickAll(page) {
               badges: [...li.querySelectorAll('.pmark')].map(label),
               buttons: [...li.querySelectorAll('button.btn')].map(label),
               h: Math.round(li.getBoundingClientRect().height),
-              whole: (t => t && t.scrollWidth <= t.clientWidth + 1)(li.querySelector('.ti-t')),
+              whole: (t => t && t.scrollWidth <= t.clientWidth + 1)(li.querySelector('[data-part=title]')),
               timeTop: (t => t && Math.round(t.getBoundingClientRect().top - li.getBoundingClientRect().top))(
                 li.querySelector('.t')
               ),
@@ -1090,7 +1090,7 @@ async function tickAll(page) {
       }
       const after = await read();
       const rows = await page.evaluate(() =>
-        [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent)
+        [...document.querySelectorAll('#today-list .ti-list > li [data-part=title]')].map(t => t.textContent)
       );
       ok(
         `${tag} after Accept the drill is on the list, the reading is off and the proposal is gone`,
@@ -1256,7 +1256,7 @@ async function tickAll(page) {
             buttons: [...li.querySelectorAll('button')].map(b => b.textContent.trim()),
           })),
           inPanel: !!r && (innerWidth < 1200 || r.left >= innerWidth - 420),
-          list: [...document.querySelectorAll('#today-list .ti-list > li .ti-t')].map(t => t.textContent),
+          list: [...document.querySelectorAll('#today-list .ti-list > li [data-part=title]')].map(t => t.textContent),
           sideways: document.documentElement.scrollWidth > innerWidth + 1,
         };
       });
@@ -1520,7 +1520,7 @@ async function tickAll(page) {
       await page.click('#tab-today');
       await page.waitForTimeout(300);
       const listCount = await page.evaluate(
-        () => document.querySelectorAll('#today-list .ti-list > li.today-item:not(.done)').length
+        () => document.querySelectorAll('#today-list .ti-list > [data-ui=line]:not([data-key=cards]):not(.done)').length
       );
       await page.click('#seg-today [data-v="week"]');
       await page.waitForTimeout(300);
@@ -1753,8 +1753,12 @@ async function tickAll(page) {
               )
             : [],
           label: ((nav && nav.querySelector('.wk-range')) || {}).textContent || '',
-          open: [...document.querySelectorAll('#today-list .ti-list > li.today-item')].map(li => li.dataset.id),
-          done: [...document.querySelectorAll('#today-list .ti-folded > li.today-item')].map(li => li.dataset.id),
+          open: [...document.querySelectorAll('#today-list .ti-list > [data-ui=line]:not([data-key=cards])')].map(
+            li => li.dataset.id
+          ),
+          done: [...document.querySelectorAll('#today-list .ti-folded > [data-ui=line]:not([data-key=cards])')].map(
+            li => li.dataset.id
+          ),
           rest: !!document.querySelector('#today-bar .ti-rest'),
           budget: !document.getElementById('today-budget').hidden,
           sideways: document.documentElement.scrollWidth > innerWidth + 1,

@@ -1080,11 +1080,12 @@ async function flashcardsChecks(page, scheme) {
   await page.click('#tab-today');
   await page.waitForTimeout(200);
   const row = await page.evaluate(
-    () => (document.querySelector('#today-list .ti-cards .ti-t') || {}).textContent || ''
+    () =>
+      (document.querySelector('#today-list [data-ui=line][data-key=cards] [data-part=title]') || {}).textContent || ''
   );
   ok(`[${scheme}] Today shows Cards · n due (B-487)`, /^Cards · \d+ due$/.test(row), row);
   const start = await page.evaluate(() => {
-    const b = document.querySelector('#today-list .ti-cards .ti-start');
+    const b = document.querySelector('#today-list [data-ui=line][data-key=cards] .ti-start');
     const r = b && b.getBoundingClientRect();
     const cs = b && getComputedStyle(b);
     return b ? { w: r.width, h: r.height, right: r.right, vis: cs.visibility, disp: cs.display } : null;
@@ -1101,7 +1102,7 @@ async function flashcardsChecks(page, scheme) {
     );
   await page.screenshot({ path: `${shots}/fc-today-${scheme}.png` });
   if (row) {
-    await page.locator('#today-list .ti-cards .fc-nm').click();
+    await page.locator('#today-list [data-ui=line][data-key=cards] .fc-nm').click();
     await page.waitForTimeout(200);
     const s = await page.evaluate(() => {
       const d = document.getElementById('fc-dlg');
@@ -2534,7 +2535,7 @@ async function studyPlanChecks(page) {
       await page.waitForTimeout(200);
       return page.evaluate(() =>
         Object.fromEntries(
-          [...document.querySelectorAll('#today-list li.today-item')].map(li => [
+          [...document.querySelectorAll('#today-list [data-ui=line]:not([data-key=cards])')].map(li => [
             li.dataset.id,
             !!(li.querySelector('input.tick') || {}).checked,
           ])
@@ -2560,7 +2561,7 @@ async function studyPlanChecks(page) {
       onToday && !r0['plan-h5'],
       JSON.stringify(r0)
     );
-    await page.locator('#today-list li.today-item[data-id="plan-h5"] input.tick').click();
+    await page.locator('#today-list [data-ui=line][data-key="plan-h5"] input.tick').click();
     await page.waitForTimeout(300);
     const s1 = await studyTick();
     const t1 = ((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h5;
@@ -2586,11 +2587,11 @@ async function studyPlanChecks(page) {
     const h1 = async () => !!((await page.evaluate(() => (window.__db.planedits || {}).E4 || {})).ticks || {}).h1;
     const g0 = await todayRows();
     const p0 = await h1();
-    await page.locator('#today-list li.today-item[data-id="plan-h1"] input.tick').click();
+    await page.locator('#today-list [data-ui=line][data-key="plan-h1"] input.tick').click();
     await page.waitForTimeout(300);
     const p1 = await h1();
     const g1 = await todayRows();
-    await page.locator('#today-list li.today-item[data-id="plan-h1"] input.tick').click(); // and back, for what follows
+    await page.locator('#today-list [data-ui=line][data-key="plan-h1"] input.tick').click(); // and back, for what follows
     await page.waitForTimeout(300);
     const p2 = await h1();
     const g2 = await todayRows();

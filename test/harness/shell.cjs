@@ -993,7 +993,10 @@ const statusShown = page =>
         await page.click('#new-save');
         await page.waitForTimeout(150);
         // B-296 (C-10): its course reads in the task's panel, which the row's name opens
-        await page.locator('#today-list .today-item .nm', { hasText: 'Harness reading chapter 12' }).first().click();
+        await page
+          .locator('#today-list [data-ui=line]:not([data-key=cards]) .nm', { hasText: 'Harness reading chapter 12' })
+          .first()
+          .click();
         await page.waitForSelector('#today-task:not([hidden])', { timeout: 1500 }).catch(() => {});
         const added = await page.evaluate(
           ({ course }) => {
@@ -1002,7 +1005,7 @@ const statusShown = page =>
               .filter(x => x[1] === 'dayedits' && x[2] === today)
               .map(x => Object.values((x[3] && x[3].added) || {}).find(a => a.text === 'Harness reading chapter 12'))
               .find(Boolean);
-            const row = [...document.querySelectorAll('#today-list .today-item')].find(li =>
+            const row = [...document.querySelectorAll('#today-list [data-ui=line]:not([data-key=cards])')].find(li =>
               li.textContent.includes('Harness reading chapter 12')
             );
             return {
@@ -1108,7 +1111,9 @@ const statusShown = page =>
           new Promise(ok =>
             requestAnimationFrame(() =>
               ok({
-                listed: [...document.querySelectorAll('#today-list .ti-t')].some(x => x.textContent.trim() === t),
+                listed: [...document.querySelectorAll('#today-list [data-part=title]')].some(
+                  x => x.textContent.trim() === t
+                ),
                 fresh: document.activeElement && document.activeElement.id === 'new-btn',
               })
             )
