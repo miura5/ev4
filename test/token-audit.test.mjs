@@ -68,7 +68,7 @@ test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/
   const pages = buildPages({ root: ROOT, spec, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
   // B-552: each file as written, its :hover rules gated by (hover:hover) (tools/hover-gate.mjs)
   const tokens = gateHover(fs.readFileSync(path.join(ROOT, 'page', 'ds', 'tokens.css'), 'utf8'));
-  const styles = gateHover(carry(fs.readFileSync(path.join(ROOT, CARRY), 'utf8')));
+  const styles = gateHover(carry(fs.readFileSync(path.join(ROOT, CARRY[0]), 'utf8')));
   assert.equal(LAYER_ORDER, '@layer reset, tokens, base, components, patterns, views;');
   for (const target of ['live', 'staging']) {
     const out = pages[target]['styles.css'];
@@ -85,7 +85,7 @@ test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/
       l = out.indexOf(styles);
     assert.ok(t > 0 && l > t, target + ': tokens, then the carry');
     assert.match(out.slice(0, t), /@layer tokens\{\n\/\* ---- page\/ds\/tokens\.css \*\/\n$/);
-    assert.match(out.slice(0, l), /\n\}\n@layer views\{\n\/\* ---- page\/ds\/views\/legacy-carry\.css \*\/\n$/);
+    assert.match(out.slice(0, l), /\n\}\n@layer views\{\n\/\* ---- page\/ds\/views\/carry-ev\.css \*\/\n$/);
     assert.ok(!/@layer legacy\b/.test(out.replace(/\/\*[\s\S]*?\*\//g, '')), target + ': no legacy layer');
   }
   for (const name of ['--fs-1', '--fs-7', '--sp-3', '--r-md', '--elev-3', '--z-overlay', '--line-h', '--pad-card'])

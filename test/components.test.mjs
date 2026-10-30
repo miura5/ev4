@@ -24,7 +24,9 @@ test('B-285: D-285 reads coded yellow back from its colour: the theme gives r4 -
 
 test('B-285: the stylesheet holds every part, rows at 36 and 52 px (B-544), and switches styled by their picked state', () => {
   // B-515 D2b: the kit's class rules live in Proprietary's component files; badge, toolbar, bar and field stay in legacy.
-  const css = fs.readFileSync(path.join(ROOT, 'page', 'ds', 'views', 'legacy-carry.css'), 'utf8');
+  const css = ['carry-ev', 'carry-study', 'carry-notes']
+    .map(f => fs.readFileSync(path.join(ROOT, 'page', 'ds', 'views', f + '.css'), 'utf8'))
+    .join('\n');
   const dir = path.join(ROOT, 'page', 'ds', 'components');
   const kit = fs
     .readdirSync(dir)

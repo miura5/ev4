@@ -325,7 +325,7 @@ test('B-320 (D-306): the read-only flag: on for the live page since the cutover,
   assert.equal(app.match(/\.doc\([^)]*\)\.(set|update|delete)\(/g), null, 'no other record write');
   assert.match(fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8'), /host: 'ev-app',/);
   assert.match(
-    fs.readFileSync(path.join(ROOT, 'page/ds/views/legacy-carry.css'), 'utf8'),
+    fs.readFileSync(path.join(ROOT, 'page/ds/views/carry-ev.css'), 'utf8'),
     /\[data-readonly\] #composer,\[data-readonly\] #new-wrap\{display:none!important\}/
   );
 });

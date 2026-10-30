@@ -32,18 +32,18 @@ test('B-219: each harness is chosen by a path it covers (planted), and only it',
   assert.deepEqual(harnessesFor(['page/app/73-ev-greeting.js']), ['run', 'captions', 'prep', 'greet', 'look']);
   assert.deepEqual(
     harnessesFor(['page/ds/tokens.css']),
-    harnessesFor(['page/ds/views/legacy-carry.css']),
+    harnessesFor(['page/ds/views/carry-ev.css']),
     'B-501: tokens as the sheet'
   );
   // D-388: the split files map as their kinds: a component's CSS, a pattern's or a view's as the sheet; a component's
   // JS or its Gallery cells to components, run and look
   for (const p of ['page/ds/components/01-button.css', 'page/ds/patterns/week.css', 'page/ds/views/today.css'])
-    assert.deepEqual(harnessesFor([p]), harnessesFor(['page/ds/views/legacy-carry.css']), p);
+    assert.deepEqual(harnessesFor([p]), harnessesFor(['page/ds/views/carry-ev.css']), p);
   assert.deepEqual(harnessesFor(['page/app/01-ui-05-line.js']), ['components', 'run', 'look']);
   assert.deepEqual(harnessesFor(['page/app/89-gallery-10-sheet.js']), ['components', 'run', 'look']);
   assert.deepEqual(harnessesFor(['page/app/01-ui.js']), HARNESSES, 'DS and dsRoot: every harness, as the kit');
   assert.deepEqual(harnessesFor(['page/app/89-gallery.js']), ['components']);
-  assert.deepEqual(harnessesFor(['page/ds/views/legacy-carry.css']), [
+  assert.deepEqual(harnessesFor(['page/ds/views/carry-ev.css']), [
     'components',
     'run',
     'captions',
