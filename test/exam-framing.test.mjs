@@ -43,5 +43,17 @@ test('the page frames its practice questions and her teaching line by the course
   assert.doesNotMatch(study, /'You write NCLEX-style/);
   assert.match(study, /E\.examFrame\(opt\.course/);
   assert.doesNotMatch(talk, /when it shows up on the NCLEX/);
-  assert.match(talk, /evContext\(nn \? nn\.course : null\)/);
+  assert.match(talk, /E\.chatCourse\(\{\s*note: nn && nn\.course/);
+  assert.match(talk, /studyCourse: ui\.studyCourse/);
+});
+
+test('the main chat with no note open takes the selected course: NUR 112 keeps NCLEX, BIO 201 has none', () => {
+  const nur = EV.teachLine(EV.chatCourse({ studyCourse: 'NUR 112' }));
+  const bio = EV.teachLine(EV.chatCourse({ studyCourse: 'BIO 201' }));
+  assert.match(nur, /the NCLEX/);
+  assert.doesNotMatch(bio.replace(/no NCLEX or nursing-board tips/, ''), /NCLEX/);
+  assert.equal(EV.chatCourse({ note: 'BIO 201', studyCourse: 'NUR 112' }), 'BIO 201');
+  assert.equal(EV.chatCourse({ item: 'NUR 112', studyCourse: 'BIO 201' }), 'NUR 112');
+  assert.equal(EV.chatCourse({}), null);
+  assert.match(EV.teachLine(null), /his exams/);
 });

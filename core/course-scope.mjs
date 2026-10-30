@@ -141,7 +141,24 @@ export function makeCourseScope(core) {
       .replace(/the NCLEX/g, f.exam)
       .replace(/NCLEX/g, f.exam);
   }
+  /**
+   * B-601: the course a chat reply is framed by. The open note's course first; with no note, the course of the item or
+   * exam being discussed, then the view's selected course (Study's studyCourse); null only when none is known.
+   */
+  function chatCourse({ note, item, exam, studyCourse } = {}) {
+    const pick = c => (c ? namedCourse(c, { guess: false }) : null);
+    return pick(note) || pick(item) || pick(exam) || pick(studyCourse) || null;
+  }
+  /** B-601: her teaching line, framed by the course in context. */
+  function teachLine(course) {
+    const f = examFrame(course);
+    return course && f.exam !== 'his exams'
+      ? 'when it shows up on ' + f.exam + (f.nursing ? '' : ' (this is ' + course + ': no NCLEX or nursing-board tips)')
+      : "when it shows up on his exams (NCLEX framing only for a nursing course's content)";
+  }
   return {
+    chatCourse,
+    teachLine,
     spotCourse,
     namedCourse,
     noteCourse,
