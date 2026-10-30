@@ -1,7 +1,7 @@
 /* Proprietary 01 Button (B-507, D-374): today's button.btn (B-303) in tokens, styled off ARIA and native state. B-515 dropped
    the legacy layer: the old sheet is page/ds/views/legacy-carry.css in views, so a carry rule still wins wherever it
    sets the same property, until the component lanes fold it here. The Gallery's forced states ([data-state], which
-   only the Gallery sets, D-383) say !important for that one reason and drop it at B-515. This file also holds the coded
+   only the Gallery sets, D-383) dropped their !important at B-515 lane 4b. This file also holds the coded
    tones every component reads as --x (D-269). */
 :where([data-tone='ok'],[data-tone='green']){--x:var(--ok)}
 :where([data-tone='warn'],[data-tone='yellow']){--x:var(--warn)}
@@ -46,11 +46,11 @@
 @media (prefers-reduced-motion:reduce){:where([data-ui='button'][aria-busy='true'])::after{animation:none}}
 :root[data-motion='reduce'] :where([data-ui='button'][aria-busy='true'])::after{animation:none}
 /* the Gallery's forced states, over legacy's button.btn until B-515 */
-[data-ui='button'][data-kind='neutral']:is([data-state='hover']){background:var(--sel)!important}
-[data-ui='button'][data-kind='neutral'][data-state='pressed']{background:var(--line2)!important}
-[data-ui='button']:is([data-state='hover'],[data-state='pressed']):is([data-kind='ghost'],.icon){background:var(--hover)!important;color:var(--text)!important}
-[data-ui='button'][data-kind='primary']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))!important}
-[data-ui='button'][data-kind='tint']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))!important}
+[data-ui='button'][data-kind='neutral']:is([data-state='hover']){background:var(--sel)}
+[data-ui='button'][data-kind='neutral'][data-state='pressed']{background:var(--line2)}
+[data-ui='button']:is([data-state='hover'],[data-state='pressed']):is([data-kind='ghost'],.icon){background:var(--hover);color:var(--text)}
+[data-ui='button'][data-kind='primary']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--her) 88%,var(--text))}
+[data-ui='button'][data-kind='tint']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))}
 /* B-515 lane D2b: the kit's class rules (legacy's button look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */
 button,.btn{font:500 var(--fs-3) var(--sans);border-radius:var(--r-pill);padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background var(--dur-press-out) var(--ease-std),border-color var(--dur-press-out) var(--ease-std)}

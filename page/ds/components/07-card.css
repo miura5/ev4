@@ -1,6 +1,6 @@
 /* Proprietary 07 Card (B-507, D-374): today's .ui-card in tokens: a surface with a hairline, one level deep, its title
    first. Legacy's .ui-card still wins until B-515 (D-373), so a plain card moves nothing today (D-376). The quiet kind
-   has no legacy rule to match (a card with no lift, on the sunken ground), so its fill says !important until B-515. */
+   has no legacy rule to match (a card with no lift, on the sunken ground), so its fill wins on its own since B-515 lane 4b. */
 :where([data-ui='card']){display:flex;flex-direction:column;gap:var(--sp-2);min-width:0;padding:var(--sp-3);border-radius:var(--r-lg);background:var(--surface)}
 :where([data-ui='card']) > h3,:where([data-ui='card']) > .ui-card-h > h3{margin:0;font:var(--fw-semibold) var(--fs-2) var(--sans);color:var(--text)}
 :where([data-ui='card']) > .ui-card-h{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
@@ -8,7 +8,7 @@
 :where([data-ui='card']) > .ui-card-h > .meta{margin:0;color:var(--faint);font-size:var(--fs-1);white-space:nowrap}
 :where([data-ui='card']) > .ui-card-h > .ui-card-acts{display:flex;gap:var(--sp-1);margin-left:auto}
 :where([data-ui='card']) > .ui-card-f{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-2);padding-top:var(--sp-2)}
-[data-ui='card'][data-kind='quiet']{background:var(--chrome)!important;box-shadow:none!important}
+[data-ui='card'][data-kind='quiet']{background:var(--chrome);box-shadow:none}
 :where([data-ui='card'][data-kind='fold']) > [data-ui='fold'] > .fold-line{color:var(--text);font-weight:var(--fw-semibold)}
 /* B-515 lane D2b: the kit's class rules (legacy's card look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */

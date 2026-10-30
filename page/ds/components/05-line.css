@@ -2,7 +2,7 @@
    --line-h for the status line until B-515). The set's one-line row (.li, B-285: 32 px from 600 px,
    44 px on the phone, C-1) and the stacked row (kind stack, the kit's row()). Legacy's .li, .row and input.tick rules
    still win until B-515 (D-373), so the look below moves nothing today (D-376); the states legacy never drew (hover's
-   fill aside) show through already. Two rules say !important for that reason, each named below; both drop at B-515. */
+   fill aside) show through already. B-515 lane 4b stripped their !important. */
 :where([data-ui='line']:not([data-kind='stack'])){display:flex;align-items:center;gap:var(--sp-3);height:calc(var(--sp-8) + var(--sp-1));padding:0 var(--sp-3);border-radius:var(--r-sm);color:var(--text);font-size:var(--fs-3);min-width:0;transition:background var(--dur-2) var(--ease-out)}
 :where([data-ui='line']:not([data-kind='stack'])) > .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 :where([data-ui='line']:not([data-kind='stack'])) > .t{flex:none;color:var(--quiet);font-size:var(--fs-1);font-variant-numeric:tabular-nums}
@@ -14,7 +14,7 @@
 :where([data-ui='line'][data-kind='stack']) .meta{margin-top:var(--sp-0_5);color:var(--faint);font-size:var(--fs-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* B-544: the title is one line; its full text shows on hover (title) and on a long press (data-full) */
 :where([data-ui='line'][data-kind='stack']) .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-:where([data-ui='line'][data-full]) :is(.nm,.title){white-space:normal!important;overflow:visible!important}
+:where([data-ui='line'][data-full]) :is(.nm,.title){white-space:normal;overflow:visible}
 :where([data-ui='line'][data-kind='stack']) .when{min-width:4.6rem;padding-top:var(--sp-0_5);color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);font-variant-numeric:tabular-nums}
 :where([data-ui='line'][data-kind='stack']) .row-badge{margin-left:var(--sp-1_5);vertical-align:1px;height:var(--sp-5)}
 /* the tick (B-545): flat, 16 px drawn on the desk and 20 px on the phone; a 1.5 px ring at rest, solid green with the
@@ -26,16 +26,15 @@
 :where([data-ui='line'],.check) > input.tick:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
 /* D-383: on the phone the tick is a 44 px tap and draws 20 px: a clear 12 px border the margins take back */
 @media (max-width:599px){
-  :where([data-ui='line'],.check) > input.tick{box-sizing:content-box!important;width:var(--sp-5)!important;height:var(--sp-5)!important;flex-basis:auto!important;border:12px solid transparent!important;background-clip:padding-box!important;margin:-12px!important;border-radius:var(--r-xl)!important}
+  :where([data-ui='line'],.check) > input.tick{box-sizing:content-box;width:var(--sp-5);height:var(--sp-5);flex-basis:auto;border:12px solid transparent;background-clip:padding-box;margin:-12px;border-radius:var(--r-xl)}
   :where([data-ui='line'],.check) > input.tick:checked::after{width:5px;height:10px}
 }
-/* the title that opens the line: a plain button. Legacy's bare button rule draws a pill around any button, so these
-   few say !important until B-515. */
-:where([data-ui='line']) button:is(.nm,.title){appearance:none!important;min-height:var(--sp-8)!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;font:inherit!important;color:inherit!important;text-align:left!important;cursor:pointer;text-decoration-color:var(--line2);text-underline-offset:3px}
+/* the title that opens the line: a plain button. B-515 lane 4b: no !important left. */
+:where([data-ui='line']) button:is(.nm,.title){appearance:none;min-height:var(--sp-8);padding:0;border:0;border-radius:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;text-decoration-color:var(--line2);text-underline-offset:3px}
 :where([data-ui='line']) button:is(.nm,.title):hover{text-decoration-line:underline}
 :where([data-ui='line']) button.nm{align-self:center}
-@media (max-width:599px){:where([data-ui='line']) button:is(.nm,.title){min-height:var(--tap)!important}}
-:where([data-ui='line']) button:is(.nm,.title):focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:var(--r-xs)!important}
+@media (max-width:599px){:where([data-ui='line']) button:is(.nm,.title){min-height:var(--tap)}}
+:where([data-ui='line']) button:is(.nm,.title):focus-visible{outline:2px solid var(--focus);outline-offset:-2px;border-radius:var(--r-xs)}
 /* states: hover, pressed, open, done, urgent, disabled, dragging */
 :where([data-ui='line']:not([data-kind='stack'])):is(:hover,[data-state='hover']){background:var(--hover)}
 :where([data-ui='line']:not([data-kind='stack'])):is(:active,[data-state='pressed']):not([aria-disabled='true']){background:var(--wash-3)}
@@ -45,7 +44,7 @@
 :where([data-ui='line'][aria-disabled='true']){opacity:.45;cursor:default}
 :where([data-ui='line'][data-state='dragging']){position:relative;z-index:var(--z-raised);background:var(--surface);box-shadow:var(--elev-2);border-radius:var(--r-md);cursor:grabbing}
 /* the Gallery's forced hover shows the hover action over legacy's .li .hov until B-515 */
-[data-ui='line'][data-state='hover'] > .hov{visibility:visible!important}
+[data-ui='line'][data-state='hover'] > .hov{visibility:visible}
 @media (max-width:599px){:where([data-ui='line']:not([data-kind='stack'])){height:auto;min-height:52px;padding:0 var(--sp-3);font-size:var(--fs-4)}:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:visible}}
 /* B-515 lane D2b: the kit's class rules (legacy's line look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */

@@ -1,7 +1,7 @@
 /* Proprietary 06 Fold (B-507, D-374): today's fold-line (a quiet line with › closed and ⌄ open) over a body that opens
    by height and opacity (B-547: --dur-fold-open, closing in --dur-fold-close), never moving what is above it (D-271). The state is the head's aria-expanded. Legacy's
    .fold-line (all:unset) still wins on the head until B-515 (D-373); on the phone its tap reaches 44 px (D-383) by the
-   rule that says !important, which matches only this component's head. */
+   rule that says !important, which matches only this component's head: later layers' .fold-line rules still compete (B-515 lane 4b). */
 :where([data-ui='fold']){display:flex;flex-direction:column;min-width:0}
 :where([data-ui='fold']) > .fold-line{display:flex;align-items:center;cursor:pointer;color:var(--quiet);font-size:var(--fs-3);padding:var(--sp-1) 0}
 :where([data-ui='fold']) > .fold-line::after{content:' ›';white-space:pre}
