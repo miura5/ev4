@@ -7571,7 +7571,7 @@
   "depends": [
    "B-409"
   ],
-  "notes": "Reframed with Matt on Oct 30: the consolidation is defined by the target structure and its gaps, with a removal sweep alongside, not by hunting unstructured code alone.",
+  "notes": "Top candidate (Matt, Oct 30): a data-vocabulary layer, Proprietary's pattern applied to data. One vocabulary section in the spec (kinds, courses, statuses, item types, labels); one generated module that the page, core, the job runners and E.V.'s prompts all read; a lint that fails on hard-coded vocabulary lists or literals in code; a small reference page. Evidence: B-607 (the New task menu kept a 6-kind list) and B-599 (a deck stored the placeholder course 'Course'). It is also the first concrete piece of D-404's ontology. The review maps today's duplicated vocabularies and sizes the work.",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
   "words": "Architecture probe at the latest version",
