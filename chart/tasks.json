@@ -10608,5 +10608,23 @@
    "outcome": "task",
    "at": "2026-10-30T08:19:01.069Z"
   }
+ },
+ {
+  "id": "B-576",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): Expanding lists and folds on staging is still instant; they should open smoothly by height and opacity like Linear, as the motion work promised.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Expanding lists and folds on staging is still instant; they should open smoothly by height and opacity like Linear, as the motion work promised.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T09:17:26.980Z",
+  "board": {
+   "row": "v4 B-576: Expanding lists and folds on staging is still instant; they should…"
+  }
  }
 ]
