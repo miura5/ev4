@@ -10240,7 +10240,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "The working notice shows at once (ca4f404). 'usually 2 to 4 min' is a builder's guess: measure it in the end-to-end run and set it from the real time.",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
