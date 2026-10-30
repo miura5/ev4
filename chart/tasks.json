@@ -10250,13 +10250,13 @@
   "title": "Meter and stat: a thin 4 px bar, a 15 px figure and a muted label; the whole stat opens its list; legends match the bar colours",
   "dod": "Progress stats open their lists; no display-size numbers remain",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515",
    "B-522"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Lane 4 (ca4f404): CI npm test green, smoke 31, components 58, look 218.",
+  "commit": "ca4f404",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
