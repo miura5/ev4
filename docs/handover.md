@@ -6,6 +6,27 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
+## Update (Oct 29, ~8 pm Central): the UI build tonight (read this first)
+
+- **Live:** v4.5.19 (ceba846). It carries flashcards complete, the bug and probe fixes, and the invisible Proprietary skeleton.
+- **The UI polish design passed** (round 5, with the L frame restored). The doc is https://claude.ai/artifact/9w83U8c79EjxijPXqs9xKi, the reference is in docs/design/ui-polish/ (on staging at /reference), and the tasks are B-539 to B-572 (D-392 to D-396).
+- **How the look and view lanes run:** docs/design/ui-polish/LANES.md (D-397). Brief every lane from it.
+- **Tonight's order (D-390: by completion, never time-gated):**
+  1. E2 and E3 finish the E.V. window (B-514). U1 finishes app-wide behaviour (B-552 to B-561, B-563).
+  2. Staging card #1.
+  3. Cleanup B-515 in lanes A (foundation, running), then B and C in parallel, then D last, per scratchpad/design-system/cleanup-map.md.
+  4. The tokens lane, then 5 component lanes, then one staging look, then up to 9 view lanes.
+  5. One real run, one review, release card #2. Live only on Matt's word.
+- **Matt's direction:**
+  - desktop first (D-394);
+  - graceful motion with no scale;
+  - neutral Linear-like look with no lines (D-392);
+  - dot badges (D-395);
+  - his four approved items (D-393);
+  - no 1:1 gate (D-396);
+  - split slow steps into parallel lanes by files.
+- **Leftover naming:** the Arc, not "flower" (renamed in B-515).
+
 ## Update (Oct 29, ~noon Central): v4.5.18 live; Proprietary design system started; three builders running
 
 - **Live:** v4.5.18 at db90509, recorded GREEN. It contains flashcards part 1 (B-487), the stringified-plan fix (B-491), the new icon (B-490) and the stray verify words fix (B-493).
