@@ -92,6 +92,9 @@
       [24, 60, 0.22],
     ],
   };
+  // B-515: --scrim and the shadows' black, --shade-1 to -6, per mode (today's values in both)
+  var SHADE = { light: [0.5, 0.05, 0.1, 0.14, 0.18, 0.22, 0.6] };
+  SHADE.dark = SHADE.light;
   // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast (r4.css --av1, --av2).
   var HER = { light: ['#b5530f', '#a8402f'], dark: ['#e0743a', '#cf5a45'] };
   // B-539, B-540 (D-392, D-395): round 4's neutral themes, word for word from docs/design/ui-polish/r4.css, made with
@@ -247,6 +250,9 @@
     });
     LIFT[T.mode].forEach(function (z, i) {
       ds['--shadow-' + (i + 1)] = '0 ' + z[0] + 'px ' + z[1] + 'px rgba(0,0,0,' + z[2] + ')';
+    });
+    SHADE[T.mode].forEach(function (a, i) {
+      ds[i ? '--shade-' + i : '--scrim'] = 'rgba(0,0,0,' + a + ')';
     });
     for (var c in CODED) {
       ds['--' + c] = g[CODED[c]] || T.quiet;
