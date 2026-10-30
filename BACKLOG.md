@@ -655,3 +655,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-494 | bug | 2026-10-29T14:49:35.202Z | On a phone, Today's Cards row hides its Start button until hover; tapping the row's name works. | staging e2e of B-487 at d7a55f5 | declined |  |
 | B-582 | bug | 2026-10-30T11:33:55.889Z | Remake stays tappable while its job is being written (21-study-plan.js remakeBtn ignores planStarting); startJob dedupes per course and day, so a second tap rewrites the same job at worst. | release review f24fcc5 | inbox |  |
 | B-583 | bug | 2026-10-30T11:33:59.841Z | In a draft plan's ⋯, Put away is hidden for his own exams (!ex.own); the old draft row always offered it. | release review f24fcc5 | inbox |  |
+| B-584 | bug | 2026-10-30T11:34:03.196Z | Only the latest tick carries Undo; ticking a second row replaces the first one's Undo. | release review f24fcc5 | inbox |  |

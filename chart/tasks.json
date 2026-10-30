@@ -10773,5 +10773,22 @@
   "board": {
    "row": "v4 B-583: In a draft plan's ⋯, Put away is hidden for his own exams (!ex.own);…"
   }
+ },
+ {
+  "id": "B-584",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): Only the latest tick carries Undo; ticking a second row replaces the first one's Undo.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review f24fcc5",
+  "words": "Only the latest tick carries Undo; ticking a second row replaces the first one's Undo.",
+  "reportedAt": "2026-10-30T11:34:03.196Z",
+  "board": {
+   "row": "v4 B-584: Only the latest tick carries Undo; ticking a second row replaces the…"
+  }
  }
 ]
