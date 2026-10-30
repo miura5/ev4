@@ -10138,12 +10138,12 @@
   "title": "No outlines: rows, cards and badges lose their borders; groups are a filled band; side panels are a surface step on the page",
   "dod": "A grep finds no row or card border in page/ds/components; Today, Record and Study match the round-5 shots",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "No outlines on cards, rows, choices and the carry side cards (08f4f1d). Borders left on segmented (04), meter (14), sheet header and footer (10), field (12), and Today's budget-card hairline from a view rule (B-564).",
-  "commit": null,
+  "notes": "Neutral buttons take r4's --raise fill with no outline (ce3b888); with 08f4f1d and 49cb12d, the outlines are off cards, rows, choices and Today. The .s-acts outline in shell.css went to B-572; segmented, meter, sheet and field borders went to the backlog.",
+  "commit": "ce3b888",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
