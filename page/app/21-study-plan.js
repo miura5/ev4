@@ -175,7 +175,8 @@
     function remakeBtn(ex, course) {
       const b = btn('Remake', ev => makePlan(ev.currentTarget, course, ex), { cls: 'btn neutral' });
       b.title = 'A new plan from today; what you ticked stays done';
-      b.disabled = !!(planJobState(ex, course, null).working || E.studyPlanNewJobRunning(S.jobs, course));
+      // B-582: held while its job is being written, as Make a plan is
+      b.disabled = !!(planJobState(ex, course, null).working || E.studyPlanNewJobRunning(S.jobs, course) || planStarting(course));
       return b;
     }
     function askForChanges(ex, p) {
