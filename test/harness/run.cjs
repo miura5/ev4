@@ -4042,6 +4042,22 @@ async function tap(page, locator, name) {
         (await page.inputValue('#new-title')) === 'half typed' &&
         (await page.evaluate(() => document.activeElement && document.activeElement.id === 'new-title'))
     );
+    // B-595: a drag that selects the title from inside out of the dialog keeps it open and the text kept
+    {
+      const tb = await page.locator('#new-title').boundingBox();
+      const db = await page.locator('#new-dlg').boundingBox();
+      await page.mouse.move(tb.x + tb.width - 4, tb.y + tb.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(tb.x + 4, tb.y + tb.height / 2, { steps: 4 });
+      await page.mouse.move(Math.max(2, db.x - 30), db.y + db.height + 30, { steps: 4 });
+      await page.mouse.up();
+      await page.waitForTimeout(100);
+      ok(
+        'a drag selecting the New title out of the dialog keeps it open with the text (B-595)',
+        (await page.evaluate(() => document.getElementById('new-dlg').open)) &&
+          (await page.inputValue('#new-title')) === 'half typed'
+      );
+    }
     await page.fill('#new-title', '');
     await page.keyboard.press('Escape');
     // B-291, B-296 (D-282, C-10): an added item's row carries no Remove; its name opens the task's panel, which says

@@ -6,6 +6,17 @@
       if (text != null) e.textContent = text;
       return e;
     };
+    // B-595: a tap outside closes a dialog, sheet or menu only when the press both starts and ends outside, so a drag
+    // that selects text from inside out (or outside in) never closes it. out(target) says whether a target is outside.
+    const outsideTap = (on, out, fn) => {
+      let down = null;
+      on.addEventListener('pointerdown', e => (down = e.target), true);
+      on.addEventListener('click', e => {
+        const d = down;
+        down = null;
+        if (d && out(d) && out(e.target)) fn(e);
+      });
+    };
     // B-507 (D-374, D-376): btn(), badge(), chip(), row(), empty() and toast() are one-line calls into Proprietary (DS,
     // page/app/01-ui*.js), so every view not yet moved gets its components with no change; B-515 removes them once no
     // view calls them. Each makes exactly the markup it made before (the pixel diff of every view says so).

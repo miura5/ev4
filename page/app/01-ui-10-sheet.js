@@ -38,7 +38,11 @@
         opener = null;
         if (o.onClose) o.onClose(r.returnValue);
       });
-      r.addEventListener('click', e => e.target === r && r.matches(':modal') && r.close()); // the backdrop
+      outsideTap(
+        r,
+        t => t === r,
+        () => r.matches(':modal') && r.close()
+      ); // the backdrop (B-595)
       // a swipe down on the head closes it on the phone; it follows the finger until then
       let y0 = null;
       head.addEventListener('pointerdown', e => e.pointerType !== 'mouse' && (y0 = e.clientY));

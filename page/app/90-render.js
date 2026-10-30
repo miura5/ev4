@@ -145,9 +145,11 @@
             setOpen(false, true);
           }
         });
-        document.addEventListener('click', e => {
-          if (!pop.hidden && !pop.contains(e.target) && !btnP.contains(e.target)) setOpen(false);
-        });
+        outsideTap(
+          document,
+          t => !pop.contains(t) && !btnP.contains(t),
+          () => !pop.hidden && setOpen(false)
+        );
         const sys = $('tab-system');
         if (sys) sys.addEventListener('click', () => setOpen(false));
       }

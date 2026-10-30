@@ -256,9 +256,7 @@
       }
     });
     dlg.addEventListener('cancel', e => e.preventDefault()); // Esc is the keydown's, so focus goes back to New
-    dlg.addEventListener('click', e => {
-      if (e.target === dlg) newClose(); // a tap on the backdrop
-    });
+    outsideTap(dlg, t => t === dlg, newClose); // a tap on the backdrop (B-595)
     $('new-cancel').addEventListener('click', newClose);
     for (const id of ['new-title', 'new-text', 'new-date']) $(id).addEventListener('input', saveSync);
     $('new-form').addEventListener('submit', e => {
