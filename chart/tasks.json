@@ -7615,7 +7615,7 @@
   "depends": [
    "B-415"
   ],
-  "notes": "",
+  "notes": "Reframed with Matt (Oct 30): the course trains him to lead D-404 (the model E.V. keeps of him), not to code it himself. Outcomes: read and question E.V.'s architecture; data modelling (entities, evidence, ontology); measurement and calibration (Brier score, base rates, updating); AI components over structured memory (context, retrieval, structured output, tool use); evals for AI judgments; learning science worth modelling (spacing, retrieval practice, forgetting curves); directing agents (specs, reviews). Each module ends in an artifact for D-404 built on his record's shape. The outcomes are set in the build chat; a Fable research agent writes the final curriculum from current research shortly before it starts; D-404 planning comes at winter break. Overview: https://claude.ai/artifact/XyjeerMNbAzinQLvzer9DH",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
   "words": "E.V. course: lesson 1",
