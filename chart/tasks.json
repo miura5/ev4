@@ -10981,7 +10981,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at da48871 and 6f5f2ce (Today titles through DS.tip); npm test 1023, smoke 33, run 522. It rides with the cleanup release; Matt checks it on staging.",
   "commit": null,
   "source": "build chat",
   "words": "A small native tooltip repeating the label pops up on hover over the view tabs, every Record item, the sidebar Today list, Preferences and Conversation's Coming up list, even where the text is fully visible.",
