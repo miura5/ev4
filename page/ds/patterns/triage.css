@@ -25,7 +25,7 @@
 .wk-list .trow .acts{display:flex!important;gap:var(--sp-1_5)!important;flex-wrap:wrap!important}
 /* B-455: Pick an objective in place of a greyed Accept: the New menu's look, under its button, inside the screen */
 .wk-list .pick-wrap{position:relative!important}
-.wk-list .pick-menu{position:absolute!important;left:0!important;top:calc(100% + 6px)!important;z-index:30!important;width:min(320px,calc(100vw - 32px))!important;max-height:min(320px,60dvh)!important;overflow-y:auto!important;padding:5px!important;border-radius:10px!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14)!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important}
+.wk-list .pick-menu{position:absolute!important;left:0;top:calc(100% + 6px)!important;z-index:30!important;width:min(320px,calc(100vw - 32px))!important;max-height:min(320px,60dvh)!important;overflow-y:auto!important;padding:5px!important;border-radius:10px!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14)!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important}
 .wk-list .pick-menu[hidden]{display:none!important}
 .wk-list .pick-menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans)!important;color:var(--quiet)!important;padding:var(--sp-1_5) 9px var(--sp-1)!important}
 .wk-list .pick-menu button.btn.mi{justify-content:flex-start!important;width:100%!important;height:auto!important;min-height:30px!important;padding:var(--sp-1_5) 9px!important;color:var(--text)!important;font-weight:400!important;text-align:left!important;white-space:normal!important;flex:none!important}
