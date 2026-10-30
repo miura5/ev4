@@ -94,7 +94,7 @@ Never run two full harness suites at once on the shared machine.
 - **Format before every push (B-586).** Run `npm run format`, then `node --test test/format.test.mjs`, and push only
   when it passes. This holds on every push, even one where you skipped the heavier checks: builder pushes on Oct 30 turned main red on formatting alone (B-575, B-579, B-586).
 - One commit per task: `B-xxx: <what changed, in words>`, then the attribution lines from the message.
-- `git fetch origin main && git rebase origin/main`, `npm test` again if the rebase brought anything in, then
+- `git fetch origin main && git rebase origin/main`, the format test and your touched unit tests again if the rebase brought anything in, then
   `git push origin HEAD:main`. Refused: rebase and push again. Never force-push, never a merge commit.
 - Whoever turns main red fixes it or reverts within 30 minutes; the others hold their pushes until it is green.
 
@@ -108,8 +108,7 @@ Subagents cannot hand back files: the report is your final message (SubagentHand
   - each sha with its task id;
   - what Matt will see, in plain words;
   - files changed;
-  - proofs with totals (`npm test` pass count, smoke, harnesses, `--touched`), and any check that failed for a known
-    sandbox reason, named;
+  - the local proofs you ran (D-408: fast, targeted checks) with their totals, and the CI result for your push;
   - anything not done or skipped, and why (including a guarded-path change, written out);
   - edge cases noticed, one line each, for the backlog;
   - for a model-path task, what the staging run should try.
