@@ -318,17 +318,37 @@ export function makeCards(core) {
     const r = rateCard(c, rating, chicagoDate(at), at);
     return { write: cardWrite(deck, id, { ...c, ...r.sched }), again: r.again, card: { ...c, ...r.sched } };
   }
+  /** B-599: the course of `courses` (spec.courses) that `s` is, or names (its name, else its guess words) when `named`. */
+  function courseIn(courses, s, named = false) {
+    const t = Object.keys(courses || {})
+      .filter(k => !k.startsWith('_'))
+      .map(name => ({ name, ...courses[name] }));
+    const text = String(s || '');
+    const norm = x => String(x).replace(/\s+/g, '').toLowerCase();
+    if (!named) return (t.find(c => norm(c.name) === norm(text)) || {}).name || null;
+    const byName = t.find(c => norm(text).includes(norm(c.name)));
+    if (byName) return byName.name;
+    return (t.find(c => c.guess && new RegExp(c.guess, 'i').test(text)) || {}).name || null;
+  }
   /**
    * B-487: the deck a flashcards job's answer makes: its course is the job's, else the one its words name. B-496: up to
    * 150 cards; a job that names a deck (job.deck, `deck` the deck as the record has it) adds to it instead: only new
    * terms, as one update of new entries, so no card there changes. { write, n, title, course, added }.
    */
-  function deckFromJob({ job, items, now, source, writer = 'worker', deck }) {
+  function deckFromJob({ job, items, now, source, writer = 'worker', deck, courses }) {
     if (job.deck && deck) {
       const r = deckCardsAdd(deck, items, now, ASK_MAX);
       return { write: r.write, n: r.added, title: deck.title, course: deck.course, added: true, dupes: r.dupes };
     }
-    const course = job.course || (guessCourse ? guessCourse(job.title + ' ' + job.brief) : null);
+    // B-599: the job's course when it is a known one, else the course its words name; `courses` is spec.courses when
+    // the runner's core holds no spec (the app's job runner), so a chat-made deck never lands on a placeholder
+    const said = job.title + ' ' + (job.brief || '');
+    const course =
+      (job.course && (courses ? courseIn(courses, job.course) : job.course)) ||
+      (courses && courseIn(courses, said, true)) ||
+      (guessCourse ? guessCourse(said) : null) ||
+      job.course ||
+      null;
     const id = 'deck-' + String(job.id).replace(/^job-/, '');
     const title = clean(String(job.title || '').replace(/^flashcards:\s*/i, ''), 120) || 'Flashcards';
     const w = deckNew({ title, course, items, writer, source, now, job: job.id, id, max: ASK_MAX });

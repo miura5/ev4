@@ -709,3 +709,24 @@ test('B-496 (Oct 29): a job always ends: a first ask that never answers fails th
   assert.match(bridge, /signal: stop\.signal,/);
   assert.match(bridge, /timeLeft: \(\) => J\.PAGE_RUN_MS - \(Date\.now\(\) - began\),/);
 });
+
+test('B-599: a chat-made deck in a runner with no spec loaded takes the course its words name, never a placeholder', () => {
+  const job = {
+    id: 'job-20261030-163249-flashcards-bio-201-ch-9',
+    kind: 'flashcards',
+    title: 'Flashcards: BIO 201 Ch 9 muscles and terms',
+    brief: 'make flashcards for BIO 201 Ch 9 muscles and terms',
+  };
+  const items = [{ term: 'Sarcomere', definition: 'The contractile unit of a muscle fibre' }];
+  EV.configure(null); // the app's job runner: its core holds no spec, only the runner's spec sections
+  try {
+    assert.equal(EV.deckFromJob({ job, items, now: AT }).course, 'Course'); // the B-599 bug, unfixed path
+    assert.equal(EV.deckFromJob({ job, items, now: AT, courses: spec.courses }).course, 'BIO 201');
+    const placeholder = EV.deckFromJob({ job: { ...job, course: 'Course' }, items, now: AT, courses: spec.courses });
+    assert.equal(placeholder.course, 'BIO 201');
+  } finally {
+    EV.configure(spec);
+  }
+  assert.ok(J.SPEC_KEYS.includes('courses'), 'the runner is given spec.courses');
+  assert.equal(EV.nameCourse('BIO 201 Ch 9 muscles and terms'), 'BIO 201'); // what Study matches an unknown course by
+});

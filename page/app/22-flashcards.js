@@ -23,7 +23,14 @@
     const modeMin = m => (m === 'mc' || m === 'learn' ? 2 : 1);
     const deckById = id => S.decks.find(d => d.id === id) || null;
     const liveDecks = () => S.decks.filter(d => d && !d.retired);
-    const decksOf = course => liveDecks().filter(d => (d.course || E.defaultCourse()) === course);
+    /** B-599: a deck's course: its own when known, else the course its title names, else null (Other); never hidden. */
+    const deckCourse = d => {
+      const c = d.course || E.defaultCourse();
+      if (E.isCourse(c)) return c;
+      return (E.nameCourse && E.nameCourse(d.title)) || null;
+    };
+    const decksOf = course => liveDecks().filter(d => deckCourse(d) === course);
+    const otherDecks = () => liveDecks().filter(d => !deckCourse(d));
     const dueIn = d => E.cardsDue([d], today).length;
     /** The card as this tab last rated it (the record may still be catching up). */
     const fcCard = (deckId, id) => FC.local[deckId + '/' + id] || ((deckById(deckId) || {}).cards || {})[id] || null;
@@ -36,9 +43,9 @@
         $('ov-grid').append(card);
       } else if (card.nextElementSibling) $('ov-grid').append(card); // after Practice sets
       card.hidden = false;
-      const decks = decksOf(course).sort((a, b) =>
-        String(b.createdAt || b.at || '').localeCompare(String(a.createdAt || a.at || ''))
-      );
+      const decks = decksOf(course)
+        .concat(otherDecks())
+        .sort((a, b) => String(b.createdAt || b.at || '').localeCompare(String(a.createdAt || a.at || '')));
       const hd = el('div', 'up-head');
       const due = decks.reduce((n, d) => n + dueIn(d), 0);
       const right = el('span', 'fc-hr');
@@ -57,7 +64,11 @@
         const b = el('button', 'st');
         b.type = 'button';
         const nm = el('span', 'sn');
-        nm.append(el('span', 'stt', d.title || d.id), el('span', 'sm', plural(n, 'card')));
+        // B-599: a deck of no known course shows under every course, marked Other
+        nm.append(
+          el('span', 'stt', d.title || d.id),
+          el('span', 'sm', plural(n, 'card') + (deckCourse(d) ? '' : ' · Other'))
+        );
         b.append(
           nm,
           el('span', 'ss' + (k ? ' fin' : ''), k ? k + ' due' : n ? 'Done for today' : 'No cards'),
@@ -350,7 +361,9 @@
       const cards = E.deckCards(deck);
       const due = dueIn(deck);
       const body = el('div', 'fc-body');
-      body.append(fcHead(deck.title, deck.course + ' · ' + plural(cards.length, 'card') + ' · ' + due + ' due'));
+      body.append(
+        fcHead(deck.title, (deckCourse(deck) || 'Other') + ' · ' + plural(cards.length, 'card') + ' · ' + due + ' due')
+      );
       const go = el('div', 'fc-go');
       const all = !due && cards.length;
       const last = modeOf(deck.id);
@@ -447,7 +460,7 @@
                 kind: 'flashcards',
                 title: 'Flashcards: ' + deck.title,
                 brief: `${k} more flashcards for the deck ${deck.title}${t ? ' on ' + t : ''}.`,
-                course: deck.course,
+                course: deckCourse(deck) || deck.course,
                 deck: deck.id,
               });
               FC.addEv = false;

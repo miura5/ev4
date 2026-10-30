@@ -33,6 +33,24 @@ function load(dir) {
   return db;
 }
 const seed = load(dbDir);
+// B-599: a deck a chat job made before its course was stored right ('Course', a placeholder); Study lists it under the
+// course its title names. Planted for the EV_ONLY=decks pass only (an extra deck moves the main pass's Study layout),
+// and only when the record has no deck of that kind (a pulled record brings its own).
+seed.decks = seed.decks || {};
+if (process.env.EV_ONLY === 'decks' && !Object.values(seed.decks).some(d => d && d.course === 'Course'))
+  seed.decks['deck-20261030-163249-flashcards-bio-201-ch-9'] = {
+    schema: 1,
+    writer: 'worker',
+    at: '2026-10-30T21:32:49Z',
+    source: 'E.V. app',
+    title: 'BIO 201 Ch 9 muscles and terms',
+    course: 'Course',
+    job: 'job-20261030-163249-flashcards-bio-201-ch-9',
+    createdAt: '2026-10-30T21:32:49Z',
+    cards: {
+      c1: { term: 'Sarcomere', definition: 'The contractile unit of a muscle fibre', at: '2026-10-30T21:32:49Z' },
+    },
+  };
 delete seed.system;
 delete seed.legacy;
 delete seed.debug;
@@ -902,6 +920,40 @@ async function practiceSetsChecks(page, scheme) {
 // its cards; Flip shows the term, Space reveals it with Again / Hard / Good / Easy and the next interval under each, and
 // a rating is one card's write with its new due date; Multiple choice offers 4 definitions, a wrong pick is Again on its
 // own and a right one asks Hard / Good / Easy; + New card and Retire write marks; Today carries Cards · n due.
+// B-599: a deck stored with a course no course is ('Course') shows under the course its title names, its header too
+async function placeholderDeckCheck(page, scheme) {
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  await page.$eval('#study-course button[aria-label="BIO 201"]', b => b.click());
+  await page.waitForTimeout(300);
+  const want = Object.values(seed.decks)
+    .filter(d => d && !d.retired && d.course === 'Course')
+    .map(d => d.title);
+  const rows = await page.evaluate(() =>
+    [...document.querySelectorAll('#ov-decks .st-row[data-key] .stt')].map(x => x.textContent)
+  );
+  ok(
+    `[${scheme}] a chat-made deck stored with a placeholder course shows under BIO 201's Flashcards (B-599)`,
+    want.length > 0 && want.every(t => rows.includes(t)),
+    JSON.stringify({ want, rows })
+  );
+  await page.locator('#ov-decks').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `${shots}/study-decks-bio-${scheme}.png` });
+  await page.locator(`#ov-decks .st[aria-label="Open deck ${want[0]}"]`).click();
+  await page.waitForTimeout(300);
+  const head = await page.evaluate(() => (document.getElementById('fc-dlg') || {}).textContent || '');
+  ok(
+    `[${scheme}] its header names BIO 201, not 'Course' (B-599)`,
+    /BIO 201 · \d+ cards?/.test(head),
+    head.slice(0, 120)
+  );
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  await page.$eval('#study-course button[aria-label="NUR 112"]', b => b.click()); // the course the later checks expect
+  await page.waitForTimeout(200);
+  await page.click('#tab-ev');
+  await page.waitForTimeout(150);
+}
 async function flashcardsChecks(page, scheme) {
   await studyView(page, 'objectives');
   await page.waitForTimeout(200);
@@ -2971,6 +3023,22 @@ async function tap(page, locator, name) {
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
+  if (process.env.EV_ONLY === 'decks') {
+    // B-599: only the placeholder-course deck check (EV_ONLY=decks), for a quick run on a pulled record
+    for (const scheme of ['phone', 'desktop']) {
+      const page = await browser.newPage({
+        viewport: scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 },
+        colorScheme: 'dark',
+      });
+      await openPage(page);
+      await page.waitForTimeout(800);
+      await placeholderDeckCheck(page, scheme);
+      await page.close();
+    }
+    await browser.close();
+    for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+    return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
   if (process.env.EV_ONLY === 'stale') {
     // B-577: only the kept-state checks (EV_ONLY=stale), for a quick run while working on them
     await staleStateChecks(browser);

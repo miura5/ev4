@@ -333,7 +333,14 @@ export const AGENT_FOLDS = {
       // B-487 (D-368): the cards become a deck in E.V. for the course (B-479's Quizlet block is retired). B-496: a job
       // that names a deck adds its new cards to that deck, never touching the cards it has.
       const deck = job.deck ? (db.decks || []).find(d => d.id === job.deck && !d.retired) || null : null;
-      const r = EV.deckFromJob({ job, items: answer.items || [], now: ctx.now, source: ctx.source, deck });
+      const r = EV.deckFromJob({
+        job,
+        items: answer.items || [],
+        now: ctx.now,
+        source: ctx.source,
+        deck,
+        courses: spec && spec.courses,
+      });
       const cards = r.n === 1 ? '1 card' : r.n + ' cards';
       // B-496: the result says what was made, never more: the count asked, how many new cards landed, and the rest
       // named as missing; with none added, no line of the model's ("Here are 10 more cards…") stands
