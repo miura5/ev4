@@ -48,7 +48,12 @@ test('B-225 (D-271): a view switch is a cut; folds open in 0.28 s and close in 0
   const hero = css.match(/body\.captions \.hero,[^{]*\{[^}]*transition:height var\(--dur-pane\)/);
   assert.ok(hero, "her stage's fold opens in --dur-pane");
   assert.match(css, /--dur-pane:280ms/, 'the token is 0.28 s');
-  assert.match(css, /body\.captions\.her-folded \.hero\{transition-duration:\.16s\}/, 'and closes in 0.16 s');
+  assert.match(
+    css,
+    /body\.captions\.her-folded \.hero\{transition-duration:var\(--dur-pop-in\)\}/,
+    'and closes in --dur-pop-in'
+  );
+  assert.match(css, /--dur-pop-in:160ms/, 'the token is 0.16 s');
   assert.match(css, /\.chev,\.prep-row \.chev\{transition-duration:\.16s\}/, 'a chevron closes in 0.16 s');
   // B-515 lane 1: the open chevron's time is the token --dur-chev-open, 280 ms
   assert.match(
