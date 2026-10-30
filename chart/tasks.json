@@ -7565,13 +7565,13 @@
   "id": "B-415",
   "kind": "request",
   "title": "Architecture probe at the latest version",
-  "dod": "After the Notes release, fresh agents map the whole system as it stands (runtimes, data paths, core and page modules, tools, deploy steps, tests and check time) and propose the consolidation: what retires with the cutover (the claude.ai page path, its artifact-data record, the shim that imitates it), how core splits by domain, how the deploy shortens, which multi-device cases can go; with before and after numbers; filed as tasks of the consolidation release (D-337).",
+  "dod": "A read-only review writes docs/design/review/structure.md, in four parts. (1) A map of E.V.'s systems and dependencies as they stand: the standard tools (Cloudflare Workers and D1, GitHub Actions, Playwright, node:test, prettier) and the owned pieces (the Chart, Proprietary, skills and workflows, measures, the harnesses, deploy, both runtimes), each with its size, owner, checks and what depends on it. (2) The target structure: about five standard tools and about five small owned pieces, each gap tested as adopt (generic, widely used, removable) or build small (specific to E.V., one page, one owner, enforced by a check). (3) A removal sweep for what fits no target: code no harness run reaches, two ways of doing one thing, checks pinning retired behaviour, and the dead parts docs/trim/scan already lists; each removal is proved by an unchanged-behaviour check. (4) The consolidation plan: tasks that move code onto the target, each with before and after numbers (lines, places E.V. runs, ship steps, check time), and no rewrite for its own sake. Plus a one-page overview for Matt in everyday words.",
   "milestone": "After Notes",
   "status": "open",
   "depends": [
    "B-409"
   ],
-  "notes": "Matt's direction (Oct 30): besides the consolidation plan, the review maps E.V.'s own systems and how they depend on each other (the Chart, workflows and skills, Proprietary, measures, the two runtimes, the harnesses, deploy) and names the gaps that would pay off as a small owned framework like Proprietary. A candidate has to recur, live in one owned place, be enforced by a check and fit on one page. Early candidates from Oct 29-30: one data and measures layer (B-522), a one-command ship, a realistic test fixture built from staging data's shapes, and the harness layout.",
+  "notes": "Reframed with Matt on Oct 30: the consolidation is defined by the target structure and its gaps, with a removal sweep alongside, not by hunting unstructured code alone.",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
   "words": "Architecture probe at the latest version",
