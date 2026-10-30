@@ -11289,7 +11289,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at b03c34e: core's LIST_KINDS is the one list the New task picker and Today's snooze read, with learn, skills-prep and clinical-prep added; tests check the picker against the map and that a hand-added Learn or Skills prep gets the plan's badge. CI npm test and smoke green. Quiz is a colour only, not a saveable kind. Note for B-415: the colour map (DS.kind) and the list (E.LIST_KINDS) are still two places, so the vocabulary layer should merge them. Rides with the cleanup release.",
   "commit": null,
   "source": "build chat",
   "words": "The New task Kind menu should offer the same full list of kinds that study plans and the Canvas run use, so a kind means the same thing however a task was created.",
