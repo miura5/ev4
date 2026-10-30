@@ -337,7 +337,11 @@ test('D-386, D-388: the budget, summed over the split files: about 900 lines of 
   const js = sum('page/app', /^01-ui[\w-]*\.js$/),
     css = sum('page/ds/components', /\.css$/),
     patterns = sum('page/ds/patterns', /\.css$/);
-  assert.ok(js <= 900, `page/app/01-ui*.js: ${js} lines (budget 900; going over needs a superseding decision)`);
+  // D-403 (supersedes D-386's 900 for the JS): 1,200 lines for 19 blocks, Table, Chart and Picker included
+  assert.ok(
+    js <= 1200,
+    `page/app/01-ui*.js: ${js} lines (budget 1,200, D-403; going over needs a superseding decision)`
+  );
   assert.ok(css <= 900, `page/ds/components/*.css: ${css} lines (budget 900)`);
   assert.ok(patterns <= 800, `page/ds/patterns/*.css: ${patterns} lines (budget 800)`);
 });
