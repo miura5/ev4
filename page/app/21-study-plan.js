@@ -947,10 +947,18 @@
         : ownOwns
           ? { panel: () => own[0].panel() }
           : parts.find(x => x.card && x.draft) || parts.find(x => x.card) || parts.find(x => x.panel) || null;
-      const kids = parts.flatMap(x => x.nodes(x === owner));
-      const own = ownList.map((p, i) => ownCard(p, ownOwns && i === 0));
-      box.replaceChildren(...kids, ...own.map(x => x.card));
-      return owner && owner.panel ? owner.panel() : null;
+      // B-577 (b): a card hands its summary to the panel only when the panel has one to show; else it keeps it
+      const build = o => {
+        const kids = parts.flatMap(x => x.nodes(x === o));
+        const own = ownList.map((p, i) => ownCard(p, !!o && ownOwns && i === 0));
+        box.replaceChildren(...kids, ...own.map(x => x.card));
+        const pan = o && o.panel ? o.panel() : null;
+        if (pan) pan.evHome = ownOwns ? own[0].card : kids.find(k => k && k.dataset && k.dataset.ui === 'card');
+        return pan;
+      };
+      const pan = build(owner);
+      if (owner && !(pan && pan.textContent.trim())) return build(null);
+      return pan;
     }
     /** B-450: a plan opened from elsewhere (an E.V. card): Study's overview on its exam's course tab. */
     function openPlanInStudy(examId, planId) {

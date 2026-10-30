@@ -2834,6 +2834,68 @@ async function studyPlanChecks(page) {
   await page.waitForTimeout(250);
 }
 
+async function staleStateChecks(browser) {
+  // B-577 (Matt, live): state kept on his device (ev3-* keys) that a clean browser lacks: a retired or unknown view, a
+  // reopen straight onto Study, a quiz left open (real or gone), a course no longer listed, and garbage. With each
+  // planted, Study on NUR 112 at 1280 shows the plan's summary somewhere: never an empty panel beside a card without it.
+  {
+    const setId = Object.keys(seed.sets || {})[0] || 'none';
+    const plants = {
+      'a retired view': { study: 'plan' },
+      'a reopen onto Study': { tab: 'study', study: 'objectives', studyCourse: 'NUR 112' },
+      'a quiz left open': { tab: 'study', quizOpen: JSON.stringify({ set: setId, mini: null, obj: null }) },
+      'a quiz on a gone set': { quizOpen: JSON.stringify({ set: 'gone', obj: { obj: 'gone', text: 'x' } }) },
+      'a gone course': { studyCourse: 'NUR 999' },
+      'practice left open': { tab: 'study', study: 'practice' },
+      'a deep scroll on Study': { tab: 'study', scroll: JSON.stringify({ study: 4000, today: 4000 }) },
+      garbage: { tab: 'zzz', study: 'zzz', studyCourse: '{', quizOpen: '{bad', scroll: '[', 'prog.period': 'x' },
+    };
+    for (const [what, kv] of Object.entries(plants)) {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+      const errs = [];
+      page.on('pageerror', e => errs.push(e.message));
+      const pre =
+        Object.entries(kv)
+          .map(([k, v]) => `localStorage.setItem(${JSON.stringify('ev3-' + k)}, ${JSON.stringify(v)});`)
+          .join('') + '';
+      await openPage(page, 'staging', `try{${pre}}catch{};`);
+      await page.waitForTimeout(900);
+      await page.click('#tab-study');
+      await page.waitForTimeout(300);
+      if (!(await page.isVisible('#study-objectives'))) await page.click('#seg-study [data-v="objectives"]');
+      await page.$eval('#study-course button[aria-label="NUR 112"]', b => b.click());
+      await page.waitForTimeout(300);
+      const s = await page.evaluate(() => {
+        // shown means on screen: laid out, inside the window, and the top thing at its middle
+        const vis = e => {
+          if (!e || e.closest('[hidden]') || !e.getClientRects().length) return false;
+          const r = e.getBoundingClientRect();
+          if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) return false;
+          const at = document.elementFromPoint(r.left + r.width / 2, Math.max(1, Math.min(innerHeight - 1, r.top + 8)));
+          return !!at && (e.contains(at) || at.contains(e));
+        };
+        const side = document.getElementById('study-side');
+        const cards = [...document.querySelectorAll('#ov-plans [data-ui=card]')].filter(
+          c => !c.closest('[hidden]') && c.getClientRects().length
+        );
+        return {
+          side: vis(side),
+          sideText: vis(side) ? side.textContent.trim().length : 0,
+          sideSum: [...((side && side.querySelectorAll('.plan-sum')) || [])].some(vis),
+          cardSum: cards.some(c => [...c.querySelectorAll('.plan-sum')].some(vis)),
+          cards: cards.length,
+        };
+      });
+      ok(
+        `[1280] ${what} kept on the device: NUR 112's plan summary shows in the panel or its card, no empty panel (B-577)`,
+        (!s.cards || s.sideSum || s.cardSum) && (!s.side || s.sideText > 0) && errs.length === 0,
+        JSON.stringify(s) + errs.join(' | ')
+      );
+      await page.close();
+    }
+  }
+}
+
 async function openPage(page, target = 'staging', pre = '') {
   // live tasks are created at cutover (B-24), so the main pass drives the staging build
   await page.clock.install({ time: DAYTIME });
@@ -2909,6 +2971,13 @@ async function tap(page, locator, name) {
   const browser = await chromium
     .launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
     .catch(() => chromium.launch());
+  if (process.env.EV_ONLY === 'stale') {
+    // B-577: only the kept-state checks (EV_ONLY=stale), for a quick run while working on them
+    await staleStateChecks(browser);
+    await browser.close();
+    for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+    return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
   // A · Aurora is dark only (D-077): the passes are phone width (all interactions) and desktop width (screens).
   for (const scheme of ['phone', 'desktop']) {
     const page = await browser.newPage({
@@ -7043,6 +7112,7 @@ async function tap(page, locator, name) {
   }
   delete seed.idchecks;
   delete seed.system.yourturn;
+  await staleStateChecks(browser);
   // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with one
   // segment lit at twelve (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
   for (const [tag, vp, arc] of [

@@ -186,7 +186,9 @@
       else set(seg.querySelector('button').dataset.v);
       seg.dataset.ready = '1';
       WIDE.addEventListener('change', () => {
-        set(store.get(key) || ui[key]);
+        // B-577 (a): a kept value is used only while its view still exists
+        const kept = store.get(key);
+        set(kept && seg.querySelector('[data-v="' + kept + '"]') ? kept : ui[key]);
         render();
       });
       return set;

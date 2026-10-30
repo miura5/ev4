@@ -59,6 +59,13 @@
                 ? ui.objPanel
                 : null
           : null;
+      // B-577 (b): a summary its card handed over is shown here, or goes back to its card: never an empty panel beside a
+      // card without it
+      const handed = ui.tab === 'study' && ui.objPanel && ui.objPanel.evHome;
+      if (handed && obj !== ui.objPanel && ui.objPanel.evHome.isConnected && !ui.objPanel.evHome.contains(ui.objPanel))
+        ui.objPanel.evHome.firstChild
+          ? ui.objPanel.evHome.firstChild.after(ui.objPanel)
+          : ui.objPanel.evHome.append(ui.objPanel);
       side.hidden = !shown && !obj;
       side.setAttribute(
         'aria-label',
