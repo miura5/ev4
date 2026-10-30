@@ -255,7 +255,7 @@ if (require.main === module) {
           JSON.stringify(got.sections) === JSON.stringify(SECTIONS),
           got.sections.join(', ')
         );
-        ok(`${tag} D-383: a slot for each of the 18 components`, got.slots.length === 18, got.slots.join(', '));
+        ok(`${tag} D-383: a slot for each of the 19 components`, got.slots.length === 19, got.slots.join(', '));
         ok(`${tag} nothing scrolls sideways`, !got.sideways);
         ok(
           `${tag} D-273: every text holds 4.5:1 on its ground (${got.texts} read)`,
@@ -443,6 +443,52 @@ if (require.main === module) {
         !s3.open && s3.focus === 'Open sheet',
         JSON.stringify(s3)
       );
+      await ctx.close();
+    }
+    // B-596: the Picker, live. Its first Gallery chip opens the popover with the search focused; arrows and Enter pick,
+    // a number key picks that row, typing filters, Esc closes with focus back on the chip.
+    for (const [w, h] of [
+      [390, 844],
+      [1280, 900],
+    ]) {
+      const tag = `[${w} picker]`;
+      const { ctx, page } = await open(browser, dir, w, h, 'light');
+      const chip = page.locator('#gallery [data-slot="picker"] .pk-chip').first();
+      const label = () => chip.evaluate(c => c.textContent.trim());
+      const shown = () =>
+        page.evaluate(() => {
+          const p = document.querySelector('#gallery [data-slot="picker"] .pk-pop[popover]');
+          return { open: !!p && p.matches(':popover-open'), q: document.activeElement.classList.contains('pk-q') };
+        });
+      await chip.click();
+      await page.waitForTimeout(250);
+      const o1 = await shown();
+      ok(`${tag} the chip opens its list with the search focused`, o1.open && o1.q, JSON.stringify(o1));
+      await page.keyboard.press('ArrowDown');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(250);
+      ok(
+        `${tag} ArrowDown and Enter pick the second row and close`,
+        (await label()) === 'Practice' && !(await shown()).open
+      );
+      await chip.click();
+      await page.waitForTimeout(250);
+      await page.keyboard.press('4');
+      await page.waitForTimeout(250);
+      ok(`${tag} the number 4 picks the fourth row`, (await label()) === 'Graded');
+      await chip.click();
+      await page.waitForTimeout(250);
+      await page.keyboard.type('clin');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(250);
+      ok(`${tag} typing filters and Enter picks the first match`, (await label()) === 'Clinical prep');
+      await chip.click();
+      await page.waitForTimeout(250);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(250);
+      const o2 = await shown();
+      const back = await chip.evaluate(c => document.activeElement === c);
+      ok(`${tag} Esc closes it and focus returns to the chip`, !o2.open && back, JSON.stringify(o2));
       await ctx.close();
     }
     await browser.close();

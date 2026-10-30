@@ -1,0 +1,18 @@
+/* Proprietary 19 Picker (B-596): a chip with the current value's kind dot, opening a popover with a search line over
+   Line rows; the current row is checked, the active one (arrows) filled, each row's number quiet at its end. */
+:where([data-ui='picker']){display:inline-flex;flex-wrap:wrap;align-items:flex-start;gap:var(--sp-2);position:relative}
+.pk-chip{display:inline-flex;flex-direction:row;align-items:center;gap:var(--sp-1_5)}
+:where(.pk-ph){color:var(--quiet)}
+.pk-chip > .pk-dot,:where(.pk-dot){display:block;flex:none;width:var(--kind-dot);height:var(--kind-dot);border-radius:var(--r-round);background:var(--x,var(--faint))}
+:where(.pk-pop){width:260px;padding:var(--sp-1);gap:var(--sp-1)}
+:where(.pk-q){width:100%;border:0;border-bottom:var(--hairline) solid var(--line);border-radius:0;background:none;
+  padding:0 var(--sp-2);font-size:var(--fs-2)}
+:where(.pk-q):focus-visible{outline:none;box-shadow:none}
+:where(.pk-list){display:flex;flex-direction:column}
+:where(.pk-row){gap:var(--sp-2);padding:0 var(--sp-2);border-radius:var(--r-sm);cursor:pointer}
+:where(.pk-row):hover,:where(.pk-row)[data-active]{background:var(--hover)}
+:where(.pk-row,.pk-chip) > svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;color:var(--quiet)}
+:where(.pk-row)[aria-selected=true]::after{content:"";flex:none;width:5px;height:9px;margin:0 3px 2px;
+  border:solid var(--text);border-width:0 1.5px 1.5px 0;rotate:45deg;order:2}
+:where(.pk-n){order:3;flex:none;min-width:1ch;color:var(--quiet);font-size:var(--fs-1);font-variant-numeric:tabular-nums}
+:where(.pk-none){margin:0;padding:var(--sp-2);color:var(--quiet);font-size:var(--fs-2)}

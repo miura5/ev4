@@ -52,8 +52,8 @@
       }
       return node;
     }
-    // The 18 components (B-504), each its hoisted declaration once its lane has built it: C1 (B-507) 01 to 09, C2
-    // (B-508) 10 to 16, and B-515's lane 1 17 and 18.
+    // The 19 components (B-504), each its hoisted declaration once its lane has built it: C1 (B-507) 01 to 09, C2
+    // (B-508) 10 to 16, B-515's lane 1 17 and 18, and B-596's 19.
     const DS = Object.freeze({
       button: typeof dsButton === 'function' ? dsButton : undefined,
       badge: typeof dsBadge === 'function' ? dsBadge : undefined,
@@ -79,4 +79,5 @@
       message: typeof dsMessage === 'function' ? dsMessage : undefined,
       table: typeof dsTable === 'function' ? dsTable : undefined, // B-515 lane 1
       chart: typeof dsChart === 'function' ? dsChart : undefined, // B-515 lane 1
+      picker: typeof dsPicker === 'function' ? dsPicker : undefined, // B-596
     });
