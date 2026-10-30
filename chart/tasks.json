@@ -10226,7 +10226,7 @@
   "depends": [
    "B-515"
   ],
-  "notes": "",
+  "notes": "Toast placement plus Undo after a tick (ca4f404). Approve and save get no Undo yet.",
   "commit": null,
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
