@@ -7571,7 +7571,7 @@
   "depends": [
    "B-409"
   ],
-  "notes": "",
+  "notes": "Matt's direction (Oct 30): besides the consolidation plan, the review maps E.V.'s own systems and how they depend on each other (the Chart, workflows and skills, Proprietary, measures, the two runtimes, the harnesses, deploy) and names the gaps that would pay off as a small owned framework like Proprietary. A candidate has to recur, live in one owned place, be enforced by a check and fit on one page. Early candidates from Oct 29-30: one data and measures layer (B-522), a one-command ship, a realistic test fixture built from staging data's shapes, and the harness layout.",
   "commit": null,
   "source": "chat, Oct 26 (D-337)",
   "words": "Architecture probe at the latest version",
