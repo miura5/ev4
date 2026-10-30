@@ -102,6 +102,10 @@ test('B-466 (D-366): the full check gates nothing: R-06 is ended in the Chart, a
   assert.match(ship, /R-04 \(D-083\): a live deploy needs Matt's explicit OK/, 'R-04 is still enforced');
   assert.doesNotMatch(ship, /fullCheckRefusal|r\.check === 'fullCheck'|nightlyGreen|NIGHTLY_RUNS|check-full\.json/);
   assert.equal(chart.fullCheckRefusal, undefined, 'the R-06 refusal is retired, not kept dead');
-  assert.match(flatSource('CLAUDE.md'), /--touched/, 'CLAUDE.md step 5 says when to run which');
+  assert.match(
+    flatSource('CLAUDE.md'),
+    /once per batch, before ship staging/,
+    'CLAUDE.md says when to run which (D-408)'
+  );
   assert.match(flatSource('CLAUDE.md'), /R-06 is ended by D-366/, 'CLAUDE.md step 5 says R-06 is ended');
 });

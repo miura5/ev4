@@ -9,10 +9,6 @@ You build one or more backlog tasks (B-xxx) the build manager gave you, prove th
 build manager claims the task in the Chart, ships staging, runs the end-to-end run and talks to Matt; you do none of
 those. CLAUDE.md is the contract and wins wherever this skill is shorter or older: read it before anything else.
 
-A scheduled `ev4-builder` run or a lane run (fired "Lane <name>") is not this kind of builder: it follows CLAUDE.md
-("Every session", "Builder runs") and its own prompt, which may have it claim, record or ship. It may still use the
-proofs and lessons here.
-
 ## What the build manager's message gives you
 
 - **Tasks:** the ids, in the order to build them.
@@ -81,7 +77,7 @@ The shared machine runs only fast, targeted checks; full suites run on GitHub. R
 | pwa/ | `npm run smoke:pwa`; `npm run test:run-api` when the run API is touched |
 | A model call | the tests above; the staging run is the build manager's |
 
-The phone is frozen at "it works" (D-407): no phone layout or polish work, no 390 look passes or screenshots; 390 checks
+The phone is frozen at "it works" (D-407): no phone layout or polish work, no phone-width look passes or screenshots; phone checks
 already in a suite still run where the full suite runs.
 
 **Full suites (npm test, smoke, every harness) are not run on the shared machine.** GitHub runs `npm test` and smoke on
@@ -91,8 +87,8 @@ Never run two full harness suites at once on the shared machine.
 
 ## Commit and push
 
-- **Format before every push (B-586).** Run `npm run format`, then `node --test test/format.test.mjs`, and push only
-  when it passes. This holds on every push, even one where you skipped the heavier checks: builder pushes on Oct 30 turned main red on formatting alone (B-575, B-579, B-586).
+- **Format before every push (B-586):** the table's first row, on every push; on Oct 30 builder pushes turned main red
+  on formatting alone (B-575, B-579, B-586).
 - One commit per task: `B-xxx: <what changed, in words>`, then the attribution lines from the message.
 - `git fetch origin main && git rebase origin/main`, the format test and your touched unit tests again if the rebase brought anything in, then
   `git push origin HEAD:main`. Refused: rebase and push again. Never force-push, never a merge commit.

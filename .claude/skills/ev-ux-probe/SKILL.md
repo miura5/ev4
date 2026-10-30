@@ -1,6 +1,6 @@
 ---
 name: ev-ux-probe
-description: Run E.V.'s UX probe (D-369) - cold testers walk the staging app at 1280 and 390 and a synthesis agent writes the UX map doc. Use it to brief a full probe or, after any change Matt will see in a view, a delta probe of only the journeys that change touched.
+description: Run E.V.'s UX probe (D-369) - cold testers walk the staging app in desktop Chrome at 1280 (D-406) and a synthesis agent writes the UX map doc. Use it to brief a full probe or, after any change Matt will see in a view, a delta probe of only the journeys that change touched.
 ---
 
 # E.V. UX probe and delta probe (D-369)
@@ -32,20 +32,20 @@ journey (J8 and on) written into the filled tester brief in the same shape as th
 | Who | What | Gets |
 | --- | --- | --- |
 | Tester A | laptop, 1280x800, one course | the filled tester brief + motion.md |
-| Tester B | phone, 390x844, one-handed, `isMobile`/`hasTouch`, the other course | the filled tester brief + motion.md |
+| Tester B | full probe only: phone, `isMobile`/`hasTouch`, the other course; a "loads and ticks" pass (D-407: it loads, a tick works, nothing overflows), no polish findings | the filled tester brief |
 | Synthesis agent | turns findings into the UX map | `synthesis.md` + the tester folders |
 | Matt | his own pass: agree, disagree or a note per signal, in the doc | a short plain line with the doc link |
 | Build manager | budget line, briefing, filing the Tasks to add | this skill |
 
-Testers and the synthesis agent are fresh agents that have not seen the work or an earlier probe. A delta whose change
-shows at one width only may use one tester.
+Testers and the synthesis agent are fresh agents that have not seen the work or an earlier probe. A delta probe uses
+Tester A only.
 
 ## Budget line to Matt (CLAUDE.md, Guardrails)
 
 Before starting, one line saying why and what it costs, for example:
 
-> UX probe (delta after <change>): 2 cold testers (laptop and phone) re-walk J<n>, J<n> on staging's practice data, then
-> 1 agent updates the UX map; about <45> minutes and three agents. They write plans, notes and quizzes on staging only.
+> UX probe (delta after <change>): 1 cold tester (desktop Chrome, 1280) re-walks J<n>, J<n> on staging's practice data, then
+> 1 agent updates the UX map; about <45> minutes and two agents. They write plans, notes and quizzes on staging only.
 
 A full probe is about 2 to 2.5 hours and three agents (testers in parallel, about an hour each plus 30 to 40 minutes of
 motion; synthesis about 45 minutes).
@@ -58,14 +58,14 @@ motion; synthesis about 45 minutes).
    repository, a brief's text or a report.
 2. **Tester folders.** One per tester in the scratchpad. Into each, copy `tester-brief.md`, `motion.md` and
    `fonts/inter-route.cjs`, and fill the brief's `<...>` lines: folder, viewport, course, sign-in file path, journeys.
-   Give the two testers **different courses** (NUR 112, BIO 201).
+   On a full probe, give the two testers **different courses** (NUR 112, BIO 201).
 3. **Gallery (delta, Proprietary).** If the change touched a Proprietary component (page/ds/components,
    page/app/01-ui-*), add to the brief's journeys line: "Open the app's /gallery, find <component>, look at each state
-   at your viewport; same row protocol, Where = Gallery › <component>."
+   at 1280; same row protocol, Where = Gallery › <component>."
 4. **Start the testers** in parallel, in the background: "Read <folder>/tester-brief.md and <folder>/motion.md and
    follow them. Your final message is your report." Keep them alive (D-358).
 5. **Synthesis.** A fresh agent: "Load the ev-ux-probe skill and follow synthesis.md in <full | delta> mode; tester
-   folders: <A>, <B>; change: <...>; build: <sha>."
+   folders: <A>[, <B>]; change: <...>; build: <sha>."
 6. **Matt's pass.** One plain line with the doc link: what was probed and the top frictions.
 7. **File.** After his pass (or at once for a delta's few rows, with a line to him), file the doc's Tasks to add:
    `node tools/chart.mjs plan --from <doc link> --apply`. A signal he disagreed with is dropped or reshaped before

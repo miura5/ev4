@@ -89,8 +89,10 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     p['build.ev4-builder'],
     "You are an E.V. v4 build session. Your first step is node tools/guard.mjs --mark (this session is the builder, B-179). Then follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs and Builder runs sections. This run was fired with a message that says what it is for: 'Job <id>', words to file (starting bug:, idea: or request:), or 'continue'. It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
   );
-  // B-187: the builder waits for its fired text as the worker does, and CLAUDE.md re-fires it with words it waits for.
-  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  // B-187: the builder waits for its fired text as the worker does, and docs/builder-runs.md (moved from CLAUDE.md,
+  // B-611) re-fires it with words it waits for.
+  const runs = fs.readFileSync(path.join(ROOT, 'docs', 'builder-runs.md'), 'utf8');
+  const claude = runs.replace(/\s+/g, ' ');
   assert.match(
     claude,
     /fire the builder again through the Claude Code Remote `fire_trigger` tool with the text `continue`/
@@ -103,8 +105,12 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
   );
   assert.match(p['build.ev4-builder'], /the Unattended runs and Builder runs sections/);
   const raw = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
-  assert.match(raw, /\n## Builder runs\n/);
-  const section = raw.split('\n## Builder runs\n')[1].split('\n## ')[0].replace(/\s+/g, ' ');
+  assert.match(
+    raw,
+    /\n## Builder runs\n[^#]*docs\/builder-runs\.md/,
+    'CLAUDE.md points the section at docs/builder-runs.md'
+  );
+  const section = runs.split('\n## Builder runs\n')[1].split('\n## ')[0].replace(/\s+/g, ' ');
   assert.match(section, /`node tools\/guard\.mjs --mark`, which writes \/tmp\/ev\/builder-run/);
   for (const step of [
     /report bug\|request --from-chat --job <id>/,

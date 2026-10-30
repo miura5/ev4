@@ -56,10 +56,9 @@ test('B-199: the harness names its six checks and both plants', () => {
   assert.ok(h.includes("['390', { width: 390") && h.includes("['1280', { width: 1280"));
 });
 
-test('B-199, B-219, B-466: CLAUDE.md step 5 says smoke while working, the touched check before ship, the full one nightly only (D-366)', () => {
-  const md = read('CLAUDE.md');
-  assert.match(md, /run `npm run smoke` while working/);
-  assert.match(md, /`npm run check -- --touched` once before ship staging/);
-  assert.match(md, /The full `npm run check` runs nightly only/);
+test('B-611 (D-408): CLAUDE.md step 5 says GitHub runs npm test and smoke, the full suite per batch before ship staging', () => {
+  const md = read('CLAUDE.md').replace(/\s+/g, ' ');
+  assert.match(md, /GitHub runs npm test and smoke on every push/);
+  assert.match(md, /full suite on GitHub once per batch, before ship staging/);
   assert.doesNotMatch(md, /runs nightly and before live/, 'D-366 ended R-06: the full check gates no live release');
 });

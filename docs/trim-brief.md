@@ -2,7 +2,7 @@
 
 E.V. works, but the machinery around it grew as big as the study logic itself. The trim makes it smaller and easier
 for Matt to understand **without changing what studying feels like**. It runs during the freeze, in parallel with
-Matt's onboarding: every cut comes to him as a product review card (D-261), and nothing reaches main until he approves it.
+Matt's onboarding: every cut comes to him for Matt's OK in the chat, and nothing reaches main until he gives it.
 
 **To start a trimmer:** open a new Claude Code session on `miura5/ev4` with the prompt "You are a trimmer. Read
 docs/trim-brief.md and do the next job." **To review a cut:** a fresh session or subagent gets the pull request and
@@ -14,7 +14,7 @@ this brief, nothing else.
 | --- | --- | --- |
 | Trimmer | One cut per branch and pull request | Merges, deploys, writes `chart/`, or adds new machinery |
 | Reviewer | Checks one pull request against this brief, without the trimmer's reasoning first | Writes code |
-| Freeze chat | Turns an approved pull request into Matt's product review card (D-261), then merges it on his OK | Merges without Matt's OK |
+| Freeze chat | Brings an approved pull request to Matt for his OK in the chat, then merges it on his OK | Merges without Matt's OK |
 | Matt | Approves each cut once he can explain it in a sentence | |
 
 ## Trimmer: the next job
@@ -51,7 +51,7 @@ no backlog task and write nothing to `chart/`.
 
    The record, its schemas, prompts and what a run writes stay out of scope. Study logic and the page are in scope
    only for restructuring that changes no behavior: the existing tests and page harnesses pass with no test changed
-   except imports, the cut ships through staging and the full check, and none lands in the days around an exam.
+   except imports, and the cut ships through staging and the full check.
 3. **One cut per branch** (`trim/<what>`, from main's head). The pull request is titled `B-262: trim <what>`, and its
    body has these headings:
    - **What goes**
@@ -100,7 +100,7 @@ Verdict, in one line: approve, change (what) or reject (why).
 
 When a pull request has the reviewer's approve:
 
-1. Turn it into a product review card (D-261: what changes for him, why, the parts it touches, what could break, size, checks done; no code) and wait for Matt's verdict.
+1. Bring it to Matt in plain words (what changes for him, why, what could break; no code) and wait for Matt's OK in the chat.
 2. On his OK, squash-merge to main with the message `B-262: trim <what>` and the session's attribution lines.
 3. Ship as the files require:
    - **Only `tools/`, `.github/`, `.claude/`, `docs/` or CLAUDE.md changed:** npm test green is enough. These files
@@ -109,7 +109,7 @@ When a pull request has the reviewer's approve:
      Matt's OK, like any change.
 4. Mark its inventory row done, and update How E.V. Works or the System Map if the cut changes what they describe.
 
-No merges in the days around an exam, and a bug that breaks studying always comes first.
+A bug that breaks studying always comes first.
 
 ## Scan runs (D-264)
 

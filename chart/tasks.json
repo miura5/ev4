@@ -11368,5 +11368,27 @@
    "outcome": "task",
    "at": "2026-10-30T23:06:14.507Z"
   }
+ },
+ {
+  "id": "B-611",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Bring CLAUDE.md and the builder, review, UX-probe and trim instructions in line with the rules in force (D-366, D-367, D-390, D-406 to D-409, the carry deleted)",
+  "dod": "proofs.md, CLAUDE.md, the ev-builder, review and ev-ux-probe skills and docs/trim-brief.md state only rules in force; Unattended and Builder runs live in docs/builder-runs.md; format and drift tests green; no check -- --touched, 390 or carry instructions remain",
+  "milestone": "workflow (ops)",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "instructions audit Oct 30",
+  "words": "Bring CLAUDE.md and the builder, review, UX-probe and trim instructions in line with the rules in force (D-366, D-367, D-390, D-406 to D-409, the carry deleted)",
+  "reworded": true,
+  "reportedAt": "2026-10-30T23:10:51.506Z",
+  "board": {
+   "row": "v4 B-611: Bring CLAUDE.md and the builder, review, UX-probe and trim…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T23:11:00.600Z"
+  }
  }
 ]
