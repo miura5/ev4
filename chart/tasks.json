@@ -11018,5 +11018,23 @@
    "outcome": "task",
    "at": "2026-10-30T16:35:18.378Z"
   }
+ },
+ {
+  "id": "B-595",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): Selecting text in the New task title by dragging closes the dialog when the drag ends outside it; what he typed is kept when he reopens it.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "Selecting text in the New task title by dragging closes the dialog when the drag ends outside it; what he typed is kept when he reopens it.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T16:38:06.388Z",
+  "board": {
+   "row": "v4 B-595: Selecting text in the New task title by dragging closes the dialog…"
+  }
  }
 ]
