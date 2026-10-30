@@ -6,7 +6,9 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
-## Update (Oct 30, afternoon Central): release card #2 sent, waiting on Matt (read this first)
+## Update (Oct 30, later): v4.5.20 LIVE at 2f50284 (the new look); next is B-522 minutes, then the course fallback (read this first)
+
+## Earlier (Oct 30, afternoon Central): release card #2 sent
 
 - **Live:** v4.5.19 at ceba846. **Staging:** GREEN at 2f50284 (v4.5.19+184), the release candidate. npm test, smoke, all 11 harnesses, the whole-release code review (no blockers) and the UI review (76/100) are done. No agents are running.
 - **Waiting on Matt:**
