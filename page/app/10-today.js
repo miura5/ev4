@@ -796,7 +796,9 @@
       const head = $('mh-title'),
         tb = $('tab-today');
       if (head && tb && ui.tab === 'today')
-        head.textContent = open ? tb.title : tb.title + (typeof headDate === 'function' ? ' · ' + headDate(today) : '');
+        head.textContent = open
+          ? tabName(tb)
+          : tabName(tb) + (typeof headDate === 'function' ? ' · ' + headDate(today) : '');
       if (!open) {
         panel.dataset.k = main.dataset.k = '';
         main.replaceChildren();

@@ -537,6 +537,28 @@ const statusShown = page =>
     );
     await page.close();
   }
+  // B-604: every view's header names that view (B-593 took the tabs' titles away and left the header empty).
+  for (const w of [390, 1280]) {
+    const { page } = await open(browser, { viewport: { width: w, height: 844 } });
+    await page.waitForTimeout(500);
+    const heads = {};
+    for (const [tab, name] of [
+      ['study', 'Study'],
+      ['progress', 'Progress'],
+      ['record', 'Record'],
+      ['ev', 'Conversation'],
+    ]) {
+      await page.click('#tab-' + tab);
+      await page.waitForTimeout(200);
+      heads[name] = await page.evaluate(() => document.getElementById('mh-title').textContent);
+    }
+    ok(
+      `[${w}] each view's header names it: Study, Progress, Record, Conversation (B-604)`,
+      Object.entries(heads).every(([n, h]) => h === n),
+      JSON.stringify(heads)
+    );
+    await page.close();
+  }
   {
     const at = ((seed.health || {}).current || {}).at || new Date().toISOString(),
       t = new Date(Date.parse(at) + 60000).toISOString();

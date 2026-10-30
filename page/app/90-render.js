@@ -400,7 +400,7 @@
     function viewName() {
       if (ui.tab === 'today' && ui.taskSel && !ui.taskGone) return 'this task';
       const b = $('tab-' + ui.tab);
-      return (b && b.title) || 'this view';
+      return tabName(b) || 'this view';
     }
     // the closed mark: queued behind the thread's own lines, on the day it was closed (talk/<day>, made when missing)
     function markClosed(th) {

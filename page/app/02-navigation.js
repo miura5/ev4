@@ -101,7 +101,7 @@
       const head = $('mh-title'),
         b = $('tab-' + t);
       // B-346 (D-312): Today's header carries the day, as the demo's "Today · Friday 23 October"
-      if (head && b) head.textContent = t === 'today' ? b.title + ' · ' + headDate(today) : b.title;
+      if (head && b) head.textContent = t === 'today' ? tabName(b) + ' · ' + headDate(today) : tabName(b);
       placeSegs(t);
       renderStudySide(); // B-223 (D-245): the Study panel only while Study is the view
       renderLine(); // B-333: her insight strip follows the view
@@ -222,12 +222,17 @@
     };
     const cmdNew = k =>
       typeof newOpen === 'function' ? newOpen(k) : document.querySelector('[data-new="' + k + '"]')?.click();
+    // B-604: a tab's name is its label's text (B-593 took the tabs' title tooltips away; the header and the command
+    // menu read the name from here, so the pane header always names the view).
+    function tabName(b) {
+      return b ? ((b.querySelector('.lab-side') || b.querySelector('span') || b).textContent || '').trim() : '';
+    }
     let cmdk = null;
     function commandMenu() {
       if (cmdk && cmdk.matches(':popover-open')) return cmdk.hidePopover();
       if (cmdk) cmdk.remove();
       const items = shownTabs().map((b, i) => ({
-        label: (b.querySelector('.lab-side') || b).textContent.trim() || b.title,
+        label: tabName(b),
         key: '⌘' + (i + 1),
         onPick: () => showTab(b.dataset.tab),
       }));
