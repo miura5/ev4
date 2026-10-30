@@ -10507,12 +10507,12 @@
   "title": "Record view: opens on Notes, with a Notes / Sessions / Quizzes / Everything switch (Matt's OK); a fixed time column; the detail pane; fits 390 with the course filter as an icon",
   "dod": "No overprint and no sideways scroll at 390",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "Behaviour part pushed 5c2d92f: Record always opens on Notes; switch Notes / Sessions / Quizzes / Everything (Everything is the old All); detail pane kept; Progress's open-in-Record still goes to Everything. Look part waits for the view lanes.",
-  "commit": null,
+  "notes": "Notes and Record (41d98ee): day bands with counts and 36 px one-line rows, as in the approved reference; Notes menus through DS.popover; Record's toolbar fits in one row at 390. npm test 1020, smoke 31, notes 195, look 218. Backlog: course dots have no colour token, rec-pop is still hand-built, dark wasn't compared side by side.",
+  "commit": "41d98ee",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
