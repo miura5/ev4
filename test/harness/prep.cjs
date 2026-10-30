@@ -461,9 +461,11 @@ async function tickAll(page) {
           tomorrow: (badge(byText('fluid balance')) || {}).className,
           in3: (badge(byText('lab report draft')) || {}).className,
           ticks: rows.map(li => {
-            const c = box(li.querySelector('input.tick')),
+            const i = li.querySelector('input.tick'),
+              bw = parseFloat(getComputedStyle(i).borderLeftWidth) * 2, // B-564: Line's 44 px tap border is clear
+              c = box(i),
               n = box(li.querySelector('.nm'));
-            return { w: Math.round(c.width), h: Math.round(c.height), clear: c.right <= n.left };
+            return { w: Math.round(c.width - bw), h: Math.round(c.height - bw), clear: c.right - bw / 2 <= n.left };
           }),
           // B-374 (D-316): Start shows on the first row that is not graded and has an estimate; on the others on hover
           starts: [...document.querySelectorAll('#today-list .ti-start')].filter(
@@ -493,8 +495,8 @@ async function tickAll(page) {
         JSON.stringify([r.tomorrow, r.in3])
       );
       ok(
-        `${tag} the tick's box is ${w < 600 ? 18 : 16} px and clear of the name`,
-        r.ticks.every(t => t.w === (w < 600 ? 18 : 16) && t.h === t.w && t.clear),
+        `${tag} the tick's box is ${w < 600 ? 20 : 16} px and clear of the name`,
+        r.ticks.every(t => t.w === (w < 600 ? 20 : 16) && t.h === t.w && t.clear),
         JSON.stringify(r.ticks)
       );
       ok(
@@ -520,12 +522,17 @@ async function tickAll(page) {
           (id && document.querySelector(`#today-list li[data-id="${id}"] input.tick`)) ||
           document.querySelector('#today-list .ti-list input.tick:checked');
         const b = c.getBoundingClientRect(),
+          bw = parseFloat(getComputedStyle(c).borderLeftWidth) * 2,
           n = c.closest('li').querySelector('.nm').getBoundingClientRect();
-        return { w: Math.round(b.width), green: getComputedStyle(c).backgroundColor, clear: b.right <= n.left };
+        return {
+          w: Math.round(b.width - bw),
+          green: getComputedStyle(c).backgroundColor,
+          clear: b.right - bw / 2 <= n.left,
+        };
       }, firstId);
       ok(
         `${tag} a ticked box fills green inside its box only`,
-        f.w === (w < 600 ? 18 : 16) && f.clear && f.green !== 'rgba(0, 0, 0, 0)',
+        f.w === (w < 600 ? 20 : 16) && f.clear && f.green !== 'rgba(0, 0, 0, 0)',
         JSON.stringify(f)
       );
       ok(`${tag} no sideways scroll, no page errors`, !r.sideways && !errors.length, errors.join(' | '));
@@ -942,7 +949,7 @@ async function tickAll(page) {
       await page.waitForTimeout(400);
       const writes = () => page.evaluate(() => window.__writes.filter(x => x[1] === 'dayedits').length);
       const before = await writes();
-      await page.click('#p-today .ti-rest');
+      await page.$eval('#p-today .ti-rest', b => b.click()); // B-564: behind the toolbar's ⋯ at 390, whose menu item clicks it
       await page.waitForTimeout(300);
       const read = () =>
         page.evaluate(() => {
@@ -1039,7 +1046,7 @@ async function tickAll(page) {
         JSON.stringify({ kept: k.prop.map(p => p.id), after: r.prop.length, writes: (await writes()) - before })
       );
       // Accept all (light), or each row's Accept in turn (dark): the add and the take-off, each by E.V.
-      await page.click('#p-today .ti-rest');
+      await page.$eval('#p-today .ti-rest', b => b.click()); // B-564: behind the toolbar's ⋯ at 390, whose menu item clicks it
       await page.waitForTimeout(200);
       const dayeditWrites = () => page.evaluate(n => window.__writes.filter(x => x[1] === 'dayedits').slice(n), before);
       const edits = doc => ({
@@ -1144,7 +1151,7 @@ async function tickAll(page) {
     await openPage(page, ct(today, 10, 0), overRecord(false));
     await page.click('#tab-today');
     await page.waitForTimeout(400);
-    await page.click('#p-today .ti-rest');
+    await page.$eval('#p-today .ti-rest', b => b.click()); // B-564: behind the toolbar's ⋯ at 390, whose menu item clicks it
     await page.waitForTimeout(300);
     const o = await page.evaluate(() => ({
       offs: [...document.querySelectorAll('#today-list .ti-list > li.ti-off')].map(li => li.dataset.id),
@@ -1166,7 +1173,7 @@ async function tickAll(page) {
     await openPage(p2, ct(today, 10, 0), overRecord(true));
     await p2.click('#tab-today');
     await p2.waitForTimeout(400);
-    await p2.click('#p-today .ti-rest');
+    await p2.$eval('#p-today .ti-rest', b => b.click());
     await p2.waitForTimeout(200);
     const t = await p2.evaluate(() => ({
       toast: document.getElementById('toast').hidden ? '' : document.getElementById('toast').textContent,
@@ -1238,7 +1245,7 @@ async function tickAll(page) {
       return !!c && !c.hidden && !c.querySelector('.chg') && /Nothing yet today\./.test(c.textContent);
     });
     ok(`${tag} with only his own add, her changes say Nothing yet today.`, empty, String(empty));
-    await page.click('#p-today .ti-rest');
+    await page.$eval('#p-today .ti-rest', b => b.click()); // B-564: behind the toolbar's ⋯ at 390, whose menu item clicks it
     await page.waitForTimeout(200);
     await page.locator('#p-today .ti-review button', { hasText: 'Accept all' }).click();
     await page.waitForTimeout(400);

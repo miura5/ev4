@@ -240,6 +240,23 @@
       t.dataset.part = 'title';
       return t;
     }
+    /** B-566: a row's phone menu: a ⋯ button and its popover (today.css shows it below 600 px only). */
+    function rowMenu(text, acts) {
+      const more = DS.button({
+        kind: 'ghost',
+        size: 'sm',
+        iconOnly: true,
+        icon: el('span', null, '⋯'),
+        label: 'More: ' + text,
+        cls: 'ti-more',
+      });
+      const menu = DS.popover({
+        anchor: more,
+        label: 'More',
+        items: acts.map(([label, onPick]) => ({ label, onPick })),
+      });
+      return [more, menu];
+    }
     function todayRow(it, isDone, o = {}) {
       const doneNow = isDone(it);
       const text = E.rowText(it); // B-392: the row shows its day, so a heads-up drops its "(due tomorrow)"
@@ -253,7 +270,7 @@
       });
       li.replaceChildren(); // Line's own name cell gives way to Today's (a tick label, the ellipsed title)
       li.dataset.id = it.id;
-      const tk = el('label', 'tk');
+      // B-564: the flat check is Line's own (a direct child, drawn by 05-line.css), then the kind's fixed column
       const c = document.createElement('input');
       c.type = 'checkbox';
       c.className = 'tick';
@@ -263,7 +280,6 @@
         T.ticked.add(it.id);
         guard(c, () => tickWrite(it, c.checked, o.date || today), null);
       });
-      tk.append(c);
       const nm = el('button', 'nm ti-nm');
       nm.type = 'button';
       nm.append(titlePart(text));
@@ -278,13 +294,12 @@
         li.addEventListener('click', e => {
           if (!e.target.closest('button, label, input, a')) openTask(it.id);
         });
-      li.append(tk, nm);
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
       // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
       // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
       const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
-      li.append(DS.badge({ text: bb[0], cls: bb[1] }));
+      li.append(c, DS.badge({ text: bb[0], cls: bb[1] }), nm);
       // B-369 (D-312): a proposed take-off keeps its row struck through, with why, the tick and the cross, as the demo
       if (o.off)
         li.append(
@@ -299,6 +314,14 @@
         st.prepend(svgIcon('M8 5l11 7-11 7z'));
         st.setAttribute('aria-label', 'Start: ' + text);
         li.append(st);
+        // B-566: on the phone Start is in the row's ⋯ menu (05-line hides the button below 600 px), beside Open
+        if (!o.date)
+          li.append(
+            ...rowMenu(text, [
+              ['Start', go],
+              ['Open', () => openTask(it.id)],
+            ])
+          );
       }
       // B-363 (D-312): as the demo, minutes for today's items and the short weekday (Mon) for one due later
       const when = doneNow
@@ -389,19 +412,19 @@
     const startable = (it, isDone) =>
       !isDone(it) && !it.deferred && it.tag !== 'GRADED' && Number(it.minutes) > 0 && !!startGo(it);
     // B-363 (D-312): the demo's Done group under the list: a chevron and "Done · N", opening in place to its rows.
+    // B-565: Done is Proprietary's Fold, shut by default; it opens and closes by height and opacity (06-fold.css)
     function doneGroup(rows, open) {
-      const f = el('button', 'grp ti-fold');
-      f.type = 'button';
-      f.append(svgIcon(open ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6'), document.createTextNode('Done · ' + rows.length));
-      f.setAttribute('aria-expanded', String(!!open));
       const ul = el('ul', 'list ti-folded');
-      ul.hidden = !open;
       ul.append(...rows);
-      f.addEventListener('click', () => {
-        ui.todayFolds = { ...(ui.todayFolds || {}), done: !open };
-        render();
+      const f = DS.fold({
+        head: 'Done · ' + rows.length,
+        body: ul,
+        open: !!open,
+        cls: 'ti-done',
+        onToggle: on => (ui.todayFolds = { ...(ui.todayFolds || {}), done: on }),
       });
-      return [f, ul];
+      f.querySelector('.fold-line').classList.add('ti-fold');
+      return [f];
     }
     function itemRow(it, isDone) {
       const doneNow = isDone(it);
@@ -1181,7 +1204,14 @@
       const st = btn('Start', () => startDueCards(), { cls: 'btn neutral sm ti-start hov' });
       st.prepend(svgIcon('M8 5l11 7-11 7z'));
       st.setAttribute('aria-label', 'Start: Cards · ' + n + ' due');
-      li.append(tk, nm, DS.badge({ text: 'Study', cls: 'x-violet' }), st, el('span', 't', ''));
+      li.append(
+        tk,
+        DS.badge({ text: 'Study', cls: 'x-violet' }),
+        nm,
+        st,
+        ...rowMenu('Cards', [['Start', () => startDueCards()]]),
+        el('span', 't', '')
+      );
       return li;
     }
     function renderToday() {
@@ -1234,6 +1264,23 @@
         });
         fseg.append(b);
       }
+      // B-564 (D-393): on the phone the toolbar is one row: List / Week, the day arrows, Add, and a Group whose ⋯ holds
+      // Plan the rest and the filter (one item per choice)
+      todayBar.filters = FILTERS.map(([k, n]) => {
+        const c = open.filter(it => k === 'all' || catOf(it) === k).length;
+        const b = DS.button({
+          kind: 'ghost',
+          size: 'sm',
+          label: 'Show ' + n.toLowerCase() + ' · ' + c,
+          pressed: k === f,
+        });
+        b.classList.add('ti-fpick');
+        b.addEventListener('click', () => {
+          ui.todayFilter = k;
+          render();
+        });
+        return b;
+      });
       todayBar.list = [fseg];
       todayBar.nav = dayNav(ld);
       todayBar.listEnd = ld ? [] : [rest];
@@ -1278,7 +1325,7 @@
         after.push(
           ...doneGroup(
             done.map(it => todayRow(it, isDone, { date: ld })),
-            folds.done !== false
+            folds.done === true
           )
         );
       // B-363 (D-312): the toolbar's + Add opens New's task form, as the demo's Add does
@@ -1670,14 +1717,27 @@
       const on = ui.todayView === 'week';
       const wk = Number(ui.weekOff) || 0,
         start = E.addDays(today, WEEK_DAYS * wk);
-      todayBar.bar.replaceChildren(
-        ...(on ? [] : todayBar.list),
-        weekSeg,
-        ...(on ? [weekNav(start, wk)] : todayBar.nav ? [todayBar.nav] : []),
-        el('span', 'sp'),
-        ...(on ? [] : todayBar.listEnd),
-        todayBar.add
-      );
+      const phone = typeof matchMedia === 'function' && matchMedia('(max-width:599px)').matches;
+      const nav = on ? [weekNav(start, wk)] : todayBar.nav ? [todayBar.nav] : [];
+      if (phone)
+        todayBar.bar.replaceChildren(
+          weekSeg,
+          ...nav,
+          DS.group({
+            items: [todayBar.add, ...(on ? [] : [...todayBar.listEnd, ...(todayBar.filters || [])])],
+            label: 'More',
+            cls: 'ti-group',
+          })
+        );
+      else
+        todayBar.bar.replaceChildren(
+          ...(on ? [] : todayBar.list),
+          weekSeg,
+          ...nav,
+          el('span', 'sp'),
+          ...(on ? [] : todayBar.listEnd),
+          todayBar.add
+        );
       weekSeg
         .querySelectorAll('button')
         .forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ui.todayView)));

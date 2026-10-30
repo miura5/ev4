@@ -4,25 +4,12 @@
 /* B-515 lane B: rules moved from page/styles.css, in their legacy order */
 #today-list .ti-list,#today-list .ti-folded{gap:0}
 #today-list .li{padding:0 4px;gap:10px;box-sizing:border-box}
-#today-list .li .tk{flex:none;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;cursor:pointer!important}
-#today-list .li input.tick{flex:none!important;width:16px!important;height:16px!important;margin:0!important;border:0!important;border-radius:5px!important;background:none;box-shadow:inset 0 0 0 1.5px var(--line2)!important}
-#today-list .li input.tick:checked{background:var(--sem-green)!important;box-shadow:none!important}
-#today-list .li input.tick:checked::after{width:3px!important;height:7px!important;border:solid var(--do-ink)!important;border-width:0 2px 2px 0!important;transform:translateY(-1px) rotate(45deg)}
-#today-list .li .nm{all:unset!important;flex:1!important;min-width:0!important;display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;cursor:pointer!important}
 #today-list .li .nm:hover .ti-t{text-decoration:underline;text-underline-offset:3px}
 #today-list .li .nm:focus-visible{outline:2px solid var(--text)!important;outline-offset:2px!important;border-radius:4px!important}
 #today-list .li.done .ti-t{color:var(--faint);text-decoration:line-through}
-#today-list .li .t{min-width:3.5em;text-align:right;white-space:nowrap}
-#today-list .ti-fold{display:flex;align-items:center;min-height:32px;margin-top:4px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
 #today-list .ti-fold:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
-#today-list .ti-folded .row{min-height:32px!important;padding:0 4px 0 30px!important;align-items:center!important;color:var(--quiet)!important}
 @media (max-width:599px){#today-list .li{padding:0 2px;gap:8px}}
-@media (max-width:599px){#today-list .li .tk{width:44px;height:44px;margin:0 -13px}}
-@media (max-width:599px){#today-list .li input.tick{width:18px!important;height:18px!important}}
-@media (max-width:599px){#today-list .li .badge{max-width:40%;overflow:hidden;text-overflow:ellipsis}}
 @media (max-width:599px){#today-list .li .ti-start{display:none}}
-@media (max-width:599px){#today-list .ti-folded .row{min-height:44px!important}}
-@media (max-width:599px){#today-list .ti-fold{min-height:44px}}
 #today-budget{gap:6px!important}
 #today-budget .tb-big{margin:0;font:600 calc(15px * var(--ts))/1.3 var(--sans);color:var(--text);font-variant-numeric:tabular-nums}
 #today-budget .tb-bar{margin:2px 0}
@@ -128,7 +115,6 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
 @media (max-width:599px){#today-task .tp-props .prop{min-height:44px}}
 @media (max-width:599px){#today-task .tp-seg button{height:44px!important;min-width:44px!important;padding:0 12px!important;justify-content:center!important}}
 @media (max-width:599px){#today-task .wk-acts .btn{min-height:44px;height:44px}}
-#p-today>.today-bar{margin:-16px -16px 0;padding:12px 18px!important;min-height:0!important;gap:8px!important;border-bottom:1px solid var(--line)!important;flex-wrap:wrap!important}
 #p-today>.today-bar .seg{flex:none;background:var(--hover);box-shadow:none;align-self:center;width:auto}
 #p-today>.today-bar .seg button{min-height:24px;height:24px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans);box-sizing:border-box}
 #p-today>.today-bar .seg button:hover{color:var(--text)!important;background:var(--bg)!important}
@@ -140,17 +126,10 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
 #p-today>.today-bar .sp{flex:1!important}
 #today-list{gap:0!important}
 #today-list .ti-list{margin:0 -16px!important}
-#today-list .ti-list>.li{height:auto;min-height:44px;padding:0 18px;gap:12px;font-size:calc(13.5px * var(--ts))}
 #today-list .ti-list>.li:hover{background:var(--chrome)}
 #today-list .li .t{min-width:70px;color:var(--quiet);font-size:calc(12.5px * var(--ts))}
-#today-list .li .nm{flex:0 1 auto!important}
-#today-list .li>.badge,#today-list .li>.nm:not(:has(+ .badge)){margin-right:auto}
-#today-list .ti-fold{margin:0 -16px;padding:14px 18px 6px;min-height:32px;font-size:calc(12px * var(--ts));font-weight:500}
 #today-list .ti-folded{margin:0 -16px}
-#today-list .ti-folded>.li{min-height:44px;height:auto;padding:0 18px;gap:12px}
-#today-list .ti-folded .row{padding:0 18px 0 46px!important}
 #today-list .ti-review{margin:0 -16px;border-radius:0;padding:9px 18px;background:var(--chrome);box-shadow:none;border-bottom:1px solid var(--line)}
-#today-budget{background:var(--surface)!important;border-radius:12px!important;box-shadow:0 0 0 1px var(--line)!important;padding:14px!important;gap:10px!important}
 #p-today #today-budget>h2{min-height:0!important;font:500 calc(12px * var(--ts))/1.3 var(--sans)!important;color:var(--quiet)!important}
 #today-budget .tb-big{font:var(--fw-semibold) var(--fs-4)/var(--lh-ui) var(--sans);font-variant-numeric:tabular-nums;margin:0}
 #today-budget .tb-bar{height:6px!important;margin:0}
@@ -169,24 +148,11 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
 @media (min-width:600px) and (max-width:1199px){#today-week .wchip .wc-t{white-space:normal}}
 @media (max-width:599px){#p-today>.today-bar{padding:10px 16px!important}}
 @media (max-width:599px){#p-today>.today-bar .seg button{height:44px;min-height:44px;padding:0 12px;min-width:44px;justify-content:center}}
-@media (max-width:599px){#today-list .ti-list>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}}
-@media (max-width:599px){#today-list .ti-folded>.li{padding:6px 16px}}
-@media (max-width:599px){#today-list .li .t{min-width:0}}
-@media (max-width:599px){#today-list .ti-list>.li .nm{max-width:calc(100% - 40px)!important;white-space:normal!important}}
-@media (max-width:599px){#today-list .ti-list>.li .nm .ti-t{white-space:normal!important;overflow:visible!important}}
-@media (max-width:599px){#today-list .ti-fold{padding:14px 16px 6px}}
 @media (max-width:599px){#today-week .wchip .wc-t{white-space:normal}}
-#today-list .ti-list>.li,#today-list .ti-folded>.li{min-height:45px}
 #today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
 @media (max-width:1199px){#p-today #today-budget{margin-top:16px}}
 @media (max-width:1199px){#p-today #today-changes{margin-top:16px}}
 @media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}}
-@media (max-width:599px){#today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:nowrap;align-items:center;padding:6px 16px;gap:12px}}
-@media (max-width:599px){#today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:1 1 auto!important;min-width:0!important;max-width:none!important;white-space:normal!important;display:flex!important;align-items:center!important}}
-@media (max-width:599px){#today-list .li .nm .ti-t{white-space:normal!important;overflow:visible!important;overflow-wrap:break-word}}
-@media (max-width:599px){#today-list .li>.badge{flex:none!important;max-width:none;margin-right:0}}
-@media (max-width:599px){#today-list .li>.nm:not(:has(+ .badge)){margin-right:0}}
-@media (max-width:599px){#today-list .li .t{flex:none;min-width:0;text-align:right}}
 #p-today>.today-bar .ti-add{gap:6px}
 #today-list .grp{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;cursor:pointer;margin:0 -16px;padding:14px 18px 6px;min-height:32px;color:var(--quiet);font:500 calc(12px * var(--ts)) var(--sans)}
 #today-list .grp svg.ico{width:14px!important;height:14px!important;flex:none!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
@@ -209,16 +175,12 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
 #today-list .li svg.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 #today-list .li>svg.ico{color:var(--quiet)!important}
 #today-list .li .sp{flex:1!important}
-#today-list .li:has(>.sp)>.badge{margin-right:0}
 #today-list .li .pmark{font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap}
 #today-list .ti-list>.li.ti-padd{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);border-bottom:0;margin:4px 12px;border-radius:8px;outline:1px dashed var(--line2);outline-offset:-4px;padding:0 6px 0 18px}
 #today-list .ti-list>.li.ti-padd:hover{background:var(--bg)}
 #today-list .li.ti-off .ti-t{text-decoration:line-through;color:var(--quiet)}
 @media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(0,1fr))}}
 #today-week .wchip .wc-t{overflow-wrap:break-word}
-@media (max-width:599px){#today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px}}
-@media (max-width:599px){#today-list .ti-list>.li .nm,#today-list .ti-folded>.li .nm{flex:0 1 auto!important;max-width:calc(100% - 30px)!important;display:block!important}}
-@media (max-width:599px){#today-list .li>.badge{margin-right:auto}}
 @media (max-width:599px){#today-list .ti-list>.li.ti-padd{padding:6px 6px 6px 16px}}
 @media (min-width:1200px){#today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}}
 #today-week .wchip .wc-t{overflow-wrap:normal;word-break:normal;hyphens:manual}
@@ -271,9 +233,37 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
 #today-list .li .fc-nm{all:unset!important;flex:1!important;min-width:0!important;display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;cursor:pointer!important;line-height:1.3!important}
 #today-list .li .fc-nm:hover .ti-t{text-decoration:underline;text-underline-offset:3px}
 #today-list .li .fc-nm:focus-visible{outline:2px solid var(--text)!important;outline-offset:2px!important;border-radius:4px!important}
-@media (max-width:599px),(hover:none){#today-list .li.ti-cards .ti-start{display:inline-flex;visibility:visible}}
 @media (min-width:1200px){#today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - var(--strip-h) - 53px)}}
 #today-list [data-ui='line']:not(.ti-off) button.nm > .ti-t{display:block;line-height:1.3}
 /* a proposed take-off's title stays inline from 600 px (its whole name shows beside its mark); on the phone it wraps
    as a block like the others */
 @media (max-width:599px){#today-list [data-ui='line'].ti-off button.nm > .ti-t{display:block;line-height:1.3}}
+
+/* B-564: rows are Line's 36 px one-line rows (05-line.css): the flat check, the kind's fixed column, the title cut with an
+   ellipsis, the minutes at the end; the budget is a surface step with no line; the bar is one row */
+#today-list .li .nm{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#today-list .li .t{min-width:3.5em;text-align:right;white-space:nowrap}
+#today-list .ti-done > .fold-line{margin:0 -16px;padding:var(--sp-3) 18px var(--sp-1_5);font:var(--fw-medium) var(--fs-1) var(--sans)}
+#today-list .ti-more{display:none}
+#today-budget{background:var(--surface)!important;border-radius:var(--r-lg)!important;box-shadow:none!important;padding:var(--sp-4)!important;gap:var(--sp-2)!important}
+#p-today>.today-bar{margin:-16px -16px 0;padding:12px 18px!important;min-height:0!important;gap:8px!important;border-bottom:1px solid var(--line)!important;flex-wrap:nowrap!important}
+#p-today>.today-bar .ti-group{flex:1 1 auto;min-width:0}
+#p-today>.today-bar .ti-group>:first-child{margin-left:auto}
+#today-list .ti-list>.li,#today-list .ti-folded>.li{padding:0 18px;gap:12px}
+@media (max-width:599px){
+  #p-today>.today-bar{padding:6px 12px!important;gap:4px!important}
+  #p-today>.today-bar .seg svg.ico,#p-today>.today-bar .wk-range,#p-today>.today-bar .ti-add svg.ico{display:none}
+  #p-today>.today-bar .seg button{padding:0 10px;min-width:0}
+  #p-today>.today-bar .wk-nav .btn:not(.icon){padding:0 6px}
+  #today-list .ti-list>.li:is(.ti-off,.ti-padd){flex-wrap:wrap;height:auto;padding-block:6px}
+  #today-list .li:is(.ti-off,.ti-padd) .nm{white-space:normal;overflow:visible;flex-basis:calc(100% - 120px)}
+  #today-list .li .pmark{white-space:normal;min-width:0}
+  #today-list .ti-list>.li,#today-list .ti-folded>.li{padding:0 16px;gap:12px}
+  #today-list .li .ti-start{display:none}
+  #today-list .li .ti-more{display:inline-flex}
+  #today-list .ti-done > .fold-line{min-height:var(--tap);padding:0 16px}
+}
+/* legacy's bare input.tick (22 px, B-515 drops it) outranks Line's :where() tick; Line's own values, restated */
+@media (min-width:600px){#today-list .li>input.tick{flex:0 0 var(--sp-4)!important;width:var(--sp-4)!important;height:var(--sp-4)!important;margin:0!important;padding:0!important;border:0!important;border-radius:var(--r-xs)!important;box-shadow:inset 0 0 0 1.5px var(--line2)!important}}
+#today-list .li>input.tick:checked{box-shadow:none!important}
+#today-list .li>input.tick:checked::after{width:var(--sp-1)!important;height:var(--sp-2)!important;border-width:0 1.75px 1.75px 0!important}
