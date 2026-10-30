@@ -142,7 +142,7 @@ const listState = page =>
         id: r.dataset.note,
         name: txt(r.querySelector('.nm')),
         sel: r.classList.contains('sel'),
-        kind: txt(r.querySelector('.nk')),
+        kind: txt(r.querySelector('.badge')),
         when: txt(r.querySelector('.t')),
         cut: r.querySelector('.nm').scrollWidth > r.querySelector('.nm').clientWidth,
         h: Math.round(r.getBoundingClientRect().height),
@@ -204,10 +204,12 @@ const openNoteId = page =>
       JSON.stringify(L0.filters)
     );
     ok(
-      `${tag} the notes are grouped by course with counts, 44 px rows with label and day, the first picked`,
-      JSON.stringify(L0.groups) === JSON.stringify(['NUR 112 2', 'BIO 201 1']) &&
+      `${tag} the notes are grouped by day with counts, one-line rows with the course and time, the first picked`,
+      L0.groups.length >= 1 &&
+        L0.groups.every(g => /^(Today · |Yesterday · )?\w{3} \d{1,2} \w{3} \d+$/.test(g)) &&
+        L0.groups.reduce((t, g) => t + Number(g.split(' ').pop()), 0) === 3 &&
         L0.rows.length === 3 &&
-        L0.rows.every(r => r.h >= 44 && r.kind && r.when) &&
+        L0.rows.every(r => r.h >= 32 && r.h <= 40 && r.kind && /\d:\d\d [ap]m$/.test(r.when)) &&
         L0.rows[0].sel &&
         L0.rows.filter(r => r.sel).length === 1,
       JSON.stringify({ g: L0.groups, rows: L0.rows })
@@ -249,7 +251,8 @@ const openNoteId = page =>
       `${tag} a course filter shows only that course; a filter that hides the picked note moves the preview to the first shown`,
       L2.rows.length === 1 &&
         L2.rows[0].id === renal.id &&
-        JSON.stringify(L2.groups) === JSON.stringify(['BIO 201 1']) &&
+        L2.groups.length === 1 &&
+        / 1$/.test(L2.groups[0]) &&
         L2.filters[2] === 'BIO 201:1*' &&
         L3.rows.length === 2 &&
         L3.rows.every(r => r.id !== renal.id) &&
@@ -900,7 +903,7 @@ const openNoteId = page =>
         const L = await listState(page);
         ok(
           `${tag} filters, groups and the preview show; nothing overflows`,
-          L.filters.length === 3 && L.groups.length === 2 && L.pv.title && L.pv.fixed && !L.over.length && !L.hscroll,
+          L.filters.length === 3 && L.groups.length >= 1 && L.pv.title && L.pv.fixed && !L.over.length && !L.hscroll,
           JSON.stringify({ f: L.filters, g: L.groups, over: L.over.slice(0, 3) })
         );
         // B-409: the "(earlier)" copy (edited last) sits directly below the note it copies, and is never the default pick
@@ -946,8 +949,8 @@ const openNoteId = page =>
         const L = await listState(page);
         const row = L.rows.find(r => r.id === LONG_ID);
         ok(
-          `${tag} the long title is cut with an ellipsis in its row; label and day keep their place; nothing overflows`,
-          !!row && (row.cut || width > 2000) && row.h === 44 && row.when && row.kind && !L.over.length && !L.hscroll,
+          `${tag} the long title is cut with an ellipsis in its row; course and time keep their place; nothing overflows`,
+          !!row && (row.cut || width > 2000) && row.h === 36 && row.when && row.kind && !L.over.length && !L.hscroll,
           JSON.stringify({ row, over: L.over.slice(0, 4) })
         );
         ok(

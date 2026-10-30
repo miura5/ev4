@@ -159,9 +159,10 @@
       const log = DS.button({
         cls: 'btn primary sm rec-log',
         icon: recIco('M12 5v14M5 12h14'),
-        label: 'Log something',
+        ariaLabel: 'Log something',
         onClick: () => newOpen('note'),
       });
+      log.append(el('span', 'rec-loglab', 'Log something')); // B-570: on the phone the icon alone, as Filter
       bar.append(fw, types, el('span', 'sp'), log);
       const cols = el('div', 'cols'),
         main = el('div', 'col-main'),
@@ -401,40 +402,45 @@
       const selX = rows.find(x => x.id === rec.sel);
       const list = $('rec-list'),
         out = [];
-      let day = null;
+      let day = null,
+        dayN = null;
       for (const x of rows) {
         if (x.date !== day) {
           day = x.date;
-          out.push(
-            el('div', 'rec-day', day === today ? 'Today' : day === E.addDays(today, -1) ? 'Yesterday' : short(day))
+          dayN = el('span', 'n', '0');
+          const h = el(
+            'div',
+            'rec-day',
+            day === today ? 'Today' : day === E.addDays(today, -1) ? 'Yesterday' : short(day)
           );
+          h.append(dayN);
+          out.push(h);
         }
+        dayN.textContent = String(+dayN.textContent + 1); // B-570: the band's count, as the board
         const [word, cls] = REC_BADGE[x.kind];
         const on = x.id === rec.sel;
-        // B-513: the row keeps today's markup (Line's own rules would move it, D-376); data-key names the entry (D-387)
-        const li = el('div', 'li rec-li' + (on ? ' sel' : ''));
-        li.dataset.key = x.id;
+        // B-570: Proprietary's one-line Line (D-387 data-key): the kind's badge, the name, its result, the time; on the
+        // phone the badge drops under the name as its one muted line
+        const li = DS.line({
+          key: x.id,
+          cls: 'rec-li' + (on ? ' sel' : ''),
+          title: x.name,
+          open: on,
+          onOpen: () => {
+            rec.sel = on && !PANEL.matches ? null : x.id;
+            renderLog();
+            $('rec-list')
+              .querySelector(`.rec-li[data-id="${CSS.escape(x.id)}"] .nm`)
+              ?.focus();
+          },
+          badge: DS.badge({ text: word, cls }),
+          lead: recTime(x) || ' ',
+        });
         li.dataset.part = 'row';
         li.dataset.kind = x.kind;
         li.dataset.id = x.id;
-        const nm = el('button', 'nm', x.name);
-        nm.type = 'button';
-        nm.title = x.name;
-        nm.setAttribute('aria-expanded', String(on));
-        nm.addEventListener('click', () => {
-          rec.sel = on && !PANEL.matches ? null : x.id;
-          renderLog();
-          $('rec-list')
-            .querySelector(`.rec-li[data-id="${CSS.escape(x.id)}"] .nm`)
-            ?.focus();
-        });
-        li.append(
-          DS.badge({ text: word, cls }),
-          nm,
-          el('span', 'sp'),
-          el('span', 'r', x.result || ''),
-          el('span', 't', recTime(x))
-        );
+        li.prepend(li.querySelector('.badge'));
+        li.querySelector('.t').before(el('span', 'r', x.result || ''));
         out.push(li);
         if (on && !PANEL.matches) out.push(recDetail(x));
       }

@@ -5098,7 +5098,7 @@ async function tap(page, locator, name) {
       const back = await count();
       ok(
         `[${w}] Record: Show workouts off hides them, Today keeps today's, Reset brings every row back`,
-        noWo === 0 && days.every(d => d === 'Today') && /Filter · 2/.test(label) && back === all,
+        noWo === 0 && days.every(d => /^Today\d*$/.test(d)) && /Filter · 2/.test(label) && back === all,
         JSON.stringify({ all, noWo, days, label, back })
       );
       await page.keyboard.press('Escape');

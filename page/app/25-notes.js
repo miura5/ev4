@@ -192,12 +192,35 @@
     bLink.title = 'Link  ' + keysText('⌘K');
     bLink.setAttribute('aria-haspopup', 'dialog');
     bLink.setAttribute('aria-expanded', 'false');
-    const stMenu = el('div', 'menu n-stm');
-    stMenu.setAttribute('role', 'menu');
-    stMenu.setAttribute('aria-label', 'Text style');
-    stMenu.hidden = true;
+    // B-569: the style menu, the course menu and the link box are Proprietary's Popover (the top layer, a tap outside
+    // and Esc close it); the page opens each under its button and closes it through its own close, which keeps the
+    // note's selection
+    const nPop = (cls, label, role) => {
+      const p = DS.popover({ cls, label, body: [] });
+      p.setAttribute('role', role);
+      p.addEventListener('toggle', e => {
+        if (e.newState === 'closed') p._shut = performance.now();
+      });
+      return p;
+    };
+    const nPopOpen = p => p.matches(':popover-open');
+    const nPopShow = (p, a) => {
+      const b = a.getBoundingClientRect();
+      p.style.setProperty(
+        '--pop-x',
+        Math.round(Math.max(8, Math.min(b.left, innerWidth - 8 - (p.offsetWidth || 260)))) + 'px'
+      );
+      p.style.setProperty('--pop-y', Math.round(b.bottom + 6) + 'px');
+      if (!nPopOpen(p)) p.showPopover();
+    };
+    const nPopHide = p => {
+      if (nPopOpen(p)) p.hidePopover();
+    };
+    // a tap on its own button that the browser's light dismiss just closed it under does not open it again
+    const nJustShut = p => performance.now() - (p._shut || 0) < 300;
+    const stMenu = nPop('n-stm', 'Text style', 'menu');
     const stItems = NSTYLES.map(([k, name, gl, keys]) => {
-      const b = el('button', 'mi');
+      const b = el('button', 'btn popover-i mi');
       b.type = 'button';
       b.dataset.style = k;
       b.setAttribute('role', 'menuitemradio');
@@ -212,10 +235,7 @@
       stMenu.append(b);
       return b;
     });
-    const lkPop = el('div', 'n-lkp');
-    lkPop.setAttribute('role', 'dialog');
-    lkPop.setAttribute('aria-label', 'Add a link');
-    lkPop.hidden = true;
+    const lkPop = nPop('n-lkp', 'Add a link', 'dialog');
     const lkLab = el('label', 'lab', 'Link');
     lkLab.htmlFor = 'n-lkin';
     const lkIn = el('input', 'in');
@@ -241,10 +261,7 @@
     const bCourse = nBtn('btn ghost sm n-course', null, null, () => toggleCourseMenu());
     bCourse.setAttribute('aria-haspopup', 'menu');
     bCourse.setAttribute('aria-expanded', 'false');
-    const courseMenu = el('div', 'menu n-cmenu');
-    courseMenu.setAttribute('role', 'menu');
-    courseMenu.setAttribute('aria-label', 'Course');
-    courseMenu.hidden = true;
+    const courseMenu = nPop('n-cmenu', 'Course', 'menu');
     const mLabel = el('span', 'dt'),
       mEdited = el('span', 'dt');
     nMeta.append(bCourse, courseMenu, mLabel, mEdited);
@@ -351,13 +368,6 @@
     // ---- the list
     const NO_COURSE = '\u0000none'; // the group key of notes in no course (shown under All only)
     const noteWords = n => (n.blocks || []).reduce((t, b) => t + (E.noteText(b).match(/[^\s]+/g) || []).length, 0);
-    const listWhen = iso => {
-      const d = iso ? new Date(iso) : null;
-      if (!d || isNaN(d)) return '';
-      const day = E.chicagoDate(d);
-      if (day === today) return clock12(iso);
-      return day === E.addDays(today, -1) ? 'Yesterday' : short(day);
-    };
     const longWhen = iso => {
       const d = iso ? new Date(iso) : null;
       if (!d || isNaN(d)) return '';
@@ -418,41 +428,50 @@
       // a filter that hides the picked note moves the preview to the first note shown
       // B-409: never an "(earlier)" copy by default
       const pick = shown.find(n => n.id === NOTE_LIST.pick) || shown.find(n => !n.earlierOf) || shown[0] || null;
-      const groups = [...order, NO_COURSE]
-        .map(k => ({ k, rows: shown.filter(n => keyOf(n) === k) }))
-        .filter(g => g.rows.length);
+      // B-569: grouped by the day each note was last edited, newest first; an "(earlier)" copy stays under its note
+      const dayOf = n => {
+        const d = new Date(n.editedAt || n.at || '');
+        return isNaN(d) ? '' : E.chicagoDate(d);
+      };
+      const groups = [];
+      for (const n of shown) {
+        const k = isCopy(n) && groups.length ? groups[groups.length - 1].k : dayOf(n);
+        if (!groups.length || groups[groups.length - 1].k !== k) groups.push({ k, rows: [] });
+        groups[groups.length - 1].rows.push(n);
+      }
+      const dayName = d =>
+        !d ? 'Undated' : (d === today ? 'Today · ' : d === E.addDays(today, -1) ? 'Yesterday · ' : '') + short(d);
       const rowOf = n => {
-        // B-512: the row keeps today's markup (Line's own rules would move it, D-376); data-key names the note (D-387)
-        const r = el('div', 'li n-row' + (pick && pick.id === n.id ? ' sel' : ''));
-        r.dataset.key = n.id;
+        // B-569: Proprietary's one-line Line (D-387 data-key): the course's dot, the title, the time; on the phone
+        // the course drops under the title as its one muted line
+        const unsaved = NET.refused.some(x => x.c === 'notes' && x.id === n.id);
+        const op = btn('Open', () => openNote(n.id), { cls: 'btn ghost sm n-open' });
+        op.setAttribute('aria-label', 'Open ' + noteName(n));
+        const r = DS.line({
+          key: n.id,
+          cls: 'n-row' + (pick && pick.id === n.id ? ' sel' : ''),
+          title: noteName(n),
+          onOpen: () => {
+            NOTE_LIST.pick = n.id;
+            renderNotes();
+          },
+          badge: keyOf(n) === NO_COURSE ? null : DS.badge({ course: String(keyOf(n)).split(' ')[0], cls: 'n-cb' }),
+          lead: clock12(n.editedAt || n.at),
+          action: op,
+        });
         r.dataset.part = 'row';
         r.dataset.note = n.id;
-        const nm = el('button', 'nm', noteName(n));
-        nm.type = 'button';
-        nm.title = noteName(n);
+        const nm = r.querySelector('.nm');
         if (pick && pick.id === n.id) nm.setAttribute('aria-current', 'true');
-        nm.addEventListener('click', () => {
-          NOTE_LIST.pick = n.id;
-          renderNotes();
-        });
         nm.addEventListener('dblclick', () => openNote(n.id));
-        const op = btn('Open', () => openNote(n.id), { cls: 'btn ghost sm hov n-open' });
-        op.setAttribute('aria-label', 'Open ' + noteName(n));
-        // B-410: a note the record refused (kept on this device only) says so in the list, as its header does
-        const unsaved = NET.refused.some(x => x.c === 'notes' && x.id === n.id);
-        r.append(
-          nIcon(NI.note, 'ico sicon'),
-          nm,
-          op,
-          ...(unsaved ? [el('span', 'mini n-unsaved', 'Not saved')] : []),
-          el('span', 'mini nk', n.label || ''),
-          el('span', 't', listWhen(n.editedAt || n.at))
-        );
+        const b = r.querySelector('.n-cb');
+        if (b) r.prepend(b);
+        if (unsaved) r.querySelector('.t').before(el('span', 'mini n-unsaved', 'Not saved'));
         return r;
       };
       nRows.replaceChildren(
         ...groups.flatMap(g => {
-          const h = el('div', 'dayh n-grp', courseName(g.k));
+          const h = el('div', 'dayh n-grp', dayName(g.k));
           h.append(el('span', 'n', String(g.rows.length)));
           return [h, ...g.rows.map(rowOf)];
         })
@@ -825,7 +844,7 @@
         b.setAttribute('aria-pressed', String(on));
       }
       const linked = marks ? !!marks.href : E.noteHasMark(NOTE.blocks, sel, 'href');
-      bLink.classList.toggle('on', linked || !lkPop.hidden);
+      bLink.classList.toggle('on', linked || nPopOpen(lkPop));
       bUndo.disabled = !NOTE.undo.length;
       bRedo.disabled = !NOTE.redo.length;
     }
@@ -901,7 +920,7 @@
       updateBar();
     }
     function toggleLink() {
-      if (!lkPop.hidden) return closeLink(true);
+      if (nPopOpen(lkPop) || nJustShut(lkPop)) return closeLink(true);
       closeStyleMenu(false);
       NOTE.linkSel = readSel() || NOTE.sel;
       const sel = NOTE.linkSel;
@@ -909,14 +928,14 @@
       const m = sel && collapsed(sel) ? E.noteMarksAt(blk, sel.f.o) : {};
       lkIn.value = m.href || '';
       lkErr.textContent = '';
-      lkPop.hidden = false;
+      nPopShow(lkPop, bLink);
       bLink.setAttribute('aria-expanded', 'true');
       bLink.classList.add('on');
       lkIn.focus();
     }
     function closeLink(refocus) {
-      if (lkPop.hidden) return;
-      lkPop.hidden = true;
+      if (bLink.getAttribute('aria-expanded') !== 'true') return;
+      nPopHide(lkPop);
       bLink.setAttribute('aria-expanded', 'false');
       if (refocus) {
         body.focus();
@@ -933,7 +952,7 @@
         lkErr.textContent = 'Only a web link (http or https).';
         return;
       }
-      lkPop.hidden = true;
+      nPopHide(lkPop);
       bLink.setAttribute('aria-expanded', 'false');
       body.focus();
       if (collapsed(sel)) {
@@ -955,16 +974,16 @@
       }
     });
     function toggleStyleMenu() {
-      if (!stMenu.hidden) return closeStyleMenu(true);
+      if (nPopOpen(stMenu) || nJustShut(stMenu)) return closeStyleMenu(true);
       closeLink(false);
       NOTE.menuSel = readSel() || NOTE.sel;
-      stMenu.hidden = false;
+      nPopShow(stMenu, bStyle);
       bStyle.setAttribute('aria-expanded', 'true');
       (stMenu.querySelector('.mi.on') || stItems[0]).focus();
     }
     function closeStyleMenu(refocus) {
-      if (stMenu.hidden) return;
-      stMenu.hidden = true;
+      if (bStyle.getAttribute('aria-expanded') !== 'true') return;
+      nPopHide(stMenu);
       bStyle.setAttribute('aria-expanded', 'false');
       if (refocus) {
         body.focus();
@@ -985,10 +1004,14 @@
       }
     });
     document.addEventListener('mousedown', e => {
-      if (!stMenu.hidden && !stMenu.contains(e.target) && !bStyle.contains(e.target)) closeStyleMenu(false);
-      if (!lkPop.hidden && !lkPop.contains(e.target) && !bLink.contains(e.target)) closeLink(false);
-      if (!courseMenu.hidden && !courseMenu.contains(e.target) && !bCourse.contains(e.target)) closeCourseMenu();
+      if (nPopOpen(stMenu) && !stMenu.contains(e.target) && !bStyle.contains(e.target)) closeStyleMenu(false);
+      if (nPopOpen(lkPop) && !lkPop.contains(e.target) && !bLink.contains(e.target)) closeLink(false);
+      if (nPopOpen(courseMenu) && !courseMenu.contains(e.target) && !bCourse.contains(e.target)) closeCourseMenu();
     });
+    // closed by the browser (a tap outside, Esc): the page's own close runs too, so the buttons and selection follow
+    stMenu.addEventListener('toggle', e => e.newState === 'closed' && closeStyleMenu(false));
+    lkPop.addEventListener('toggle', e => e.newState === 'closed' && closeLink(false));
+    courseMenu.addEventListener('toggle', e => e.newState === 'closed' && closeCourseMenu());
 
     // ---- the course: one of spec.courses, or none
     function paintMeta() {
@@ -1000,10 +1023,10 @@
       mEdited.textContent = NOTE.edited ? 'Edited ' + editedText(NOTE.edited) : 'New';
     }
     function toggleCourseMenu() {
-      if (!courseMenu.hidden) return closeCourseMenu();
+      if (nPopOpen(courseMenu) || nJustShut(courseMenu)) return closeCourseMenu();
       courseMenu.replaceChildren(
         ...[...courseKeys(), null].map(k => {
-          const b = el('button', 'mi' + (k === NOTE.course ? ' on' : ''), k || 'No course');
+          const b = el('button', 'btn popover-i mi' + (k === NOTE.course ? ' on' : ''), k || 'No course');
           b.type = 'button';
           b.setAttribute('role', 'menuitemradio');
           b.setAttribute('aria-checked', String(k === NOTE.course));
@@ -1018,12 +1041,12 @@
           return b;
         })
       );
-      courseMenu.hidden = false;
+      nPopShow(courseMenu, bCourse);
       bCourse.setAttribute('aria-expanded', 'true');
       courseMenu.querySelector('button').focus();
     }
     function closeCourseMenu() {
-      courseMenu.hidden = true;
+      nPopHide(courseMenu);
       bCourse.setAttribute('aria-expanded', 'false');
     }
     courseMenu.addEventListener('keydown', e => {

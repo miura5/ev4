@@ -3,7 +3,6 @@
    Notes rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
    synthetic record does not paint uses; Lane D moves them when legacy goes. Raw values left have no token. */
 /* ---- B-515 lane C: moved from page/styles.css in their legacy order; the rules after them were already here */
-#p-notes .n-row .nk,#p-notes .n-row .t{flex:none;font-size:calc(12.5px * var(--ts));color:var(--quiet);white-space:nowrap;text-align:right}
 #p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
 #p-notes .n-outline .si{height:30px;padding:0 10px;font-size:calc(13px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
 @media (min-width:600px){
@@ -38,11 +37,6 @@
 #p-notes .n-toolbar{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 #p-notes .n-toolbar .sp{flex:1}
 #p-notes .n-filters .n{color:var(--quiet);font-weight:400;font-variant-numeric:tabular-nums}
-#p-notes .n-grp{display:flex;gap:var(--sp-2);padding:14px 18px var(--sp-1_5);font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
-#p-notes .n-grp .n{color:var(--faint);font-weight:400;font-variant-numeric:tabular-nums}
-#p-notes .n-row .sicon{color:var(--quiet)}
-#p-notes .n-row .nk{width:92px;overflow:hidden;text-overflow:ellipsis}
-#p-notes .n-row .t{min-width:70px}
 #p-notes .n-pv .badge{align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #p-notes .n-props{display:flex;flex-direction:column;gap:var(--sp-0_5);padding:14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 #p-notes .n-props .prop{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:var(--sp-2);min-height:34px;font-size:var(--fs-2)}
@@ -57,7 +51,6 @@
 #p-notes .n-stb .gl,#p-notes .n-stm .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:var(--fw-semibold) 11.5px var(--sans);color:var(--quiet);letter-spacing:-.02em}
 #p-notes .n-stb .lb{flex:1;text-align:left}
 #p-notes .n-stb .sicon{color:var(--quiet)}
-#p-notes .n-stm{left:84px;top:40px;width:252px}
 #p-notes .n-stm .mi .lb{flex:1}
 #p-notes .n-stm .mi .ks{font-size:12px;color:var(--faint);letter-spacing:.04em;font-variant-numeric:tabular-nums}
 #p-notes .n-stm .mi.on .gl{color:var(--text)}
@@ -68,7 +61,6 @@
 #p-notes .n-meta{position:relative;display:flex;align-items:center;gap:var(--sp-1);flex-wrap:wrap;font-size:12.5px;color:var(--quiet);margin:0 0 var(--sp-2) -10px}
 #p-notes .n-meta .dt{padding:0 var(--sp-1)}
 #p-notes .n-meta .dt::before{content:"·";margin-right:var(--sp-2)}
-#p-notes .n-cmenu{left:0;top:32px;width:200px}
 #note-body.untitled>.nb:first-child{position:relative}
 #note-body.untitled>.nb:first-child::before{content:"Untitled";position:absolute;left:0;top:0;pointer-events:none;color:var(--faint)}
 #note-body.empty.untitled::after{content:attr(data-placeholder);display:block;margin-top:var(--sp-0_5);pointer-events:none;color:var(--faint);font-size:var(--fs-3);max-width:620px}
@@ -79,3 +71,16 @@
 .mh .n-crumb{font:var(--fw-regular) var(--fs-2) var(--sans);color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mh .n-sync .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3)}
+/* ---- B-569: the list as the round-5 board. Day bands on a raised fill with their count at the end; rows are
+   Proprietary's one-line Line: the course's dot in a fixed column, the title, the time. The menus and the link box are
+   Proprietary's Popover (placed by the page under their buttons). */
+#p-notes .n-rows{display:flex;flex-direction:column;padding:var(--sp-1) var(--sp-2) var(--sp-4)}
+#p-notes .n-grp{display:flex;align-items:center;gap:var(--sp-2);height:var(--sp-8);margin:var(--sp-1_5) 0 var(--sp-0_5);padding:0 var(--sp-3);border-radius:var(--r-md);background:var(--raise);font:var(--fw-medium) var(--fs-2) var(--sans);color:var(--text)}
+#p-notes .n-grp .n{margin-left:auto;color:var(--faint);font-weight:var(--fw-regular);font-variant-numeric:tabular-nums}
+#p-notes .n-row{font-size:var(--fs-3)}
+#p-notes .n-row.sel{background:var(--hover)}
+#p-notes .n-row > .badge{flex:none;width:var(--sp-12);justify-content:flex-start}
+#p-notes .n-row > .t{flex:none;min-width:var(--sp-16);text-align:right}
+#p-notes .n-stm{width:252px}
+#p-notes .n-cmenu{width:200px}
+#p-notes .n-lkp{width:300px;gap:var(--sp-2)}

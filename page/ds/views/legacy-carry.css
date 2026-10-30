@@ -658,21 +658,10 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 .rec-pop .seg button{flex:1;white-space:nowrap}
 .rec-ck input{width:16px;height:16px;margin:0;accent-color:var(--text)}
 .rec-list{display:flex;flex-direction:column;gap:0}
-.rec-li .nm{height:100%;padding:0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
-.rec-li.sel{background:var(--hover)}
 .rec-detail .meta{margin:0}
 .rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:8px;font:500 var(--fs-1) var(--sans)}
 @media (max-width:599px){
-  #record-sessions .rec-bar{flex-wrap:wrap}
-}
-@media (max-width:599px){
-  #record-sessions .rec-bar > .seg{flex:1 1 auto;width:auto}
-}
-@media (max-width:599px){
   .rec-pop .seg button{min-height:44px}
-}
-@media (max-width:599px){
-  .rec-li{padding:0 4px}
 }
 @media (max-width:599px){
   .rec-detail select.idea-kind{height:44px;min-height:44px}
@@ -681,42 +670,17 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
    (32 px, C-1), the Filter button carries its icon, the pop-over's switches keep their own width, and the detail is
    the right panel itself: badge, an 18 px title, the properties in a card, her line, and Quiz me for a quiz. */
 #record-sessions{margin:-18px -16px 0;gap:0}
-#record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap}
+#record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:nowrap}
 .rec-fbtn .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rec-pop .seg{align-self:flex-start;width:auto}
 .rec-pop .seg button{flex:none}
 #record-sessions .cols > .col-main{gap:0}
 #record-sessions .rec-list{gap:0}
-.rec-li{padding:0 18px}
-.rec-li.sel{background:var(--chrome)}
-.rec-li:hover{background:var(--chrome)}
 @media (max-width:599px){
   #record-sessions .rec-bar{padding:10px 12px}
 }
 @media (max-width:599px){
-  #record-sessions .rec-bar > .seg{flex:none;width:auto}
-}
-@media (max-width:599px){
-  .rec-li{padding:0 16px}
-}
-/* B-356 (D-314): the demo's rows. 44 px at every size; the result sits before the time; on the phone a row wraps as
-   the demo's does (badge and name on the first line, the result and time after them or on a second line), and a
-   long name wraps in full rather than losing its result. */
-.rec-li{height:auto;min-height:44px;box-sizing:content-box}
-.rec-li .nm{flex:0 1 auto}
-@media (max-width:599px){
-  .rec-li{flex-wrap:wrap;padding:6px 16px;gap:4px 12px;min-height:44px;box-sizing:border-box}
-}
-@media (max-width:599px){
-  .rec-li .nm{flex:0 1 auto;min-height:44px;white-space:normal;overflow:visible;display:flex;align-items:center;line-height:1.35;overflow-wrap:anywhere}
-}
-/* B-379 (D-312): under 600 px a row is two lines, as the Record phone board: the badge and name on the first, the
-   result and the time on the second, both from the row's left edge. The name's tap area covers the whole row. */
-@media (max-width:599px){
-  .rec-li{position:relative;row-gap:2px;padding:8px 16px}
-}
-@media (max-width:599px){
-  .rec-li .nm{min-height:24px;position:static}
+  #record-sessions .rec-bar > .seg{flex:0 1 auto;min-width:0;width:auto;overflow-x:auto;scrollbar-width:none}
 }
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
@@ -726,7 +690,7 @@ body.has-line #today-week .wk-her{display:none}
    The log alone (Dates, Journal, Canvas and Library left the page): the toolbar strip under the header, rows edge to
    edge grouped by day, and the picked row's detail in the panel. */
 #p-record > .panel{margin:-18px -16px 0;gap:0}
-#p-record > .panel .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;min-height:0}
+#p-record > .panel .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:nowrap;min-height:0}
 #p-record > .panel .rec-bar > .seg{align-self:center}
 #p-record > .panel .seg button .n{margin-left:6px;color:var(--quiet);font-variant-numeric:tabular-nums}
 #p-record > .panel .cols > .col-main{gap:0}
@@ -735,7 +699,8 @@ body.has-line #today-week .wk-her{display:none}
   #p-record > .panel .rec-bar{padding:10px 12px}
 }
 @media (max-width:599px){
-  #p-record > .panel .rec-bar > .seg{flex:none;width:auto}
+  #p-record > .panel .rec-bar > .seg{flex:0 1 auto;min-width:0;width:auto;overflow-x:auto;scrollbar-width:none}
+  #p-record > .panel .rec-bar > .seg > button{flex:none}
 }
 @media (max-width:599px){
   #p-record .rec-list > .empty{padding:14px 16px}
@@ -818,12 +783,6 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes > .n-list{margin:-18px -16px 0;gap:0}
 #p-notes .n-list .col-main{gap:0}
 #p-notes .n-filters{align-self:center;flex:none}
-#p-notes .n-row{display:flex;align-items:center;gap:12px;height:auto;min-height:44px;padding:0 18px;border-bottom:1px solid var(--line);color:var(--text);font:400 var(--fs-2) var(--sans);box-sizing:border-box}
-#p-notes .n-row:hover,#p-notes .n-row.sel{background:var(--chrome)}
-#p-notes .n-row .nm{flex:1 1 auto;min-width:0;align-self:stretch;appearance:none;border:0;background:none;padding:0;margin:0;font:inherit;color:inherit;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#p-notes .n-row .nm:focus-visible{outline:2px solid var(--focus,var(--text));outline-offset:-2px;border-radius:4px}
-#p-notes .n-row .hov{visibility:hidden}
-#p-notes .n-row:hover .hov,#p-notes .n-row:focus-within .hov{visibility:visible}
 #p-notes .n-row .n-unsaved{flex:none;font-size:var(--fs-1);color:var(--urg);white-space:nowrap} /* B-410: refused, kept on this device */
 #p-notes .nempty span{max-width:360px}
 #p-notes .nempty .ico{width:28px;height:28px;stroke-width:1.4;color:var(--faint);margin-bottom:4px}
@@ -841,15 +800,12 @@ body.has-line #today-week .wk-her{display:none}
 /* D-361: the quiet line beside the strip's control, on its row */
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
-#p-notes .menu{position:absolute;z-index:30;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box;display:flex;flex-direction:column}
-#p-notes .menu[hidden],#p-notes .n-lkp[hidden]{display:none}
 /* B-442: Ask E.V. on words selected in a note, under the selection */
 .n-ask{position:fixed;z-index:35;box-shadow:0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.14)}
 .n-ask[hidden]{display:none}
-#p-notes .menu .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 var(--fs-2) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
-#p-notes .menu .mi:hover,#p-notes .menu .mi:focus-visible,#p-notes .menu .mi.on{background:var(--hover)}
-#p-notes .menu .mi.on{font-weight:500}
-#p-notes .n-lkp{position:absolute;left:300px;top:40px;z-index:30;width:300px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+#p-notes .popover .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 var(--fs-2) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
+#p-notes .popover .mi:hover,#p-notes .popover .mi:focus-visible,#p-notes .popover .mi.on{background:var(--hover)}
+#p-notes .popover .mi.on{font-weight:500}
 #p-notes .n-lkp .in{height:38px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:400 var(--fs-3) var(--sans);color:var(--text);width:100%;box-sizing:border-box}
 #p-notes .n-doc{position:relative;width:100%;max-width:700px;margin:0 auto;padding:34px 40px 120px;box-sizing:border-box;color:var(--text)}
 #p-notes .n-meta .btn{color:var(--quiet);gap:5px}
@@ -894,9 +850,6 @@ body.has-line #today-week .wk-her{display:none}
 }
 /* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
    page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
-@media (max-width:599px){
-  .rec-li .r{white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
-}
 /* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
    document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the
    installed app (--app-h, set from the screen's height by the composer part) the frame and the tab bar are placed by
