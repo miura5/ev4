@@ -5574,7 +5574,7 @@
    "layout": "Sticky top bar (small E.V. core, readout, status, System button); one centred column; a floating dock with E.V., Today, Study, Progress and Record. The E.V. tab opens with a large core above the greeting; after his first message today, or while a session runs, the core moves to the top bar (or into the session ring) and each E.V. message gets its own small core.",
    "motion": "New messages rise in over 0.6 s; the core eases between states over about half a second; timers move once a second; reduced motion turns animation off.",
    "core": {
-    "retired": "B-205 (D-212): Silk core v2 is replaced by spec.ui.look.flower; history only since B-206 (D-134 superseded by D-212, D-135 by D-224, itself superseded by D-272, whose budget is spec.ui.look.flower.budget); only sizes is still read",
+    "retired": "B-205 (D-212): Silk core v2 is replaced by spec.ui.look.dialArc; history only since B-206 (D-134 superseded by D-212, D-135 by D-224, itself superseded by D-272, whose budget is spec.ui.look.dialArc.budget); only sizes is still read",
     "_": [
      "Core v2 (B-76; D-134 and D-135, superseded by D-212 and D-224): the Silk body from the E.V. Core Variations canvas, its Silk preset's values copied here once on Oct 18; from then on the spec owns them, and the canvas is not read again.",
      "Units: lengths are fractions of her radius R (R is radiusOfSize times the canvas size) unless named Px; rates are per second; times in seconds unless named Ms.",
@@ -5863,13 +5863,13 @@
     },
     "reducedMotion": "a still frame per mood; a gesture is a short brightness change (D-127)"
    },
-   "flower": {
+   "dialArc": {
     "_": [
      "Her stage sizes and frame budget. The 2D forget-me-not these values once drew (B-205) is retired: the Dial Arc took her place (B-272, D-265), and B-276 (D-271, D-272) removed its drawing values and its held-frame clock. Only sizes (the page lays her stage out by them) and budget (the core harness measures her by it) are read.",
      "Units: sizes in CSS px; times in seconds."
     ],
     "sizes": {
-     "_": "D-213: her stage size by layout and state, and the 24 px flower that is her everywhere else",
+     "_": "D-213: her stage size by layout and state, and the 24 px Arc that is her everywhere else",
      "phone": 104,
      "sidebarNarrow": 112,
      "sidebarNarrowBelowPx": 900,

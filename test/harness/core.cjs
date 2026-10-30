@@ -43,7 +43,7 @@ if (seed.talk) delete seed.talk[today];
 for (const c of ['sessions', 'workouts'])
   for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || dayOf(d.startedAt)) === today) delete seed[c][id];
 const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
-const F = spec.ui.look.flower; // her stage sizes and budget (D-213, D-272)
+const F = spec.ui.look.dialArc; // her stage sizes and budget (D-213, D-272)
 const GDUR = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const ORIGIN = 'https://ev.local';

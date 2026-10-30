@@ -1,5 +1,5 @@
 // core/motion.mjs (B-76): history since D-134 and D-135 were superseded (the Dial Arc draws her, D-265; her budget is
-// D-272's, spec.ui.look.flower.budget). These pin the retired Silk core v2's speech envelope, gesture blend, springs, size steps and step-down,
+// D-272's, spec.ui.look.dialArc.budget). These pin the retired Silk core v2's speech envelope, gesture blend, springs, size steps and step-down,
 // driven frame by frame with the spec's own parameters (spec.ui.look.core), and spec.ui.look.core validated.
 import test from 'node:test';
 import assert from 'node:assert/strict';

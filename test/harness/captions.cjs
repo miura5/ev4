@@ -438,7 +438,7 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(gc)
     );
     ok(
-      `[${scheme}] opening: her flower at ${A.core} px on her stage (D-213), no bubbles`,
+      `[${scheme}] opening: her Arc at ${A.core} px on her stage (D-213), no bubbles`,
       v.step === 'idle' && v.corePx === A.core && v.stageH >= A.stage[0] && v.stageH <= A.stage[1] && !v.bubbles,
       JSON.stringify({ step: v.step, px: v.corePx, stage: v.stageH })
     );
@@ -527,8 +527,8 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(v.texts)
     );
     ok(
-      // B-357 (D-327): her lines' sizes and the earlier lines' fade are the demo's; her flower and stage stay (D-213)
-      `[${scheme}] in conversation: her flower the same ${A.convCore} px on its stage (D-213)`,
+      // B-357 (D-327): her lines' sizes and the earlier lines' fade are the demo's; her Arc and stage stay (D-213)
+      `[${scheme}] in conversation: her Arc the same ${A.convCore} px on its stage (D-213)`,
       v.step === 'conversation' &&
         Math.abs(v.corePx - A.convCore) <= 1 &&
         v.stageH >= A.convStage[0] &&
@@ -657,7 +657,7 @@ async function sideBySide(browser, left, right, out, vp) {
         f = r('ev-form');
       return {
         stage: Math.round(r('hero').height),
-        flower: !!document.getElementById('mh-her').getClientRects().length,
+        arc: !!document.getElementById('mh-her').getClientRects().length,
         offCentre: Math.round(Math.abs(n.left + n.width / 2 - (t.left + t.width / 2))),
         aboveField: Math.round(f.top - n.bottom),
         inThread: n.top >= t.top && n.bottom <= t.bottom + 12,
@@ -665,7 +665,7 @@ async function sideBySide(browser, left, right, out, vp) {
     });
     ok(
       `[${scheme}] reading back keeps her stage still (no fold under his scroll, B-452)`,
-      Math.abs(back.stage - stage0) <= 1 && !back.flower,
+      Math.abs(back.stage - stage0) <= 1 && !back.arc,
       JSON.stringify({ stage0, ...back })
     );
     ok(
@@ -1974,13 +1974,13 @@ async function sideBySide(browser, left, right, out, vp) {
       await ctx.close();
     }
   }
-  // B-289 (D-213, C-2, C-3, C-15): her stage and captions, measured. Her flower is 104 px at 390, 140 px at 1280 x 900
+  // B-289 (D-213, C-2, C-3, C-15): her stage and captions, measured. Her Arc is 104 px at 390, 140 px at 1280 x 900
   // and 168 px when taller than 1000 px, 70% of that in a session; her current line 20 px, earlier lines 15 px on the
   // phone and 14 px at 1280; her two faces are her own palette (--av1, --av2), never the accent. Light and dark, idle
   // and in a session (on desktop the session's notes beside her name the step 'surface'; her size is the session's),
   // each screenshotted.
   {
-    const FZ = spec.ui.look.flower.sizes;
+    const FZ = spec.ui.look.dialArc.sizes;
     const inSession = () => {
       const db = JSON.parse(JSON.stringify(seed)),
         t0 = new Date(NOW.getTime() - 3 * 60e3).toISOString(),
@@ -2047,11 +2047,7 @@ async function sideBySide(browser, left, right, out, vp) {
             };
           });
           const want = state === 'session' ? Math.round(idle * FZ.sessionShare) : idle;
-          ok(
-            `[stage ${tag} ${scheme} ${state}] her flower measures ${want} px (D-213)`,
-            v.px === want,
-            JSON.stringify(v)
-          );
+          ok(`[stage ${tag} ${scheme} ${state}] her Arc measures ${want} px (D-213)`, v.px === want, JSON.stringify(v));
           // B-357 (D-327): her lines' sizes are the demo's (C-2's 20 px and 14/15 px retired)
           const hex = c =>
             /^#/.test(String(c))

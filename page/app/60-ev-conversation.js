@@ -53,7 +53,7 @@
     // One SVG per place she shows (her stage, the sidebar, the pane header, the phone's tab), every one the same drawing.
     // Each frame eases toward the state's targets with frame-rate-independent smoothing, k(b) = 1 - (1 - b)^(dt x 30);
     // a still idle or sleepy dial draws nothing. The page talks to her through CORE.setMood, CORE.gesture, CORE.speak,
-    // CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the flower it replaced (D-134).
+    // CORE.speechEnd and CORE.setRing (also EVApp.core), as it did to the forget-me-not it replaced (D-134).
     let MOOD_NOW = 'idle';
     const CORE = (() => {
       const SVG = 'http://www.w3.org/2000/svg';
@@ -714,11 +714,11 @@
       return { make, gesture, speak, speechEnd, setMood, setRing, stats, resetStats, sample, cores: () => [...cores] };
     })();
     window.EVApp.core = CORE;
-    // B-209 (D-213): her stage size follows the layout and what is on screen, from spec.ui.look.flower.sizes: 104 px on
+    // B-209 (D-213): her stage size follows the layout and what is on screen, from spec.ui.look.dialArc.sizes: 104 px on
     // the phone, 112 or 128 px beside the sidebar (under or from 900 px wide), 140 or 168 px with the details panel
     // (from 1000 px tall), 70% of that in a session. The step names the state (idle, conversation, list or surface,
     // session, skills) as the Captions layout reads it.
-    const FZ = EV_SPEC.ui.look.flower.sizes;
+    const FZ = EV_SPEC.ui.look.dialArc.sizes;
     function stagePx(state) {
       const w = innerWidth,
         h = innerHeight;
@@ -741,7 +741,7 @@
     const coreStage = () => MO_SIZE(innerWidth, 'idle');
     const heroOrb = CORE.make(coreStage().px, { follow: true, pointer: true });
     $('hero').append(heroOrb.el);
-    // On a screen under 560 px tall her stage folds and she is the 24 px flower in the pane's header (D-213; B-452 ended
+    // On a screen under 560 px tall her stage folds and she is the 24 px Arc in the pane's header (D-213; B-452 ended
     // the fold while he reads back); tapping her there is tapping her.
     if ($('mh-her')) {
       $('mh-her').append(

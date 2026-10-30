@@ -147,7 +147,7 @@
       capBox.dispatchEvent(new Event('scroll'));
     });
     function renderStage() {
-      // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px flower on a screen
+      // B-209 (D-213): one size per layout (MO_SIZE), 70% in a session; folded to the header's 24 px Arc on a screen
       // under 560 px tall. B-452 (Matt): her stage no longer folds while he reads back. That fold changed the thread's
       // height mid-scroll and moved his scroll to make up for it, which stopped the trackpad's momentum and made the
       // thread feel rigid.

@@ -208,7 +208,7 @@ export function stepDownStart() {
   return { level: 0, samples: [], lastStepAt: null };
 }
 
-/** The share (0 to 1) of frame times longer than ms; 0 for an empty list. The retired core v2 counted dropped frames this way (D-224 measures the flower). */
+/** The share (0 to 1) of frame times longer than ms; 0 for an empty list. The retired core v2 counted dropped frames this way (D-224 measures the Arc). */
 export function slowShare(xs, ms) {
   if (!xs.length) return 0;
   let n = 0;

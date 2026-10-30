@@ -402,7 +402,7 @@ export function pageSpecFor(spec, schemas, { target, release }) {
     // B-401 (D-325): the one size a page write is held to (a note over it is refused before it is sent).
     capacity: () => ({ documentBytes: (spec.capacity || {}).documentBytes || null }),
     // ui.tenets is the look pass's (test/harness/look.cjs reads it from the spec), not the page's.
-    // Of ui.look.flower (B-276) and the retired Silk core (B-205) the page keeps only the stage sizes it lays her out by.
+    // Of ui.look.dialArc (B-276; was flower, B-515) and the retired Silk core (B-205) the page keeps only the stage sizes it lays her out by.
     ui: () =>
       Object.fromEntries(
         Object.entries(spec.ui)
@@ -414,7 +414,7 @@ export function pageSpecFor(spec, schemas, { target, release }) {
                   ...v,
                   core: { sizes: v.core.sizes },
                   // her budget is the harness's
-                  flower: { sizes: v.flower.sizes },
+                  dialArc: { sizes: v.dialArc.sizes },
                 }
               : v,
           ])

@@ -2838,18 +2838,18 @@ async function tap(page, locator, name) {
     await page.screenshot({ path: `${shots}/ev-${scheme}.png`, fullPage: false });
     ok(`[${scheme}] opens on E.V.`, (await page.isVisible('#p-ev')) && !(await page.isVisible('#p-today')));
     ok(
-      `[${scheme}] opening: her stage above the greeting, her 24 px flower kept in the sidebar (D-213)`,
+      `[${scheme}] opening: her stage above the greeting, her 24 px Arc kept in the sidebar (D-213)`,
       ...(await page.evaluate(() => {
         const v = {
           opening: document.body.classList.contains('opening'),
-          flower: !!document.querySelector('#hero svg.fl'),
+          arc: !!document.querySelector('#hero svg.fl'),
           stage: Math.round(document.querySelector('#hero').getBoundingClientRect().height),
           av: Math.round(
             (document.querySelector('#top-av svg.fl') || { getBoundingClientRect: () => ({}) }).getBoundingClientRect()
               .width || 0
           ),
         };
-        return [v.opening && v.flower && v.stage >= 100 && (innerWidth < 600 || v.av >= 20), JSON.stringify(v)];
+        return [v.opening && v.arc && v.stage >= 100 && (innerWidth < 600 || v.av >= 20), JSON.stringify(v)];
       }))
     );
     ok(
@@ -3412,7 +3412,7 @@ async function tap(page, locator, name) {
       t.dispatchEvent(new Event('scroll'));
     });
     await page.waitForTimeout(150);
-    // B-208 (D-210): her flower: the sidebar's from 600 px, the E.V. tab's on the phone.
+    // B-208 (D-210): her Arc: the sidebar's from 600 px, the E.V. tab's on the phone.
     await page.click('#tab-ev'); // B-368: the sidebar's brand is no control; Conversation in the nav returns to now
     await page.waitForTimeout(900);
     // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
@@ -6180,8 +6180,8 @@ async function tap(page, locator, name) {
         };
       });
       ok(
-        // B-377 (D-316): starting a session keeps the thread and adds her line; her flower 70% on its stage (D-213)
-        'in a session: the thread ends with her start line, her flower at 70% (73 px on the phone) on its stage (D-213)',
+        // B-377 (D-316): starting a session keeps the thread and adds her line; her Arc 70% on its stage (D-213)
+        'in a session: the thread ends with her start line, her Arc at 70% (73 px on the phone) on its stage (D-213)',
         cs.step === 'session' &&
           /^ev: Session started/.test(cs.thread[cs.thread.length - 1] || '') &&
           Math.abs(cs.px - 73) <= 1,
@@ -6914,7 +6914,7 @@ async function tap(page, locator, name) {
   delete seed.system.yourturn;
   // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with one
   // segment lit at twelve (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
-  for (const [tag, vp, flower] of [
+  for (const [tag, vp, arc] of [
     ['[notice 390]', { width: 390, height: 844 }, '#tab-her svg'],
     ['[notice 1280]', { width: 1280, height: 860 }, '#top-av svg'],
   ]) {
@@ -6961,7 +6961,7 @@ async function tap(page, locator, name) {
             i = C.cores().findIndex(c => c.svg === document.querySelector(sel));
           return i >= 0 && C.sample(i).facing;
         },
-        flower,
+        arc,
         { timeout: 3000 }
       )
       .catch(() => {});
@@ -6983,7 +6983,7 @@ async function tap(page, locator, name) {
           b => b.getBoundingClientRect().height > 0 && !b.closest('.li')
         ).length,
       };
-    }, flower);
+    }, arc);
     await page.screenshot({ path: `${shots}/notice-${vp.width}.png` });
     ok(
       `${tag} a job finished off the E.V. tab: her status says something’s ready, she is alert, ${vp.width < 600 ? '(the phone bar carries the demo’s speech-bubble icon, B-361)' : 'her small dial faces him, closed, lit at twelve,'} no badge (D-216)`,

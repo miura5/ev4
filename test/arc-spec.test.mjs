@@ -1,4 +1,4 @@
-// B-205 (D-213): her stage sizes live once in spec.ui.look.flower, with her frame budget (D-272). The forget-me-not's
+// B-205 (D-213): her stage sizes live once in spec.ui.look.dialArc, with her frame budget (D-272). The forget-me-not's
 // drawing values are history: B-275 took out its inks, and B-276 (D-271, D-272) the rest with its clock, since the
 // Dial Arc draws her (D-265). The Silk core is retired in place, kept as history.
 import test from 'node:test';
@@ -8,14 +8,14 @@ import path from 'node:path';
 import { ROOT } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), 'utf8'));
-const F = spec.ui.look.flower;
+const F = spec.ui.look.dialArc;
 
 /** A small schema for what is still read: her stage sizes and her budget, each of its type and range. */
 function problems(f) {
   const out = [];
   const num = (v, at, lo = -Infinity, hi = Infinity) =>
     typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? null : out.push(`${at}: ${JSON.stringify(v)}`);
-  if (!f) return ['spec.ui.look.flower is missing'];
+  if (!f) return ['spec.ui.look.dialArc is missing'];
   for (const k of ['phone', 'sidebarNarrow', 'sidebar', 'wide', 'wideTall', 'corner'])
     num(f.sizes[k], `sizes.${k}`, 24, 240);
   num(f.sizes.sessionShare, 'sizes.sessionShare', 0.1, 1);
@@ -26,7 +26,7 @@ function problems(f) {
   return out;
 }
 
-test('B-205: spec.ui.look.flower holds her stage sizes and budget, of the right shape', () => {
+test('B-205: spec.ui.look.dialArc holds her stage sizes and budget, of the right shape', () => {
   assert.deepEqual(problems(F), []);
   assert.deepEqual(Object.keys(F).sort(), ['_', 'budget', 'sizes'], 'B-276: only what the page and the harness read');
 });

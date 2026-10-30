@@ -1,5 +1,5 @@
-    // ---- Proprietary 15 Presence (B-508; D-374, D-381): E.V. herself, her hand-made flower (CORE, page/app/60-ev-
-    // conversation.js) at one of three sizes and in one of five states. Only she glows (D-381); the flower stays hers
+    // ---- Proprietary 15 Presence (B-508; D-374, D-381): E.V. herself, her Dial Arc (CORE, page/app/60-ev-
+    // conversation.js) at one of three sizes and in one of five states. Only she glows (D-381); the Arc stays hers
     // and the component only sizes and names it. A follow presence moves with her own state (CORE.setMood); any other
     // keeps the state it was made with. She is decorative unless a label is given (then an image, or a status while
     // loading).
