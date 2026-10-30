@@ -10955,9 +10955,9 @@
   "id": "B-592",
   "kind": "request",
   "title": "Request (reported Oct 30): In the Conversation view, her reply should write itself out with a caret leading it, as in his Type-only mock-up, instead of words fading in from a blur; the caret is optional but he likes it.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "In the Conversation, her newest reply appears letter by letter with a thin caret in her colour leading it (steady while writing, gone a moment after the last letter); pace and the 6 s cap as D-137; a tap or scroll finishes it; reduced motion shows it whole; no blur anywhere; captions harness green; seen on staging at 1280 and 390.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10967,6 +10967,10 @@
   "reportedAt": "2026-10-30T14:07:53.454Z",
   "board": {
    "row": "v4 B-592: In the Conversation view, her reply should write itself out with a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T14:08:23.110Z"
   }
  }
 ]
