@@ -10124,12 +10124,12 @@
   "title": "Badge: a 7 px coloured dot plus coloured text, no fill and no outline, set in a fixed-width column",
   "dod": "Badges line up in one column on Today, Record and Progress at 1280; the Gallery is GREEN",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "Dot plus coloured word, 72 px column (9a8cbe5). Progress and the sidebar match. Today's one-column bar waits on B-564, which must move the badge ahead of the title.",
-  "commit": null,
+  "notes": "Today view (49cb12d): 36 px rows, flat check, badge column, budget card with no line, Done folded, toolbar in one row at 390, Start in the row ⋯ on the phone. npm test 1020, smoke 31, prep 297, look 217. The core harness's 3 failures in E.V.'s Ember dark face and frame budget went to B-572.",
+  "commit": "49cb12d",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
