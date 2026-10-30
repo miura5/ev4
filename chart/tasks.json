@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Lane C pushed 582edc3 (Notes/Record: importants and hidden hacks gone, 55 rules moved; 107 rules stay in legacy because shared legacy rules on .btn/.menu .mi/.seg/.li/.badge also style them, and move in D2c once D2b's kit lands) and 8fef65c (spec.ui.look.flower -> dialArc with every reader; flower comments renamed). D2c must also keep the old class names in markup that harness selectors still use (lane T list).",
+  "notes": "D2b pushed 3fd2ae0: legacy kit rules (button/.btn and tones, chips, seg, li/row, card, input.tick) moved into the component files with their selectors and order; with styles.css empty the Gallery kit is identical. Still on legacy: Today rows/tick/Start, budget, .ov-sets/.ov-quiz, #prog-day (B); #rec-list and .n-row padding (C, now D2c); #ev-dates, ev-btn, the header New button, cursor:default (D1/D2a). One legacy line kept until B narrows .ov-sets .sm.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
