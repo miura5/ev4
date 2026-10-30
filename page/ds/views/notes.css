@@ -3,8 +3,8 @@
    Notes rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
    synthetic record does not paint uses; Lane D moves them when legacy goes. Raw values left have no token. */
 /* ---- B-515 lane C: moved from page/styles.css in their legacy order; the rules after them were already here */
-#p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:calc(13.5px * var(--ts));line-height:1.5;text-align:center}
-#p-notes .n-outline .si{height:30px;padding:0 10px;font-size:calc(13px * var(--ts));color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
+#p-notes .nempty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:72px 24px;color:var(--quiet);font-size:var(--fs-3);line-height:1.5;text-align:center}
+#p-notes .n-outline .si{height:30px;padding:0 10px;font-size:var(--fs-2);color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;line-height:30px;box-sizing:border-box}
 @media (min-width:600px){
   body:has(#notes-editor:not([hidden])) .mh::before{content:"";position:absolute;left:-1px;right:-1px;top:-8px;height:8px;background:var(--sunken);pointer-events:none}
 }
@@ -15,24 +15,24 @@
 /* B-474: Safari fills a selection's left gap from the editor's edge to the text, a band under the bullets, numbers and
    checkboxes; an identity transform makes each list line its own selection root, so the fill starts at its text */
 #note-body .nb[data-t=ol]{counter-increment:nol}
-#note-body .nb[data-t=ol]::before{content:counter(nol) ".";position:absolute;left:0;width:22px;text-align:right;color:var(--faint);font-size:14px;font-variant-numeric:tabular-nums}
+#note-body .nb[data-t=ol]::before{content:counter(nol) ".";position:absolute;left:0;width:22px;text-align:right;color:var(--faint);font-size:var(--fs-3);font-variant-numeric:tabular-nums}
 #note-body .nb[data-indent="1"]{margin-left:24px}#note-body .nb[data-indent="2"]{margin-left:48px}#note-body .nb[data-indent="3"]{margin-left:72px}
 #note-body .nb[data-indent="4"]{margin-left:96px}#note-body .nb[data-indent="5"]{margin-left:120px}#note-body .nb[data-indent="6"]{margin-left:144px}
 #note-body .nb[data-t=todo][data-checked=true]{color:var(--faint);text-decoration:line-through}
 #p-notes .n-pick .vpick{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line2);margin:2px 0 18px}
-#p-notes .n-pick .vh{display:flex;gap:10px;align-items:flex-start;font-size:calc(13.5px * var(--ts))}
+#p-notes .n-pick .vh{display:flex;gap:10px;align-items:flex-start;font-size:var(--fs-3)}
 #p-notes .n-pick .vhw{display:flex;flex-direction:column;gap:2px}
 #p-notes .n-pick .vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-#p-notes .n-pick .ver{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);min-width:0}
+#p-notes .n-pick .ver{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:var(--r-md);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);min-width:0}
 #p-notes .n-pick .vrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
-#p-notes .n-pick .vwho{display:flex;align-items:center;gap:7px;font-size:calc(13.5px * var(--ts))}
-#p-notes .n-pick .vx{display:flex;flex-direction:column;gap:1px;font-size:calc(13.5px * var(--ts));line-height:1.55;min-width:0}
-#p-notes .n-pick .vt{font-weight:600;font-size:calc(14px * var(--ts));margin-bottom:2px;overflow-wrap:anywhere}
-#p-notes .n-pick .vl{display:flex;gap:8px;padding:1px 6px;margin-left:-6px;border-radius:5px;overflow-wrap:anywhere}
+#p-notes .n-pick .vwho{display:flex;align-items:center;gap:7px;font-size:var(--fs-3)}
+#p-notes .n-pick .vx{display:flex;flex-direction:column;gap:1px;font-size:var(--fs-3);line-height:1.55;min-width:0}
+#p-notes .n-pick .vt{font-weight:600;font-size:var(--fs-3);margin-bottom:2px;overflow-wrap:anywhere}
+#p-notes .n-pick .vl{display:flex;gap:8px;padding:1px 6px;margin-left:-6px;border-radius:var(--r-xs);overflow-wrap:anywhere}
 #p-notes .n-pick .vl::before{content:"•";color:var(--faint)}
 #p-notes .n-pick .only{background:var(--tint);box-shadow:inset 0 0 0 1px var(--line2)}
-#p-notes .n-pick .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-#p-notes .n-pick .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:18px;border-radius:9px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:calc(13px * var(--ts))}
+#p-notes .n-pick .mini{font-size:var(--fs-2);color:var(--faint)}
+#p-notes .n-pick .endline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:18px;border-radius:var(--r-md);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2);font-size:var(--fs-2)}
 #p-notes .n-pick .endline .sp{flex:1;min-width:220px}
 #p-notes .n-toolbar{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 #p-notes .n-toolbar .sp{flex:1}
@@ -45,20 +45,20 @@
 #p-notes .n-otl{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet)}
 #p-notes .n-outline{display:flex;flex-direction:column;margin-top:-8px}
 #p-notes .n-acts{display:flex;flex-direction:column;gap:10px}
-#p-notes .n-pvfoot,#p-notes .n-pvnone{font-size:calc(12.5px * var(--ts));color:var(--quiet);line-height:1.5}
+#p-notes .n-pvfoot,#p-notes .n-pvnone{font-size:var(--fs-2);color:var(--quiet);line-height:1.5}
 #p-notes > .n-ed{margin:-18px -16px 0}
 #p-notes .fsep{width:1px;height:18px;background:var(--line);margin:0 var(--sp-1_5);flex:none}
-#p-notes .n-stb .gl,#p-notes .n-stm .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:var(--fw-semibold) 11.5px var(--sans);color:var(--quiet);letter-spacing:-.02em}
+#p-notes .n-stb .gl,#p-notes .n-stm .gl{width:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;font:var(--fw-semibold) var(--fs-1) var(--sans);color:var(--quiet);letter-spacing:-.02em}
 #p-notes .n-stb .lb{flex:1;text-align:left}
 #p-notes .n-stb .sicon{color:var(--quiet)}
 #p-notes .n-stm .mi .lb{flex:1}
-#p-notes .n-stm .mi .ks{font-size:12px;color:var(--faint);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+#p-notes .n-stm .mi .ks{font-size:var(--fs-1);color:var(--faint);letter-spacing:.04em;font-variant-numeric:tabular-nums}
 #p-notes .n-stm .mi.on .gl{color:var(--text)}
-#p-notes .n-lkp .lab{font-size:12px;color:var(--quiet);font-weight:var(--fw-medium)}
-#p-notes .n-lkerr{font-size:12px;color:var(--urg)}
+#p-notes .n-lkp .lab{font-size:var(--fs-1);color:var(--quiet);font-weight:var(--fw-medium)}
+#p-notes .n-lkerr{font-size:var(--fs-1);color:var(--urg)}
 #p-notes .n-lkerr:empty{display:none}
 #p-notes .n-lkrow{display:flex;justify-content:flex-end;gap:var(--sp-2)}
-#p-notes .n-meta{position:relative;display:flex;align-items:center;gap:var(--sp-1);flex-wrap:wrap;font-size:12.5px;color:var(--quiet);margin:0 0 var(--sp-2) -10px}
+#p-notes .n-meta{position:relative;display:flex;align-items:center;gap:var(--sp-1);flex-wrap:wrap;font-size:var(--fs-2);color:var(--quiet);margin:0 0 var(--sp-2) -10px}
 #p-notes .n-meta .dt{padding:0 var(--sp-1)}
 #p-notes .n-meta .dt::before{content:"·";margin-right:var(--sp-2)}
 #note-body.untitled>.nb:first-child{position:relative}
@@ -126,7 +126,7 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3
 #note-body h1.nb{margin:0 0 14px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #note-body h2.nb{margin:28px 0 6px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
 #note-body h3.nb{margin:18px 0 4px;font-size:var(--fs-4);font-weight:600;line-height:1.4;color:var(--ink)}
-#note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
+#note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:var(--r-xs);box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
 #note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
 #note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
 #note-body .n-chk.done .ico{opacity:1}

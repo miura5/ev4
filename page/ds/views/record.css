@@ -3,9 +3,9 @@
    and New rules still in page/styles.css are those a shared legacy rule meets on the same element, or that a state the
    synthetic record does not paint uses; Lane D moves them when legacy goes. Raw values left have no token. */
 /* ---- B-515 lane C: moved from page/styles.css in their legacy order; the rules after them were already here */
-.rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.16)}
+.rec-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:280px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--r-md);background:var(--surface);box-shadow:var(--elev-2)}
 .rec-pop[hidden]{display:none}
-.rec-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:calc(13.5px * var(--ts));cursor:pointer}
+.rec-ck{display:flex;align-items:center;gap:8px;min-height:32px;font-size:var(--fs-3);cursor:pointer}
 .rec-pop-foot{display:flex;justify-content:space-between;gap:8px}
 .rec-list .rec-detail{padding:10px 12px 14px 108px;border-bottom:1px solid var(--line)}
 .rec-detail{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
@@ -23,7 +23,7 @@
 .rec-fbtn{gap:7px}
 .rec-pop{width:260px;top:calc(100% + 8px);gap:10px}
 .rec-detail{gap:14px}
-.rec-props{border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
+.rec-props{border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line);padding:6px 14px;box-sizing:border-box;gap:2px}
 .rec-list .rec-detail{padding:14px 18px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
 @media (min-width:1200px){
   section.panel > .cols > .col-side .rec-detail{background:none;border:0;box-shadow:none;padding:0;border-radius:0}
@@ -33,11 +33,11 @@
 }
 .mh .new-wrap{position:relative;order:10;flex:0 0 auto}
 .new-wrap .menu button.btn.mi svg{color:var(--quiet)}
-.new-wrap .menu .mhd{font:var(--fw-medium) calc(11.5px * var(--ts))/1.45 var(--sans);color:var(--quiet);padding:var(--sp-1_5) 9px var(--sp-1)}
-.new-dlg{width:min(560px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:var(--r-lg);background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line2),0 24px 60px rgba(0,0,0,.22)}
+.new-wrap .menu .mhd{font:var(--fw-medium) var(--fs-1)/1.45 var(--sans);color:var(--quiet);padding:var(--sp-1_5) 9px var(--sp-1)}
+.new-dlg{width:min(560px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 122px);margin:110px auto auto;padding:0;border:0;border-radius:var(--r-lg);background:var(--surface);color:var(--text);box-shadow:var(--elev-3)}
 .new-dlg::backdrop{background:color-mix(in srgb,var(--text) 22%,transparent)}
 @media (prefers-color-scheme:dark){
-:root:not([data-theme="light"]) .new-dlg::backdrop{background:rgba(0,0,0,.5)}
+:root:not([data-theme="light"]) .new-dlg::backdrop{background:var(--scrim)}
 }
 @media (max-width:599px){
 .new-dlg{margin:max(48px,env(safe-area-inset-top,0px)) auto auto;max-height:calc(100dvh - 60px)}
@@ -52,20 +52,20 @@
 .new-body #new-warn:empty{display:none}
 .new-foot{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line);flex-wrap:wrap}
 .rec-fwrap{position:relative;flex:none}
-.rec-detail .rec-title{margin:0;font:var(--fw-semibold) calc(15px * var(--ts))/1.35 var(--sans);color:var(--text);overflow-wrap:anywhere}
+.rec-detail .rec-title{margin:0;font:var(--fw-semibold) var(--fs-4)/1.35 var(--sans);color:var(--text);overflow-wrap:anywhere}
 .rec-props{align-self:stretch;display:flex;flex-direction:column}
 .rec-props .prop{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:32px;border-bottom:1px solid var(--line);font-size:var(--fs-2)}
 .rec-props .prop:last-child{border-bottom:0}
 .rec-props .prop-k{color:var(--quiet)}
 .rec-props .prop-v{text-align:right;min-width:0;overflow-wrap:anywhere}
-.rec-detail .rec-desc{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
+.rec-detail .rec-desc{margin:0;font-size:var(--fs-3);line-height:1.5;color:var(--text)}
 @media (max-width:599px){
 .rec-props .prop{min-height:44px}
 }
 .rec-detail .rec-title{font:var(--fw-semibold) var(--fs-5)/1.3 var(--sans);margin:0}
 .rec-props .prop{display:grid;grid-template-columns:92px 1fr;justify-content:stretch;gap:var(--sp-2);min-height:34px;border-bottom:0}
 .rec-props .prop-v{text-align:left}
-.rec-detail .rec-desc{font-size:calc(13.5px * var(--ts));line-height:1.6;color:var(--quiet)}
+.rec-detail .rec-desc{font-size:var(--fs-3);line-height:1.6;color:var(--quiet)}
 .rec-detail .rec-quiz{align-self:flex-start;max-width:100%}
 @media (max-width:599px){
 .rec-props .prop{min-height:34px}
@@ -179,7 +179,7 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
    and the tab bar steps aside, so the header, thread and composer stay on screen with no gap and nothing past the edge. */
 @media (max-width:599px){
   input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
-  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(16px,var(--fs-3))}
+  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(var(--fs-input),var(--fs-3))}
 }
 /* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
    page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
@@ -189,7 +189,7 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
    the screen's height instead. */
 /* B-432 (review): the fields whose own rules outrank the phone's 16 px floor: the New note text and Record's kind select */
 @media (max-width:599px){
-  #p-record .rec-detail select.idea-kind{font-size:max(16px,var(--fs-3))}
+  #p-record .rec-detail select.idea-kind{font-size:max(var(--fs-input),var(--fs-3))}
 }
 /* ============================================================ B-554: cheap scroll frames ===========================
    The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
