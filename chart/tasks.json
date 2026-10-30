@@ -10913,9 +10913,9 @@
   "id": "B-590",
   "kind": "request",
   "title": "Request (reported Oct 30): At 1280 Today's rows stretch very wide, with each title far from its minutes, and a short list leaves a large empty area.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Matches the reference at 1280 and 390 on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10924,6 +10924,10 @@
   "reportedAt": "2026-10-30T13:22:37.083Z",
   "board": {
    "row": "v4 B-590: At 1280 Today's rows stretch very wide, with each title far from its…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T13:22:49.481Z"
   }
  }
 ]
