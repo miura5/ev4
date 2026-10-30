@@ -11155,9 +11155,9 @@
   "id": "B-601",
   "kind": "bug",
   "title": "Bug (reported Oct 30): While taking notes with E.V. on BIO 201, she adds NCLEX framing; NCLEX tips belong only to nursing courses like NUR 112, not to BIO 201.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V.'s teaching, note help, practice questions and study guides frame material by the course in context: NCLEX and nursing framing only for nursing courses (a course flag in the spec, NUR 112 set), the course's own exam for others (BIO 201: its lecture and lab exams); every prompt that names NCLEX reads the flag; a test asserts a BIO 201 prompt has no NCLEX and a NUR 112 prompt keeps it.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11167,6 +11167,10 @@
   "reportedAt": "2026-10-30T18:27:43.529Z",
   "board": {
    "row": "v4 B-601: While taking notes with E.V. on BIO 201, she adds NCLEX framing;…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T18:28:06.588Z"
   }
  }
 ]
