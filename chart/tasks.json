@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "D2b pushed 3fd2ae0: legacy kit rules (button/.btn and tones, chips, seg, li/row, card, input.tick) moved into the component files with their selectors and order; with styles.css empty the Gallery kit is identical. Still on legacy: Today rows/tick/Start, budget, .ov-sets/.ov-quiz, #prog-day (B); #rec-list and .n-row padding (C, now D2c); #ev-dates, ev-btn, the header New button, cursor:default (D1/D2a). One legacy line kept until B narrows .ov-sets .sm.",
+  "notes": "Plan for D2c: rules that never matched in the synthetic crawl (lane B left 296 for Today/Study/Progress, and more in other areas) are not deleted blind. D2c moves every remaining legacy rule, in order, into the views layer (unlayered legacy becomes empty), then deletes only what a crawl over more states shows is dead. Nothing Matt might reach in a rare state loses its style.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
