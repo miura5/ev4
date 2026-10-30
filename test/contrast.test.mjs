@@ -35,7 +35,7 @@ test("B-539: at contrast 60 the theme is r4.css's neutral round-4 tables to the 
   }
   assert.equal(T.R4.light.chrome, '#f3f3f4');
   assert.equal(T.R4.dark.bg, '#151517');
-  assert.deepEqual(T.RECIPE.base, { h: 270, c: 0.6 });
+  assert.deepEqual({ ...T.RECIPE.base }, { h: 270, c: 0.6 });
 });
 
 test('B-271: every contrast in both modes holds D-273 (text 4.5, faint 4.6, her ink 4.5, coded 3:1 on surface)', () => {

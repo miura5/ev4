@@ -92,7 +92,7 @@ test('B-501, B-505, B-515: the published styles.css is the layer order, page/ds/
     assert.match(tokens, new RegExp(name + ':'), name);
   // D-379: five durations, three easings
   const durs = [...tokens.matchAll(/--dur-\d:(\d+)ms/g)].map(m => Number(m[1]));
-  assert.deepEqual(durs, [80, 140, 160, 280, 420]);
+  assert.deepEqual(durs, [80, 140, 180, 240, 420]); // B-547: r4's motion spec (fold close 180, open 240)
   for (const e of ['--ease-out', '--ease-in', '--ease-std']) assert.match(tokens, new RegExp(e + ':cubic-bezier'), e);
   // every type size scales with Matt's text size
   for (const m of tokens.matchAll(/--fs-\d:([^;]+);/g)) assert.match(m[1], /var\(--ts\)/);

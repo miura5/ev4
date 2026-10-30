@@ -18,8 +18,8 @@
   --fs-5:calc(18px * var(--ts)); /* heading: the top of the scale */
   /* B-543 (D-392, r4.css): the scale is 12 / 13 / 14 / 15 / 18 with no display numbers; the old display sizes fold
      into the heading until their readers move. */
-  --fs-6:var(--fs-5);
-  --fs-7:var(--fs-5);
+  --fs-6:calc(18px * var(--ts));
+  --fs-7:calc(18px * var(--ts));
   --fw-regular:400; --fw-medium:500; --fw-semibold:600;
   --lh-tight:1.2; --lh-ui:1.4; --lh-read:1.5;
   --track-display:-.01em; /* the 18px heading (r4.css .t-h); smaller text keeps 0 */
