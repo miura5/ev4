@@ -80,7 +80,7 @@ body.captions .msg.ev .msg-body,body.captions .msg.matt .msg-body{max-width:none
 body.captions .bubble,body.captions .msg.matt .bubble,body.captions.opening .msg.greet .bubble{background:none;padding:0;border-radius:0;max-width:100%;text-wrap:pretty}
 body.captions .msg.ev .bubble{font-size:calc(15px * var(--ts));line-height:1.45;color:var(--quiet);opacity:.6;transition:font-size .4s ease,opacity .4s ease,color .4s ease}
 body.captions .msg.ev.current .bubble{font-size:var(--fs-5);line-height:1.45;color:var(--ink);opacity:1}
-body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
+body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5)}
 body.captions.opening .msg.greet .bubble p:first-child{font-size:inherit;line-height:inherit;font-weight:inherit;letter-spacing:0;color:inherit;margin:0;text-wrap:pretty}
 body.captions .msg.earlier .bubble{opacity:.45}
 body.captions .msg.ev .bubble.err{background:none;border:0;padding:0;color:var(--warn)}
@@ -114,7 +114,7 @@ body.captions .hero{--stage-h:370px}
 body.captions .msg.ev .bubble{font-size:calc(14px * var(--ts))}
 body.captions .msg.ev.current .bubble{font-size:var(--fs-5)}
 body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts))}
-body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
+body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5)}
 }
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
@@ -145,7 +145,7 @@ body.captions #p-ev>.composer{grid-row:6}
 .msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
 body.captions .cap-in{max-width:600px;padding:0 24px 18px;gap:14px}
 body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint);opacity:1}
-body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts));line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
+body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5);line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
 body.captions .msg.matt.last{display:block}
 body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts));color:var(--quiet);opacity:1;max-width:80%;text-align:right}
 body.captions .msg.matt .bubble::before{content:"You";display:block;font-size:calc(12px * var(--ts));font-weight:500;color:var(--faint)}

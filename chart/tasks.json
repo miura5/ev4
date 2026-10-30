@@ -10802,5 +10802,26 @@
    "outcome": "task",
    "at": "2026-10-30T11:34:17.532Z"
   }
+ },
+ {
+  "id": "B-585",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): In the review surface, the card's question (18 px) reads larger than her line above it (17 px); the card question must be no larger than her line (captions harness, surfaces 390/735/1280)",
+  "dod": "Her current line uses the --fs-5 token (18 px, r4's heading step) in place of a hand 17 px, so the card question is no larger than her line and its options smaller; captions surfaces 390/735/1280 green",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release harness f24fcc5",
+  "words": "In the review surface, the card's question (18 px) reads larger than her line above it (17 px); the card question must be no larger than her line (captions harness, surfaces 390/735/1280)",
+  "reportedAt": "2026-10-30T12:39:41.702Z",
+  "board": {
+   "row": "v4 B-585: In the review surface, the card's question (18 px) reads larger than…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T12:39:55.828Z"
+  }
  }
 ]
