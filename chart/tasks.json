@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Lane D split for speed (Matt): D0 (base fonts, svg, tones) plus four parallel lanes started at once: D1a (E window thread, captions, Arc stage), D1b (E window cards and sessions), D2a (shell, L frame, New dialog, data-ui on static markup, --status-h rename), D2b (kit component CSS, tick). D2c last: strip remaining importants, drop legacy, token lint. The map, dry-run report and lane plan are saved in docs/design/proprietary/ (ce03e1a).",
+  "notes": "Lane C pushed 582edc3 (Notes/Record: importants and hidden hacks gone, 55 rules moved; 107 rules stay in legacy because shared legacy rules on .btn/.menu .mi/.seg/.li/.badge also style them, and move in D2c once D2b's kit lands) and 8fef65c (spec.ui.look.flower -> dialArc with every reader; flower comments renamed). D2c must also keep the old class names in markup that harness selectors still use (lane T list).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
