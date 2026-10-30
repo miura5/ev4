@@ -9,41 +9,22 @@
    it. Her two faces are --av1 and --av2 (D-266). */
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
 /* top bar */
-.top{position:sticky;top:0;z-index:8;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:calc(4px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px));
-  background:rgba(var(--ground),.95);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(var(--tint),.06)}
-.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
-.brand{flex:1 1 0;display:flex;align-items:center;gap:10px;min-width:0;background:none;border:0;padding:0 6px 0 0;color:inherit;text-align:left;min-height:44px;border-radius:14px;cursor:default;font:inherit}
-.brand:hover{background:none}
+
 .top-av{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;transition:opacity .28s ease,transform .28s var(--ease),width .28s var(--ease),flex-basis .28s var(--ease),margin .28s var(--ease)}
 body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .top-av{overflow:hidden;opacity:0;transform:scale(.5);width:0;flex-basis:0;margin-right:-10px}
-.brand-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
-.wordmark{font-size:calc(16px * var(--ts));font-weight:600;line-height:1.2}
-.wordmark .stg{font:500 calc(12px * var(--ts)) var(--sans);color:var(--warn);margin-left:6px;vertical-align:2px}
-.readout{font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.readout .led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px}
-/* Matt, Oct 20 (B-125, D-163): the status lights are steady; the word beside them says what E.V. is doing. */.readout .led.busy{background:var(--plum)} .readout .led.off{background:var(--soft)} .readout .led.brk{background:var(--warn-solid)}
-.top-right{flex:0 0 auto;display:flex;align-items:center;gap:6px}
-.status{flex:0 1 auto;min-width:0;font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:36vw}
-.status:not(.ok){color:var(--warn);white-space:normal}.status.note{white-space:nowrap}
-.tab-sys{appearance:none;width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);display:grid;place-items:center;padding:0;cursor:pointer}
-.tab-sys:hover{background:var(--glass2)} .tab-sys[aria-current="page"]{background:var(--accent-bg);border-color:var(--accent-edge);color:var(--accent-text)}
+
+/* Matt, Oct 20 (B-125, D-163): the status lights are steady; the word beside them says what E.V. is doing. */  
+
 /* B-85, D-159: the Live line only from 1024 px; boot and error lines always, on their own row under 1024 */
-@media (max-width:1023px){.status.ok,.status.note{display:none}.top-in{flex-wrap:wrap;row-gap:0}.status:not(.ok){order:3;flex-basis:100%;max-width:none;padding:0 0 4px}}
+
 /* the five tabs: icons in the top bar beside System, their names from 1024 px (B-85, D-159; was a floating dock) */
-.tabs{display:flex;align-items:center;gap:2px}
-.tabs .tab{appearance:none;position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-width:40px;height:40px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--quiet);font:500 calc(13.5px * var(--ts)) var(--sans);cursor:pointer;white-space:nowrap;transition:background .25s ease,color .25s ease}
-.tabs .tab svg{width:19px;height:19px;flex:0 0 19px}
-.tabs .tab span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.tabs .tab:hover{background:var(--glass2)}
-.tabs .tab[aria-selected="true"]{background:var(--accent-bg);color:var(--accent-text);font-weight:600}
-@media (min-width:1024px){.tabs .tab{padding:0 13px}.tabs .tab span{position:static;width:auto;height:auto;overflow:visible;clip:auto}
-  .brand{flex:0 0 auto;max-width:300px}.status{flex:1 1 auto;max-width:none;text-align:right}}
+
 .panel .card{scroll-margin-top:calc(var(--top-h) + 12px)}
-@media (max-width:420px){.top-in{gap:6px}.tabs{gap:0}.tabs .tab{min-width:38px;padding:0 9px}.top-right{gap:4px}}
+
 /* page */
-.wrap{max-width:760px;margin:0 auto;padding-top:18px;display:flex;flex-direction:column;gap:16px}
+
 /* D-159: two breakpoints, 600 and 1024 px; every width between them is the phone stack, its column centred at most 660 px. */
-@media (max-width:1023px){.wrap{max-width:660px}}
+
 .ptitle{font:600 calc(30px * var(--ts))/1.15 var(--sans);letter-spacing:-.02em;text-transform:none;color:var(--ink);margin:4px 0 0}
 /* kit: card, row, chip, stat, table, empty */
 .panel{display:flex;flex-direction:column;gap:14px}
@@ -187,16 +168,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .fine{font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */
-.sbar{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:8px;min-height:32px;padding:0;min-width:0;font:500 calc(13px * var(--ts)) var(--sans);font-variant-numeric:tabular-nums;color:var(--soft);transition:color .3s ease}
-.s-led{width:6px;height:6px;border-radius:50%;background:var(--do);flex:0 0 6px}
-.sbar.brk .s-led{background:var(--warn-solid)} .sbar.busy .s-led{background:var(--plum)}
-.s-main{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s-clock{color:var(--ink2);font-variant-numeric:tabular-nums;transition:color .3s ease}
-.sbar.alert .s-clock{color:var(--ink)} .sbar.brk .s-clock{color:var(--warn)}
-.s-acts{display:flex;gap:0;flex:0 0 auto;margin-left:2px}
-.sbar button{appearance:none;min-height:32px;padding:0 9px;border:0;border-radius:999px;background:none;color:var(--soft);font:500 calc(12.5px * var(--ts)) var(--sans);letter-spacing:0;cursor:pointer}
-.sbar button:hover{background:var(--glass2);color:var(--ink)}
-.sbar button.end{color:var(--ink2)}
+
 .ev-card.check{background:var(--glass);border-color:var(--line2)}
 .ev-card.check.done{background:var(--glass);border-color:var(--line)}
 .ev-card textarea{min-height:72px}
@@ -311,7 +283,7 @@ body:not(.on-ev) .cap-now{display:none}
 body.captions .composer>*{max-width:660px;width:100%;margin-inline:auto;box-sizing:border-box}
 body.captions .composer>.cap-echo{max-width:none}
 @media (min-width:1024px){
-  body.captions.on-ev .wrap{max-width:1180px}
+
   body.captions .hero{--stage-h:370px}
   /* Nothing beside her: her stage centres in the window. Something beside her: the column slides in from the right
      and her stage re-centres in what is left. */
@@ -361,12 +333,7 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 @media (max-width:1023px){.ptitle{display:none}}
 /* B-121 (D-158): from 1024 px Today, Study, Progress, Record and System are two columns: the lead and the list he acts
    in on the left, the folded detail on the right. Below it the columns are one stack, in the same order. */
-.cols,.col-main,.col-side{display:contents}
-@media (min-width:1024px){
-  body:not(.on-ev) .wrap{max-width:1120px}
-  .cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
-  .col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
-}
+
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
 /* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
@@ -410,55 +377,32 @@ button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:calc(14
    From 1200 px: a details panel on the right too, holding the view's side column, present only while it has one (D-151).
    The document still scrolls (the pane is drawn behind it), so every scroll, sticky and anchor keeps working. Reading
    width is at most 680 px; extra width is margin. Rows and the view switch come with B-213, the motion with B-216. */
-html{background:var(--bg)}
-body{background:transparent}
+
 /* B-332 (D-312, superseding D-225's 680 px): lists, cards and grids span the pane; only her message column keeps 680 px */
-.wrap{max-width:none}
-@media (max-width:1023px){.wrap{max-width:none}}
-body:not(.on-ev) .wrap{max-width:none}
-.top-in,.top-right{display:contents}
+
 /* the pane's header: the view's name, and the page's one status line */
-.mh{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:10px;min-height:var(--mh-h);
-  margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
-  padding:calc(env(safe-area-inset-top,0px)) 16px 0;background:rgba(var(--ground),.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.mh-title{font:600 calc(14px * var(--ts))/1.3 var(--sans);color:var(--text);flex:0 0 auto}
-.mh .status{flex:1 1 auto;min-width:0;max-width:none;text-align:left;margin:0;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mh .status:not(.ok){color:var(--att);white-space:normal}
+
 /* D-151: the status line speaks only of a problem or a note; Live stays off the header. */
-.mh .status.ok{display:none}
+
 /* B-332: the header holds only the title, the view's switch and New; health and status live in System (B-341) */
-.mh .status{display:none}
+
 /* B-357: a boot that stops says why: the refusal is the one line he can read */
-body.boot-stopped .mh .status{display:block}
+
 /* B-381: a System problem is one quiet line in the header and the sidebar; a tap opens #system */
-.mh .status.sys{display:block;white-space:nowrap;color:var(--soft);cursor:pointer}
-.readout.sys{cursor:pointer;white-space:nowrap}
+
 .ptitle{display:none}
 /* the sidebar's rows */
-.side{z-index:9}
-.side .brand{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 8px 0 6px;margin:0 0 6px;border-radius:8px;max-width:none}
+
 .side .top-av{width:24px;height:24px;flex:0 0 24px}
 body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.core-big .side .top-av,body.captions.on-ev .side .top-av{opacity:1;transform:none;width:24px;flex-basis:24px;margin-right:0;overflow:visible}
-.side .wordmark{font-size:calc(14px * var(--ts))}
-.side .tabs{display:flex;flex-direction:column;align-items:stretch;gap:1px}
-.side .tabs .tab,.side .tab-sys{appearance:none;position:static;display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:32px;min-width:0;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--faint);font:500 calc(13px * var(--ts)) var(--sans);cursor:pointer;flex:0 0 auto}
-.side .tabs .tab > svg,.side .tab-sys > svg{width:16px;height:16px;flex:0 0 16px}
-.side .tabs .tab span,.side .tab-sys span{position:static;width:auto;height:auto;overflow:visible;clip:auto;white-space:nowrap}
-.side .tabs .tab:hover,.side .tab-sys:hover{color:var(--text);background:var(--surface)}
-.side .tabs .tab[aria-selected="true"],.side .tab-sys[aria-current="page"]{color:var(--text);background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);font-weight:500;border-color:transparent}
+
 /* Under 600 px: the tab bar at the bottom; her 24 px avatar is the E.V. tab; System sits at the header's end, 44 px
    like every tab (B-288). */
 @media (max-width:599px){
-  :root{--dock-h:60px}
-  .side{position:fixed;left:0;right:0;bottom:0;height:calc(60px + env(safe-area-inset-bottom,0px));padding:0 0 env(safe-area-inset-bottom,0px);background:var(--sunken);border-top:1px solid var(--line)}
-  .side .brand{display:none}
+
   /* B-361: the demo's tab bar: five icon tabs (E.V.'s is the speech bubble), the active one on a grey ground */
-  .side .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:60px;gap:0;padding:2px 4px 6px;box-sizing:border-box}
-  .side .tabs .tab{flex-direction:column;justify-content:center;gap:2px;height:auto;min-height:52px;padding:0;border-radius:8px;font:500 calc(11px * var(--ts)) var(--sans);color:var(--quiet)}
-  .side .tabs .tab[aria-selected="true"]{background:var(--hover);box-shadow:none;color:var(--text)}
-  .side .tab-sys{position:fixed;top:calc(2px + env(safe-area-inset-top,0px));right:max(4px,env(safe-area-inset-right,0px));width:44px;height:44px;padding:0;justify-content:center;z-index:10;border-radius:10px}
-  .side .tab-sys span{display:none}
-  .mh{padding:0 8px 0 16px} /* B-361: New sits flush right, as in the demo */
+
+   /* B-361: New sits flush right, as in the demo */
   /* the surface sheet gives the tab bar its height back, so her line keeps its room */
   body.captions #ev-surf{max-height:clamp(300px,calc(46dvh - var(--dock-h)),410px)}
   /* B-428: E.V.'s view is a fixed frame on the phone. The installed app pads <html> by the safe areas (build-pwa.mjs),
@@ -466,37 +410,23 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
      scrolled it: the header slid under the status bar and a band opened over the tab bar. Here the document is
      exactly the screen and never scrolls; the thread (and the surface sheet) scroll inside it. Other views still
      scroll the document. */
-  html:has(>body.on-ev){height:100%;overflow:hidden;overscroll-behavior:none}
-  body.on-ev{box-sizing:border-box;height:100%;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:none}
+
   body.on-ev .qchips{touch-action:pan-x}
   /* The views that do scroll the document hold the header under the status bar's band, not beneath it; the shadow
      fills the band above the header so lines scroll away under it. Without insets (the artifact page) both are 0. */
-  .mh{top:env(safe-area-inset-top,0px);box-shadow:0 calc(-.5 * env(safe-area-inset-top,0px)) 0 calc(.5 * env(safe-area-inset-top,0px)) var(--bg)}
-  body.on-ev .mh{top:0} /* on E.V. the body is the frame, and it starts below the band already */
+
+   /* on E.V. the body is the frame, and it starts below the band already */
 }
 /* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
 @media (min-width:600px){
-  :root{--side-w:236px;--pane-l:calc(var(--side-w));--pane-r:8px}
-  html{background:var(--sunken)}
-  body{padding-left:calc(var(--pane-l) + 16px);padding-right:calc(var(--pane-r) + 16px)}
-  body::before{content:"";position:fixed;z-index:-1;top:8px;bottom:8px;left:var(--pane-l);right:8px;background:var(--bg);border-radius:12px;box-shadow:0 0 0 1px var(--line)}
-  .side{position:fixed;left:0;top:0;bottom:0;width:var(--side-w);display:flex;flex-direction:column;padding:8px 8px 10px;overflow-y:auto;scrollbar-width:none}
-  .side .tab-sys{margin-top:auto}
+
   /* B-332: the header spans the window, over the right panel too */
-  .mh{top:8px;margin-top:8px;margin-right:calc(8px - 16px - var(--pane-r));border-radius:12px 12px 0 0;padding:0 12px 0 18px;box-sizing:border-box;height:var(--mh-h)}
+
 }
-@media (min-width:600px) and (max-width:699px){:root{--side-w:184px}}
-@media (min-width:1600px){:root{--side-w:236px}}
+
 /* Below 1200 px the view's side column reads under its main column, inside the 680 px column. */
-.cols,.col-main,.col-side{display:contents}
-@media (min-width:1024px){.cols,.col-main,.col-side{display:contents}}
+
 /* From 1200 px: the details panel on the right holds the view's side column, while the view has one. */
-@media (min-width:1200px){
-  :root{--right-w:320px}
-  body:has(section.panel:not([hidden]) > .cols > .col-side, section.panel:not([hidden]) > .panel:not([hidden]) > .cols > .col-side){--pane-r:calc(var(--right-w) + 8px)}
-  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}
-  .col-main{display:flex;flex-direction:column;gap:14px;min-width:0}
-}
 
 /* ============================================================ B-209 (D-213): the E.V. tab in C =================
    Her stage is one size per layout (104, 112 or 128, 140 or 168 px; 70% in a session), set in px by the page. While he
@@ -513,64 +443,24 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 
 /* ============================================================ B-221: the shade, the pane, the sidebar's sections ======
    (Matt's staging look, Oct 22.) The sidebar's Today section, one 32 px row each, absent while empty (B-286: no Working). */
-@media (min-width:600px){
-  html{background:var(--sunken)}
-  body{background:transparent}
-}
+
 /* B-334 (D-312): the sidebar's Today as in the demo: "Today" and "n left", then up to five open items, each with an 8 px
    dot coloured by its type, its name and its minutes or day; it shows on every view. */
-.side-sec{display:flex;flex-direction:column}
-.side-sec .sec{display:flex;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);margin:0;padding:20px 10px 6px}
-.side-sec .sec .sp{flex:1}
-.side-sec .si{appearance:none;box-sizing:border-box;border:0;background:transparent;height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:7px;font:400 calc(13px * var(--ts)) var(--sans);color:var(--quiet);white-space:nowrap;text-align:left;width:100%;cursor:pointer}
-.side-sec .si,.side .prefs-btn,.side .prefpop .tab-sys.sys-link{min-height:0}
-.side-sec .si .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.side-sec .si .st{font-size:calc(11.5px * var(--ts));color:var(--quiet);flex:none}
-.side-sec .si:hover{background:var(--surface);color:var(--text)}
-.side-sec .si.on{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+
 /* B-407: the review row's "· 1 to review" sits on a second line, so the sidebar never cuts it off */
-.side-sec .si.si-rev{height:auto;min-height:30px;padding-top:5px;padding-bottom:5px}
-.side-sec .si.si-rev .t{display:flex;flex-direction:column;white-space:normal}
-.side-sec .si.si-rev .t,.side-sec .si.si-rev .tr{overflow:visible;text-overflow:clip}
-.side-sec .si.si-rev .tr{font-size:calc(11.5px * var(--ts));color:var(--faint)}
-.sdot{width:8px;height:8px;border-radius:4px;flex:0 0 8px;background:var(--x,var(--quiet))}
-.sdot.d-q{--x:var(--quiet)}
-.side .lab-side{display:none}
-@media (min-width:600px){.side .tabs .tab .lab-bar{display:none}.side .tabs .tab .lab-side{display:inline}}
-@media (max-width:599px){.side-sec{display:none}}
+
 /* B-286 (C-4, C-14, C-15, D-291): the sidebar's foot holds Theme and Contrast above System; "n more in Today" is quiet;
    her dial sits on the sidebar's own ground. The phone's tab bar has no foot. */
 .side .ev-av .under{fill:var(--sunken)}
-.side-sec .si.more{color:var(--quiet);font-size:calc(12.5px * var(--ts))}
+
 /* B-334 (D-312): the foot is one Preferences row; it opens a popover above it with Theme, Contrast and System. Under
    600 px the button is the header's last icon and the popover drops from it. */
-.side-foot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding:8px 0 0;position:relative}
-.side .prefs-btn{appearance:none;display:flex;align-items:center;gap:10px;width:100%;height:32px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--quiet);font:400 calc(13.5px * var(--ts)) var(--sans);cursor:pointer;text-align:left;box-sizing:border-box}
-.side .prefs-btn>svg{width:16px;height:16px;flex:0 0 16px}
-.side .prefs-btn:hover{background:var(--surface);color:var(--text)}
-.side .prefs-btn[aria-expanded="true"]{background:var(--bg);color:var(--text);box-shadow:0 0 0 1px var(--line)}
-.side .prefpop{position:absolute;left:0;bottom:44px;z-index:30;width:260px;padding:12px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
-.side .prefpop[hidden]{display:none}
-.side .prefpop .pref{display:flex;flex-direction:column;gap:10px;margin:0}
-.side .prefpop .pref>.lbl{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.side .prefpop .seg{align-self:flex-start}
-.side .prefpop .tab-sys.sys-link{position:static;width:auto;height:auto;min-height:24px;padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:var(--text);font:400 calc(13px * var(--ts)) var(--sans);text-decoration:underline;text-underline-offset:3px;justify-content:flex-start;align-self:flex-start}
-.side .prefpop .tab-sys.sys-link span{display:inline}
-.side .prefpop .tab-sys.sys-link:hover{background:none}
-.side .prefpop .tab-sys.sys-link[hidden]{display:none}
+
 @media (max-width:599px){
-  .side-foot{display:none} /* B-352: no Preferences on the phone header, as the demo */
-  .side .prefs-btn{width:44px;height:44px;padding:0;justify-content:center;border-radius:10px}
-  .side .prefs-btn span{display:none}
-  .side .prefpop{top:48px;bottom:auto;left:auto;right:0}
+   /* B-352: no Preferences on the phone header, as the demo */
+
 }
 /* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
-@media (min-width:600px){
-  .side .prefpop{position:fixed;left:8px;bottom:52px}
-  .side .brand{min-height:48px;margin:0 0 4px}
-  .side .tabs .tab{min-height:0;font-weight:400;font-size:calc(13.5px * var(--ts));color:var(--quiet)}
-}
-.readout .led{display:none}
 
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
 body.captions .msg.matt.last{display:flex}
@@ -582,7 +472,7 @@ body.captions .cap-echo{display:none}
 /* ============================================================ B-210 (D-209, D-210): surfaces, jobs and Your turn in C ==
    Below 1200 px a surface is the sheet over the composer; from 1200 px it is the details panel on the right (the same
    fixed column as a view's side column), and the pane gives it room. Her captions stay one column at most 680 px. */
-body.captions.on-ev .wrap{max-width:680px}
+
 @media (min-width:1200px){
   body.captions.on-ev.side-on{--pane-r:calc(var(--right-w) + 8px)}
   body.captions.side-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0}
@@ -590,15 +480,9 @@ body.captions.on-ev .wrap{max-width:680px}
 }
 
 /* B-211 (D-217): the session bar sits in the pane header; answers carry their key number */
-.mh .sbar{flex:0 1 auto;margin:0 0 0 auto;min-height:28px;justify-content:flex-end;gap:6px;font:500 calc(13px * var(--ts)) var(--sans);color:var(--quiet)}
-.mh .sbar[hidden]{display:none}
-.mh .sbar button.btn{height:28px;min-height:28px} /* B-303: the session line's Break, +5 and End stay one quiet 28 px line, at every width */
-.mh .sbar .s-main{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mh .sbar button{min-height:28px;padding:0 8px;border-radius:8px;color:var(--quiet);font:500 calc(13px * var(--ts)) var(--sans)}
-.mh .sbar button:hover{background:var(--surface);color:var(--text)}
-.mh .sbar button.end{color:var(--text)}
-.mh .sbar .s-led{background:var(--quiet)} .mh .sbar.brk .s-led{background:var(--att)}
-@media (max-width:599px){.mh .sbar .s-acts button:not(.end):not(:first-child){display:none}}
+
+ /* B-303: the session line's Break, +5 and End stay one quiet 28 px line, at every width */
+
 .opt kbd.opt-n{flex:0 0 22px;width:22px;height:22px;border-radius:6px;display:inline-grid;place-items:center;font:500 calc(12px * var(--ts)) var(--sans);color:var(--faint);background:none;box-shadow:inset 0 0 0 1px var(--line2)}
 .opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
 @media (hover:none){.opt kbd.opt-n{display:none}}
@@ -632,8 +516,7 @@ body.captions.on-ev .wrap{max-width:680px}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button{min-height:32px;border-radius:8px;padding:0 12px;font-size:calc(13px * var(--ts))}
 }
 /* the switch is a part of the component set (B-285, at the end of this sheet); here only where it sits */
-.mh .seg{flex:0 0 auto;align-self:center}
-.mh .seg[hidden],body.on-ev .mh .seg{display:none}
+
 /* the right panel's cards: on the ground, a hairline, 32 px rows */
 @media (min-width:1200px){
   section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:6px 10px 10px;gap:0}
@@ -804,44 +687,20 @@ button.btn.sm{font-size:calc(12.5px * var(--ts))}
    The pane's 48 px header names the view ("E.V." on hers) and ends with New, the page's one way to create: a menu of
    Task for Today and Note, each a modal dialog. The way out is Esc or a tap outside (D-160). */
 
-.mh .seg{flex-shrink:1;min-width:0} /* a view's switch scrolls inside itself before New leaves the header */
+ /* a view's switch scrolls inside itself before New leaves the header */
 /* a spacer before the header's right end, so Back to now, the session line and New end it whatever else shows */
-.mh::after{content:"";order:8;flex:1 1 0;min-width:0}
-.mh > .sbar{order:9;margin-left:0}
-.new-wrap .menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:0;box-sizing:border-box}
-.new-wrap .menu[hidden]{display:none}
-.new-wrap .menu button.btn.mi{justify-content:flex-start;width:100%;color:var(--text);font-weight:400}
+
 /* B-361: as the demo: the menu's Create heading; the dialog 560 px wide, 110 px from the top (48 px on the phone), its
    header an icon and the kind, the page dimmed behind it, Cancel beside Add */
-:root[data-theme="dark"] .new-dlg::backdrop{background:rgba(0,0,0,.5)}
-.new-dlg form{display:flex;flex-direction:column;gap:0;margin:0}
+
 /* B-380: the demo's modal type: 14 px text, its header line at 1.45, the footer hint at 13 px */
-.new-head{margin:0;font:600 calc(14px * var(--ts))/1.45 var(--sans)}
-.new-body #new-title{height:44px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 12px;font:500 calc(17px * var(--ts)) var(--sans);color:var(--text)}
-.new-body #new-title:focus,.new-body #new-title:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
-.new-body :is(input,textarea){width:100%;box-sizing:border-box}
+
 /* B-373: the note's words as the demo's textarea, one plain focus ring on every field */
-.new-body #new-text{flex:none;height:86px;min-height:86px;border-radius:8px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:10px 12px;resize:none;font:400 calc(14px * var(--ts))/1.45 var(--sans);color:var(--text)}
-.new-body #new-text:focus,.new-body #new-text:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
-.new-body :is(#new-title,#new-text)::placeholder{color:var(--faint);opacity:1}
-.new-fields .frow[hidden]{display:none}
-.new-body #new-warn{margin:0;color:var(--att)}
+
 /* B-308 (C-7): a task's fields, one row each: its label, then its choices; under 600 px the label sits above them. */
-.new-fields{display:flex;flex-direction:column;gap:14px}
-.new-fields[hidden]{display:none}
-.new-fields .frow{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:10px;min-width:0}
-.new-fields .seg{justify-self:start;align-self:center;width:max-content;max-width:100%}
-.new-fields .seg button{min-height:24px;height:24px;padding:0 9px;font-size:calc(12px * var(--ts))}
-@media (max-width:599px){.new-fields .seg button{flex:none;height:44px;min-height:44px;min-width:44px;padding:0 12px;font-size:calc(12px * var(--ts))}}
+
 /* B-465: an exam's Date, a field in the row's rhythm (the title's look at the switch buttons' height) */
-.new-fields #new-date{justify-self:start;width:auto;min-width:168px;height:28px;border-radius:7px;border:0;box-shadow:inset 0 0 0 1px var(--line2);background:var(--bg);padding:0 10px;font:400 calc(13px * var(--ts)) var(--sans);color:var(--text);color-scheme:light dark}
-.new-fields #new-date:focus,.new-fields #new-date:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--focus,var(--text))}
-@media (max-width:599px){.new-fields #new-date{height:44px;font-size:max(16px,calc(14px * var(--ts)))}}
-.new-foot #new-hint{flex:1;min-width:0;font-size:calc(13px * var(--ts));color:var(--faint)}
-@media (max-width:599px){
-  .new-wrap .menu{width:min(240px,calc(100vw - 32px));top:calc(100% - 2px);right:4px}
-  .new-wrap .menu button.btn.mi{height:44px;min-height:44px}
-}
+
 /* ============================================================ B-291 (C-1, C-13, D-270, D-276): Today's list ===========
    One row per item on the component set's row: the tick, the name, at most one badge, Start on the first startable row,
    the time. 32 px from 600 px and 44 px on the phone, where the time stays on the row's line and the tick is a 44 px
@@ -1095,7 +954,7 @@ button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:
 @media (max-width:1199px){#p-today #today-budget{margin-top:16px}#p-today #today-changes{margin-top:16px}}
 @media (min-width:1200px){
   #today-week .wk-days{grid-template-columns:repeat(7,minmax(min-content,1fr))}
-  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--line-h, 0px) - 8px - 8px - 53px)}
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - 8px - 53px)}
 }
 @media (max-width:599px){
   #today-list .ti-list>.li,#today-list .ti-folded>.li{flex-wrap:nowrap;align-items:center;padding:6px 16px;gap:12px}
@@ -1183,7 +1042,7 @@ body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;pla
 body[data-view="today"].task-open .mh button.btn.mh-back:hover{background:var(--hover);color:var(--text)}
 .mh .mh-back svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 /* B-373: the board's task view carries her line only for graded work (taskLine); the panel starts under it */
-body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--line-h, 0px))}
+body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--status-h, 0px))}
 #p-today.tk-open>#today-bar{display:none!important}
 #today-taskmain[hidden]{display:none}
 #today-taskmain{display:flex;flex-direction:column;min-width:0;margin:-18px -16px 0}
@@ -1387,19 +1246,8 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--lin
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
    header does, and from 1200 px the right panel starts under it. The week's own line moves up into it. */
-:root{--line-h:0px}
-.evline{position:sticky;top:var(--mh-h);z-index:7;display:flex;align-items:center;gap:10px;min-height:40px;box-sizing:border-box;
-  margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
-  padding:4px 8px 4px 16px;background:var(--bg);border-bottom:1px solid var(--line);font:400 calc(13px * var(--ts))/1.45 var(--sans);color:var(--text);flex-wrap:wrap}
-.evline[hidden]{display:none}
-.evline .el-ico{width:14px;height:14px;flex:0 0 14px;fill:none;stroke:var(--quiet);stroke-width:1.8;stroke-linejoin:round}
-.evline .el-t{flex:1 1 0;min-width:0}
-.evline .btn{flex:0 0 auto}
+
 body.has-line #today-week .wk-her{display:none}
-@media (min-width:600px){
-  .evline{top:calc(8px + var(--mh-h));margin-right:calc(8px - 16px - var(--pane-r));padding:4px 12px 4px 18px;flex-wrap:nowrap;min-height:49px}
-  body.has-line{--panel-top:calc(8px + var(--mh-h) + var(--line-h))}
-}
 
 /* ============================================================ B-350, B-359 (D-316): Record's log frame ===============
    The log alone (Dates, Journal, Canvas and Library left the page): the toolbar strip under the header, rows edge to
@@ -1422,45 +1270,16 @@ body.has-line #today-week .wk-her{display:none}
 
 /* B-353 (D-314): a running session as the demo's strip under the header (ConversationPhone): under 600 px on every
    view, and on her view under 1200 px where her panel is hidden. The topic in bold, the minutes, Break and End. */
-.mh>#sbar .s-topic{display:none}
-@media (max-width:599px){
-  .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
-  .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
-  .mh>#sbar{order:20;flex:1 0 calc(100% + 24px);box-sizing:border-box;max-width:calc(100% + 24px);justify-content:flex-start;gap:6px;margin:0 -8px 0 -16px;padding:4px 8px 4px 16px;min-height:44px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
-  .mh>#sbar .s-led{display:none}
-  .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
-  .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
-  .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
-  .mh>#sbar .s-clock{color:var(--text)}
-  .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
-  .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
-  .mh>#sbar .s-acts button.btn{height:44px;min-height:44px;min-width:44px;padding:0 12px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text);font:500 calc(12.5px * var(--ts)) var(--sans)}
-}
+
 /* B-383: the strip takes its height from her view, so the composer stays above the tab bar during a session. */
 @media (max-width:599px){
   body.captions:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 53px)}
-  .mh>#sbar .s-main{display:flex;align-items:baseline;overflow:visible}
-  .mh>#sbar .s-topic{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .mh>#sbar .s-topic::after{content:none}
-  .mh>#sbar .s-clock{flex:none;white-space:nowrap}
-  .mh>#sbar .s-clock::before{content:"\00a0·\00a0"}
+
 }
 @media (min-width:600px) and (max-width:1199px){
   body.captions.on-ev:has(.mh>#sbar:not([hidden])) #p-ev{height:calc(var(--fh,100dvh) - var(--top-h) - 18px - var(--dock-h) - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 41px)}
 }
-@media (min-width:600px) and (max-width:1199px){
-  body.on-ev .mh:has(>#sbar:not([hidden])){flex-wrap:wrap;align-content:flex-start;row-gap:0}
-  body.on-ev .mh:has(>#sbar:not([hidden]))::before{content:"";order:-1;flex:0 0 0;width:0;margin-right:-10px;height:calc(var(--mh-h) - 1px)}
-  body.on-ev .mh>#sbar .s-acts{display:flex;gap:6px;flex:none}
-  body.on-ev .mh>#sbar{order:20;flex:1 0 100%;justify-content:flex-start;gap:6px;margin:0 -16px;padding:4px 8px 4px 18px;min-height:40px;border-top:1px solid var(--line);font:400 calc(13px * var(--ts)) var(--sans);color:var(--text)}
-  body.on-ev .mh>#sbar .s-led{display:none}
-  body.on-ev .mh>#sbar .s-main{flex:1 1 auto;min-width:0}
-  body.on-ev .mh>#sbar .s-topic{display:inline;font-weight:600;color:var(--text)}
-  body.on-ev .mh>#sbar .s-topic::after{content:" · ";font-weight:400}
-  body.on-ev .mh>#sbar .s-clock{color:var(--text)}
-  body.on-ev .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none}
-  body.on-ev .mh>#sbar .s-acts button.btn{height:28px;min-height:28px;padding:0 10px;border-radius:7px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
-}
+
 /* B-320 (D-306): the claude.ai live page after the cutover: one line at the top, and nothing offered that would write */
 .ro-banner{position:sticky;top:0;z-index:50;margin:0;padding:8px 16px;background:var(--surface);color:var(--text);font-size:13px;text-align:center;border-bottom:1px solid var(--line)}
 [data-readonly] #composer,[data-readonly] #new-wrap{display:none!important}
@@ -1470,30 +1289,16 @@ body.has-line #today-week .wk-her{display:none}
    E.V. button, the chats history). Her chat floats over the page, bottom right, as Linear's does; nothing under it moves.
    --dock-h is the 30 px the page gives up beyond its old 8 px foot, so every height that already counts it stays right.
    Below 1024 px none of it shows: the phone layout is unchanged. */
-.estrip,.chatp{display:none}
+.chatp{display:none}
 @media (min-width:1024px){
-  :root{--strip-h:38px;--dock-h:30px}
-  body::before{bottom:var(--strip-h)}
-  section.panel > .cols > .col-side,section.panel > .panel > .cols > .col-side,#study-side:not([hidden]),body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
-  .estrip{display:flex;position:fixed;z-index:30;left:var(--pane-l);right:0;bottom:0;height:var(--strip-h);align-items:center;gap:6px;padding:0 8px 0 6px;box-sizing:border-box;background:var(--sunken);font:400 calc(12.5px * var(--ts)) var(--sans);color:var(--quiet)}
-  .estrip .ss{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0}
-  .estrip .ss:empty{display:none}
+
+  #study-side:not([hidden]),body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
+
   /* B-406 (D-325): a Notes session's controls, as the AppNotes board's strip: the time left, what it is on, Break, End */
-  .estrip .ss b{font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
-  .estrip .ss .s-led{background:var(--do)} .estrip .ss.brk .s-led{background:var(--att)}
+
   /* B-438: a writing clock paused (nothing typed for 2 minutes) dims its light and its time */
-  .estrip .ss.paused .s-led{background:var(--quiet)} .estrip .ss.paused b{color:var(--quiet)}
-  .estrip .ss .tn{appearance:none;border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-  .estrip .ss .tn:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
-  .estrip .ss .s-ended{overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:340px;margin-left:4px}
-  .estrip>.sp{flex:1;min-width:0}
-  .estrip .sug{appearance:none;border:0;background:none;padding:0 8px;height:28px;min-height:0;border-radius:6px;font:inherit;color:var(--quiet);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:520px}
-  .estrip .sug:hover{color:var(--text);background:var(--hover)}
-  .estrip button.btn.evb{color:var(--text)}
-  .estrip button.btn.evb.on{background:var(--hover)}
-  .estrip button.btn.pchip{max-width:260px;justify-content:flex-start;min-width:0;flex:0 1 auto}
-  .estrip .pchip .pc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-  .estrip .ico,.chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  .chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .chatp:not([hidden]){display:flex}
   .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:30vh;width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);font:400 calc(13.5px * var(--ts))/1.55 var(--sans)}
   .chatp.wide{width:640px;top:56px}
@@ -1534,7 +1339,7 @@ body.has-line #today-week .wk-her{display:none}
 }
 @media (min-width:1200px){
   #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - 8px - var(--strip-h) - 53px)}
-  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--line-h, 0px) - 8px - var(--strip-h) - 53px)}
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - var(--strip-h) - 53px)}
 }
 /* ==== B-402 Notes: the editor (page/app/25-notes.js; the demo's AppNotes, NoteEditor and NoteStyleMenu boards) ==== */
 #tab-notes[hidden],#p-notes[hidden]{display:none!important}
@@ -1567,10 +1372,10 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-fbar{position:sticky;top:calc(var(--mh-h,48px) + 8px);z-index:6;display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-bottom:1px solid var(--line);background:var(--bg)}
 /* B-409: as the demo, the format bar sits right under the header (or her band) with its rule across the whole page, and
    nothing of the note shows in the ground above the page while it scrolls */
-#p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--line-h,0px));padding:0 28px;box-sizing:border-box}
-.estrip .sug.plain,.estrip .sug:disabled{cursor:default;background:none;color:var(--quiet)}
+#p-notes .n-fbar{top:calc(var(--mh-h,48px) + 8px + var(--status-h,0px));padding:0 28px;box-sizing:border-box}
+
 /* D-361: the quiet line beside the strip's control, on its row */
-.estrip #ev-uncounted:not([hidden]){display:inline-flex;align-items:center;flex:0 1 auto;color:var(--faint)}
+
 #p-notes .n-fbar button.btn.on{color:var(--text);background:var(--hover);box-shadow:inset 0 0 0 1px var(--line)}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
 #p-notes .menu{position:absolute;z-index:30;padding:5px;border-radius:10px;background:var(--surface);box-shadow:0 0 0 1px var(--line2),0 12px 32px rgba(0,0,0,.14);box-sizing:border-box;display:flex;flex-direction:column}
@@ -1622,81 +1427,57 @@ body.has-line #today-week .wk-her{display:none}
   input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(16px,calc(14.5px * var(--ts)))}
   /* the panel's height is the frame's (--fh): the visible viewport, with the home bar's inset handed back as the keyboard covers it */
-  body.kb{--dock-h:0px;--fh:calc(var(--vvh,100dvh) + env(safe-area-inset-bottom,0px))}
+
   body.captions.kb #p-ev{min-height:0}
-  body.kb .side{display:none}
-  html:has(>body.on-ev.kb){height:var(--vvh,100%)}
-  body.on-ev.kb{height:var(--vvh,100%)}
+
 }
 /* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
    page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
 @media (max-width:599px){
   .rec-li .r{white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
-  body{overflow-x:clip}
+
 }
 /* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
    document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the
    installed app (--app-h, set from the screen's height by the composer part) the frame and the tab bar are placed by
    the screen's height instead. */
-@media (max-width:599px){
-  html:has(>body.on-ev){height:var(--app-h,100%)}
-  .side{top:calc(var(--app-h,100dvh) - 60px - env(safe-area-inset-bottom,0px));bottom:auto}
-  body{--fh:var(--app-h,100dvh)}
-}
+
 /* B-432 (review): the fields whose own rules outrank the phone's 16 px floor: the New note text and Record's kind select */
 @media (max-width:599px){
-  #new-dlg .new-body #new-text,#p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
+  #p-record .rec-detail select.idea-kind{font-size:max(16px,calc(14.5px * var(--ts)))}
 }
 /* B-431 (UI review of 74499d4): read-along's toggle is filled only when on; on the phone the header's New sits inside
    the 48 px header with room above and below (its tap area still 44 px), and the tab bar stays inside the screen. */
 .mh .n-read{background:transparent;box-shadow:none}
 .mh .n-read[aria-pressed=true]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);color:var(--text)}
-@media (max-width:599px){
-  .mh #new-btn{height:34px;min-height:34px;position:relative}
-  .side{box-sizing:border-box}
-}
-
 
 /* ============================================================ B-553: the desktop scroll pane =======================
    From 600 px the window never scrolls. The header and her band are fixed to the top of the raised pane, the side
    panels stay fixed columns beside it, and only the centre (.wrap) scrolls, with a thin themed scrollbar inside the
-   pane, as Linear does. Its top follows the header and her band (--line-h); its foot is the pane's foot (8 px, or the
+   pane, as Linear does. Its top follows the header and her band (--status-h); its foot is the pane's foot (8 px, or the
    strip from 1024 px). Phone layout (under 600 px) is unchanged: the document still scrolls there. */
 @media (min-width:600px){
-  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-  body{min-height:0;padding:0}
-  .mh,#evline{position:fixed;left:var(--pane-l);right:8px;margin:0}
-  .mh{top:8px}
-  #evline{top:calc(8px + var(--mh-h))}
-  .wrap .evline{top:-18px}
-  .wrap{position:fixed;top:calc(8px + var(--mh-h) + var(--line-h,0px));bottom:var(--strip-h,8px);left:var(--pane-l);right:var(--pane-r);
-    overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:18px 16px 28px;margin:0;
-    scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
-  body.on-ev .wrap{padding-bottom:0}
-  body.captions.on-ev .wrap{max-width:none}
+
   body.captions.on-ev .wrap>#p-ev{width:100%;max-width:680px;margin-inline:auto}
-  .wrap::-webkit-scrollbar{width:8px}
-  .wrap::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px;border:2px solid transparent;background-clip:content-box}
-  .wrap::-webkit-scrollbar-track{background:transparent}
+
   #p-notes .n-fbar{top:-18px} /* sticky insets count from the pane's padding edge; the editor already sits 18 px up */
 }
 
 /* ============================================================ B-554: cheap scroll frames ===========================
    The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
    skip layout and paint for rows out of view (rows with no menu inside: paint containment clips one). */
-.top,.mh{-webkit-backdrop-filter:none;backdrop-filter:none}
+.top{-webkit-backdrop-filter:none;backdrop-filter:none}
 .rec-li,#p-record .rec-day,.ti-folded>li,.ov-rows>*{content-visibility:auto;contain-intrinsic-size:auto 44px}
 
 /* ============================================================ B-552: a native baseline ============================
    No grey tap flash, no double-tap zoom wait, no text selection or long-press callout on controls, the arrow cursor on
    the app's chrome (a pointer only on real links), and a pane scrollbar that never shifts the layout. Hover itself is
    gated by (hover:hover) at build time (tools/hover-gate.mjs). His words, notes and E.V.'s lines stay selectable. */
-html{-webkit-tap-highlight-color:transparent}
+
 a,button,input,select,textarea,label,summary,[role="tab"],[role="button"],[role="menuitem"]{touch-action:manipulation}
-button,[role="tab"],[role="button"],[role="menuitem"],summary,.side,.mh,.seg,.estrip,.tabs{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-button,[role="tab"],[role="button"],[role="menuitem"],summary,label,.side,.mh,.seg,.estrip{cursor:default!important}
+button,[role="tab"],[role="button"],[role="menuitem"],summary,.seg{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button,[role="tab"],[role="button"],[role="menuitem"],summary,label,.seg{cursor:default!important}
 a[href],a[href] *{cursor:pointer!important}
-@media (min-width:600px){.wrap{scrollbar-gutter:stable}}
 
 /* B-556: on a cold open of her view, its frame stays unpainted until her first lines and her stage have their sizes
    (02-navigation lifts it), so nothing in it moves once it shows. The header, sidebar and tab bar paint at once. */

@@ -55,7 +55,9 @@ test('B-125 (D-271): the stylesheet has no staggered rise and no growth of bars 
 });
 
 test('B-125 (D-271, Matt Oct 20): the status lights are steady, the header one and the session bar one', () => {
-  const css = fs.readFileSync(path.join(ROOT, 'page', 'styles.css'), 'utf8');
+  const css = ['page/styles.css', 'page/ds/patterns/shell.css'] // B-515: the shell's lights moved
+    .map(f => fs.readFileSync(path.join(ROOT, f), 'utf8'))
+    .join('\n');
   const rules = [...css.matchAll(/([^{}]*\.(?:led|s-led)[^{}]*)\{([^}]*)\}/g)];
   assert.ok(rules.length >= 4, 'the light rules are in the stylesheet');
   for (const [, sel, body] of rules) assert.doesNotMatch(body, /animation|transition/, sel.trim());

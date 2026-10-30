@@ -227,12 +227,12 @@
       }
       strip.hidden = !line;
       document.body.classList.toggle('has-line', !!line);
-      document.documentElement.style.setProperty('--line-h', line ? strip.offsetHeight + 'px' : '0px');
+      document.documentElement.style.setProperty('--status-h', line ? strip.offsetHeight + 'px' : '0px');
       renderFrame(); // B-405: the bottom strip and the pop-up follow the view
     }
     addEventListener('resize', () => {
       const s = $('evline');
-      if (s && !s.hidden) document.documentElement.style.setProperty('--line-h', s.offsetHeight + 'px');
+      if (s && !s.hidden) document.documentElement.style.setProperty('--status-h', s.offsetHeight + 'px');
     });
 
     // ------------------------------------------------------------ B-405 (D-327): the L-frame on desktop

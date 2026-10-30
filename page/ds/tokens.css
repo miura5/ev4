@@ -130,5 +130,25 @@
   --r:22px; --top-h:53px; --dock-h:0px; --ease:cubic-bezier(.2,.7,.2,1);
 }
 :root{--side-w:0px;--right-w:0px;--pane-l:0px;--pane-r:0px;--mh-h:48px;--top-h:44px;--panel-top:calc(8px + var(--mh-h))}
+/* B-515 (D2a): the pane geometry by width, moved from page/styles.css; --status-h (was --line-h) is her status band's height, set by the page (90-render). */
+@media (max-width:599px){
+  :root{--dock-h:60px}
+}
+@media (min-width:600px){
+  :root{--side-w:236px;--pane-l:calc(var(--side-w));--pane-r:8px}
+}
+@media (min-width:600px) and (max-width:699px){
+  :root{--side-w:184px}
+}
+@media (min-width:1600px){
+  :root{--side-w:236px}
+}
+@media (min-width:1200px){
+  :root{--right-w:320px}
+}
+:root{--status-h:0px}
+@media (min-width:1024px){
+  :root{--strip-h:38px;--dock-h:30px}
+}
 :root{--ts:1}
 :root[data-text="larger"]{--ts:1.125}

@@ -157,7 +157,7 @@
     }
     tabs.forEach(b =>
       b.addEventListener('click', () => {
-        // B-208 (D-210): on the phone her flower is the E.V. tab; tapping her there, already on E.V., is tapping her.
+        // B-208 (D-210): on the phone her Arc is the E.V. tab; tapping her there, already on E.V., is tapping her.
         if (b.dataset.tab === 'ev' && ui.tab === 'ev' && innerWidth < 600) return backToNow();
         showTab(b.dataset.tab);
       })

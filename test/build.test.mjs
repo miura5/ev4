@@ -332,12 +332,12 @@ test('D-388: one file per component in each of its three homes, in B-504’s ord
   assert.ok(fs.existsSync(path.join(ROOT, 'page/app/01-ui.js')), 'DS and dsRoot');
 });
 
-test('D-386, D-388: the budget, summed over the split files: about 900 lines of JS, 900 of CSS, 500 of patterns', () => {
+test('D-386, D-388: the budget, summed over the split files: about 900 lines of JS, 900 of CSS, 800 of patterns (B-515 D2a: the shell moved in)', () => {
   const sum = (dir, re) => inDir(dir, re).reduce((n, f) => n + linesOf(path.join(ROOT, dir, f)), 0);
   const js = sum('page/app', /^01-ui[\w-]*\.js$/),
     css = sum('page/ds/components', /\.css$/),
     patterns = sum('page/ds/patterns', /\.css$/);
   assert.ok(js <= 900, `page/app/01-ui*.js: ${js} lines (budget 900; going over needs a superseding decision)`);
   assert.ok(css <= 900, `page/ds/components/*.css: ${css} lines (budget 900)`);
-  assert.ok(patterns <= 500, `page/ds/patterns/*.css: ${patterns} lines (budget 500)`);
+  assert.ok(patterns <= 800, `page/ds/patterns/*.css: ${patterns} lines (budget 800)`);
 });

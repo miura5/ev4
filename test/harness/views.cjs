@@ -31,7 +31,7 @@ function viewsOf(html) {
   const tabs = [...new Set([...String(html).matchAll(/data-tab="([a-z-]+)"/g)].map(m => m[1]))];
   const out = [];
   for (const tab of tabs) {
-    const seg = String(html).match(new RegExp(`<div class="seg" id="seg-${tab}"[^>]*>([\\s\\S]*?)</div>`));
+    const seg = String(html).match(new RegExp(`<div class="seg"[^>]*? id="seg-${tab}"[^>]*>([\\s\\S]*?)</div>`));
     const vs = seg ? [...seg[1].matchAll(/data-v="([a-z-]+)"/g)].map(m => m[1]) : [];
     if (!vs.length) out.push({ tab, v: null, id: tab });
     else for (const v of [...vs, ...(QUIZ[tab] || [])]) out.push({ tab, v, id: `${tab}-${v}` });

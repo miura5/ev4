@@ -28,8 +28,8 @@
        No System link, as the demo: System opens at #system. Not on the phone. -->
   <div class="side-foot" id="side-prefs">
     <div class="prefpop" id="side-prefpop" role="dialog" aria-label="Preferences" hidden>
-      <div class="pref"><span class="lbl" id="side-theme-lbl">Theme</span><div class="seg theme-seg" id="side-theme-seg" role="group" aria-labelledby="side-theme-lbl"><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div></div>
-      <div class="pref"><span class="lbl" id="side-contrast-lbl">Contrast</span><div class="seg theme-seg" id="side-contrast-seg" role="group" aria-labelledby="side-contrast-lbl"><button type="button" data-c="30" aria-pressed="false">30</button><button type="button" data-c="60" aria-pressed="true">60</button><button type="button" data-c="100" aria-pressed="false">100</button></div></div>
+      <div class="pref"><span class="lbl" id="side-theme-lbl">Theme</span><div class="seg theme-seg" data-ui="segmented" id="side-theme-seg" role="group" aria-labelledby="side-theme-lbl"><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div></div>
+      <div class="pref"><span class="lbl" id="side-contrast-lbl">Contrast</span><div class="seg theme-seg" data-ui="segmented" id="side-contrast-seg" role="group" aria-labelledby="side-contrast-lbl"><button type="button" data-c="30" aria-pressed="false">30</button><button type="button" data-c="60" aria-pressed="true">60</button><button type="button" data-c="100" aria-pressed="false">100</button></div></div>
       <button class="tab tab-sys sys-link" id="tab-system" data-tab="system" type="button" title="System" aria-current="false" hidden><span>System</span></button>
     </div>
     <button class="prefs-btn" id="side-prefs-btn" type="button" aria-expanded="false" aria-controls="side-prefpop" aria-label="Preferences" title="Preferences"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8M14 5v4M8 15v4"/></svg><span>Preferences</span></button>
@@ -41,11 +41,11 @@
   <p class="status" id="status" role="status">Connecting to your record…</p>
   <!-- B-287 (C-7): New is the page's one way to create: Task for Today and Note -->
   <div class="new-wrap" id="new-wrap">
-    <button type="button" class="btn neutral sm" id="new-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="new-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New</button>
+    <button type="button" class="btn neutral sm" data-ui="button" data-kind="neutral" data-size="sm" id="new-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="new-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New</button>
     <div class="menu" id="new-menu" role="menu" aria-label="Create" hidden>
       <div class="mhd" aria-hidden="true">Create</div>
-      <button type="button" class="btn ghost mi" role="menuitem" data-new="task"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Task for Today</button>
-      <button type="button" class="btn ghost mi" role="menuitem" data-new="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h4"/></svg>Note</button>
+      <button type="button" class="btn ghost mi" data-ui="button" data-kind="ghost" role="menuitem" data-new="task"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Task for Today</button>
+      <button type="button" class="btn ghost mi" data-ui="button" data-kind="ghost" role="menuitem" data-new="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4M9 12h6M9 16h4"/></svg>Note</button>
     </div>
   </div>
 </header>
@@ -72,9 +72,9 @@
   <section class="panel" id="p-today" role="tabpanel" aria-labelledby="tab-today" hidden>
     <h2 class="ptitle">Today</h2>
     <div class="cols"><div class="col-main">
-    <div class="card" id="today-list"><h2>Today</h2><p class="empty">Today's list appears after the 4:25am run.</p></div>
+    <div class="card" data-ui="card" id="today-list"><h2>Today</h2><p class="empty">Today's list appears after the 4:25am run.</p></div>
     </div><div class="col-side">
-    <div class="card" id="weekly" hidden></div>
+    <div class="card" data-ui="card" id="weekly" hidden></div>
     </div></div>
   </section>
 
@@ -82,19 +82,19 @@
   <section class="panel" id="p-study" role="tabpanel" aria-labelledby="tab-study" hidden>
     <h2 class="ptitle">Study</h2>
     <div class="toolbar sbar-study" id="sbar-study">
-      <div class="seg" id="seg-study" role="group" aria-label="Study views">
+      <div class="seg" data-ui="segmented" id="seg-study" role="group" aria-label="Study views">
         <button type="button" data-v="objectives" aria-pressed="true">Objectives</button>
         <button type="button" data-v="weak" aria-pressed="false">Weak spots</button>
       </div>
-      <button type="button" class="btn ghost sm" id="study-back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button>
+      <button type="button" class="btn ghost sm" data-ui="button" data-kind="ghost" data-size="sm" id="study-back" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button>
       <span class="mini" id="study-qlab" hidden></span>
-      <div class="seg course-seg" id="study-course" role="group" aria-label="Course"></div>
+      <div class="seg course-seg" data-ui="segmented" id="study-course" role="group" aria-label="Course"></div>
       <span class="sp"></span>
-      <button type="button" class="btn neutral" id="study-qquiz" hidden>Quiz me</button>
-      <button type="button" class="btn neutral" id="study-qweak" hidden>Weak spots</button>
-      <button type="button" class="btn primary" id="study-start" aria-label="Start session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg><span class="lbl">Start session</span></button>
+      <button type="button" class="btn neutral" data-ui="button" data-kind="neutral" id="study-qquiz" hidden>Quiz me</button>
+      <button type="button" class="btn neutral" data-ui="button" data-kind="neutral" id="study-qweak" hidden>Weak spots</button>
+      <button type="button" class="btn primary" data-ui="button" data-kind="primary" id="study-start" aria-label="Start session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg><span class="lbl">Start session</span></button>
       <!-- B-450: the plan settings: his instructions, when something is missing, where approved tasks go -->
-      <div class="pm-set" id="study-planwrap"><button type="button" class="btn icon" id="study-planset" aria-label="Plan settings" title="Plan settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6M6 14v6M12 4v2M12 10v10M18 4v10M18 18v2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="18" cy="16" r="2"/></svg></button></div>
+      <div class="pm-set" id="study-planwrap"><button type="button" class="btn icon" data-ui="button" id="study-planset" aria-label="Plan settings" title="Plan settings" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6M6 14v6M12 4v2M12 10v10M18 4v10M18 18v2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="18" cy="16" r="2"/></svg></button></div>
     </div>
     <div id="study-objectives" class="panel">
       <div class="ui-card ov-card" id="ov-card"></div>
@@ -103,18 +103,18 @@
     </div>
     <div id="study-review" class="panel" hidden>
       <!-- B-348 (D-312): the demo's StudyQuiz card: its label and score, the bar, then the question -->
-      <div class="card qz-card">
+      <div class="card qz-card" data-ui="card">
         <div class="qz-head"><button type="button" class="fold-line set-count" id="rv-count" aria-expanded="false" aria-controls="rv-body" hidden></button><span class="mini qz-score" id="rv-score"></span></div>
         <div class="progress qz-bar" aria-hidden="true"><i id="rv-bar" style="width:0"></i></div>
         <div id="rv-body"><p class="empty">Today's review appears after the 4:25am run.</p></div>
       </div>
       <!-- B-116 (D-151): one line, shown once today's set is done; B-126 (D-165): then inside the finished set, its one primary. -->
-      <div class="card more-line" id="more-card" hidden title="E.V. writes 5 new questions aimed at the weak spots due soonest and your weakest objective. It uses your Claude plan, like a chat.">
-        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn" class="btn primary">Give me 5 more</button>
+      <div class="card more-line" data-ui="card" id="more-card" hidden title="E.V. writes 5 new questions aimed at the weak spots due soonest and your weakest objective. It uses your Claude plan, like a chat.">
+        <span class="meta grow" id="more-status" role="status">Five new questions on what’s due soonest.</span><button type="button" id="more-btn" class="btn primary" data-ui="button" data-kind="primary">Give me 5 more</button>
       </div>
     </div>
     <div id="study-practice" class="panel" hidden>
-      <div class="card qz-card" id="pr-card">
+      <div class="card qz-card" data-ui="card" id="pr-card">
         <div class="card-head"><h2 id="pr-title">Drills and practice</h2><span class="meta" id="pr-count"></span></div>
         <div id="pr-prog" hidden><div class="qz-head"><button type="button" class="fold-line set-count" id="pr-qcount" aria-expanded="false" aria-controls="pr-body" hidden></button><span class="mini qz-score" id="pr-score"></span></div><div class="progress qz-bar" aria-hidden="true"><i id="pr-bar" style="width:0"></i></div></div>
         <div id="pr-body"></div>
@@ -123,7 +123,7 @@
     <!-- B-123 (D-162): weak spots; in Study since B-297 (D-281). B-347 (D-312): as the demo's StudyWeak board, a strip
          (back to Objectives, Weak spots and its course, Quiz me), then sections of full-width rows -->
     <div id="study-weak" class="panel" hidden>
-      <div class="wk-bar"><button type="button" class="btn ghost sm" id="weak-back"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button><span class="mini" id="weak-lab">Weak spots</span><span class="sp"></span><button type="button" class="btn neutral" id="weak-quiz">Quiz me</button></div>
+      <div class="wk-bar"><button type="button" class="btn ghost sm" data-ui="button" data-kind="ghost" data-size="sm" id="weak-back"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>All topics</button><span class="mini" id="weak-lab">Weak spots</span><span class="sp"></span><button type="button" class="btn neutral" data-ui="button" data-kind="neutral" id="weak-quiz">Quiz me</button></div>
       <div class="wk-list" id="weak-list"></div>
     </div>
     <!-- B-223 (D-245): from 1200 px the open set's questions, as a list in the right panel -->
@@ -133,7 +133,7 @@
   <!-- PROGRESS -->
   <section class="panel" id="p-progress" role="tabpanel" aria-labelledby="tab-progress" hidden>
     <h2 class="ptitle">Progress</h2>
-    <div class="seg" id="seg-progress" role="group" aria-label="Progress views">
+    <div class="seg" data-ui="segmented" id="seg-progress" role="group" aria-label="Progress views">
       <button type="button" data-v="readiness" aria-pressed="true">Readiness</button>
     </div>
     <!-- B-381: the Progress view's cards are built by the page (30-progress); the old readiness, findings, audit, score
@@ -154,16 +154,16 @@
     <!-- B-119 (D-148, D-276, D-151): one lead line, the pipeline and run lists folded under it with only exceptions
          marked; Background jobs, Capacity and Checks absent while empty; versions and privacy two quiet lines. -->
     <div class="cols"><div class="col-main">
-    <div class="card" id="health"><div id="health-top"></div>
+    <div class="card" data-ui="card" id="health"><div id="health-top"></div>
       <button type="button" class="fold-line" id="pipes-fold" aria-expanded="false" aria-controls="pipes">Pipelines</button><ul class="list" id="pipes" hidden></ul>
       <button type="button" class="fold-line" id="runs-fold" aria-expanded="false" aria-controls="runs">Recent runs</button><ul class="list" id="runs" hidden></ul>
     </div>
     </div><div class="col-side">
-    <div class="card fold-card" id="jobs-card" hidden><button type="button" class="fold-line" id="jobs-card-line" aria-expanded="false" aria-controls="jobs">Background jobs</button><ul class="list" id="jobs" hidden></ul></div>
-    <div class="card fold-card" id="cap-card" hidden><button type="button" class="fold-line" id="cap-card-line" aria-expanded="false" aria-controls="capacity">Capacity</button><div id="capacity" hidden></div></div>
-    <div class="card fold-card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
+    <div class="card fold-card" data-ui="card" id="jobs-card" hidden><button type="button" class="fold-line" id="jobs-card-line" aria-expanded="false" aria-controls="jobs">Background jobs</button><ul class="list" id="jobs" hidden></ul></div>
+    <div class="card fold-card" data-ui="card" id="cap-card" hidden><button type="button" class="fold-line" id="cap-card-line" aria-expanded="false" aria-controls="capacity">Capacity</button><div id="capacity" hidden></div></div>
+    <div class="card fold-card" data-ui="card" id="lint-card" hidden><button type="button" class="fold-line" id="lint-card-line" aria-expanded="false" aria-controls="lint-body">Checks</button><div id="lint-body" hidden><ul class="list" id="lint"></ul></div></div>
     <!-- B-214 (D-211): the theme, this device's own: the system's, or light or dark -->
-    <div class="card" id="theme-card"><h2>Preferences</h2>
+    <div class="card" data-ui="card" id="theme-card"><h2>Preferences</h2>
       <!-- B-214, B-271, B-224: Theme, Contrast, Text size and Reduce motion, this device's own; B-303: built by the System part (50) -->
       <p class="meta" id="theme-note">On this device only.</p></div>
     <p class="meta sys-foot" id="versions"></p>
@@ -181,17 +181,17 @@
       <textarea id="new-text" rows="4" aria-label="Note" placeholder="What did you learn, in your words?" hidden></textarea>
       <!-- B-308 (C-7): a task's Category, Estimate, When and Course, written through the list edit; a note's Course (B-373) -->
       <div class="new-fields" id="new-fields" hidden>
-        <div class="frow" id="new-kind-row"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
-        <div class="frow" id="new-est-row"><span class="lbl" id="new-est-lbl">Estimate</span><div class="seg" id="new-est" role="group" aria-labelledby="new-est-lbl"></div></div>
-        <div class="frow" id="new-when-row"><span class="lbl" id="new-when-lbl">When</span><div class="seg" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
-        <div class="frow"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
+        <div class="frow" id="new-kind-row"><span class="lbl" id="new-kind-lbl">Category</span><div class="seg" data-ui="segmented" id="new-kind" role="group" aria-labelledby="new-kind-lbl"></div></div>
+        <div class="frow" id="new-est-row"><span class="lbl" id="new-est-lbl">Estimate</span><div class="seg" data-ui="segmented" id="new-est" role="group" aria-labelledby="new-est-lbl"></div></div>
+        <div class="frow" id="new-when-row"><span class="lbl" id="new-when-lbl">When</span><div class="seg" data-ui="segmented" id="new-when" role="group" aria-labelledby="new-when-lbl"></div></div>
+        <div class="frow"><span class="lbl" id="new-course-lbl">Course</span><div class="seg" data-ui="segmented" id="new-course" role="group" aria-labelledby="new-course-lbl"></div></div>
         <!-- B-465: an exam's Date and Kind (its kind as the title says until he picks one) -->
         <div class="frow" id="new-date-row" hidden><label class="lbl" for="new-date">Date</label><input type="date" id="new-date"></div>
-        <div class="frow" id="new-ekind-row" hidden><span class="lbl" id="new-ekind-lbl">Kind</span><div class="seg" id="new-ekind" role="group" aria-labelledby="new-ekind-lbl"></div></div>
+        <div class="frow" id="new-ekind-row" hidden><span class="lbl" id="new-ekind-lbl">Kind</span><div class="seg" data-ui="segmented" id="new-ekind" role="group" aria-labelledby="new-ekind-lbl"></div></div>
       </div>
       <p class="meta" id="new-warn" role="status"></p>
     </div>
-    <div class="new-foot"><span class="meta grow" id="new-hint"></span><button type="button" class="btn ghost sm" id="new-cancel">Cancel</button><button type="submit" class="btn primary sm" id="new-save" disabled>Add task</button></div>
+    <div class="new-foot"><span class="meta grow" id="new-hint"></span><button type="button" class="btn ghost sm" data-ui="button" data-kind="ghost" data-size="sm" id="new-cancel">Cancel</button><button type="submit" class="btn primary sm" data-ui="button" data-kind="primary" data-size="sm" id="new-save" disabled>Add task</button></div>
   </form>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
