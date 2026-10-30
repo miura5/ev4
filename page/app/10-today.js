@@ -842,16 +842,15 @@
       const title = el('div', 'tvb-title');
       if (!G) {
         // the tick beside the title ticks the task, as the Status switch does
-        const chk = el('button', 'tp-chk' + (isDone(it) ? ' done' : ''));
-        chk.type = 'button';
+        const chk = el('input', 'tick');
+        chk.type = 'checkbox';
+        chk.checked = chk.defaultChecked = isDone(it);
         chk.setAttribute('aria-label', 'Done: ' + text);
-        chk.setAttribute('aria-pressed', String(isDone(it)));
-        chk.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
-        chk.addEventListener('click', () => {
-          const v = !isDone(it);
+        chk.addEventListener('change', () => {
           T.ticked.add(it.id);
-          guard(chk, () => tickWrite(it, v), null);
+          guard(chk, () => tickWrite(it, chk.checked), null);
         });
+        title.classList.add('check'); // B-578: the flat check, Line's component, as Study's plan rows draw it
         title.append(chk);
       }
       title.append(el('h2', null, text));
