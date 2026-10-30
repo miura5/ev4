@@ -66,3 +66,51 @@ test('B-522: Study, Today and Progress read the measures from core, not their ow
   assert.match(prog, /E\.studyTime\(S\.sessions/);
   assert.doesNotMatch(prog, /s\.status !== 'active' && s\.date/);
 });
+
+test('B-522: tasks ticked off the day list count on their tick day, plan or list, once each', () => {
+  // made up: a plan's task ticked on a day it wasn't on the list, another on its own day's list, and a list add
+  const plans = [
+    {
+      id: 'P1-2',
+      exam: 'P1',
+      days: [
+        { date: '2026-10-29', tasks: [{ id: 't3', minutes: 45 }] },
+        { date: '2026-10-30', tasks: [{ id: 'b4', minutes: 20 }] },
+      ],
+      done: { t3: { at: '2026-10-29T14:48:00Z' }, b4: { at: '2026-10-29T16:00:00Z' } },
+    },
+  ];
+  const lists = [
+    {
+      date: '2026-10-29',
+      items: [
+        { id: 'plan-t3', key: 'plans/P1#t3', minutes: 45, course: 'A', done: true }, // the same task: once
+        { id: 'add-x', minutes: 10, course: 'B', done: true },
+        { id: 'add-y', minutes: 30, course: 'B', done: false },
+      ],
+    },
+  ];
+  const tw = E.tickedWork({ plans, planCourse: () => 'A', lists, courseOf: it => it.course });
+  assert.deepEqual(
+    tw.map(x => [x.key, x.date, x.course, x.minutes]),
+    [
+      ['plans/P1#t3', '2026-10-29', 'A', 45],
+      ['plans/P1#b4', '2026-10-29', 'A', 20],
+      ['2026-10-29/add-x', '2026-10-29', 'B', 10],
+    ]
+  );
+  const st = E.studyTime([{ id: 's', status: 'ended', date: '2026-10-29', minutes: 2, c: 'B' }], {
+    courseOf: s => s.c,
+    ticked: tw,
+  });
+  assert.equal(E.minutesIn(st, '2026-10-29', '2026-10-29'), 75); // 65 A ticked, B the larger of 10 and 2
+  assert.equal(E.minutesIn(st, '2026-10-30', '2026-10-30'), 0); // b4 counts the day it was ticked, not its plan day
+});
+
+test('B-522: Today, Progress and Record read study time from core', () => {
+  const read = f => fs.readFileSync(new URL('../page/app/' + f, import.meta.url), 'utf8');
+  assert.match(read('30-progress.js'), /E\.tickedWork\(/);
+  assert.match(read('10-today.js'), /dayStudyMinutes\(today\)/);
+  assert.match(read('40-record.js'), /E\.sessionMinutes\(s, now\(\)\)/);
+  assert.doesNotMatch(read('40-record.js'), /s\.minutes \?\? E\.sessionState/);
+});

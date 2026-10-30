@@ -1,6 +1,6 @@
 // E.V. core's measures (B-522): one source for each count a view shows, so Today, Study and Progress never disagree.
 // Open weak spots, an objective's readiness state, and study time per day and course (ended sessions, a running one at
-// its clock, and today's ticked task minutes). One factory with no imports, as core's other sections: the same file
+// its clock, and the minutes of tasks ticked that day, from any list or plan). One factory with no imports, as core's other sections: the same file
 // runs in node (evcore.mjs imports it) and in the page (the build writes it into core.js ahead of E.V. core). It reads
 // the core's own rules (isActive, untriaged, sessionState, chicagoDate) through `core()` when a measure runs.
 
@@ -50,7 +50,7 @@ export function makeMeasures(core) {
   }
   /**
    * Study time by day and course: {cells: {'<date>|<course>': minutes}, sessions: [{s, date, minutes, course}]}.
-   * Sessions count at sessionMinutes; `ticked` ([{date, course, minutes}], today's ticked tasks) counts too, but a day
+   * Sessions count at sessionMinutes; `ticked` ([{date, course, minutes}], tickedWork's, any day) counts too, but a day
    * and course takes the larger of its session time and its ticked minutes, so a task done in a session is not counted
    * twice.
    */
@@ -76,6 +76,38 @@ export function makeMeasures(core) {
     for (const k of new Set([...Object.keys(byS), ...Object.keys(byT)])) cells[k] = Math.max(byS[k] || 0, byT[k] || 0);
     return { cells, sessions: ses };
   }
+  /**
+   * B-522: every task ticked, on the day it was ticked, whichever list or plan it came from: [{key, date, course,
+   * minutes}]. A plan task ticked in its plan (plans as views: done = taskId -> {at}) counts on its tick's day; a list
+   * item done on a day's list counts on that day. `lists` is [{date, items: [{id, key?, minutes, course?, done}]}]; an
+   * item that is a plan task carries the plan task's key ('plans/<exam>#<task>'), so a task counts once wherever it was
+   * ticked. planCourse(plan) and courseOf(item) name the course.
+   */
+  function tickedWork({ plans = [], planCourse, lists = [], courseOf } = {}) {
+    const out = [],
+      seen = new Set();
+    for (const p of plans || []) {
+      const ex = p.exam || p.id;
+      for (const t of L.planTasks(p)) {
+        const tk = p.done && p.done[t.id];
+        if (!tk) continue;
+        const key = 'plans/' + ex + '#' + t.id;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const date = typeof tk.at === 'string' && tk.at ? L.chicagoDate(tk.at) : t.date;
+        out.push({ key, date, course: planCourse(p), minutes: Number(t.minutes) || 0 });
+      }
+    }
+    for (const l of lists || [])
+      for (const it of (l && l.items) || []) {
+        if (!it.done) continue;
+        const key = it.key || l.date + '/' + it.id;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ key, date: l.date, course: courseOf(it), minutes: Number(it.minutes) || 0 });
+      }
+    return out.filter(x => x.date && x.minutes > 0);
+  }
   /** The minutes of studyTime's cells from `from` to `to` (dates, inclusive), all courses or one. */
   function minutesIn(st, from, to, course = null) {
     let t = 0;
@@ -94,5 +126,5 @@ export function makeMeasures(core) {
     }
     return out;
   }
-  return { openSpots, objectiveState, sessionMinutes, studyTime, minutesIn, minutesByCourse };
+  return { openSpots, objectiveState, sessionMinutes, studyTime, tickedWork, minutesIn, minutesByCourse };
 }

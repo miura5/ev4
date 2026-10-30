@@ -88,9 +88,8 @@
               ? 'going now'
               : [
                   // B-406: a session a switch ended shows its minutes before it is filed
-                  (s.minutes ?? E.sessionState(s, now()).minutes)
-                    ? durFmt(s.minutes ?? E.sessionState(s, now()).minutes)
-                    : '',
+                  // B-522: its minutes as core's one measure counts them (EVCore.sessionMinutes)
+                  (E.sessionMinutes(s, now()) || {}).minutes ? durFmt(E.sessionMinutes(s, now()).minutes) : '',
                   s.questions ? plural(s.questions, 'question') : '',
                 ]
                   .filter(Boolean)

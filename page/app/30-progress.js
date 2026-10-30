@@ -34,14 +34,34 @@
     const monthEnd = ym => E.addDays(monthStart(E.addDays(monthStart(ym), 32).slice(0, 7)), -1);
     const weekStart = d => E.addDays(d, -((E.weekday(d) + 6) % 7)); // Monday
     // B-522: study time is core's one measure (EVCore.studyTime): every session Record lists (a running one at its
-    // clock), and today's ticked task minutes per course, a day and course taking the larger so nothing counts twice
-    function studyTime() {
-      const ds = dayState();
-      const ticked = ds.items
-        .filter(it => ds.isDone(it) && Number(it.minutes) > 0)
-        .map(it => ({ date: today, course: E.courseOf(it), minutes: Number(it.minutes) }));
-      return E.studyTime(S.sessions, { now: now(), courseOf: sessionCourse, ticked });
+    // clock), and every task ticked on a day (EVCore.tickedWork: a plan task on its tick's day, a list item on its
+    // list's day, once wherever it was ticked), a day and course taking the larger so nothing counts twice
+    const planCourse = p => {
+      const ex = (S.exams || []).find(e => e.id === (p.exam || p.id));
+      return ex ? E.courseOf(ex) : E.guessCourse([p.title, p.exam || p.id].filter(Boolean).join(' '));
+    };
+    function tickedWork() {
+      const dates = new Set([today, ...(S.days || []).map(d => d.id), ...(S.dayedits || []).map(d => d.id)]);
+      const lists = [...dates]
+        .filter(d => d && d <= today)
+        .map(date => {
+          const ds = dayState(date);
+          return {
+            date,
+            items: ds.items.map(it => {
+              const pt = planTaskById(it.ref);
+              const key = pt ? 'plans/' + (pt.plan.exam || pt.plan.id) + '#' + pt.task.id : null;
+              return { id: it.id, key, minutes: it.minutes, course: E.courseOf(it), done: ds.isDone(it) };
+            }),
+          };
+        });
+      return E.tickedWork({ plans: S.plans, planCourse, lists, courseOf: it => it.course });
     }
+    function studyTime() {
+      return E.studyTime(S.sessions, { now: now(), courseOf: sessionCourse, ticked: tickedWork() });
+    }
+    /** B-522: a day's study time as Progress counts it; Today's Done reads this. */
+    const dayStudyMinutes = date => E.minutesIn(studyTime(), date, date);
     let ST = null; // this render's study time
     const timed = () => (ST || (ST = studyTime())).sessions.map(x => ({ ...x.s, date: x.date, minutes: x.minutes }));
     // a session's course: its Study Watch folder names one (aliases), else its words guess one, else the default

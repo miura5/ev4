@@ -465,9 +465,11 @@
       if (!budget || !(budget.available > 0)) return null;
       const available = Math.round(budget.available),
         planned = Math.max(0, Math.round(budget.planned || 0));
-      const doneRaw = items.filter(it => isDone(it)).reduce((s, it) => s + (Number(it.minutes) || 0), 0);
-      const done = Math.min(planned, Math.round(doneRaw)),
-        left = planned - done,
+      const listDone = items.filter(it => isDone(it)).reduce((s, it) => s + (Number(it.minutes) || 0), 0);
+      // B-522: Done is the day's study time as Progress counts it (core's one measure: every task ticked today from any
+      // list or plan, and session time); what's left is the list's own undone minutes
+      const done = Math.round(Math.max(listDone, dayStudyMinutes(today))),
+        left = Math.max(0, planned - Math.min(planned, Math.round(listDone))),
         free = Math.max(0, available - done),
         over = Math.max(0, left - free);
       return {
