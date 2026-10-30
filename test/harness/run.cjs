@@ -2440,8 +2440,15 @@ async function studyPlanChecks(page) {
   await pickCourse('NUR 112');
   // B-577: from the panel breakpoint up, the plan's summary is in the right panel (shown, on top, with its button row
   // and ⋯) and not in its card, for a draft and for an approved plan
+  // B-577: a resize carries it too: load narrow (summary in its card), widen past 1200 without a reload, then back
+  const inCardAt = async w => {
+    await page.setViewportSize({ width: w, height: 860 });
+    await page.waitForTimeout(250);
+    return page.evaluate(() => !!document.querySelector('#ov-plans [data-ui=card][data-key="E4-H2"] > .plan-sum'));
+  };
   const sidePlan = async kind => {
-    for (const w of [1440, 1280]) {
+    const narrow = await inCardAt(1100);
+    for (const w of [1300, 1440, 1280]) {
       await page.setViewportSize({ width: w, height: 860 });
       await page.waitForTimeout(250);
       const s = await page.evaluate(() => {
@@ -2462,6 +2469,14 @@ async function studyPlanChecks(page) {
         JSON.stringify(s)
       );
     }
+    const back = await inCardAt(1100);
+    ok(
+      `[1100 to 1300 to 1100] ${kind}: the summary is in its card when narrow, before and after (B-577)`,
+      narrow && back,
+      JSON.stringify({ narrow, back })
+    );
+    await page.setViewportSize({ width: 1280, height: 860 });
+    await page.waitForTimeout(250);
   };
   await sidePlan('a draft');
   // Approve (from the panel at 1280): the draft is the plan in force, Today opens, a tick moves the done count by one
