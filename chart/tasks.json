@@ -10879,5 +10879,22 @@
   "board": {
    "row": "v4 B-588: At 390 the Undo toast covers Today's List/Week/Add toolbar while it…"
   }
+ },
+ {
+  "id": "B-589",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Today's Cards row has no checkbox and its Start chip sits apart, so its left edge doesn't line up with the other rows.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "UI review, release card 2",
+  "words": "Today's Cards row has no checkbox and its Start chip sits apart, so its left edge doesn't line up with the other rows.",
+  "reportedAt": "2026-10-30T13:22:34.082Z",
+  "board": {
+   "row": "v4 B-589: Today's Cards row has no checkbox and its Start chip sits apart, so…"
+  }
  }
 ]
