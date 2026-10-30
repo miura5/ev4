@@ -46,7 +46,7 @@
       ['--line', 'Quiet divider'],
       ['--line2', 'Control border'],
     ];
-    // The 16 components (B-504's final list): each slot's name, the batch that builds it, its states and what it is, in
+    // The 18 components (B-504's final list, and B-515's Table and Chart): each slot's name, the batch that builds it, its states and what it is, in
     // plain words.
     const GAL_COMPONENTS = [
       ['button', 'Button', 'B-507', 'rest, hover, pressed, focus, disabled, busy', 'What you tap to do one thing.'],
@@ -131,6 +131,14 @@
         'pending, streaming, sent, failed',
         'One line in the conversation, hers or yours.',
       ],
+      [
+        'table',
+        'Table',
+        'B-515',
+        'rest, checked right and wrong',
+        'A small grid of rows and columns, like a matrix question.',
+      ],
+      ['chart', 'Chart', 'B-515', 'bars, empty days', 'A row of bars, like the week chart E.V. shows.'],
     ];
     // D-388: each component's own state cells, galDs<Name>() in page/app/89-gallery-NN-<name>.js, filled by the lane that
     // builds the component; a slot shows them once DS has that component, and today's kit helpers until then.
@@ -151,6 +159,8 @@
       meter: typeof galDsMeter === 'function' ? galDsMeter : undefined,
       presence: typeof galDsPresence === 'function' ? galDsPresence : undefined,
       message: typeof galDsMessage === 'function' ? galDsMessage : undefined,
+      // table: shown as today's version (galToday): its 20 px radios are under the 44 px target until Study moves
+      chart: typeof galDsChart === 'function' ? galDsChart : undefined,
     };
     const GAL_ICO = 'M5 12l5 5 9-10';
     function galIcon(d = GAL_ICO) {
@@ -607,13 +617,14 @@
         }
         cells.push(galCell('stat', stat('12', 'cards due')));
       } else if (ui === 'message') cells.push(galCell('hers, his', galThread(false)));
+      else if (ui === 'table' && typeof galDsTable === 'function') cells.push(...galDsTable());
       return cells;
     }
     function galComponents() {
       const s = galSec(
         'components',
         'Components',
-        'Components: the 16 building blocks every screen is made of, each in its states; until a block is rebuilt, today’s version shows.'
+        'Components: the 18 building blocks every screen is made of, each in its states; until a block is rebuilt, today’s version shows.'
       );
       const grid = el('div', 'gal-comps');
       for (const [ui, name, batch, states, plain] of GAL_COMPONENTS) {

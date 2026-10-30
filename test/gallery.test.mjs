@@ -44,7 +44,7 @@ test('B-506: the Gallery is in staging’s app.js and styles.css and in none of 
     .filter(f => /^89-gallery[\w-]*\.js$/.test(f))
     .sort();
   assert.ok(appSource(ROOT, 'staging').includes(part), 'staging carries every Gallery part, in order');
-  assert.equal(galParts.length, 17, 'the Gallery and one file per component (D-388)');
+  assert.equal(galParts.length, 19, 'the Gallery and one file per component (D-388)');
   assert.equal(
     appSource(ROOT, 'live'),
     galParts.reduce(
@@ -65,10 +65,10 @@ test('B-506: the Gallery reads and writes no record, and opens only on staging',
   for (const re of [/(^|[^\w.])S\./m, /\bwrite\(/, /\brun\(/, /\bdb\./, /\buse\(/, /\bACT\./, /subscribe/])
     assert.doesNotMatch(part, re);
   assert.match(part, /EV_SPEC\.target === 'staging'/);
-  // a section caption for each of the seven, in plain words, and a slot for each of the 16 components
+  // a section caption for each of the seven, in plain words, and a slot for each of the 18 components (B-515 lane 1 added Table and Chart)
   for (const sec of ['tuner', 'colour', 'type', 'space', 'motion', 'components', 'patterns'])
     assert.match(part, new RegExp(`galSec\\(\\s*'${sec}'`), sec);
-  const names = [...part.matchAll(/\[\s*'([a-z]+)',\s*'([A-Z][a-z]+)',\s*'B-50[78]'/g)].map(m => m[2]);
+  const names = [...part.matchAll(/\[\s*'([a-z]+)',\s*'([A-Z][a-z]+)',\s*'B-5(?:0[78]|15)'/g)].map(m => m[2]);
   assert.deepEqual(names, [
     'Button',
     'Badge',
@@ -86,5 +86,7 @@ test('B-506: the Gallery reads and writes no record, and opens only on staging',
     'Meter',
     'Presence',
     'Message',
+    'Table',
+    'Chart',
   ]);
 });

@@ -302,6 +302,8 @@ const PROPRIETARY = [
   'meter',
   'presence',
   'message',
+  'table', // B-515 lane 1
+  'chart', // B-515 lane 1
 ];
 const linesOf = f => {
   const t = fs.readFileSync(f, 'utf8');

@@ -46,7 +46,6 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .stat span{font-size:var(--fs-2);color:var(--soft)}
 @media (max-width:420px){.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
 .empty{color:var(--soft);font-size:var(--fs-4);margin:0}
-.scroll{overflow-x:auto;max-width:100%}
 table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
 table.tbl th{text-align:left;font:500 var(--fs-1) var(--sans);color:var(--soft);padding:6px 8px 8px 0;border-bottom:1px solid var(--line)}
 table.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid rgba(var(--tint),.06);vertical-align:top}
@@ -87,14 +86,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .num-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;color:var(--soft)}
 .opt.locked{cursor:default}
 .why{display:block;font-size:var(--fs-3);color:var(--quiet);margin-top:4px;line-height:1.45}
-table.mx{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:var(--fs-4)}
-table.mx th{font:500 var(--fs-1) var(--sans);color:var(--soft);padding:0 6px;text-align:center}
-table.mx th:first-child{text-align:left}
-table.mx td{background:rgba(var(--tint),.03);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 6px;text-align:center;vertical-align:middle}
-table.mx td:first-child{text-align:left;border-left:1px solid var(--line);border-radius:12px 0 0 12px;padding-left:12px}
-table.mx td:last-child{border-right:1px solid var(--line);border-radius:0 12px 12px 0}
-table.mx tr.right td{background:rgba(var(--do-rgb),.10)} table.mx tr.wrong td{background:rgba(var(--urg-rgb),.10)}
-table.mx input{width:20px;height:20px;accent-color:var(--accent)}
 .verdict{font-weight:600;font-size:var(--fs-5);margin:0} .verdict.ok{color:var(--do)} .verdict.no{color:var(--bad)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-h) + 18px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);font-weight:600;font-size:var(--fs-3);padding:10px 18px;border-radius:999px;max-width:calc(100% - 32px);z-index:20;box-shadow:0 10px 30px -10px rgba(0,0,0,.6);animation:rise .35s var(--ease) both}
 body.on-ev .toast{bottom:calc(var(--dock-h) + 150px + env(safe-area-inset-bottom,0px))}
@@ -111,8 +102,6 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 /* B-479: a flashcards job's Quizlet import text, as Copy copies it */
 .links{display:flex;flex-direction:column;gap:4px}
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
-.chart svg{width:100%;height:auto;display:block}
-.chart .bar{fill:var(--do)} .chart .base{fill:rgba(var(--tint),.05)} .chart text{font:500 var(--fs-1) var(--sans);fill:var(--soft)} .chart .pct{fill:var(--ink);font-weight:600}
 .qchip.go svg{width:13px;height:13px}
 .compose-row textarea{border:0;background:transparent;min-height:44px;height:44px;max-height:140px;resize:none;padding:11px 0;border-radius:0;outline:none;flex:1;min-width:0;font-size:var(--fs-4);line-height:1.4}
 .compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:50%;padding:0;display:grid;place-items:center}
@@ -131,8 +120,6 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 /* B-225 (D-271): a view switch is a cut: the settled view paints on the tap frame (no fade). */
 @keyframes fade{from{opacity:0}to{opacity:1}}
 .rise{animation:rise .3s var(--ease) both}
-@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes pulse{50%{opacity:.35}}
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:var(--fs-3);padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
 /* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
@@ -302,9 +289,6 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
    /* on E.V. the body is the frame, and it starts below the band already */
 }
 /* From 600 px: the dim sidebar and the raised pane, drawn behind the document's flow. */
-@media (min-width:600px){
-  /* B-332: the header spans the window, over the right panel too */
-}
 /* Below 1200 px the view's side column reads under its main column, inside the 680 px column. */
 /* From 1200 px: the details panel on the right holds the view's side column, while the view has one. */
 /* ============================================================ B-209 (D-213): the E.V. tab in C =================
@@ -329,9 +313,6 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 .side .ev-av .under{fill:var(--sunken)}
 /* B-334 (D-312): the foot is one Preferences row; it opens a popover above it with Theme, Contrast and System. Under
    600 px the button is the header's last icon and the popover drops from it. */
-@media (max-width:599px){
-   /* B-352: no Preferences on the phone header, as the demo */
-}
 /* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
 /* B-209 (D-210, amending D-122): his sent lines stay, quiet and right-aligned under a small "You"; no echo. */
 /* ============================================================ B-210 (D-209, D-210): surfaces, jobs and Your turn in C ==

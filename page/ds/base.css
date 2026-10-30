@@ -19,6 +19,10 @@ input[type=text],input[type=date],input[type=number],select,textarea{font:inheri
 select option{background:var(--surface);color:var(--ink)}
 input::placeholder,textarea::placeholder{color:var(--faint)}
 textarea{min-height:110px;resize:vertical;line-height:1.55}
+/* B-515 lane 1: the shared motions, moved from the carry: rise (the toast's entrance, a new thread line's .rise) and
+   pulse (the typing dots). */
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pulse{50%{opacity:.35}}
 /* Reduced motion, the system setting and E.V.'s own (B-224): in base, its !important beats every later layer's. */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 :root[data-motion="reduce"] *,:root[data-motion="reduce"] *::before,:root[data-motion="reduce"] *::after{transition:none!important;animation:none!important}

@@ -255,7 +255,7 @@ if (require.main === module) {
           JSON.stringify(got.sections) === JSON.stringify(SECTIONS),
           got.sections.join(', ')
         );
-        ok(`${tag} D-383: a slot for each of the 16 components`, got.slots.length === 16, got.slots.join(', '));
+        ok(`${tag} D-383: a slot for each of the 18 components`, got.slots.length === 18, got.slots.join(', '));
         ok(`${tag} nothing scrolls sideways`, !got.sideways);
         ok(
           `${tag} D-273: every text holds 4.5:1 on its ground (${got.texts} read)`,

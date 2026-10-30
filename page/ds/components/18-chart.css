@@ -1,0 +1,7 @@
+/* Proprietary 18 Chart (B-515 lane 1): E.V.'s week chart (.chart), moved from the carry as it was. Bars in the done
+   green on a quiet track, the percent over each bar in the ink, the day and count under it quiet. */
+.chart svg{width:100%;height:auto;display:block}
+.chart .bar{fill:var(--do)}
+.chart .base{fill:rgba(var(--tint),.05)}
+.chart text{font:var(--fw-medium) var(--fs-1) var(--sans);fill:var(--soft)}
+.chart .pct{fill:var(--ink);font-weight:var(--fw-semibold)}
