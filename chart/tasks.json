@@ -10521,13 +10521,13 @@
   "title": "Progress day panel: badge column, one-line titles with a muted second line, and a total that includes the running session",
   "dod": "The panel's total matches Record and Today for the day",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515",
    "B-522"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Progress day panel (ca7318b): badges in a 72 px DS.kind column, one-line titles, data-part selectors (run.cjs moved with them). npm test 1020, smoke 31, run 508, look 218. Not proved: the panel total matching Record and Today for the same day; checked in the staging look before the card.",
+  "commit": "ca7318b",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
