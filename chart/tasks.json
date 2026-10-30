@@ -10617,7 +10617,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 85f24d5: every inline fold outside E.V.'s files grows by height and opacity; a frame check showed 156/273/300 px with reduced motion instant. E.V.'s folds go with B-572. Staging look pending.",
   "commit": null,
   "source": "build chat",
   "words": "Expanding lists and folds on staging is still instant; they should open smoothly by height and opacity like Linear, as the motion work promised.",
