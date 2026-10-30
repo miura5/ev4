@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "D1a pushed 1a1fc53: 183 E-window rules (thread, captions, Arc stage, composer, quick asks, greeting brief) in views/ev.css, de-duplicated; pixdiff 0. Duplicates kept in legacy for #p-ev, .hero, #ev-send, composer button/textarea, svg sizes, .cap-now: on drop, re-run captions (cap-now stacking, Back to now, #ev-send size). Seen during runs, outside the E window: run.cjs notice-1280 'A run was missed' again (B-573 flake) and one crash in study plans: D2c's full harness pass must rule both in or out.",
+  "notes": "Lane B done (ea5d7cc, 1b93a6d): 449 owned rules into the views, 1,048 !important stripped where nothing competes, D2b's items moved, .ov-sets .sm narrowed. 135 legacy rules and 211 !important lines left for D2c. D2c started (brief docs/design/proprietary/d2c-brief.md).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
