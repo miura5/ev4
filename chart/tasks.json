@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Lane A pushed 4efbabe: page/ds/base.css in @layer base ([hidden], reduced motion, element rules, coded tone colours at legacy values); non-colour vars into tokens.css; 60+ dead rules deleted; pixdiff 0. Reduced motion now also beats component importants. Lanes B and C started; D last (E window, shell, kit, --status-h rename, drop legacy, token lint).",
+  "notes": "Lane D dry run (no commits): dropping legacy today breaks everything: the shell (.side, .tabs, .mh, .wrap, pane geometry) lives only in legacy; static markup carries no data-ui so kit looks come from legacy; form controls fall back to Arial; svg icons lose their size; .x-* tones vanish; the E window collapses; tick size and colour. Stripping !important alone only affects Study/Progress/System (lanes B/C). New lane D order: D0 base fonts, svg size, tones (invisible, now) -> D1 E window and D2 shell + kit markup (data-ui), tick and New dialog, in parallel -> D2c strip remaining importants, drop legacy, token lint. Report: scratchpad/design-system/dryrun-report.md.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
