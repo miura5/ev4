@@ -10265,12 +10265,12 @@
   "title": "E.V.'s ✦ line: one muted line with no fill, a small Ember ✦, and the whole line a button",
   "dod": "It never wraps at 1280 and never reads as a banner; at 390 it opens the E.V. sheet",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Lane 4 (ca4f404): CI npm test green, smoke 31, components 58, look 218.",
+  "commit": "ca4f404",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
