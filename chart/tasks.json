@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Lane B must fix the weak-spot 'Pick an objective' menu (notes.cjs B-455 fails on main: at 390 the menu doesn't open focused or on screen; at 1280 a tap outside doesn't close it). Likely cause, per the cleanup map: triage.css:28 left:0!important from the Study move (V2) overrides the menu's inline position. Prove with notes.cjs B-455 green.",
+  "notes": "Lane A pushed 4efbabe: page/ds/base.css in @layer base ([hidden], reduced motion, element rules, coded tone colours at legacy values); non-colour vars into tokens.css; 60+ dead rules deleted; pixdiff 0. Reduced motion now also beats component importants. Lanes B and C started; D last (E window, shell, kit, --status-h rename, drop legacy, token lint).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
