@@ -78,12 +78,15 @@
      },
      "kind": {
       "enum": [
+       "todo",
        "reading",
+       "learn",
        "practice",
        "review",
        "notes",
-       "todo",
-       "graded"
+       "graded",
+       "skills-prep",
+       "clinical-prep"
       ]
      },
      "minutes": {

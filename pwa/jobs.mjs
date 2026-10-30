@@ -22,7 +22,7 @@ import { writersOf, classOf, appendEntries, appendDepth, keyWriter } from '../co
 /** The source every document the app's job runner writes carries; the staging count check knows it by this. */
 export const APP_SOURCE = 'E.V. app';
 /** The spec sections the runner reads (tools/build-pwa.mjs publishes only these, with the schemas, as jobs-spec.json). */
-export const SPEC_KEYS = ['jobs', 'pipelines', 'collections', 'capacity', 'boundaries', 'courses'];
+export const SPEC_KEYS = ['jobs', 'pipelines', 'collections', 'capacity', 'boundaries', 'courses', 'constants'];
 
 const STUDY_GUIDE_APP =
   'Write a one-page study guide on the brief, grounded in the passages given from his course materials: the key rules, a comparison laid out as short lines where it helps, 3 memory hooks, the NCLEX traps, and 3 self-check questions with answers at the end. Put the whole guide in text, as plain lines (no links): the app saves it in E.V., in this job’s result and its message, not as a Claude Doc. Mark anything from general knowledge ‘check your materials’: a guide that rests partly on general knowledge is still a guide, so its caveat goes in text, never in failed.';
@@ -82,6 +82,7 @@ export function contextFor({ jobId, now, release, dir = SCRATCH }) {
  * kind, output, ctx}.
  */
 export function prepare({ db, spec, jobId, now, release, dir }) {
+  EV.configure(spec); // core's course rules (spec.courses) frame NCLEX for a nursing course only (B-601)
   const ctx = contextFor({ jobId, now, release, dir });
   CODE_STEPS['job-brief'](db, ctx, spec);
   const material = AGENT_MATERIAL['job-brief'](db, ctx, spec);
