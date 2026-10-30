@@ -11027,7 +11027,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built at 3fef3e9: a shared outsideTap helper for the sheet, the New dialog and the popover; npm test 1023, smoke 33, run 522 with the drag check. It rides with the cleanup release; Matt checks it on staging.",
   "commit": null,
   "source": "build chat",
   "words": "Selecting text in the New task title by dragging closes the dialog when the drag ends outside it; what he typed is kept when he reopens it.",
