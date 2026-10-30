@@ -6164,5 +6164,31 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.19"
+ },
+ {
+  "target": "staging",
+  "commit": "ea5d7cc",
+  "time": "2026-10-30T01:09:21.701Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "ceba846",
+  "tasks": [
+   "B-507",
+   "B-509",
+   "B-508",
+   "B-512",
+   "B-513",
+   "B-522",
+   "B-511",
+   "B-510",
+   "B-514",
+   "B-553",
+   "B-515"
+  ],
+  "summary": "Proprietary components, batch 1, at today's look; Move System and Progress onto Proprietary, invisibly; Proprietary components, batch 2, at today's look; Move Notes onto Proprietary, invisibly; Move Record, New and the forms onto Proprietary, invisibly; Counts disagree across views (weak spots 20/24, readiness), and…; Move Study onto Proprietary, invisibly; Move Today onto Proprietary, invisibly, as the System and Progress move does; Move the E.V. window onto Proprietary, invisibly; Desktop scroll pane; Proprietary cleanup and token lint",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
