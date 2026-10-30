@@ -10493,12 +10493,12 @@
   "title": "Notes view: day groups, course dots, one-line titles, and the note on a surface panel with Quiz me on this note",
   "dod": "It matches the round-5 shots at 1280 and 390 in light and dark",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Notes and Record (41d98ee): day bands with counts and 36 px one-line rows, as in the approved reference; Notes menus through DS.popover; Record's toolbar fits in one row at 390. npm test 1020, smoke 31, notes 195, look 218. Backlog: course dots have no colour token, rec-pop is still hand-built, dark wasn't compared side by side.",
+  "commit": "41d98ee",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
