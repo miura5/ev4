@@ -10479,12 +10479,12 @@
   "title": "Study plan card: one button row (Ask for changes, Remake, ⋯ holding Put away and plan settings); meta \"NUR 112 · Mon 2 Nov · on track\"; the title uses the full width, with hover for the whole title",
   "dod": "No button row wraps; the title and the reading line fit at 1280",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Study view (ca16353): Practice sets table with aligned actions, plan card on one row plus ⋯, DS.popover for plan settings and Pick an objective; run 508, notes 195, look 218, smoke 31. The bordered buttons are a Button component fix (B-542).",
+  "commit": "ca16353",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
