@@ -10,9 +10,9 @@
     // so a course in the filter leaves them out, as it leaves out workouts. The filter is this device's (store).
     const REC_TYPES = { note: 'Notes', session: 'Sessions', quiz: 'Quizzes', all: 'Everything' };
     const REC_BADGE = {
-      session: ['Session', 'x-violet'],
-      quiz: ['Quiz', 'x-violet'],
-      note: ['Note', 'x-blue'],
+      session: ['Session', ''],
+      quiz: ['Quiz', ''],
+      note: ['Note', ''],
       workout: ['Workout', ''],
     };
     const REC_WHEN = { today: 'Today', two: '2 days', all: 'All' };

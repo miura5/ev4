@@ -65,7 +65,7 @@
     function tagBadge(t) {
       const k = tagKey(t);
       const b = k && BADGE[k];
-      return b ? el('span', 'badge' + (b[1] ? ' ' + b[1] : ''), b[0]) : null;
+      return b ? DS.badge({ text: b[0] }) : null; // B-594: coloured by DS.kind, as Today and the sidebar
     }
     // The rubric's eight criteria, in the brief's order (spec.jobs.kinds.exam-plan's answer holds eight scores).
     const RUBRIC = [

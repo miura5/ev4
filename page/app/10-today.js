@@ -168,21 +168,21 @@
     // tomorrow and not ticked. No Remove on a row (D-282: it lives in the task's panel); a set opens where it lives, any
     // other item opens in place to its note and who added it.
     const BADGE = {
-      REVIEW: ['Review', 'x-violet'],
-      'ATI REVIEW': ['ATI review', 'x-violet'],
-      PRACTICE: ['Practice', 'x-violet'],
-      DRILL: ['Study', 'x-violet'],
-      SKILLS: ['Practice', 'x-violet'],
+      REVIEW: ['Review', ''],
+      'ATI REVIEW': ['ATI review', ''],
+      PRACTICE: ['Practice', ''],
+      DRILL: ['Study', ''],
+      SKILLS: ['Practice', ''],
       READING: ['Reading', ''],
       LEARN: ['Learn', ''], // D-357: a study plan's badges are Graded, Learn, Practice, Review, Clinical prep, Skills prep
-      NOTES: ['Note', 'x-blue'], // B-369: the demo's badge reads Note
-      CANVAS: ['Canvas', 'x-blue'],
+      NOTES: ['Note', ''], // B-369: the demo's badge reads Note
+      CANVAS: ['Canvas', ''],
       CLINICAL: ['Clinical', ''],
       'CLINICAL PREP': ['Clinical prep', ''],
       VALIDATION: ['Validation', ''],
       'VALIDATION PREP': ['Validation prep', ''],
-      'SKILLS PREP': ['Skills prep', 'x-yellow'], // B-450: as the plan's rows
-      GRADED: ['Graded', 'x-quiet'],
+      'SKILLS PREP': ['Skills prep', ''], // B-450: as the plan's rows
+      GRADED: ['Graded', ''],
     };
     // When graded work on the list is due: its calendar entry (date-, soon-), else the graded date it names.
     function gradedDue(it) {
@@ -298,8 +298,8 @@
       const due = it.tag === 'GRADED' ? gradedDue(it) : null;
       const b = BADGE[it.tag];
       // B-293 (C-9): a proposed take-off keeps its row, with one "Proposed" badge and Accept and Keep in place of Start
-      // B-363 (D-312): every row carries its category chip, as the demo's list does; B-361: Graded is neutral grey
-      const bb = b || (catOf(it) === 'study' ? ['Study', 'x-violet'] : ['Class', '']);
+      // B-363 (D-312): every row carries its category chip, as the demo's list does; B-594: every badge in its kind's colour (DS.kind)
+      const bb = b || (catOf(it) === 'study' ? ['Study', ''] : ['Class', '']);
       li.append(c, DS.badge({ text: bb[0], cls: bb[1] }), nm);
       // B-369 (D-312): a proposed take-off keeps its row struck through, with why, the tick and the cross, as the demo
       if (o.off)
@@ -1131,7 +1131,7 @@
       nm.append(titlePart(p.text));
       DS.tip(nm, p.text);
       const tag = { practice: 'PRACTICE', review: 'REVIEW', reading: 'READING', notes: 'NOTES' }[p.kind];
-      const b = (tag && BADGE[tag]) || ['Study', 'x-violet'];
+      const b = (tag && BADGE[tag]) || ['Study', ''];
       li.append(
         nm,
         DS.badge({ text: b[0], cls: b[1] }),
@@ -1210,7 +1210,7 @@
       st.setAttribute('aria-label', 'Start: Cards · ' + n + ' due');
       li.append(
         tk,
-        DS.badge({ text: 'Study', cls: 'x-violet' }),
+        DS.badge({ text: 'Study' }),
         nm,
         st, // B-494: the Cards row keeps Start on the phone too; it has no ⋯ menu
         el('span', 't', '')
@@ -1505,7 +1505,7 @@
         : '';
     }
     // B-363 (D-312): a week card as the demo's: the title, then a grey dot and its time ('9:00 am', 'Any time'); no kind
-    // words, no red (B-361: Graded is neutral grey) and no bold exams.
+    // words, no red (B-594: every badge in its kind's colour (DS.kind)) and no bold exams.
     function weekChip(d, sel) {
       const off = E.isRemovedDate(d);
       const c = el('button', 'wchip' + (off ? ' off' : '') + (d.date < today ? ' past' : ''));
@@ -1842,7 +1842,7 @@
         return p;
       };
       const graded = d.graded || d.kind === 'exam';
-      const badge = DS.badge({ text: graded ? 'Graded' : 'Class', cls: 'wd-badge x-quiet' });
+      const badge = DS.badge({ text: graded ? 'Graded' : 'Class', cls: 'wd-badge' }); // B-594: Graded and Class in their kind colours
       const title = el('div', 'wd-title', d.title || '');
       const clock = dateClock(d);
       const dw = new Date(d.date + 'T12:00:00Z');
