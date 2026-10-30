@@ -11172,5 +11172,22 @@
    "outcome": "task",
    "at": "2026-10-30T18:28:06.588Z"
   }
+ },
+ {
+  "id": "B-602",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar facts into her instructions.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, build chat Oct 30",
+  "words": "Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar facts into her instructions.",
+  "reportedAt": "2026-10-30T18:38:20.903Z",
+  "board": {
+   "row": "v4 B-602: Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar…"
+  }
  }
 ]
