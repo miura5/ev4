@@ -11150,5 +11150,23 @@
    "outcome": "task",
    "at": "2026-10-30T17:20:59.753Z"
   }
+ },
+ {
+  "id": "B-601",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): While taking notes with E.V. on BIO 201, she adds NCLEX framing; NCLEX tips belong only to nursing courses like NUR 112, not to BIO 201.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "While taking notes with E.V. on BIO 201, she adds NCLEX framing; NCLEX tips belong only to nursing courses like NUR 112, not to BIO 201.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T18:27:43.529Z",
+  "board": {
+   "row": "v4 B-601: While taking notes with E.V. on BIO 201, she adds NCLEX framing;…"
+  }
  }
 ]
