@@ -11347,5 +11347,22 @@
    "outcome": "task",
    "at": "2026-10-30T21:58:55.527Z"
   }
+ },
+ {
+  "id": "B-610",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Next cleanup release: clear the remaining roughly 176 !important declarations left after the 630-rule strip, by moving Study-only rules from the patterns layer into the Study view file, merging the toast placement into its component, and retiring the old side-card rules; base, tokens and the cursor policy keep theirs (spike report, Oct 30).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "!important spike Oct 30",
+  "words": "Next cleanup release: clear the remaining roughly 176 !important declarations left after the 630-rule strip, by moving Study-only rules from the patterns layer into the Study view file, merging the toast placement into its component, and retiring the old side-card rules; base, tokens and the cursor policy keep theirs (spike report, Oct 30).",
+  "reportedAt": "2026-10-30T23:06:03.689Z",
+  "board": {
+   "row": "v4 B-610: Next cleanup release: clear the remaining roughly 176 !important…"
+  }
  }
 ]
