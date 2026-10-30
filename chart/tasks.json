@@ -10536,12 +10536,12 @@
   "title": "Conversation empty state and E.V. window: a greeting block in the top third with Next up and the composer under it; Coming up kept in the side pane; from 1024 px E.V. floats as a window that sizes to its content; below that it is a sheet (Matt's OK)",
   "dod": "The avatar never sits low on an empty thread; the window has no empty space below a short answer",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Conversation greeting with Next up, her Arc beside her newest line, the window sized to content, buttons and folds on Proprietary; Ember checks moved to r4's values (theme already r4). greet 74, prep 297, shell 115, frame 172, core 141/142, captions 199/202 (3 card-question-size checks, 18 vs 17 px, red on main before too). The phone ✦ sheet stays at baseline.",
+  "commit": "f24fcc5",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
