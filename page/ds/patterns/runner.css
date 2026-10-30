@@ -93,8 +93,7 @@
   #study-side .set-list{margin:0!important}
 }
 /* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
-.actions .q-back{margin-right:auto}
-.stem{font-size:var(--fs-5);line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
+.actions .q-back{margin-right:auto}.stem{font-size:var(--fs-5);line-height:1.55;margin:2px 0 0;white-space:pre-wrap}
 .q-tags{margin:2px 0 4px}
 .more-line{flex-direction:row;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px}#more-btn{flex:none}
 .opts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0;min-width:0}.opt{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;font-size:var(--fs-4);border:1px solid rgba(var(--tint),.10);border-radius:var(--r-xl);cursor:pointer;background:rgba(var(--tint),.02);min-height:var(--tap);transition:border-color var(--dur-bar),background var(--dur-bar)}.opt:hover{border-color:var(--accent-edge)}.opt input{flex:0 0 auto;margin-top:3px;accent-color:var(--accent);width:18px;height:18px}.opt.right{border-color:var(--do);background:rgba(var(--do-rgb),.10)}.opt.wrong{border-color:var(--bad-solid);background:rgba(var(--urg-rgb),.10)}
