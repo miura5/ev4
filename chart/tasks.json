@@ -11307,10 +11307,12 @@
   "id": "B-608",
   "kind": "request",
   "title": "Request (reported Oct 30): When E.V. creates a plan task, flashcard deck or note, it also records which existing objective or topic it is about (no new UI), so concept-level tracking for D-404 has linked data from now on.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "Plan tasks, decks and notes E.V. creates carry an objective or topic reference from the course's existing objectives or weak-spot topics; nothing visible changes; a test covers each creator.",
+  "milestone": "Later",
+  "status": "open",
+  "depends": [
+   "B-415"
+  ],
   "notes": "",
   "commit": null,
   "source": "Matt, build chat Oct 30",
@@ -11318,6 +11320,10 @@
   "reportedAt": "2026-10-30T21:42:59.594Z",
   "board": {
    "row": "v4 B-608: When E.V. creates a plan task, flashcard deck or note, it also…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T21:43:02.517Z"
   }
  }
 ]
