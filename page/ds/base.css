@@ -12,10 +12,10 @@ a{color:var(--accent-text)}
 /* B-275 (D-270): selected text is neutral, a grey wash in the text colour, never the system blue */
 ::selection{background:rgba(var(--tint),.18);color:var(--text)}
 h1{font-size:var(--fs-5);font-weight:600;letter-spacing:-.02em;margin:0}
-h2{font:600 calc(13.5px * var(--ts))/1.3 var(--sans);color:var(--ink2);margin:0}
-details>summary{cursor:pointer;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
+h2{font:600 var(--fs-3)/1.3 var(--sans);color:var(--ink2);margin:0}
+details>summary{cursor:pointer;font:600 var(--fs-3) var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
 form{display:flex;flex-direction:column;gap:10px}
-input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;min-height:44px;padding:9px 12px;border-radius:12px;border:1px solid var(--line2);background:rgba(var(--tint),.04);color:var(--ink);min-width:0;flex:1;color-scheme:dark}
+input[type=text],input[type=date],input[type=number],select,textarea{font:inherit;min-height:44px;padding:9px 12px;border-radius:var(--r-lg);border:1px solid var(--line2);background:rgba(var(--tint),.04);color:var(--ink);min-width:0;flex:1;color-scheme:dark}
 select option{background:var(--surface);color:var(--ink)}
 input::placeholder,textarea::placeholder{color:var(--faint)}
 textarea{min-height:110px;resize:vertical;line-height:1.55}

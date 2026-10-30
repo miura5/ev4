@@ -18,7 +18,7 @@
 .message[data-state=streaming] .message-b > :last-child::after{content:"";display:inline-block;width:6px;height:6px;
   margin-left:var(--sp-1);border-radius:var(--r-round);background:var(--her);vertical-align:middle}
 /* failed: the line stays; a plain reason under it with its red dot */
-:where(.message-s){margin:0;font-size:calc(12.5px * var(--ts));color:var(--text)}
+:where(.message-s){margin:0;font-size:var(--fs-2);color:var(--text)}
 :where(.message-s)::before{content:"";display:inline-block;width:6px;height:6px;margin:0 var(--sp-1_5) 1px 0;border-radius:var(--r-round);
   background:var(--sem-red)}
 :where(.message-a){display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}

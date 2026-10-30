@@ -14,7 +14,7 @@
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */
 .card{background:var(--glass);border:0;border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .card-head{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
-.ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:12px;background:var(--surface)}
-.ui-card>h3{margin:0;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--text)}
+.ui-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px;border-radius:var(--r-lg);background:var(--surface)}
+.ui-card>h3{margin:0;font:600 var(--fs-3) var(--sans);color:var(--text)}
 /* B-515 lane 1: moved from the carry: a card scrolled to stops under the top bar. */
 .panel .card{scroll-margin-top:calc(var(--top-h) + 12px)}

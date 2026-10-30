@@ -14,8 +14,8 @@
 @starting-style{:where(.sheet)[open]{opacity:0;scale:.98}}
 .sheet[data-kind=confirm]{--sheet-w:420px}
 :where(.sheet)::backdrop{background:var(--sheet-scrim)}
-:root[data-theme="dark"] :where(.sheet)::backdrop{background:rgba(0,0,0,.5)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) :where(.sheet)::backdrop{background:rgba(0,0,0,.5)}}
+:root[data-theme="dark"] :where(.sheet)::backdrop{background:var(--scrim)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) :where(.sheet)::backdrop{background:var(--scrim)}}
 :where(.sheet-h){flex:none;display:flex;align-items:center;gap:10px;padding:14px var(--sp-4);border-bottom:1px solid var(--line)}
 :where(.sheet-h) > svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--quiet);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 :where(.sheet-h) > h2{flex:1;min-width:0;margin:0;font:var(--fw-semibold) var(--fs-3)/1.45 var(--sans)}

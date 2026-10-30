@@ -26,7 +26,7 @@
 :where([data-ui='line'],.check) > input.tick:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
 /* D-383: on the phone the tick is a 44 px tap and draws 20 px: a clear 12 px border the margins take back */
 @media (max-width:599px){
-  :where([data-ui='line'],.check) > input.tick{box-sizing:content-box!important;width:var(--sp-5)!important;height:var(--sp-5)!important;flex-basis:auto!important;border:12px solid transparent!important;background-clip:padding-box!important;margin:-12px!important;border-radius:16px!important}
+  :where([data-ui='line'],.check) > input.tick{box-sizing:content-box!important;width:var(--sp-5)!important;height:var(--sp-5)!important;flex-basis:auto!important;border:12px solid transparent!important;background-clip:padding-box!important;margin:-12px!important;border-radius:var(--r-xl)!important}
   :where([data-ui='line'],.check) > input.tick:checked::after{width:5px;height:10px}
 }
 /* the title that opens the line: a plain button. Legacy's bare button rule draws a pill around any button, so these
@@ -53,7 +53,7 @@
 .li{display:flex;align-items:center;gap:12px;height:36px;padding:0 12px;border-radius:var(--r-sm);color:var(--text);font-size:var(--fs-3);min-width:0}
 .li:hover{background:var(--hover)}
 .li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.li .t{flex:none;color:var(--quiet);font-size:calc(12.5px * var(--ts));font-variant-numeric:tabular-nums}
+.li .t{flex:none;color:var(--quiet);font-size:var(--fs-2);font-variant-numeric:tabular-nums}
 .li .hov{visibility:hidden}
 .li:hover .hov,.li:focus-within .hov{visibility:visible}
 @media (max-width:599px){

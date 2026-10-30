@@ -11,7 +11,7 @@
 /* the native input covers the row: the whole row is the tap target, and the browser keeps the group's keys */
 :where(.choice-o) > input{appearance:none;position:absolute;inset:0;width:100%;height:100%;margin:0;border:0;border-radius:inherit;
   opacity:0;cursor:inherit}
-:where(.choice-o) > kbd{flex:0 0 20px;font:var(--fw-medium) calc(12.5px * var(--ts)) var(--sans);color:var(--quiet)}
+:where(.choice-o) > kbd{flex:0 0 20px;font:var(--fw-medium) var(--fs-2) var(--sans);color:var(--quiet)}
 :where(.choice-o) > span{flex:1;min-width:0;overflow-wrap:anywhere}
 :where(.choice-o) > svg{width:16px;height:16px;flex:none;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .choice-o:not(:has(:disabled)):hover{background:var(--hover)}
@@ -26,6 +26,6 @@
 @media (hover:none){:where(.choice-o) > kbd{display:none}}
 /* B-515 lane D2b: the kit's class rules (legacy's choice look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */
-input.tick:not(:where([data-ui='line'],.check) > *){appearance:none;flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;border:1.5px solid var(--faint);border-radius:7px;background:transparent;cursor:pointer;display:grid;place-content:center;transition:background .2s,border-color .2s}
+input.tick:not(:where([data-ui='line'],.check) > *){appearance:none;flex:0 0 22px;width:22px;height:22px;margin:1px 0 0;border:1.5px solid var(--faint);border-radius:var(--r-sm);background:transparent;cursor:pointer;display:grid;place-content:center;transition:background var(--dur-bar),border-color var(--dur-bar)}
 input.tick:not(:where([data-ui='line'],.check) > *):checked{background:var(--do);border-color:var(--do)}
 input.tick:not(:where([data-ui='line'],.check) > *):checked::after{content:"";width:6px;height:11px;border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}

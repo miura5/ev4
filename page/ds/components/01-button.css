@@ -53,7 +53,7 @@
 [data-ui='button'][data-kind='tint']:is([data-state='hover'],[data-state='pressed']){background:color-mix(in srgb,var(--x,var(--faint)) 20%,var(--surface))!important}
 /* B-515 lane D2b: the kit's class rules (legacy's button look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */
-button,.btn{font:500 calc(14px * var(--ts)) var(--sans);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background var(--dur-press-out) var(--ease-std),border-color var(--dur-press-out) var(--ease-std)}
+button,.btn{font:500 var(--fs-3) var(--sans);border-radius:var(--r-pill);padding:0 16px;min-height:40px;cursor:pointer;border:1px solid var(--line2);background:transparent;color:var(--ink);transition:background var(--dur-press-out) var(--ease-std),border-color var(--dur-press-out) var(--ease-std)}
 button:hover{background:var(--glass2)}
 button:active:not(:disabled){background:var(--sel);transition-duration:var(--dur-press-in)}
 /* B-275 (D-270): the primary button is Ember, one of the three places her accent appears (her, primary, send). */
@@ -64,7 +64,7 @@ button:disabled{opacity:.5;cursor:default}
 button.quiet{background:transparent;border-color:var(--line2);color:var(--ink2)}
 .x-green{--x:var(--sem-green)}.x-yellow{--x:var(--sem-yellow)}.x-red{--x:var(--sem-red)}.x-blue{--x:var(--sem-blue)}.x-violet{--x:var(--sem-violet)}.x-quiet{--x:var(--quiet)}
 /* buttons */
-button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--text);font:500 calc(13px * var(--ts)) var(--sans);white-space:nowrap;cursor:pointer;box-shadow:none;transition:background var(--dur-press-out) var(--ease-std),color var(--dur-press-out) var(--ease-std)}
+button.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-md);background:none;color:var(--text);font:500 var(--fs-2) var(--sans);white-space:nowrap;cursor:pointer;box-shadow:none;transition:background var(--dur-press-out) var(--ease-std),color var(--dur-press-out) var(--ease-std)}
 button.btn svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 button.btn.primary{background:var(--her);color:var(--on-her);font-weight:600}
 button.btn.primary:not(:disabled):hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
@@ -77,9 +77,9 @@ button.btn.tint:not(:disabled):hover{background:color-mix(in srgb,var(--x,var(--
 button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint){color:var(--quiet)}
 button.btn:is(.ghost,.icon):not(.primary,.neutral,.tint,:disabled):hover{background:var(--hover);color:var(--text)}
 button.btn.icon{width:32px;padding:0}
-button.btn.sm{height:28px;min-height:28px;padding:0 10px;font-size:calc(12.5px * var(--ts))}
+button.btn.sm{height:28px;min-height:28px;padding:0 10px;font-size:var(--fs-2)}
 button.btn.icon.sm{width:28px;padding:0}
-button.btn.send{border-radius:16px}
+button.btn.send{border-radius:var(--r-xl)}
 button.btn:disabled{opacity:.45;cursor:default}
 @media (max-width:599px){
   button.btn,button.btn.sm{height:44px;min-height:44px}

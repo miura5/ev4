@@ -1,7 +1,7 @@
 /* Proprietary 11 Popover (B-508, D-375): .popover on the native popover attribute, at today's New menu look */
 :where(.popover){position:fixed;inset:auto;left:var(--pop-x,8px);top:var(--pop-y,8px);margin:0;z-index:var(--z-overlay);
   min-width:200px;max-width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 16px);overflow:auto;box-sizing:border-box;
-  display:flex;flex-direction:column;gap:0;padding:5px;border:0;border-radius:10px;background:var(--surface);color:var(--text);
+  display:flex;flex-direction:column;gap:0;padding:5px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--text);
   box-shadow:var(--elev-2);font:var(--fw-regular) var(--fs-2) var(--sans)}
 :where(.popover)[popover]:not(:popover-open){display:none}
 /* B-547 (D-394): a popover or menu fades and rises --rise-pop as it opens, and fades out quicker as it closes */

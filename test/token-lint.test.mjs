@@ -21,19 +21,8 @@ const RAW = {
 };
 // [colours, font sizes, radii, durations] left per file on Oct 30; lower these as tokens replace them, never raise.
 const LEFT = new Map([
-  ['page/ds/base.css', [0, 3, 1, 0]],
-  ['page/ds/components/01-button.css', [0, 3, 3, 5]],
-  ['page/ds/components/03-chip.css', [0, 1, 1, 0]],
-  ['page/ds/components/04-segmented.css', [0, 2, 4, 0]],
-  ['page/ds/components/05-line.css', [0, 2, 1, 0]],
+  ['page/ds/base.css', [0, 1, 0, 0]], // B-515 snap (D-402): the body's 16px is the reading size, not a half step
   ['page/ds/components/06-fold.css', [0, 0, 0, 2]],
-  ['page/ds/components/07-card.css', [0, 1, 1, 0]],
-  ['page/ds/components/10-sheet.css', [2, 0, 0, 0]],
-  ['page/ds/components/11-popover.css', [0, 0, 1, 0]],
-  ['page/ds/components/12-field.css', [0, 1, 2, 0]],
-  ['page/ds/components/13-choice.css', [0, 1, 2, 2]],
-  ['page/ds/components/14-meter.css', [0, 0, 3, 0]],
-  ['page/ds/components/16-message.css', [0, 1, 0, 0]],
   ['page/ds/patterns/cards.css', [0, 20, 4, 0]],
   ['page/ds/patterns/plan-card.css', [1, 19, 4, 0]],
   ['page/ds/patterns/runner.css', [0, 10, 6, 0]],
