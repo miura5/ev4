@@ -10657,9 +10657,9 @@
   "id": "B-578",
   "kind": "bug",
   "title": "Bug (reported Oct 30): On Today the checkboxes still show the old inner shading instead of the flat check that Study now shows.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Today's row checkboxes (list, week and task pane) draw the flat check component exactly as Study does: no inner shading, the same size and radius at 1280 and 390, light and dark; seen on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10669,6 +10669,10 @@
   "reportedAt": "2026-10-30T09:46:55.155Z",
   "board": {
    "row": "v4 B-578: On Today the checkboxes still show the old inner shading instead of…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T09:47:21.736Z"
   }
  }
 ]
