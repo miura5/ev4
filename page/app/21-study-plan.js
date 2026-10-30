@@ -293,7 +293,7 @@
     // ---------------------------------------------------------------- the rows
     function taskRow(p, t, isDone, draft) {
       const on = !draft && isDone(t);
-      const li = el('li', 'pl-t' + (on ? ' done' : ''));
+      const li = el('li', 'pl-t check' + (on ? ' done' : ''));
       const c = el('input', 'tick');
       c.type = 'checkbox';
       c.checked = c.defaultChecked = on;
