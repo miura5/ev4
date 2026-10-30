@@ -10639,7 +10639,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "Seen again on live at 2f50284: NUR 112, an approved ATI Proctored Dosage Assessment plan whose exam shows 'No objectives yet'. Wide, the summary leaves the card and the right panel stays empty; narrow, it's inline. Matt's first report (Exam 5) also had 'No objectives yet'. The lead is an exam with no objectives.",
+  "notes": "7b82ee7: own plans (no exam in the record, like NUR 112's ATI dosage plan) were built unpanelled while .pm-line hid their summary at 1200 px and up, so the summary vanished. Now the first own plan holds the panel when no exam plan does, otherwise it keeps its line; the panel prefers draft over approved over the no-plan view. run 521, npm test 1020, smoke 31. There's no own-plan harness check yet; Matt checks on staging.",
   "commit": null,
   "source": "build chat",
   "words": "On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
