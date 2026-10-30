@@ -1,3 +1,47 @@
+/* ---- B-515 lane D1b: jobs, check-ins, the check fold, energy buttons, the prep marker, work lines and briefs moved from page/styles.css. The patterns layer sits under legacy (D-373), so every
+   declaration says !important until legacy drops and they are stripped. */
+.job-title{font-weight:600!important;margin:0!important;overflow-wrap:anywhere!important}
+.result{font-size:calc(15px * var(--ts))!important;line-height:1.6!important;white-space:pre-wrap!important;margin:0!important;overflow-wrap:anywhere!important;color:var(--ink2)!important}
+.quizlet-block{font:inherit!important;font-size:calc(13px * var(--ts))!important;line-height:1.5!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;tab-size:2!important;margin:8px 0 0!important;padding:8px 10px!important;max-height:240px!important;overflow:auto!important;border-radius:8px!important;background:var(--chip)!important;color:var(--ink2)!important}
+.energy{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:6px!important}
+.energy button{padding:0 4px!important;min-height:52px!important;border-radius:14px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;line-height:1.15!important}
+.energy button small{font-size:calc(11px * var(--ts))!important;color:var(--soft)!important;font-weight:500!important}
+.energy button[aria-pressed="true"]{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--accent-ink)!important}
+.energy button[aria-pressed="true"] small{color:var(--accent-ink)!important}
+.check-items{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:12px!important}
+.check-items li{display:flex!important;gap:12px!important;align-items:baseline!important;overflow-wrap:anywhere!important;font-size:calc(16.5px * var(--ts))!important;line-height:1.5!important}
+.check-kind{flex:0 0 46px!important;text-transform:capitalize!important;font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--ink2)!important}
+.check-kind.link{color:var(--plum)!important} .check-kind.gap,.check-kind.weakspot{color:var(--warn)!important}
+.sess-sec{display:flex!important;flex-direction:column!important;gap:6px!important}
+.sess-sec h3{font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--soft)!important;margin:0!important}
+.sess-sec ul{margin:0!important;padding-left:20px!important;display:flex!important;flex-direction:column!important;gap:3px!important}
+.card-more{align-self:flex-start!important;min-height:36px!important;padding:0 12px!important;font-size:calc(13px * var(--ts))!important}
+.brief-line{margin:0!important;display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:4px 10px!important;font-size:calc(14px * var(--ts))!important;line-height:1.45!important;color:var(--faint)!important}
+.brief-line .bl-t{min-width:0!important;flex:0 1 auto!important}
+.brief-line .bl-go{flex:none!important}
+.bi-prep,.prep-mark{flex:none!important;margin-left:8px!important;padding:0 7px!important;border-radius:999px!important;background:var(--plum-bg)!important;color:var(--plum)!important;font:600 calc(11.5px * var(--ts))/calc(20px * var(--ts)) var(--sans)!important;letter-spacing:.02em!important}
+.prep.open .prep-row .chev{transform:rotate(180deg)!important}
+.check-head .check-fold{color:var(--ink)!important;font-weight:600!important;font-size:calc(15px * var(--ts))!important}
+.ev-card.check.folded{gap:0!important}.ev-card.check.folded>:not(.check-head){display:none!important}
+.bi-prep,.prep-mark{padding:0!important;border-radius:0!important;background:none!important;color:var(--quiet)!important;font:500 calc(12px * var(--ts))/1.3 var(--sans)!important;letter-spacing:0!important}
+.ckin{box-sizing:border-box!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:8px!important;padding:12px 14px!important;border-radius:12px!important;background:var(--surface)!important;box-shadow:0 0 0 1px var(--line)!important}
+.ckin[hidden]{display:none!important}
+.ckin .ck-row{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important}
+.ckin .ck-head{justify-content:space-between!important}
+.ckin .lab{font:500 calc(12px * var(--ts)) var(--sans)!important;color:var(--quiet)!important}
+.ckin .mini{font-size:calc(12.5px * var(--ts))!important;color:var(--faint)!important}
+.ckin .ck-q{font-size:calc(13.5px * var(--ts))!important;color:var(--text)!important}
+.ckin .seg{align-self:center!important;width:auto!important}
+.ckin .adv{margin:0!important;font-size:calc(13.5px * var(--ts))!important;line-height:1.5!important;color:var(--text)!important}
+@media (max-width:599px){
+  .ckin{width:100%!important}
+  .ckin .seg{flex:1!important;width:auto!important}
+  .ckin .seg button{flex:1!important}
+}
+.work{margin-top:2px!important}.work-line{font-size:calc(13px * var(--ts))!important;padding:2px 0!important}.work-line:disabled{cursor:default!important}.work-line:disabled::after{content:''!important}
+.work-changes{margin:2px 0 0!important}.work-changes li{padding:4px 0!important;border:0!important}.work-changes .tlink{text-align:left!important}
+:is(.energy,.check-items,.check-items li,.sess-sec,.sess-sec ul,.brief-line,.ckin,.ckin .ck-row)[hidden]{display:none!important}
+
 /* ---- The E.V. window's cards: the prep checklist and Your turn (B-514, D-376, D-391): moved from page/styles.css. The
    patterns layer sits under legacy (D-373), so every declaration says !important until B-515 strips them. A .prep-row
    .chev rule stays in legacy: a later legacy rule shortens its transition. */

@@ -192,17 +192,9 @@ body.opening .msg.greet .bubble p:first-child{font-size:calc(34px * var(--ts));l
 body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-self:stretch;text-align:left;margin-top:14px}
 .ev-card{padding:16px 18px;gap:10px}
 .ev-card .big{font-size:calc(30px * var(--ts));letter-spacing:-.02em}
-.job-title{font-weight:600;margin:0;overflow-wrap:anywhere}
-.result{font-size:calc(15px * var(--ts));line-height:1.6;white-space:pre-wrap;margin:0;overflow-wrap:anywhere;color:var(--ink2)}
 /* B-479: a flashcards job's Quizlet import text, as Copy copies it */
-.quizlet-block{font:inherit;font-size:calc(13px * var(--ts));line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;margin:8px 0 0;padding:8px 10px;max-height:240px;overflow:auto;border-radius:8px;background:var(--chip);color:var(--ink2)}
 .links{display:flex;flex-direction:column;gap:4px}
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
-.energy{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
-.energy button{padding:0 4px;min-height:52px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
-.energy button small{font-size:calc(11px * var(--ts));color:var(--soft);font-weight:500}
-.energy button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.energy button[aria-pressed="true"] small{color:var(--accent-ink)}
 .chart svg{width:100%;height:auto;display:block}
 .chart .bar{fill:var(--do)} .chart .base{fill:rgba(var(--tint),.05)} .chart text{font:500 calc(9px * var(--ts)) var(--sans);fill:var(--soft)} .chart .pct{fill:var(--ink);font-weight:600}
 .composer::after{content:"";position:absolute;left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));top:100%;height:calc(var(--dock-h) + 40px + env(safe-area-inset-bottom,0px));background:var(--bg)}
@@ -234,14 +226,7 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 .sbar button.end{color:var(--ink2)}
 .ev-card.check{background:var(--glass);border-color:var(--line2)}
 .ev-card.check.done{background:var(--glass);border-color:var(--line)}
-.check-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-.check-items li{display:flex;gap:12px;align-items:baseline;overflow-wrap:anywhere;font-size:calc(16.5px * var(--ts));line-height:1.5}
-.check-kind{flex:0 0 46px;text-transform:capitalize;font:500 calc(12px * var(--ts)) var(--sans);color:var(--ink2)}
-.check-kind.link{color:var(--plum)} .check-kind.gap,.check-kind.weakspot{color:var(--warn)}
 .ev-card textarea{min-height:72px}
-.sess-sec{display:flex;flex-direction:column;gap:6px}
-.sess-sec h3{font:500 calc(12px * var(--ts)) var(--sans);color:var(--soft);margin:0}
-.sess-sec ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:3px}
 .pend{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid rgba(var(--tint),.30);border-radius:16px;background:rgba(var(--tint),.07)}
 /* motion (B-125, D-163): a view's content shows at once on a switch, with one fade of at most 0.2 s on the view as a
    whole; nothing rises or staggers, and bars, meters and the week chart are drawn at their value. Folds, her stage and
@@ -253,9 +238,6 @@ body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(aut
 @keyframes pulse{50%{opacity:.35}}
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:calc(14px * var(--ts));padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
-.sk-tog::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-left:2px solid var(--soft);border-top:2px solid var(--soft);transform:translateY(-25%) rotate(45deg);transition:transform .25s var(--ease)}
-.sk-panel{display:none}
-body.skill-on .qchips{display:none}
 /* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
 
 /* D-108: the workout card */
@@ -264,7 +246,6 @@ a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px
 .share-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .share-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-edge);border-radius:16px;background:var(--accent-bg)}
 .share-bar .grow{flex:1 1 200px}
-@media (max-width:1023px){body.skill-on .toast{bottom:auto;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))}}
 /* ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
    The E.V. tab without the thread: her stage on top (the session bar above it in a session), her captions in their
    own scroller under her (the pull zone above them), then chips and the composer. From 1024 px the stage takes the
@@ -324,14 +305,10 @@ body.captions .msg-cards,body.captions.opening .msg.greet .msg-cards{display:fle
 body.captions .msg-cards:empty{display:none}
 /* Until B-78's surfaces: one card under her line (five rows and a more that opens its tab; never scrolling inside
    itself), the rest of the reply's cards as one tappable line that swaps the next card in. */
-.card-more{align-self:flex-start;min-height:36px;padding:0 12px;font-size:calc(13px * var(--ts))}
 /* B-353 (D-314): the greeting's things to know as her own lines, as the demo's Main board: quiet 14 px lines, no fold
    and no dot; an action sits at a line's end as a small button. */
 .brief{align-self:stretch;width:100%;margin:8px 0 0;text-align:left;display:flex;flex-direction:column;gap:4px}
 .msg.greet .brief{margin-top:0} /* B-368: the card, then her grey summary line, the thread's gap apart */
-.brief-line{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint)}
-.brief-line .bl-t{min-width:0;flex:0 1 auto}
-.brief-line .bl-go{flex:none}
 .chev{width:15px;height:15px;flex:none;color:var(--soft);transition:transform .25s var(--ease)}
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 .sread{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--glass);font-size:calc(12.5px * var(--ts));color:var(--soft);white-space:nowrap;overflow:hidden}
@@ -405,9 +382,7 @@ body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;
 body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 /* B-104 (D-143, D-144): the calm Prep marker (quiet grey; never the red of urgent) and the prep
    check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
-.bi-prep,.prep-mark{flex:none;margin-left:8px;padding:0 7px;border-radius:999px;background:var(--plum-bg);color:var(--plum);font:600 calc(11.5px * var(--ts))/calc(20px * var(--ts)) var(--sans);letter-spacing:.02em}
 .prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform .25s var(--ease)}
-.prep.open .prep-row .chev{transform:rotate(180deg)}
 /* B-119: System. One lead line; pipelines, runs and each card's list fold under one line; only exceptions are marked (yellow). */
 /* B-120 (D-156): the page title only from 1024 px; below it the highlighted tab icon names the page. D-157: a problem in the status line reads yellow, on desktop only (System leads with it everywhere). */
 @media (max-width:1023px){.ptitle{display:none}}
@@ -420,8 +395,6 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
   .col-main,.col-side{display:flex;flex-direction:column;gap:14px;min-width:0}
 }
 /* B-122 (D-160, D-161): a check folds to its head line; the skills panel to its head line */
-.check-head .check-fold{color:var(--ink);font-weight:600;font-size:calc(15px * var(--ts))}
-.ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
 /* B-123 (D-162): Weak spots. One line per weak spot with its objective, opening in place; Copy for Quizlet a text link. */
 .ws-item{flex-direction:column;align-items:stretch;gap:2px;padding:2px 0}
 .ws-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:6px 0;line-height:1.4}
@@ -658,10 +631,6 @@ body.captions.on-ev .wrap{max-width:680px}
 @media (hover:none){.opt kbd.opt-n{display:none}}
 
 /* B-212 (D-217): skills runs and workouts follow the session: bar in the pane header, steps in the pane, list right */
-#ev-side>.sk-panel{display:none}
-@media (min-width:1200px){
-  body.captions #ev-side>.sk-panel{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2)}
-}
 
 /* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
    Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px
@@ -682,7 +651,6 @@ body.captions.on-ev .wrap{max-width:680px}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick{flex:0 0 16px;width:16px;height:16px;margin:0;border:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked{background:var(--do);box-shadow:none}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked::after{width:3px;height:7px;border-color:var(--bg);border-width:0 2px 2px 0}
-.bi-prep,.prep-mark{padding:0;border-radius:0;background:none;color:var(--quiet);font:500 calc(12px * var(--ts))/1.3 var(--sans);letter-spacing:0}
 @media (min-width:600px){
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{min-height:32px;font-size:calc(13px * var(--ts))}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{padding:4px 0}
@@ -749,17 +717,8 @@ body.captions #p-ev>#ev-side{grid-row:6}
   body.captions #p-ev>#ev-side{grid-row:5}
   body.captions #p-ev>.composer{grid-row:6}
 }
-.ckin{box-sizing:border-box;margin:0;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
-.ckin[hidden]{display:none}
 /* B-362 (D-316): her newest line's one action, as the demo's row of small neutral buttons under the thread */
 .msg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.ckin .ck-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ckin .ck-head{justify-content:space-between}
-.ckin .lab{font:500 calc(12px * var(--ts)) var(--sans);color:var(--quiet)}
-.ckin .mini{font-size:calc(12.5px * var(--ts));color:var(--faint)}
-.ckin .ck-q{font-size:calc(13.5px * var(--ts));color:var(--text)}
-.ckin .seg{align-self:center;width:auto}
-.ckin .adv{margin:0;font-size:calc(13.5px * var(--ts));line-height:1.5;color:var(--text)}
 body.captions .cap-in{max-width:600px;padding:0 24px 18px;gap:14px}
 body.captions .msg.ev .bubble,body.captions .msg.earlier .bubble{font-size:calc(14px * var(--ts));line-height:1.45;color:var(--faint);opacity:1}
 body.captions .msg.ev.current .bubble,body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts));line-height:1.5;letter-spacing:-.005em;color:var(--text);opacity:1}
@@ -801,11 +760,8 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
 @media (max-width:1199px){body.captions.surface-open #qchips{display:none}}
 @media (max-width:599px){
   /* B-345: the frame already gives the view its 16 px gutters, so the card, lines, chips and field run to them. */
-  .ckin{width:100%}
   .qchips{padding:0}
   body.captions .composer>.compose-row{width:100%}
-  .ckin .seg{flex:1;width:auto}
-  .ckin .seg button{flex:1}
   body.captions .cap-in{padding:0 0 12px}
   .qchip,.qchip.go{height:44px;min-height:44px}
   body.captions .composer>.compose-row{margin-bottom:12px;min-height:56px;padding:0 6px 0 16px}
@@ -834,12 +790,8 @@ body.captions .composer>.compose-row{width:calc(100% - 32px);max-width:600px;mar
    A transition takes the duration of the state it goes to: closed is quick, open a little slower. */
 .chev,.prep-row .chev{transition-duration:.16s}
 .prep.open .chev,[aria-expanded="true"] .chev,[aria-expanded="true"]>.chev{transition-duration:.28s}
-.sk-tog::after{transition-duration:.16s}
-.sk-tog[aria-expanded="true"]::after{transition-duration:.28s}
 body.captions.her-folded .hero{transition-duration:.16s}
 /* B-227 (D-232): her work line, one quiet line that opens in place to what she changed */
-.work{margin-top:2px}.work-line{font-size:calc(13px * var(--ts));padding:2px 0}.work-line:disabled{cursor:default}.work-line:disabled::after{content:''}
-.work-changes{margin:2px 0 0}.work-changes li{padding:4px 0;border:0}.work-changes .tlink{text-align:left}
 
 /* ============================================================ B-285 (D-274, D-278, D-269, C-1, C-15): the component set
    Every part a view is built from: five kinds of button (primary, neutral, coded tint, ghost, icon; .sm is the small

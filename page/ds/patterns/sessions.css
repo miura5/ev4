@@ -1,3 +1,16 @@
+/* ---- B-515 lane D1b: the skills panel, its toggle and the skill-on rules moved from page/styles.css. The patterns layer sits under legacy (D-373), so every
+   declaration says !important until legacy drops and they are stripped. */
+.sk-tog::after{content:""!important;position:absolute!important;right:8px!important;top:50%!important;width:9px!important;height:9px!important;border-left:2px solid var(--soft)!important;border-top:2px solid var(--soft)!important;transform:translateY(-25%) rotate(45deg)!important;transition:transform .25s var(--ease)!important}
+.sk-panel{display:none!important}
+body.skill-on .qchips{display:none!important}
+@media (max-width:1023px){body.skill-on .toast{bottom:auto!important;top:calc(var(--top-h) + 14px + env(safe-area-inset-top,0px))!important}}
+#ev-side>.sk-panel{display:none!important}
+@media (min-width:1200px){
+  body.captions #ev-side>.sk-panel{display:flex!important;flex-direction:column!important;gap:12px!important;padding:14px 16px!important;background:var(--bg)!important;border:0!important;border-radius:12px!important;box-shadow:0 0 0 1px var(--line)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
+.sk-tog::after{transition-duration:.16s!important}
+.sk-tog[aria-expanded="true"]::after{transition-duration:.28s!important}
+
 /* ---- Skills runs and workouts (B-514, D-376, D-380, D-391): moved from page/styles.css. The patterns layer sits under
    legacy (D-373), so every declaration says !important until B-515 retires legacy and strips them. Left in legacy for
    B-515: .sk-tog::after and its fold durations (reduced motion), .sk-panel display and #ev-side panel rules, .sbar. */
