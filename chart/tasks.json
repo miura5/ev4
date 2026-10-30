@@ -10437,12 +10437,12 @@
   "title": "Today Done group collapses by default, with lighter struck text",
   "dod": "Done opens and closes by height and opacity; struck titles use the faint ink",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Today view (49cb12d): 36 px rows, flat check, badge column, budget card with no line, Done folded, toolbar in one row at 390, Start in the row ⋯ on the phone. npm test 1020, smoke 31, prep 297, look 217. The core harness's 3 failures in E.V.'s Ember dark face and frame budget went to B-572.",
+  "commit": "49cb12d",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
