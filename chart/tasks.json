@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Plan for D2c: rules that never matched in the synthetic crawl (lane B left 296 for Today/Study/Progress, and more in other areas) are not deleted blind. D2c moves every remaining legacy rule, in order, into the views layer (unlayered legacy becomes empty), then deletes only what a crawl over more states shows is dead. Nothing Matt might reach in a rare state loses its style.",
+  "notes": "D2a pushed df00ad4: the shell (L frame, single scroll pane, header, status, side panels, New menu and dialog) is 268 rules in patterns/shell.css; pane geometry and --status-h in tokens; --line-h renamed; data-ui on 33 static kit elements; with legacy dropped the shell frame is identical. For D2c: [data-readonly] composer/new-wrap rule (pinned by pwa-live.test), the right panel card look, and E-window shell rules (.top-av, .mh-her, body.captions.*, #p-ev).",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
