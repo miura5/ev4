@@ -251,3 +251,35 @@ button.wk-h{border:0;margin:0;background:none;font-family:inherit;text-align:lef
   #today-list .li .ti-more{display:inline-flex}
   #today-list .ti-done > .fold-line{min-height:var(--tap);padding:0 16px}
 }
+/* B-515 lane 3: moved from the carry (carry-study.css), in its source order. */
+.wk-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
+.fold-line{all:unset;-webkit-user-select:auto!important;user-select:auto!important;cursor:pointer;color:var(--ink2);font-size:var(--fs-3);padding:4px 0}
+.wchip:hover{background:var(--hover);box-shadow:inset 0 0 0 1px var(--line2)}
+.wchip:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.wchip[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--text)}
+.wchip.exam .wc-t{font-weight:600}
+.wchip .wc-s.urgent{color:var(--urg)}
+.wchip.off .wc-t{color:var(--faint);text-decoration:line-through}
+.wchip.wk-load.done .wc-t{color:var(--quiet)}
+button.wk-h:hover b{text-decoration:underline}
+button.wk-h:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:600}
+.wchip.wk-task .wc-t{color:var(--ink2,var(--text))}
+.col-side>.tk-away,.col-main>.tk-away{display:none!important}
+#p-today{gap:0!important}
+#today-list>.empty{padding:14px 2px}
+@media (min-width:1200px){
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - 8px - 53px)}
+}
+button.btn.mh-back{display:none}
+body[data-view="today"].task-open .mh button.btn.mh-back{display:inline-grid;place-items:center;width:28px;height:28px;min-height:0;padding:0;margin-left:-8px;border:0;background:none;color:var(--quiet);flex:0 0 28px;border-radius:var(--r-sm)}
+body[data-view="today"].task-open .mh button.btn.mh-back:hover{background:var(--hover);color:var(--text)}
+.mh .mh-back svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--status-h, 0px))}
+@media (max-width:599px){
+  body[data-view="today"].task-open .mh button.btn.mh-back{width:44px;height:44px;margin-left:-12px;color:var(--text)}
+  .mh .mh-back svg{width:18px;height:18px}
+}
+@media (min-width:1200px){
+  body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - var(--strip-h) - 53px)}
+}
