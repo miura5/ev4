@@ -11177,10 +11177,12 @@
   "id": "B-602",
   "kind": "request",
   "title": "Request (reported Oct 30): Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar facts into her instructions.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "spec.persona and the chat context follow D-405 word for word in intent. The corporate tics, 'unit EV-04' and 'three pipelines' are gone. Her page and avatar description is generated from the spec (sidebar views, the Dial Arc and its colours). A test asserts that no stale layout words (top bar, tap your small core) appear and that the tics are absent. One real chat on staging is read back for tone.",
+  "milestone": "UI polish",
+  "status": "open",
+  "depends": [
+   "B-601"
+  ],
   "notes": "",
   "commit": null,
   "source": "Matt, build chat Oct 30",
@@ -11188,6 +11190,10 @@
   "reportedAt": "2026-10-30T18:38:20.903Z",
   "board": {
    "row": "v4 B-602: Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T18:38:25.104Z"
   }
  }
 ]
