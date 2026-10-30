@@ -10208,12 +10208,12 @@
   "title": "Motion tokens and components: no scale() anywhere; press is a fill change (80 ms in, 140 ms out); folds animate height and opacity (240 ms open, 180 ms close); menus, popovers and toasts fade and rise 4–6 px; new rows reveal with a 40 ms stagger; view switches stay instant",
   "dod": "A grep finds no scale( in styles.css or page/ds; the motion strips reproduce at 1280; reduced motion zeroes all durations",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "No scale anywhere; a press changes the fill; folds open by height and opacity; popovers fade and rise. npm test, smoke 31 and components 58/58 pass. The 40 ms row stagger goes to the view lanes.",
+  "commit": "949176b",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
