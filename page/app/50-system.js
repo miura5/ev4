@@ -124,8 +124,15 @@
       b.addEventListener('click', () => {
         const on = !openSys.has(key);
         on ? openSys.add(key) : openSys.delete(key);
+        // B-576: the state flips at once; the detail grows in, or stays drawn while it folds away
+        const shown = getComputedStyle(more).display;
         li.classList.toggle('open', on);
         b.setAttribute('aria-expanded', String(on));
+        if (on) DS.grow(more, true);
+        else {
+          more.style.display = shown;
+          DS.grow(more, false, () => (more.style.display = ''));
+        }
       });
       li.append(b, more);
       return li;
@@ -138,8 +145,15 @@
       if (!line.dataset.on) {
         line.dataset.on = '1';
         line.addEventListener('click', () => {
+          const shown = getComputedStyle(list).display;
           list.hidden = !list.hidden;
           line.setAttribute('aria-expanded', String(!list.hidden));
+          // B-576: it grows in, or stays drawn while it folds away (hidden is already set)
+          if (!list.hidden) DS.grow(list, true);
+          else {
+            list.style.display = shown;
+            DS.grow(list, false, () => (list.style.display = ''));
+          }
         });
       }
     }

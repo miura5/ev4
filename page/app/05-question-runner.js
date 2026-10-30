@@ -276,6 +276,7 @@
         if (!keep) {
           hasRest = true;
           s.hidden = !restOpen;
+          DS.foldTag('why:' + wk, s);
         }
         return s;
       };
@@ -437,10 +438,11 @@
           foldLine(
             type === 'matrix' ? 'Why the other rows' : 'Why not the others',
             restOpen,
-            () => {
-              whyOpen[wk] = !whyOpen[wk];
-              render();
-            },
+            () =>
+              DS.foldFlip('why:' + wk, !restOpen, () => {
+                whyOpen[wk] = !whyOpen[wk];
+                render();
+              }),
             'why-fold'
           )
         );
@@ -854,26 +856,35 @@
       if (missed.length) {
         const ul = el('ul', 'list sum-list'),
           all = !!sumOpen[key + ':missed'];
-        (all ? missed : missed.slice(0, 5)).forEach(q => ul.append(sumLine(key, q, answers[q.id])));
+        (all ? missed : missed.slice(0, 5)).forEach((q, i) => {
+          const li = sumLine(key, q, answers[q.id]);
+          if (i >= 5) DS.foldTag(key + ':missed', li); // B-576: the extra misses grow in
+          ul.append(li);
+        });
         lst.push(el('p', 'meta sum-h', missed.length === 1 ? '1 miss' : missed.length + ' misses'), ul);
         if (missed.length > 5)
           lst.push(
-            foldLine(all ? 'Fewer' : missed.length - 5 + ' more', all, () => {
-              sumOpen[key + ':missed'] = !all;
-              render();
-            })
+            foldLine(all ? 'Fewer' : missed.length - 5 + ' more', all, () =>
+              DS.foldFlip(key + ':missed', !all, () => {
+                sumOpen[key + ':missed'] = !all;
+                render();
+              })
+            )
           );
       }
       if (right.length) {
         const open = !!sumOpen[key + ':right'],
           ul = el('ul', 'list sum-list');
         ul.hidden = !open;
+        DS.foldTag(key + ':right', ul);
         if (open) right.forEach(q => ul.append(sumLine(key, q, answers[q.id])));
         lst.push(
-          foldLine(right.length + ' right', open, () => {
-            sumOpen[key + ':right'] = !open;
-            render();
-          }),
+          foldLine(right.length + ' right', open, () =>
+            DS.foldFlip(key + ':right', !open, () => {
+              sumOpen[key + ':right'] = !open;
+              render();
+            })
+          ),
           ul
         );
       }

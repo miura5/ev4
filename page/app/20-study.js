@@ -519,13 +519,15 @@
           foldLine(
             plural(objs.length, 'objective') + ' · ' + words.join(', '),
             !!ui.objFold,
-            () => {
-              ui.objFold = !ui.objFold;
-              render();
-            },
+            () =>
+              DS.foldFlip('objfold', !ui.objFold, () => {
+                ui.objFold = !ui.objFold;
+                render();
+              }),
             'pm-more'
           )
         );
+        DS.foldTag('objfold', items.rows); // B-576: the objectives grow in under their line
       }
       box.append(...items.rows);
       card.classList.toggle('pm-ex', planned);
@@ -638,8 +640,13 @@
         nm.title = r.o.text || r.o.id;
         nm.setAttribute('aria-expanded', String(on));
         nm.addEventListener('click', () => {
-          objSel = on && !PANEL.matches ? null : r.o.id;
-          render();
+          const go = () => {
+            objSel = on && !PANEL.matches ? null : r.o.id;
+            render();
+          };
+          // B-576: under its row (below 1200 px) the detail grows in and folds away; the panel stays a view switch
+          if (PANEL.matches) go();
+          else DS.foldFlip('objd', !on, go);
         });
         const q = btn('Quiz me', ev => quizObjective(r.o, ev.currentTarget), { cls: 'btn ghost sm oq' });
         q.setAttribute('aria-label', 'Quiz me on ' + (r.o.text || r.o.id));
@@ -653,7 +660,7 @@
         if (on) {
           const d = objDetail(r, word, cls, fullName, PANEL.matches);
           if (PANEL.matches) ui.objPanel = d;
-          else wrap.append(d);
+          else wrap.append(...DS.foldTag('objd', d));
         }
         out.push(wrap);
       }
@@ -898,12 +905,14 @@
       if (older.length) {
         const o = !!ui.setsOlder;
         list.append(
-          foldLine('Older · ' + older.length, o, () => {
-            ui.setsOlder = !o;
-            render();
-          })
+          foldLine('Older · ' + older.length, o, () =>
+            DS.foldFlip('sets-older', !o, () => {
+              ui.setsOlder = !o;
+              render();
+            })
+          )
         );
-        if (o) list.append(...older.map(rowOf));
+        if (o) list.append(...DS.foldTag('sets-older', older.map(rowOf)));
       }
       card.replaceChildren(hd, list);
     }

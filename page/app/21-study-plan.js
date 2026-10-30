@@ -351,8 +351,12 @@
         planUi.open[key] = on;
         wrap.classList.toggle('open', on);
         b.setAttribute('aria-expanded', String(on));
-        if (on) wrap.append(list());
-        else wrap.querySelectorAll(':scope > .pl-tasks').forEach(x => x.remove());
+        // B-576: the day's tasks grow in by height and opacity, and fold away the same way
+        if (on) {
+          const ul = list();
+          wrap.append(ul);
+          DS.grow(ul, true);
+        } else wrap.querySelectorAll(':scope > .pl-tasks').forEach(x => DS.grow(x, false, () => x.remove()));
       });
       wrap.append(b);
       if (isOpen) wrap.append(list());
@@ -413,15 +417,16 @@
             (carry.length === 1 ? '1 left from ' : carry.length + ' left from ') +
               (carry.every(t => t.date === from) ? short(from) : 'earlier days'),
             co,
-            () => {
-              planUi.carry[ck] = !co;
-              render();
-            }
+            () =>
+              DS.foldFlip('carry:' + ck, !co, () => {
+                planUi.carry[ck] = !co;
+                render();
+              })
           );
           fb.prepend(el('i', 'dot x-yellow'));
           li.append(fb);
           lead.push(li);
-          if (co) for (const t of carry) lead.push(taskRow(p, t, isDone, draft));
+          if (co) for (const t of carry) lead.push(...DS.foldTag('carry:' + ck, taskRow(p, t, isDone, draft)));
         }
         rows.append(
           dayRow(p, tdy ? tdy.d : { date: today }, ts, {
@@ -438,27 +443,28 @@
       const ahead = days.filter(x => x.d.date > today);
       const N = draft ? 5 : 3,
         more = !!planUi.more[p.id];
-      ahead.slice(0, more ? ahead.length : N).forEach((x, i) =>
-        rows.append(
-          dayRow(p, x.d, x.ts, {
-            cls: draft ? 'draft' : '',
-            label: label(x),
-            count: countEl(plural(x.ts.length, 'task'), null, planMinutes(x.ts) ? mShort(planMinutes(x.ts)) : ''),
-            isDone,
-            draft,
-            open: draft && !tdy && i === 0,
-          })
-        )
-      );
+      ahead.slice(0, more ? ahead.length : N).forEach((x, i) => {
+        const r = dayRow(p, x.d, x.ts, {
+          cls: draft ? 'draft' : '',
+          label: label(x),
+          count: countEl(plural(x.ts.length, 'task'), null, planMinutes(x.ts) ? mShort(planMinutes(x.ts)) : ''),
+          isDone,
+          draft,
+          open: draft && !tdy && i === 0,
+        });
+        if (i >= N) DS.foldTag('more:' + p.id, r); // B-576: the days past the first few grow in
+        rows.append(r);
+      });
       if (ahead.length > N)
         rows.append(
           foldLine(
             more ? 'Fewer days' : `${plural(ahead.length - N, 'more day')} to ${exShortOf(ex)} · ${short(ex.date)}`,
             more,
-            () => {
-              planUi.more[p.id] = !more;
-              render();
-            }
+            () =>
+              DS.foldFlip('more:' + p.id, !more, () => {
+                planUi.more[p.id] = !more;
+                render();
+              })
           )
         );
       const past = days.filter(x => x.d.date < today).reverse();
@@ -468,10 +474,11 @@
           foldLine(
             'Earlier · ' + plural(past.length, 'day'),
             eo,
-            () => {
-              planUi.earlier[p.id] = !eo;
-              render();
-            },
+            () =>
+              DS.foldFlip('earlier:' + p.id, !eo, () => {
+                planUi.earlier[p.id] = !eo;
+                render();
+              }),
             'pm-earlier'
           )
         );
@@ -479,13 +486,16 @@
           for (const x of past) {
             const n = x.ts.filter(isDone).length;
             rows.append(
-              dayRow(p, x.d, x.ts, {
-                cls: 'past',
-                label: label(x),
-                count: countEl(n + ' of ' + x.ts.length, n === x.ts.length ? 'x-green' : null),
-                isDone,
-                draft,
-              })
+              ...DS.foldTag(
+                'earlier:' + p.id,
+                dayRow(p, x.d, x.ts, {
+                  cls: 'past',
+                  label: label(x),
+                  count: countEl(n + ' of ' + x.ts.length, n === x.ts.length ? 'x-green' : null),
+                  isDone,
+                  draft,
+                })
+              )
             );
           }
       }
@@ -494,15 +504,17 @@
     function foldList(key, text, items) {
       const o = !!planUi.fold[key];
       const out = [
-        foldLine(text, o, () => {
-          planUi.fold[key] = !o;
-          render();
-        }),
+        foldLine(text, o, () =>
+          DS.foldFlip('list:' + key, !o, () => {
+            planUi.fold[key] = !o;
+            render();
+          })
+        ),
       ];
       if (o) {
         const ul = el('ul', 'pl-notes');
         for (const it of items) ul.append(it);
-        out.push(ul);
+        out.push(...DS.foldTag('list:' + key, ul));
       }
       return out;
     }
@@ -560,10 +572,11 @@
               foldLine(
                 `${crit.length} criteria · lowest: ${RUBRIC[low]} ${crit[low]}/5`,
                 ro,
-                () => {
-                  planUi.fold[rk] = !ro;
-                  render();
-                },
+                () =>
+                  DS.foldFlip('rub:' + rk, !ro, () => {
+                    planUi.fold[rk] = !ro;
+                    render();
+                  }),
                 'pm-rubfold'
               )
             );
@@ -578,6 +591,8 @@
               );
               rub.append(r);
             });
+            // B-576: only where the line folds it (in the card, on the phone) does it grow in and fold away
+            if (inCard && innerWidth < 600) DS.foldTag('rub:' + rk, rub);
             d.append(rub);
           }
         }

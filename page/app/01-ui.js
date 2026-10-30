@@ -35,6 +35,9 @@
       group: typeof dsGroup === 'function' ? dsGroup : undefined,
       line: typeof dsLine === 'function' ? dsLine : undefined,
       fold: typeof dsFold === 'function' ? dsFold : undefined,
+      grow: typeof dsGrow === 'function' ? dsGrow : (n, o, d) => (d ? d() : o || !n || (n.hidden = true)), // B-576
+      foldFlip: typeof dsFoldFlip === 'function' ? dsFoldFlip : (k, o, f) => f(),
+      foldTag: typeof foldTag === 'function' ? foldTag : (k, ...n) => n.flat().filter(Boolean),
       card: typeof dsCard === 'function' ? dsCard : undefined,
       notice: typeof dsNotice === 'function' ? dsNotice : undefined,
       toast: typeof dsToast === 'function' ? dsToast : undefined,

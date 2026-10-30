@@ -530,8 +530,15 @@
       b.addEventListener('click', () => {
         const o = !openWs.has(w.id);
         o ? openWs.add(w.id) : openWs.delete(w.id);
+        // B-576: the state flips at once; the detail grows in, or stays drawn while it folds away
+        const shown = getComputedStyle(more).display;
         li.classList.toggle('open', o);
         b.setAttribute('aria-expanded', String(o));
+        if (o) DS.grow(more, true);
+        else {
+          more.style.display = shown;
+          DS.grow(more, false, () => (more.style.display = ''));
+        }
       });
       const more = el('div', 'ws-more');
       if (detail) more.append(el('p', 'meta', detail));

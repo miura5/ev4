@@ -2240,7 +2240,7 @@ async function studyPlanChecks(page) {
     // a day folds on a second tap and opens on a third
     const row = page.locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-dr').first();
     await row.click();
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(400); // B-576: the day folds away in --dur-fold-close
     const folded = await page
       .locator('#ov-plans [data-ui=card][data-key="E4-H2"] .pl-day')
       .first()
