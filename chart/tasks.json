@@ -10639,7 +10639,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "92ecb00 adds a harness check but doesn't reproduce it when loading at 1280 or 1440. The next lead is a resize from narrow to wide without a re-render.",
+  "notes": "ec2ed50 adds resize checks. Not reproduced on main, neither on the staging app's own data (read only, draft NUR 112 and approved BIO 201, widened from 390, 800 and 1100) nor on a resize, because a width change past 1200 already re-renders. Next: Matt retries on the next staging build, with his window width and course.",
   "commit": null,
   "source": "build chat",
   "words": "On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
