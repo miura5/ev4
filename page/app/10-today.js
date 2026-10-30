@@ -98,8 +98,23 @@
     }
     function tickWrite(it, on, date = today) {
       const pt = planTaskById(it.ref);
-      if (pt) return tickPlan(pt.plan, pt.task, on);
-      return editList(date, { action: 'check', id: it.id, done: on }, 'Matt'); // B-448: on the day the row is on
+      // B-448: a list tick lands on the day the row is on
+      const w = pt ? tickPlan(pt.plan, pt.task, on) : editList(date, { action: 'check', id: it.id, done: on }, 'Matt');
+      // B-548: a tick says so with an Undo that takes the tick back
+      if (on)
+        Promise.resolve(w).then(
+          () =>
+            DS.toast({
+              text: 'Marked done.',
+              root: $('toast'),
+              action: {
+                label: 'Undo',
+                onClick: () => Promise.resolve(tickWrite(it, false, date)).then(() => render()),
+              },
+            }),
+          () => {}
+        );
+      return w;
     }
     async function tickPlan(plan, task, on) {
       // planedits/<exam id>: the page's ticks, replaced whole

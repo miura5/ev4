@@ -189,6 +189,16 @@
         strip.id = 'evline';
         strip.setAttribute('role', 'status');
         strip.hidden = true;
+        // B-551: the whole ✦ line is her button: a tap off its own button runs that button, or opens E.V. (the
+        // floating chat on the desk, her sheet on the phone)
+        strip.addEventListener('click', ev => {
+          if (ev.target.closest('button')) return;
+          const own = strip.querySelector('button');
+          if (own) return own.click();
+          const b = typeof F !== 'undefined' && F && F.evb;
+          if (b && b.offsetParent) b.click();
+          else showTab('ev');
+        });
         $('mh').after(strip);
       }
       let line = null;

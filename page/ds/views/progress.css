@@ -57,7 +57,7 @@
 .prog-hb-top .meta{color:var(--faint)!important;font-size:calc(12.5px * var(--ts))!important;margin:0!important;white-space:nowrap}
 .prog-hb .gauge{height:10px;border-radius:5px}
 #prog-day{display:flex;flex-direction:column;gap:14px!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
-#prog-day .prog-day-total{margin:0;font-size:30px;font-weight:var(--fw-semibold);letter-spacing:-.02em;line-height:1.1;color:var(--text)}
+#prog-day .prog-day-total{margin:0;font-size:var(--fs-4);font-weight:var(--fw-semibold);font-variant-numeric:tabular-nums;line-height:var(--lh-ui);color:var(--text)}
 #prog-day .prog-sessions{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
 #prog-day .prog-s{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:var(--sp-2);padding:0;min-height:0;border:0;font-size:var(--fs-2)}
 #prog-day .prog-s-t{display:flex;flex-direction:column;gap:1px;min-width:0}

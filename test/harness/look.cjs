@@ -350,7 +350,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           const rgbOf = v => ((probe.style.color = v), getComputedStyle(probe).color);
           const ember = new Set(['--her', '--her2', '--av1', '--av2'].map(n => rgbOf(cs.getPropertyValue(n).trim())));
           probe.remove();
-          const mine = e => e.closest('.ev-av, button.primary, #ev-send');
+          const mine = e => e.closest('.ev-av, button.primary, #ev-send, #evline .el-ico'); // B-551: her ✦ on her line (D-381)
           const out = [];
           for (const e of document.querySelectorAll('body *')) {
             if (mine(e) || (e.checkVisibility && !e.checkVisibility({ visibilityProperty: true }))) continue;

@@ -224,10 +224,10 @@ body.captions.on-ev .wrap{max-width:680px!important}
   .new-wrap .menu{width:min(240px,calc(100vw - 32px))!important;top:calc(100% - 2px)!important;right:4px!important}
   .new-wrap .menu button.btn.mi{height:44px!important;min-height:44px!important}
 }
-.evline{position:sticky;top:var(--mh-h);z-index:7;display:flex;align-items:center;gap:10px;min-height:40px;box-sizing:border-box;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px 8px 4px 16px;background:var(--bg);border-bottom:1px solid var(--line);font:400 calc(13px * var(--ts))/1.45 var(--sans);color:var(--text);flex-wrap:wrap}
+.evline{position:sticky;top:var(--mh-h);z-index:7;display:flex;align-items:center;gap:10px;min-height:40px;box-sizing:border-box;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px 8px 4px 16px;background:var(--bg);border:0;font:var(--fw-regular) var(--fs-2)/var(--lh-ui) var(--sans);color:var(--quiet);flex-wrap:nowrap;cursor:pointer}
 .evline[hidden]{display:none!important}
-.evline .el-ico{width:14px!important;height:14px!important;flex:0 0 14px!important;fill:none!important;stroke:var(--quiet)!important;stroke-width:1.8!important;stroke-linejoin:round!important}
-.evline .el-t{flex:1 1 0!important;min-width:0!important}
+.evline .el-ico{width:16px!important;height:16px!important;flex:0 0 16px!important;fill:var(--her)!important;stroke:none!important}
+.evline .el-t{flex:1 1 0!important;min-width:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .evline .btn{flex:0 0 auto!important}
 @media (min-width:600px){
   .evline{top:calc(8px + var(--mh-h));margin-right:calc(8px - 16px - var(--pane-r));padding:4px 12px 4px 18px;flex-wrap:nowrap;min-height:49px}

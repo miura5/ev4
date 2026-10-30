@@ -97,7 +97,7 @@
 /* the summary: the right panel's card from 1200 px; below that a draft's heads its card, a plan's is one line */
 .plan-sum .pm-scope{font:var(--fw-semibold) calc(15px * var(--ts))/1.35 var(--sans);color:var(--text)}
 .plan-sum .pm-meta{display:flex;flex-direction:column;gap:var(--sp-0_5)}
-.plan-sum .big .of{font-size:.5em;color:var(--quiet);font-weight:var(--fw-medium)}
+.plan-sum .big .of{font-size:inherit;color:var(--quiet);font-weight:var(--fw-medium)}
 .plan-sum .pm-sub{margin-top:-10px}
 .plan-sum .pm-rub{display:flex;flex-direction:column}
 .plan-sum .pm-rub .od-ws{margin:0;height:26px}

@@ -156,7 +156,15 @@
     // ---------------------------------------------------------------- asks: make, change, approve, answer
     async function makePlan(b, course, ex) {
       return guard(b, async () => {
-        const r = await startJob(E.studyPlanJob({ course, exams: S.exams, date: today, examId: ex && ex.id }));
+        // B-549: the working notice shows at once, before the record answers; the real job takes over on the render
+        T.planStart = { course, at: new Date().toISOString() };
+        render();
+        let r;
+        try {
+          r = await startJob(E.studyPlanJob({ course, exams: S.exams, date: today, examId: ex && ex.id }));
+        } finally {
+          T.planStart = null;
+        }
         if (!r.fired.ok)
           toast(r.fired.error === 'app_only' ? fireCopy('app_only') : 'Couldn’t start it: ' + fireCopy(r.fired.error));
         render();
@@ -670,10 +678,10 @@
       );
       card.append(line);
       // B-521 (F-13): Remake at work says so, with how long, and a new plan that didn't finish says why
-      const making = js.working || (p.section && E.studyPlanNewJobRunning(S.jobs, course));
+      const making = js.working || (p.section && (E.studyPlanNewJobRunning(S.jobs, course) || planStarting(course)));
       if (making)
         card.append(planWorking(making, js.working && js.working.revise ? 'Changing your plan' : 'Making a new plan'));
-      else if (js.failed) card.append(el('p', 'mini pl-failed', `Your new plan didn’t finish: ${js.why}`));
+      else if (js.failed) card.append(planFailed(`Your new plan didn’t finish: ${js.why}`));
       const bf = badgeFilter(p, c.ts);
       if (bf) card.append(bf.seg);
       const rows = planRowsFor(p, ex, { draft: false, f: bf ? bf.f : 'all', isDone: c.isDone });
@@ -745,13 +753,19 @@
       };
     }
     /** B-521 (F-13): a plan being made, said as it goes: working, how long so far, and where it lands. */
+    // B-549: Remake's tap, until the record holds its job
+    const planStarting = course => (T.planStart && T.planStart.course === course ? { at: T.planStart.at } : null);
+    /** B-549: the working notice: what is running, how long it usually takes, and the time since it started. */
     function planWorking(j, words) {
-      const p = el('span', 'mini pl-working');
-      p.append(liveSince(jobSince(j), words, 'pl-since'), document.createTextNode('. It shows here when it’s ready.'));
-      return p;
+      const n = DS.notice({ kind: 'working', line: '', expected: 'usually 2 to 4 min', cls: 'mini pl-working' });
+      const line = n.querySelector('.notice-line');
+      line.prepend(liveSince(jobSince(j), words, 'pl-since'));
+      return n;
     }
+    /** B-549: a plan that didn't finish says so in plain words. */
+    const planFailed = text => DS.notice({ kind: 'failed', line: text, cls: 'mini pl-failed' });
     function noPlanCard(ex, course, js) {
-      const making = js.working || E.studyPlanNewJobRunning(S.jobs, course); // D-362: one new plan per course
+      const making = js.working || E.studyPlanNewJobRunning(S.jobs, course) || planStarting(course); // D-362: one per course
       const card = DS.card({ cls: 'pl-card pl-none' + (making ? ' working' : '') });
       card.append(svgEl(PL_SPARK));
       const g = el('div', 'grow');
@@ -760,13 +774,13 @@
         el('span', 'h', failed ? `Study plan for ${exShortOf(ex)}` : `No study plan for ${exShortOf(ex)} yet`),
         making
           ? planWorking(making, 'Making your plan')
-          : el(
-              'span',
-              failed ? 'mini pl-failed' : 'mini',
-              failed
-                ? `Your last plan didn’t finish: ${js.why}`
-                : `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
-            )
+          : failed
+            ? planFailed(`Your last plan didn’t finish: ${js.why}`)
+            : el(
+                'span',
+                'mini',
+                `E.V. reads the ${course} calendar and materials, plans each day to ${short(ex.date)}, and scores it before you see it.`
+              )
       );
       card.append(g);
       // B-521: the button is Make a plan in every state, held while one is being made

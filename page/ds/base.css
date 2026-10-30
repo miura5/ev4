@@ -11,7 +11,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:cal
 a{color:var(--accent-text)}
 /* B-275 (D-270): selected text is neutral, a grey wash in the text colour, never the system blue */
 ::selection{background:rgba(var(--tint),.18);color:var(--text)}
-h1{font-size:calc(30px * var(--ts));font-weight:600;letter-spacing:-.02em;margin:0}
+h1{font-size:var(--fs-5);font-weight:600;letter-spacing:-.02em;margin:0}
 h2{font:600 calc(13.5px * var(--ts))/1.3 var(--sans);color:var(--ink2);margin:0}
 details>summary{cursor:pointer;font:600 calc(13.5px * var(--ts)) var(--sans);color:var(--ink2);min-height:36px;display:flex;align-items:center}
 form{display:flex;flex-direction:column;gap:10px}

@@ -33,7 +33,7 @@ body.opening .msg.greet{flex-direction:column;align-items:center;text-align:cent
 body.opening .msg.greet>.ev-av,body.opening .msg.greet>.av-slot,body.opening .msg.greet .msg-meta{display:none}
 body.opening .msg.greet .msg-body{align-self:stretch;align-items:center;padding-top:0}
 body.opening .msg.greet .bubble{font-size:calc(18px * var(--ts));line-height:1.55;color:var(--quiet);max-width:620px;text-wrap:pretty}
-body.opening .msg.greet .bubble p:first-child{font-size:calc(34px * var(--ts));line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;text-wrap:balance}
+body.opening .msg.greet .bubble p:first-child{font-size:var(--fs-5);line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;text-wrap:balance}
 body.opening .msg.greet .msg-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));align-self:stretch;text-align:left;margin-top:14px}
 .composer::after{content:"";position:absolute;left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));top:100%;height:calc(var(--dock-h) + 40px + env(safe-area-inset-bottom,0px));background:var(--bg)}
 .composer{position:sticky;bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px));z-index:4;background:linear-gradient(to bottom,rgba(var(--ground),0),var(--bg) 18px);padding-top:18px;padding-bottom:6px;display:flex;flex-direction:column;gap:10px}
@@ -79,7 +79,7 @@ body.captions .msg-body{align-items:center;gap:8px;padding:0}
 body.captions .msg.ev .msg-body,body.captions .msg.matt .msg-body{max-width:none;flex:none}
 body.captions .bubble,body.captions .msg.matt .bubble,body.captions.opening .msg.greet .bubble{background:none;padding:0;border-radius:0;max-width:100%;text-wrap:pretty}
 body.captions .msg.ev .bubble{font-size:calc(15px * var(--ts));line-height:1.45;color:var(--quiet);opacity:.6;transition:font-size .4s ease,opacity .4s ease,color .4s ease}
-body.captions .msg.ev.current .bubble{font-size:calc(20px * var(--ts));line-height:1.45;color:var(--ink);opacity:1}
+body.captions .msg.ev.current .bubble{font-size:var(--fs-5);line-height:1.45;color:var(--ink);opacity:1}
 body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
 body.captions.opening .msg.greet .bubble p:first-child{font-size:inherit;line-height:inherit;font-weight:inherit;letter-spacing:0;color:inherit;margin:0;text-wrap:pretty}
 body.captions .msg.earlier .bubble{opacity:.45}
@@ -112,7 +112,7 @@ body.captions .composer>.cap-echo{max-width:none}
 @media (min-width:1024px){
 body.captions .hero{--stage-h:370px}
 body.captions .msg.ev .bubble{font-size:calc(14px * var(--ts))}
-body.captions .msg.ev.current .bubble{font-size:calc(20px * var(--ts))}
+body.captions .msg.ev.current .bubble{font-size:var(--fs-5)}
 body.captions .msg.matt .bubble{font-size:calc(14px * var(--ts))}
 body.captions.surface-open .msg.ev.current .bubble{font-size:calc(17px * var(--ts))}
 }

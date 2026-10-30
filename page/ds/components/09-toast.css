@@ -4,3 +4,11 @@
 :where([data-ui='toast']){position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-h) + var(--sp-4) + env(safe-area-inset-bottom,0px));z-index:var(--z-toast);max-width:calc(100% - var(--sp-8));padding:var(--sp-2) var(--sp-4);border-radius:var(--r-pill);background:var(--text);color:var(--bg);font-weight:var(--fw-semibold);font-size:var(--fs-3);box-shadow:var(--shadow-toast);animation:rise var(--dur-5) var(--ease-out) both}
 :where([data-ui='toast']:has(.toast-act)){display:flex;align-items:center;gap:var(--sp-2);padding-right:var(--sp-1)}
 :where([data-ui='toast']) .toast-act{--quiet:var(--bg);color:var(--bg);text-decoration:underline;text-underline-offset:3px}
+/* B-548: where it sits. On the desk it rises just above the bottom strip, never over its prompt; on the phone it takes
+   E.V.'s line slot under the header, so it never covers a row or the tab bar. !important: legacy's raised .toast. */
+@media (min-width:1024px){
+  .toast{bottom:calc(var(--strip-h) + var(--sp-2) + env(safe-area-inset-bottom,0px))!important;left:auto!important;right:var(--sp-5)!important;transform:none!important}
+}
+@media (max-width:599px){
+  .toast,body.on-ev .toast{top:calc(var(--mh-h) + var(--sp-1) + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:var(--sp-3)!important;right:var(--sp-3)!important;transform:none!important;max-width:none!important;justify-content:space-between;border-radius:var(--r-md)!important;box-shadow:none!important}
+}

@@ -2375,7 +2375,7 @@ async function studyPlanChecks(page) {
     made.briefs.some(b => /\(B9H\)/.test(b)) &&
       made.button === 'Make a plan' &&
       made.held === true &&
-      /^Making your plan · \d+ s\. It shows here when it’s ready\.$/.test(made.line || '') &&
+      /^Making your plan · \d+ s · usually 2 to 4 min$/.test(made.line || '') &&
       /^working · \d+ (s|min)/.test(made.readout || ''), // the longest job running sets it
     JSON.stringify(made)
   );
@@ -2386,7 +2386,7 @@ async function studyPlanChecks(page) {
   );
   ok(
     'its working line keeps time as it goes, with no repaint (B-521)',
-    /^Making your plan · 1 min \d+ s\./.test(ticked || ''),
+    /^Making your plan · 1 min \d+ s · usually/.test(ticked || ''),
     String(ticked)
   );
   // B-456: Making… never sticks: the job got no result (no worker here), so 2 minutes after it was asked the button is

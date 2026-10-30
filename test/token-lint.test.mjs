@@ -21,7 +21,7 @@ const RAW = {
 };
 // [colours, font sizes, radii, durations] left per file on Oct 30; lower these as tokens replace them, never raise.
 const LEFT = new Map([
-  ['page/ds/base.css', [0, 4, 1, 0]],
+  ['page/ds/base.css', [0, 3, 1, 0]],
   ['page/ds/components/01-button.css', [0, 3, 3, 5]],
   ['page/ds/components/03-chip.css', [0, 1, 1, 0]],
   ['page/ds/components/04-segmented.css', [0, 2, 4, 0]],
@@ -32,20 +32,20 @@ const LEFT = new Map([
   ['page/ds/components/11-popover.css', [0, 0, 1, 0]],
   ['page/ds/components/12-field.css', [0, 1, 1, 0]],
   ['page/ds/components/13-choice.css', [0, 1, 2, 2]],
-  ['page/ds/components/14-meter.css', [0, 1, 2, 0]],
+  ['page/ds/components/14-meter.css', [0, 0, 2, 0]],
   ['page/ds/components/16-message.css', [0, 1, 0, 0]],
   ['page/ds/patterns/cards.css', [0, 20, 4, 0]],
-  ['page/ds/patterns/plan-card.css', [1, 20, 4, 0]],
-  ['page/ds/patterns/runner.css', [0, 13, 6, 0]],
-  ['page/ds/patterns/sessions.css', [0, 5, 2, 3]],
-  ['page/ds/patterns/shell.css', [3, 39, 28, 4]],
+  ['page/ds/patterns/plan-card.css', [1, 19, 4, 0]],
+  ['page/ds/patterns/runner.css', [0, 10, 6, 0]],
+  ['page/ds/patterns/sessions.css', [0, 3, 2, 3]],
+  ['page/ds/patterns/shell.css', [3, 38, 28, 4]],
   ['page/ds/patterns/triage.css', [1, 3, 2, 0]],
-  ['page/ds/views/ev.css', [9, 29, 13, 14]],
+  ['page/ds/views/ev.css', [9, 26, 13, 14]],
   ['page/ds/views/notes.css', [0, 17, 4, 0]],
-  ['page/ds/views/progress.css', [0, 8, 3, 0]],
+  ['page/ds/views/progress.css', [0, 7, 3, 0]],
   ['page/ds/views/record.css', [3, 7, 2, 0]],
-  ['page/ds/views/study.css', [0, 26, 9, 1]],
-  ['page/ds/views/today.css', [0, 46, 27, 0]],
+  ['page/ds/views/study.css', [0, 25, 9, 1]],
+  ['page/ds/views/today.css', [0, 44, 27, 0]],
 ]);
 const raw = f => {
   const a = audit(fs.readFileSync(path.join(ROOT, f), 'utf8'));

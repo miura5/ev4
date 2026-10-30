@@ -37,10 +37,10 @@ body.skill-on .qchips{display:none!important}
 .sk-step.miss .sk-mark{color:var(--bad)!important}
 .sk-crit{font:var(--fw-medium) var(--fs-1) var(--sans)!important;color:var(--warn)!important;white-space:nowrap!important}
 .sk-cur{margin:0!important;font-size:calc(17px * var(--ts))!important;line-height:1.5!important}
-.wo-clock{margin:0!important;font:var(--fw-semibold) calc(34px * var(--ts)) var(--sans)!important;font-variant-numeric:tabular-nums!important;color:var(--ink)!important}
+.wo-clock{margin:0!important;font:var(--fw-semibold) var(--fs-5) var(--sans)!important;font-variant-numeric:tabular-nums!important;color:var(--ink)!important}
 .wo-moves{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:var(--sp-1_5)!important}
 .wo-moves li{display:flex!important;gap:10px!important;align-items:baseline!important;font-size:var(--fs-5)!important}
-.wo-moves b{min-width:2.4em!important;text-align:right!important;font:var(--fw-semibold) calc(20px * var(--ts)) var(--sans)!important;color:var(--ink)!important;font-variant-numeric:tabular-nums!important}
+.wo-moves b{min-width:2.4em!important;text-align:right!important;font:var(--fw-semibold) var(--fs-5) var(--sans)!important;color:var(--ink)!important;font-variant-numeric:tabular-nums!important}
 .wo-extra{display:flex!important;flex-direction:column!important;gap:10px!important}
 .sk-headtxt{display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)!important;min-width:0!important}
 .sk-head button{flex:0 0 auto!important;min-height:36px!important}

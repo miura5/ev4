@@ -179,6 +179,20 @@
           val.append(el('b', null, v));
           if (d) val.append(el('span', 'meta', ' · ' + d));
           r.append(el('span', 'prop-k', k), val);
+          // B-550: the whole stat opens its list: the time by day, the questions answered, the open weak spots
+          const go = {
+            'Study time': () => ($('prog-chart-h') || r).scrollIntoView({ block: 'start', behavior: 'smooth' }),
+            'Quiz accuracy': () => (showTab('study'), setStudy('practice')),
+            'Weak spots': () => (showTab('study'), setStudy('weak')),
+          }[k];
+          if (go) {
+            r.setAttribute('role', 'button');
+            r.tabIndex = 0;
+            r.addEventListener('click', go);
+            r.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') (e.preventDefault(), go());
+            });
+          }
           return r;
         })
       );
