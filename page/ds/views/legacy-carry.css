@@ -24,7 +24,6 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .big{font-size:var(--fs-5);font-weight:600;line-height:1.25;margin:0}
 .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .row .grow{flex:1;min-width:0}
-.row .title{overflow-wrap:anywhere}
 .row.done .title{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(var(--tint),.2)}
 .meta{font-size:var(--fs-2);color:var(--soft);margin-top:2px}
 /* B-117: Today's lines. One line each; the rest opens in place. */
@@ -32,29 +31,17 @@ body.on-ev.opening .top-av,body.on-ev.in-session .top-av,body.on-ev.core-big .to
 .wk-line{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:8px;width:100%;min-width:0;cursor:pointer;padding:4px 0;line-height:1.4}
 .wk-line:focus-visible,.fold-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .ti-t,.wk-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wk-k{flex:none;color:var(--ink2);font-size:var(--fs-2)}
-.wk-k.urgent{color:var(--bad)}
 .week-item .when{padding-top:0}
 .fold-line{all:unset;cursor:pointer;color:var(--ink2);font-size:var(--fs-3);padding:4px 0}
 /* B-118: Readiness. One lead line; one objective per line, opening in place; the other tables one line each. */
 .fold-card{padding-top:10px;padding-bottom:10px}.fold-card .fold-line{color:var(--ink)}
 .fold-line::after{content:' ›'}.fold-line[aria-expanded=true]::after{content:' ⌄'}
 .when{font:500 var(--fs-1) var(--sans);font-variant-numeric:tabular-nums;min-width:4.6rem;color:var(--ink2);padding-top:2px}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.stat{background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:13px 16px;min-width:0}
-.stat b{display:block;font-size:var(--fs-5);font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2;letter-spacing:-.01em}
-.stat span{font-size:var(--fs-2);color:var(--soft)}
-@media (max-width:420px){.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:span 2}}
 .empty{color:var(--soft);font-size:var(--fs-4);margin:0}
-table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
-table.tbl th{text-align:left;font:500 var(--fs-1) var(--sans);color:var(--soft);padding:6px 8px 8px 0;border-bottom:1px solid var(--line)}
-table.tbl td{padding:8px 8px 8px 0;border-bottom:1px solid rgba(var(--tint),.06);vertical-align:top}
-table.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .meter{height:8px;border-radius:4px;background:rgba(var(--tint),.08);overflow:hidden}.meter i{display:block;height:100%;background:var(--do);border-radius:4px}
 .progress{height:4px;border-radius:2px;background:rgba(var(--tint),.08);overflow:hidden}.progress i{display:block;height:100%;background:var(--do);transition:width .2s ease}
 /* controls */
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.fields{display:flex;gap:8px;flex-wrap:wrap}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .actions .grow{flex:1;min-width:0}
 /* B-191: Back sits at the left of a question's actions, Next and the check at the right; an open set folds by its head line (D-160). */
@@ -84,7 +71,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .open-points li.hit{color:var(--do)} .open-points li.miss{color:var(--bad)}
 .open-added{margin:0;color:var(--soft)}
 .num-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px;color:var(--soft)}
-.opt.locked{cursor:default}
 .why{display:block;font-size:var(--fs-3);color:var(--quiet);margin-top:4px;line-height:1.45}
 .verdict{font-weight:600;font-size:var(--fs-5);margin:0} .verdict.ok{color:var(--do)} .verdict.no{color:var(--bad)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock-h) + 18px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);font-weight:600;font-size:var(--fs-3);padding:10px 18px;border-radius:999px;max-width:calc(100% - 32px);z-index:20;box-shadow:0 10px 30px -10px rgba(0,0,0,.6);animation:rise .35s var(--ease) both}
@@ -104,10 +90,7 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
 .qchip.go svg{width:13px;height:13px}
 .compose-row textarea{border:0;background:transparent;min-height:44px;height:44px;max-height:140px;resize:none;padding:11px 0;border-radius:0;outline:none;flex:1;min-width:0;font-size:var(--fs-4);line-height:1.4}
-.compose-row button{width:44px;height:44px;min-height:44px;flex:0 0 44px;border-radius:50%;padding:0;display:grid;place-items:center}
-.compose-row button svg{width:18px;height:18px}
 #p-ev.drop .compose-row{border-color:var(--accent)}
-.fine{font:500 var(--fs-1) var(--sans);color:var(--faint);text-align:center;margin:0}
 /* E.V.: a running study session (B-84, the Captions v2 artboard): one line, a dot, the minutes and the next check,
    Break, +5, End; its progress is the ring round her core */
 .ev-card.check{background:var(--glass);border-color:var(--line2)}
@@ -118,15 +101,13 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
    whole; nothing rises or staggers, and bars, meters and the week chart are drawn at their value. Folds, her stage and
    the side column keep their own moves. */
 /* B-225 (D-271): a view switch is a cut: the settled view paints on the tap frame (no fade). */
-@keyframes fade{from{opacity:0}to{opacity:1}}
 .rise{animation:rise .3s var(--ease) both}
-.update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:var(--fs-3);padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update[hidden]{display:none}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
+.update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:var(--fs-3);padding:8px 8px 8px 16px;border-radius:999px;max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}.update span{white-space:nowrap}.update button{padding:6px 14px;min-height:0}
 /* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
 /* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
 /* D-108: the workout card */
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
-.share-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .share-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-edge);border-radius:16px;background:var(--accent-bg)}
 .share-bar .grow{flex:1 1 200px}
 /* ---------------------------------------------------------------- Captions (B-77; D-122, D-127, D-128)
@@ -141,19 +122,14 @@ body.captions #p-ev{display:grid;grid-template-columns:minmax(0,1fr);grid-templa
 body.captions #p-ev>*{grid-column:1;min-width:0}
 /* B-112: under 560 px tall the panel gives up its floor and the composer its fade, so it fits the screen. */
 @media (max-height:559px){body.captions #p-ev{min-height:0}}
-body.captions #p-ev>.hero{grid-row:1}
 /* B-86: the session's line sits just under her core, between her and her words. */
 body.captions #p-ev>.sbar{grid-row:2;justify-self:center;max-width:min(660px,100%);margin:-6px 0 4px;box-sizing:border-box}
-body.captions #p-ev>.thread{grid-row:3}
-body.captions #p-ev>.composer{grid-row:4}
 body.captions #p-ev>#ev-side{grid-row:5}
 /* The side column exists only while it holds something (D-122 as amended): an open surface, or in a session his notes. */
 body.captions #p-ev>#ev-side:empty{display:none}
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{max-height:none;opacity:1;margin:0;overflow:visible;height:var(--stage-h,300px);align-items:center;transition:height .28s var(--ease);cursor:pointer;-webkit-tap-highlight-color:transparent}
 body.captions .hero>.ev-av{transition:opacity var(--dur-4) var(--ease-out)}
 /* Her captions: a scroller with the pull zone above them; the newest line sits just under her. */
-body.captions .cap-pull svg.r{position:absolute;inset:0}
-body.captions .cap-pull .arrow svg{width:14px;height:14px}
 /* No bubbles: her lines are captions; his earlier lines are small and grey. */
 /* Until B-78's surfaces: one card under her line (five rows and a more that opens its tab; never scrolling inside
    itself), the rest of the reply's cards as one tappable line that swaps the next card in. */
@@ -176,21 +152,7 @@ body.captions .bubble:not(.reveal) .ev-caret{opacity:0}
    moves nothing under him. */
 body.captions button.cap-now{position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:5;width:auto;max-width:none;height:30px;min-height:30px;padding:0 12px;border-radius:15px;border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.18);color:var(--quiet);font:500 var(--fs-1) var(--sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 body.captions .cap-now:hover{background:var(--hover);color:var(--text)}
-body.captions .cap-now svg{width:13px;height:13px}
 @media (max-width:599px){body.captions button.cap-now{height:44px;min-height:44px;padding:0 16px;border-radius:22px}}
-body.captions .cap-now[hidden]{display:none}
-body:not(.on-ev) .cap-now{display:none}
-@media (min-width:1024px){
-  body.captions .hero{--stage-h:370px}
-  /* Nothing beside her: her stage centres in the window. Something beside her: the column slides in from the right
-     and her stage re-centres in what is left. */
-  /* D-247: the direction C prototype's sizes (D-122 had 16 and 24) */
-  
-  
-  
-  
-}
-@keyframes ev-side-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){body.captions .reveal .w{opacity:1;filter:none;transform:none}body.captions.side-on #p-ev>#ev-side{animation:none}}
 /* B-78 (D-123, D-125, D-126, D-160): surfaces. One open at a time under its head line (title and state, a chevron),
    the reply's other cards as one-line rows under that line, never pills; the head line folds it and unfolds it. Below
@@ -212,14 +174,12 @@ body:not(.on-ev) .cap-now{display:none}
 .surf .passage{margin:2px 0 8px;font-size:var(--fs-4);line-height:1.5;color:var(--ink2)}
 @media (max-width:1199px){
   body.captions #p-ev>#ev-side{grid-row:4;justify-self:center;width:100%;max-width:660px}
-  body.captions #p-ev>.composer{grid-row:5}
   body.captions #ev-surf{max-height:clamp(330px,46dvh,410px);overflow-y:auto;overscroll-behavior:contain;margin-top:6px;border-radius:18px 18px 14px 14px}
   body.captions #ev-surf.folded{max-height:none;overflow:visible}
 }
 @media (min-width:1200px){body.captions #ev-side{display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin}
 }
 /* With the skills or workout panel open on desktop (B-51), her captions still fill their row and scroll. */
-body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 /* B-104 (D-143, D-144): the calm Prep marker (quiet grey; never the red of urgent) and the prep
    check under her greeting: one line that opens to a tickable list, each item with the file and page it came from. */
 .prep-row .chev{width:14px;height:14px;opacity:.7;transition:transform .25s var(--ease)}
@@ -235,22 +195,17 @@ body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
 .ws-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 .ws-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws-n{flex:none;color:var(--ink2);font-size:var(--fs-2)}
-.ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}.ws-item.open .ws-more{display:flex}.ws-more .meta{margin:0}.ws-more .actions{margin:0}
+.ws-more{display:none;flex-direction:column;gap:6px;padding:0 0 8px}.ws-item.open .ws-more{display:flex}.ws-more .meta{margin:0}
 button.tlink{all:unset;cursor:pointer;color:var(--accent-text);font-size:var(--fs-3);padding:4px 0}button.tlink:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 /* B-126 (D-165): Study answered and done. The counter is the set's fold line; one line per question under it, beside
    the question from 1024 px; the verdict one line under the stem; a finished set's lines open in place. */
-.set-count{flex:none;font-variant-numeric:tabular-nums;color:var(--ink2);font-size:var(--fs-2)}
 .fold-line.flat{cursor:default;pointer-events:none}.fold-line.flat::after{content:''}
 .set-q:focus-visible,.sum-line:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-.sq-s.ok{color:var(--do)}
 .q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}
 .q-main{display:flex;flex-direction:column;gap:12px;min-width:0}.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
 .verdict{margin:0}
-.why[hidden]{display:none}
 .why-fold{align-self:flex-start}
-.sum-h{margin:6px 0 0}
 .sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
-#more-card:not(.card){padding:4px 0}
 /* B-48 (D-105): readiness over time. Thin line, recessive grid; the night-before prediction a ring of its own. */
 /* B-72 (D-120): the week's three lines. */
 /* B-182: Your turn, grouped by place; a place is a quiet label, each ask a row with its chips. */
@@ -296,13 +251,10 @@ body.on-ev.opening .side .top-av,body.on-ev.in-session .side .top-av,body.on-ev.
    is under 560 px tall, it folds and she is the 24 px Dial Arc in the header (B-452: no longer while he reads back). */
 body.captions .hero,body.captions.opening .hero,body.captions.core-big .hero{align-items:flex-start;padding-top:var(--stage-pad,24px);box-sizing:border-box}
 body.captions.her-folded .hero{padding-top:0;overflow:hidden}
-body.captions .hero>.ev-av{transform:none}
 .mh-her{display:none;appearance:none;border:0;background:none;padding:0;width:24px;height:24px;flex:0 0 24px;cursor:pointer;border-radius:6px}
 .mh-her:hover{background:var(--surface)}
 body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* the send: a quiet circle that fills in Ember when he types (D-270) */
-.compose-row #ev-send{background:var(--raised);border:0;box-shadow:inset 0 0 0 1px var(--line2);color:var(--quiet);width:36px;height:36px;min-height:36px;flex:0 0 36px;align-self:center}
-.compose-row #ev-send.on{background:var(--her);color:var(--on-her);box-shadow:none}
 /* ============================================================ B-221: the shade, the pane, the sidebar's sections ======
    (Matt's staging look, Oct 22.) The sidebar's Today section, one 32 px row each, absent while empty (B-286: no Working). */
 /* B-334 (D-312): the sidebar's Today as in the demo: "Today" and "n left", then up to five open items, each with an 8 px
@@ -310,7 +262,6 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* B-407: the review row's "· 1 to review" sits on a second line, so the sidebar never cuts it off */
 /* B-286 (C-4, C-14, C-15, D-291): the sidebar's foot holds Theme and Contrast above System; "n more in Today" is quiet;
    her dial sits on the sidebar's own ground. The phone's tab bar has no foot. */
-.side .ev-av .under{fill:var(--sunken)}
 /* B-334 (D-312): the foot is one Preferences row; it opens a popover above it with Theme, Contrast and System. Under
    600 px the button is the header's last icon and the popover drops from it. */
 /* from 600 px the popover rises from the button over the pane's edge, as in the demo; the sidebar's rows are 32 px */
@@ -338,16 +289,11 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>h2,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head{min-height:28px;align-items:center;display:flex;margin:0}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .card>.card-head .meta{font-size:var(--fs-1);color:var(--faint);margin:0}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{border-top:0;padding:6px 0;min-height:44px;align-items:baseline;gap:10px;font-size:var(--fs-3);box-sizing:border-box}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.week-item{align-items:center;padding:0}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row .meta{font-size:var(--fs-1);color:var(--faint)}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .when{font-size:var(--fs-1);color:var(--faint);min-width:4.6rem;padding:0}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{align-items:center;min-height:44px;padding:0}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k{font-size:var(--fs-1);color:var(--faint)}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k.urgent{color:var(--urg)}
 @media (min-width:600px){
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{min-height:32px;font-size:var(--fs-2)}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{padding:4px 0}
-  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row.week-item{padding:0}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text]{min-height:32px;padding:4px 10px;border-radius:8px;font-size:var(--fs-2)}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) form button{min-height:32px;border-radius:8px;padding:0 12px;font-size:var(--fs-2)}
 }
@@ -409,7 +355,6 @@ body.captions #p-ev>#ev-side{grid-row:6}
 /* B-383 (D-316, Matt's one-row rule): from 600 px the chips wrap onto centred rows as the demo, every word whole; on the
    phone they stay one row that scrolls sideways and comes to rest on a whole chip. */
 .compose-row textarea{min-height:0;height:auto;padding:14px 0;font-size:var(--fs-3)}
-.compose-row textarea::placeholder{color:var(--faint)}
 .compose-row textarea:placeholder-shown{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .compose-row #ev-send,.compose-row #ev-send.on{width:32px;height:32px;min-height:32px;flex:0 0 32px;border-radius:16px;background:var(--her);color:var(--on-her);box-shadow:none}
 .compose-row #ev-send:hover{background:color-mix(in srgb,var(--her) 88%,var(--text))}
@@ -453,7 +398,7 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
    primary. No part only closes or hides (D-160). Rows are 32 px from 600 px and 44 px on the phone (C-1);
    on the phone every button and switch segment is a 44 px target. The views move onto these parts in their own tasks. */
 /* badge: words first, one per row (D-276); the dot carries the coded colour, the words stay text */
-.title .row-badge{margin-left:6px;vertical-align:1px;height:20px} /* B-303: a kit row's one badge, after its name */
+ /* B-303: a kit row's one badge, after its name */
 /* segmented switch: grey, the picked option on the ground; it says which is picked (aria-pressed or aria-checked, C-15) */
 /* B-380: as the demo's .seg: a flat grey fill with no outline; the picked option on the surface with a hairline */
 /* card */
@@ -536,7 +481,6 @@ button.wk-h[aria-pressed="true"]>span:first-child{color:var(--text);font-weight:
    List / Week and Plan the rest; in the week List / Week, back / Today / forward and the range. Rows span the pane,
    44 px, hairline between. The budget's figure is large, with On the list and Done as rows. The week fills the pane. */
 #p-today{gap:0}
-#p-today>.cols{margin-top:0}
 #today-list>.empty{padding:14px 2px}
 /* B-354 (D-314): the demo's row is 44 px with its hairline under it (45 in all); a week title wraps between words only,
    a column widening to its longest word; the grid ends at the pane's foot under E.V.'s line; on the phone a long title
@@ -598,8 +542,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 #p-study .sbar-study .seg{align-self:center}
 #study-course .code{display:none}
 #study-objectives{display:flex;flex-direction:column;gap:12px;padding:2px 2px 18px}
-#study-objectives[hidden]{display:none}
-.ov-card{gap:10px}
 .ov-card[hidden]{display:none}
 .ov .obj{display:flex;align-items:center;gap:12px;min-height:44px;padding:4px 4px 4px 0;box-sizing:border-box;border-bottom:1px solid var(--line);font-size:var(--fs-2);color:var(--text)}
 .ov:last-child .obj{border-bottom:0}
@@ -625,7 +567,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 .ov-card .ov-none-row .ov-none{flex:1;min-width:200px;margin:0}
 .ov-detail .od-add{align-self:flex-start;margin-top:-6px}
 /* B-482: Practice sets in this course, a full row under Coming up and the mini quiz */
-.ov-sets[hidden]{display:none}
 .ov-sets .st:hover{background:var(--hover)}
 .ov-sets span.sm,.ov-sets .sd{color:var(--quiet);font-size:var(--fs-1);white-space:nowrap}
 .ov-sets .fold-line{padding:8px 6px;color:var(--quiet);font-size:var(--fs-1)}
@@ -648,9 +589,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 .rec-detail .meta{margin:0}
 .rec-detail select.idea-kind{height:28px;min-height:28px;padding:0 8px;border-radius:8px;font:500 var(--fs-1) var(--sans)}
 @media (max-width:599px){
-  .rec-pop .seg button{min-height:44px}
-}
-@media (max-width:599px){
   .rec-detail select.idea-kind{height:44px;min-height:44px}
 }
 /* B-339 (D-312): Record as the demo draws it. The toolbar spans the pane under a hairline, the rows run edge to edge
@@ -658,7 +596,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
    the right panel itself: badge, an 18 px title, the properties in a card, her line, and Quiz me for a quiz. */
 #record-sessions{margin:-18px -16px 0;gap:0}
 #record-sessions .rec-bar{padding:12px 18px;border-bottom:1px solid var(--line);gap:8px;flex-wrap:nowrap}
-.rec-fbtn .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rec-pop .seg{align-self:flex-start;width:auto}
 .rec-pop .seg button{flex:none}
 #record-sessions .cols > .col-main{gap:0}
@@ -672,7 +609,6 @@ body[data-view="today"].task-open{--panel-top:calc(8px + var(--mh-h) + var(--sta
 /* ============================================================ B-333 (D-312): her insight strip, as in the demo ========
    One sentence and at most one action under the header on Today and Study, sticky with it; it spans the window as the
    header does, and from 1200 px the right panel starts under it. The week's own line moves up into it. */
-body.has-line #today-week .wk-her{display:none}
 /* ============================================================ B-350, B-359 (D-316): Record's log frame ===============
    The log alone (Dates, Journal, Canvas and Library left the page): the toolbar strip under the header, rows edge to
    edge grouped by day, and the picked row's detail in the panel. */
@@ -738,7 +674,6 @@ body.has-line #today-week .wk-her{display:none}
   .chatp .cin2{margin:0 8px 8px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line2);display:flex;flex-direction:column;flex:none}
   .chatp .cin2:focus-within{box-shadow:inset 0 0 0 2px var(--text)}
   .chatp .cin2 textarea{border:0;border-radius:12px 12px 0 0;background:none;resize:none;font:400 var(--fs-2)/1.45 var(--sans);color:var(--text);padding:10px 12px 4px;min-height:0;height:38px;max-height:140px;box-sizing:border-box;outline:none}
-  .chatp .cin2 textarea::placeholder{color:var(--faint)}
   .chatp .cin2 .crow{display:flex;align-items:center;gap:6px;padding:0 6px 6px 10px}
   .chatp .cin2 .crow .sp{flex:1}
   .chatp .cin2 .ctx{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-1);color:var(--quiet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -759,10 +694,6 @@ body.has-line #today-week .wk-her{display:none}
   body.has-line #today-week .wk-days{min-height:calc(100dvh - var(--mh-h) - var(--status-h, 0px) - 8px - var(--strip-h) - 53px)}
 }
 /* ==== B-402 Notes: the editor (page/app/25-notes.js; the demo's AppNotes, NoteEditor and NoteStyleMenu boards) ==== */
-#tab-notes[hidden],#p-notes[hidden]{display:none!important}
-@media (max-width:1023px){
-  #tab-notes,#p-notes{display:none!important}
-}
 #p-notes .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 /* B-403: the list, as the NotesList board. The toolbar (course filters with counts, New note) spans the pane under a
    hairline; rows run edge to edge, 44 px, grouped by course; Open shows on hover or focus. The picked note's preview is
@@ -789,7 +720,6 @@ body.has-line #today-week .wk-her{display:none}
 #p-notes .n-stb{width:164px;justify-content:flex-start;gap:8px;padding:0 8px;color:var(--text)!important}
 /* B-442: Ask E.V. on words selected in a note, under the selection */
 .n-ask{position:fixed;z-index:35;box-shadow:0 0 0 1px var(--line2),0 6px 18px rgba(0,0,0,.14)}
-.n-ask[hidden]{display:none}
 #p-notes .popover .mi{display:flex;align-items:center;gap:10px;height:34px;padding:0 9px;border-radius:6px;border:0;background:none;width:100%;font:400 var(--fs-2) var(--sans);color:var(--text);cursor:pointer;text-align:left;box-sizing:border-box}
 #p-notes .popover .mi:hover,#p-notes .popover .mi:focus-visible,#p-notes .popover .mi.on{background:var(--hover)}
 #p-notes .popover .mi.on{font-weight:500}
@@ -803,7 +733,6 @@ body.has-line #today-week .wk-her{display:none}
 #note-body h1.nb{margin:0 0 14px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.02em;line-height:1.2}
 #note-body h2.nb{margin:28px 0 6px;font-size:var(--fs-5);font-weight:600;letter-spacing:-.012em;line-height:1.3;color:var(--ink)}
 #note-body h3.nb{margin:18px 0 4px;font-size:var(--fs-4);font-weight:600;line-height:1.4;color:var(--ink)}
-#note-body p.nb{margin:6px 0}
 #note-body .n-chk{position:absolute;left:2px;top:.3em;width:16px;height:16px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line2);display:inline-flex;align-items:center;justify-content:center;color:var(--do-ink);cursor:pointer;-webkit-user-select:none;user-select:none}
 #note-body .n-chk.done{background:var(--sem-green);box-shadow:none}
 #note-body .n-chk .ico{width:11px;height:11px;stroke-width:2.6;opacity:0}
@@ -824,7 +753,6 @@ body.has-line #today-week .wk-her{display:none}
 .mh .n-read{order:9;margin-left:8px;gap:5px;color:var(--quiet);font-weight:400}
 .mh .n-read .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .mh .n-read[aria-pressed=false]{color:var(--faint)}
-.mh .n-crumb[hidden],.mh .n-sync[hidden],.mh .n-back[hidden],.mh .n-read[hidden]{display:none}
 /* ==== end B-402 ==== */
 /* B-432: the phone's keyboard. Safari zooms the page on a text field under 16 px, so every field is 16 px or more here.
    While the keyboard is up (body.kb, set from visualViewport by the composer part), the frame is the space above it
@@ -861,7 +789,6 @@ body.has-line #today-week .wk-her{display:none}
 /* ============================================================ B-554: cheap scroll frames ===========================
    The header's ground is 96% opaque, so its blur showed nothing and cost a repaint on every scroll frame; long lists
    skip layout and paint for rows out of view (rows with no menu inside: paint containment clips one). */
-.top{-webkit-backdrop-filter:none;backdrop-filter:none}
 .rec-li,#p-record .rec-day,.ti-folded>li,.ov-rows>*{content-visibility:auto;contain-intrinsic-size:auto 44px}
 /* ============================================================ B-552: a native baseline ============================
    No grey tap flash, no double-tap zoom wait, no text selection or long-press callout on controls, the arrow cursor on
@@ -873,4 +800,3 @@ button,[role="tab"],[role="button"],[role="menuitem"],summary,label,.seg{cursor:
 a[href],a[href] *{cursor:pointer!important}
 /* B-556: on a cold open of her view, its frame stays unpainted until her first lines and her stage have their sizes
    (02-navigation lifts it), so nothing in it moves once it shows. The header, sidebar and tab bar paint at once. */
-body.ev-booting #p-ev{opacity:0}
