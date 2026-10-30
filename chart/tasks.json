@@ -10765,9 +10765,9 @@
   "id": "B-583",
   "kind": "bug",
   "title": "Bug (reported Oct 30): In a draft plan's ⋯, Put away is hidden for his own exams (!ex.own); the old draft row always offered it.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Fixed and seen on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10776,6 +10776,10 @@
   "reportedAt": "2026-10-30T11:33:59.841Z",
   "board": {
    "row": "v4 B-583: In a draft plan's ⋯, Put away is hidden for his own exams (!ex.own);…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T11:34:14.283Z"
   }
  },
  {
