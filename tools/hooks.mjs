@@ -235,6 +235,40 @@ export function treeHash(root = ROOT) {
   }
   return h.digest('hex');
 }
+/** The Stop hook's cap (D-408): a targeted run, never the whole suite; over it the run counts as red. */
+export const STOP_TEST_MS = 90e3;
+export const STOP_TEST_MAX = 8;
+
+/** The paths that differ from HEAD: tracked changes and untracked files not ignored. */
+export function changedFiles(root = ROOT) {
+  const g = a => spawnSync('git', ['-C', root, ...a], { encoding: 'utf8', maxBuffer: 1 << 30 }).stdout || '';
+  return [
+    ...new Set([
+      ...g(['diff', '--name-only', 'HEAD']).split('\n'),
+      ...g(['ls-files', '-o', '--exclude-standard']).split('\n'),
+    ]),
+  ].filter(Boolean);
+}
+
+/**
+ * D-408: the tests the Stop hook runs for a change: test/format.test.mjs, a changed test file itself, the test named
+ * after a changed file (x.mjs -> x.test.mjs or <dir>-x.test.mjs), and the tests that import it; at most STOP_TEST_MAX.
+ */
+export function stopTests(changed, testFiles, readTest = () => '') {
+  const tests = testFiles.filter(f => f.endsWith('.test.mjs')).sort(),
+    out = new Set(tests.includes('format.test.mjs') ? ['format.test.mjs'] : []);
+  for (const c of changed) {
+    const parts = c.split('/'),
+      file = parts.at(-1),
+      base = file.replace(/\.[^.]+$/, '').replace(/\.test$/, ''),
+      dir = parts.length > 1 ? parts.at(-2) : '';
+    if (parts[0] === 'test' && tests.includes(file)) out.add(file);
+    for (const t of [`${base}.test.mjs`, `${dir}-${base}.test.mjs`]) if (tests.includes(t)) out.add(t);
+    if (parts.length > 1 && /\.(m?js|cjs)$/.test(file) && parts[0] !== 'test')
+      for (const t of tests) if (readTest(t).includes(`${dir}/${file}'`)) out.add(t);
+  }
+  return [...out].slice(0, STOP_TEST_MAX);
+}
 const testOkFile = root => path.join(root, 'dist', 'test-ok');
 
 // Its own test run, never a child of another (node:test skips the files when NODE_TEST_CONTEXT is set at all).
@@ -276,20 +310,17 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
       process.stdout.write(`npm test: skipped, the tree is unchanged since its last green run (${ok.at}; B-146)\n`);
       return 0;
     }
+    const t0 = Date.now(),
+      picked = stopTests(changedFiles(ROOT), fs.readdirSync(path.join(ROOT, 'test')), f =>
+        fs.readFileSync(path.join(ROOT, 'test', f), 'utf8')
+      );
     const r = spawnSync(
       process.execPath,
-      [
-        '--import',
-        './test/tmp-root.mjs', // B-326: each test process empties its own temp folder
-        '--test',
-        ...fs
-          .readdirSync(path.join(ROOT, 'test'))
-          .filter(f => f.endsWith('.test.mjs'))
-          .sort()
-          .map(f => path.join('test', f)),
-      ],
-      { cwd: ROOT, encoding: 'utf8', env: ownRun() }
+      ['--import', './test/tmp-root.mjs', '--test', ...picked.map(f => path.join('test', f))], // B-326
+      { cwd: ROOT, encoding: 'utf8', env: ownRun(), timeout: STOP_TEST_MS }
     );
+    if (process.env.EV_STOP_VERBOSE)
+      process.stdout.write(`stop: ran ${picked.join(', ')} in ${((Date.now() - t0) / 1000).toFixed(1)}s\n`);
     const v = stopVerdict(input, { status: r.status, out: (r.stdout || '') + (r.stderr || '') });
     if (r.status === 0) {
       fs.mkdirSync(path.dirname(testOkFile(ROOT)), { recursive: true });

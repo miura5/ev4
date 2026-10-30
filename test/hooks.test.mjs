@@ -496,3 +496,26 @@ test('B-320: treeHash reads a diff over 1 MiB whole: the same hash on two runs, 
   fs.writeFileSync(path.join(dir, 'big.txt'), body + 'tail-two\n');
   assert.notEqual(H.treeHash(dir), one, 'a change past the first 1 MiB is seen');
 });
+
+test('D-408: the Stop hook picks the format test, changed tests, same-name tests and importers, capped', () => {
+  const tests = [
+    'format.test.mjs',
+    'cards.test.mjs',
+    'pwa-claude.test.mjs',
+    'core.test.mjs',
+    'hooks.test.mjs',
+    'x.mjs',
+  ];
+  const src = { 'core.test.mjs': "import { a } from '../core/cards.mjs';" };
+  const pick = changed => H.stopTests(changed, tests, f => src[f] || '');
+  assert.deepEqual(pick([]), ['format.test.mjs']);
+  assert.deepEqual(pick(['core/cards.mjs']), ['format.test.mjs', 'cards.test.mjs', 'core.test.mjs']);
+  assert.deepEqual(pick(['pwa/claude.js']), ['format.test.mjs', 'pwa-claude.test.mjs']);
+  assert.deepEqual(pick(['test/hooks.test.mjs', 'README.md']), ['format.test.mjs', 'hooks.test.mjs']);
+  assert.ok(
+    H.stopTests(
+      Array.from({ length: 20 }, (_, i) => `test/t${i}.test.mjs`),
+      Array.from({ length: 20 }, (_, i) => `t${i}.test.mjs`)
+    ).length <= H.STOP_TEST_MAX
+  );
+});

@@ -202,7 +202,7 @@ goes in (D-335, Matt's call; it ends the journal's named read, D-106 and D-113, 
 stays owner-only, and reading never writes. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
 required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
-(.claude/settings.json, B-56 to B-58): npm test at the end of a turn, the spec's JSON form, and a guard that refuses a
+(.claude/settings.json, B-56 to B-58): at the end of a turn the format test and the changed files' own tests (D-408, 90 s cap), the spec's JSON form, and a guard that refuses a
 live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipeline runs never load them (B-65).
 
 ## Rules from past failures
