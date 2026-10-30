@@ -6,24 +6,28 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
-## Update (Oct 30, ~12:20 am Central): overnight, D2c running (read this first)
+## Update (Oct 30, early morning Central): staging look done, view lanes running (read this first)
 
 - **Live:** v4.5.19 at ceba846. Matt is asleep. Nothing waits on him until release card #2.
-- **Running:** one agent, B-515 lane D2c (brief docs/design/proprietary/d2c-brief.md). It drops page/styles.css,
-  moves every remaining legacy rule into Proprietary, and strips `!important` once nothing competes (lane B's
-  scratchpad scripts collect/decide/apply/post.mjs and redo.sh). Started ~11:15 pm; due ~12:15; not pushed yet, no
-  stall seen. A liveness Monitor watches its transcript.
-- **Lane B is done** (ea5d7cc, 1b93a6d), by its report: pixdiff 0, npm test 1018, smoke 31, prep 297. It fixed the
-  B-455 pick-objective menu. It left 135 legacy rules (95 never matched in the crawl) and 211 `!important` lines for
-  D2c, and did not run `check --touched`; D2c runs every harness.
-- **Next, in order (D-390, LANES.md):**
-  1. Tokens lane merges branch `tokens` (c32fe5f; worktree scratchpad/tokens) after D2c.
-  2. Five component lanes.
-  3. One staging look.
-  4. View lanes B-564 to B-572 (view-lanes.md).
-  5. One end-to-end run and one whole-release review.
-  6. Release card #2. Live waits on Matt's word.
-- **If the ETA slips past ~1:15 am, tell Matt why in two lines** (guardrail).
+- **Staging:** GREEN at 9a8cbe5 (v4.5.19+123). It has the tokens, every component lane and the smoke fix.
+- **Done tonight:**
+  - D2c (37b0df8): legacy is dropped through legacy-carry.css, with carry.mjs keeping its precedence.
+  - Tokens (267db1c).
+  - Components:
+    - buttons and motion (949176b, 0f772e7)
+    - Line, check and no outlines (08f4f1d)
+    - type, toast, notice, meter and the ✦ line (ca4f404)
+    - badges (9a8cbe5)
+  - B-574: the smoke workflow was red for 25+ commits on smoke:pwa's plant; fixed at 7c469ba.
+- **Running, view wave 1 (4 agents):** Today B-564/565/566, Study B-567/568, Notes and Record B-569/570, and Conversation B-572. A liveness Monitor watches them.
+- **Next:**
+  1. Progress B-571.
+  2. Ship staging.
+  3. One real end-to-end run: time a plan, and set B-549's "usually" line from it.
+  4. One whole-release code review.
+  5. Release card #2. Live waits on Matt's word.
+- **Running late:** about an hour behind the plan given to Matt. Card ETA ~5 to 6 am.
+- **Open bars for the view lanes:** B-541's Today column, B-544's Today rows, B-546's toolbar rows, B-542's budget hairline, and B-548's Undo on approve and save.
 
 ## Update (Oct 29, ~8 pm Central): the UI build tonight
 
