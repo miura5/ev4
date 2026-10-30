@@ -10096,12 +10096,12 @@
   "title": "Neutral themes: the theme.js recipe sets base hue 270 and chroma 0.6, with surface steps for chrome, page, panel, raise, hover and selected in light and dark; Ember only for E.V., Send and the one primary",
   "dod": "The Gallery shows both modes at 3 contrasts with every text pair at 4.5:1 or better; no warm tint left; ship staging GREEN",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "done",
   "depends": [
    "B-515"
   ],
-  "notes": "",
-  "commit": null,
+  "notes": "Tokens lane: r4 neutral themes, raise and sel steps, the type scale and motion tokens in tokens.css and theme.js. npm test 1020, smoke 31, Gallery 58/58 at contrast 30, 60 and 100. Spots where old rules still win go to the component lanes.",
+  "commit": "267db1c",
   "source": "plan 9w83U8c79EjxijPXqs9xKi"
  },
  {
