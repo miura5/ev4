@@ -51,3 +51,52 @@
       });
       return g;
     }
+
+    /**
+     * Group (B-546): a symmetric row of controls (DS.button nodes) that never wraps. When the row has no room, the
+     * controls from the end go behind a ⋯ button whose menu (DS.popover) runs each one's click; keep (a count) pins the
+     * first controls in the row. Options: items (the nodes), label (the menu's name, 'More'), keep, cls, key.
+     *   row.append(DS.group({ items: [a, b, c], label: 'More actions' }));
+     */
+    function dsGroup(o = {}) {
+      const r = dsRoot('div', 'group', o, 'ds-group');
+      r.setAttribute('role', 'group');
+      const items = [].concat(o.items || []).filter(Boolean);
+      const keep = Math.max(1, o.keep || 1);
+      const more = dsButton({
+        cls: 'group-more',
+        kind: 'ghost',
+        label: o.label || 'More',
+        iconOnly: true,
+        icon: el('span', null, '⋯'),
+      });
+      more.hidden = true;
+      r.append(...items, more);
+      let menu = null;
+      const fit = () => {
+        for (const it of items) it.hidden = false;
+        more.hidden = true;
+        if (r.scrollWidth <= r.clientWidth + 1) return;
+        more.hidden = false;
+        const away = [];
+        for (let i = items.length - 1; i >= keep && r.scrollWidth > r.clientWidth + 1; i--) {
+          items[i].hidden = true;
+          away.unshift(items[i]);
+        }
+        if (menu) menu.remove();
+        menu = dsPopover({
+          anchor: more,
+          label: o.label || 'More',
+          items: away.map(b => ({
+            label: b.getAttribute('aria-label') || b.textContent.trim(),
+            disabled: b.disabled,
+            onPick: () => b.click(),
+          })),
+        });
+        r.append(menu);
+      };
+      if (typeof ResizeObserver === 'function') new ResizeObserver(() => fit()).observe(r);
+      requestAnimationFrame(fit);
+      r.dsFit = fit;
+      return r;
+    }

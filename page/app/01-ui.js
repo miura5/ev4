@@ -31,6 +31,7 @@
       badge: typeof dsBadge === 'function' ? dsBadge : undefined,
       chip: typeof dsChip === 'function' ? dsChip : undefined,
       segmented: typeof dsSegmented === 'function' ? dsSegmented : undefined,
+      group: typeof dsGroup === 'function' ? dsGroup : undefined,
       line: typeof dsLine === 'function' ? dsLine : undefined,
       fold: typeof dsFold === 'function' ? dsFold : undefined,
       card: typeof dsCard === 'function' ? dsCard : undefined,

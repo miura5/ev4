@@ -28,3 +28,9 @@
   .seg{align-self:stretch;width:100%}
   .seg button{min-height:44px;height:44px;padding:0 12px;min-width:44px;justify-content:center;flex:1}
 }
+/* B-546: Group, a symmetric row of controls. It never wraps: the controls that don't fit go, last first, behind its ⋯
+   button (a DS.popover menu), so a toolbar is one even row at every width. */
+:where([data-ui='group']){display:flex;flex-wrap:nowrap;align-items:center;gap:var(--sp-1);min-width:0;max-width:100%;overflow:hidden}
+:where([data-ui='group']) > *{flex:none}
+:where([data-ui='group']) > [hidden]{display:none}
+:where([data-ui='group']) > .group-more{margin-inline-start:auto}
