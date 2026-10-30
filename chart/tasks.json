@@ -10723,9 +10723,9 @@
   "id": "B-581",
   "kind": "bug",
   "title": "Bug (reported Oct 30): run.cjs studyPlanChecks crashes: the plan-tick click times out as element not stable, likely from the B-576 fold motion",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "run.cjs runs studyPlanChecks to the end with no timeout, every check passing, including B-577's approved-plan checks.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10734,6 +10734,10 @@
   "reportedAt": "2026-10-30T10:28:10.065Z",
   "board": {
    "row": "v4 B-581: run.cjs studyPlanChecks crashes: the plan-tick click times out as…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T10:28:35.664Z"
   }
  }
 ]
