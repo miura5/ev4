@@ -1,5 +1,17 @@
 [
  {
+  "id": "D-398",
+  "date": "Oct 29",
+  "title": "Proprietary's patterns budget is about 800 lines (was 500 in D-386/D-388); the JS and component budgets stand",
+  "why": "Lane D2a moved the whole shell (the L frame, pane geometry, tabs, header) into patterns/shell.css, about 257 rules; that is structure every view needs and has no smaller home",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [
+   "D-388"
+  ],
+  "source": "log"
+ },
+ {
   "id": "D-397",
   "date": "Oct 29",
   "title": "UI polish lanes follow docs/design/ui-polish/LANES.md: tokens first (r4.css ported word for word), then up to 5 component lanes, one staging look, then up to 9 view lanes; look changes only in tokens and components; a two-minute side-by-side look before each push (no pixel gate); each view lane converts its own leftover old-structure parts; states the reference doesn't show go to the designer once; the L frame, day arrows and everything Matt uses are kept",
