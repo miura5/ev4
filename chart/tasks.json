@@ -11111,9 +11111,9 @@
   "id": "B-599",
   "kind": "bug",
   "title": "Bug (reported Oct 30): A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and terms, 32 cards) opens from the conversation, but it isn't listed under Flashcards in Study for BIO 201 or NUR 112, even after a refresh; the deck's header reads 'Course' instead of the course name.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A deck E.V. makes on request is stored with its real course and appears under that course's Flashcards in Study; a deck whose course field doesn't match a known course still appears (by its title's course, or in an Other group), never hidden; the existing BIO 201 Ch 9 deck shows under BIO 201 without a hand edit to the live record; a test covers a chat-made deck; checked on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11123,6 +11123,10 @@
   "reportedAt": "2026-10-30T17:00:38.314Z",
   "board": {
    "row": "v4 B-599: A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T17:00:56.049Z"
   }
  }
 ]
