@@ -883,15 +883,17 @@
       }
       // a plan in force for no exam in the record (a dosage plan, B-194) shows on every course tab while it has days,
       // an exam ahead or not; its summary stays on its card
-      const own = ownPlans().map(p =>
+      // B-577: an own plan owns the panel only when no exam plan's card does (an exam with no objectives and no plan
+      // of its own); otherwise its card keeps its summary line at every width
+      const ownCard = (p, panelled) =>
         approvedCard(
           p,
           { id: p.exam || p.id, title: p.title || 'Plan', date: planDays(p).slice(-1)[0].date, own: true },
           cur ? cur.course : '',
-          { panelled: false }
-        )
-      );
+          { panelled }
+        );
       if (!cur || !cur.exam) {
+        const own = ownPlans().map(p => ownCard(p, false));
         box.replaceChildren(...own.map(x => x.card));
         box.hidden = !own.length;
         return null;
@@ -937,9 +939,16 @@
         )
         .sort((a, b) => a.date.localeCompare(b.date)))
         one(ex, false);
+      const ownList = ownPlans();
       const usePanel = PANEL.matches && panelFree;
-      const owner = usePanel ? parts.find(x => x.card && x.draft) || parts.find(x => x.panel) || null : null;
+      const ownOwns = usePanel && ownList.length > 0 && !parts.some(x => x.card);
+      const owner = !usePanel
+        ? null
+        : ownOwns
+          ? { panel: () => own[0].panel() }
+          : parts.find(x => x.card && x.draft) || parts.find(x => x.card) || parts.find(x => x.panel) || null;
       const kids = parts.flatMap(x => x.nodes(x === owner));
+      const own = ownList.map((p, i) => ownCard(p, ownOwns && i === 0));
       box.replaceChildren(...kids, ...own.map(x => x.card));
       return owner && owner.panel ? owner.panel() : null;
     }

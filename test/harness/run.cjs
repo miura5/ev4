@@ -2811,6 +2811,25 @@ async function studyPlanChecks(page) {
   await page.click('#tab-study');
   await page.waitForTimeout(300);
   await sidePlan('an approved plan');
+  // B-577 (Matt, live): the same approved plan on an exam with no objectives yet; the panel still holds its summary
+  const moved = await page.evaluate(async () => {
+    const db = await window.claude.use('db'),
+      ids = Object.entries(window.__db.objectives || {})
+        .filter(([, o]) => o.exam === 'E4')
+        .map(([id]) => id);
+    for (const id of ids) await db.collection('objectives').doc(id).update({ exam: 'E4-later' });
+    return ids;
+  });
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  const noneShown = await page.evaluate(() => /No objectives yet/.test(document.getElementById('ov-card').textContent));
+  ok('E4 with its objectives moved off reads No objectives yet (B-577)', moved.length > 0 && noneShown, moved.length);
+  await sidePlan('an approved plan, exam with no objectives');
+  await page.screenshot({ path: path.join(shots, 'b577-no-objectives-1280.png') });
+  await page.evaluate(async ids => {
+    const db = await window.claude.use('db');
+    for (const id of ids) await db.collection('objectives').doc(id).update({ exam: 'E4' });
+  }, moved);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(250);
 }
