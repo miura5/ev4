@@ -66,20 +66,28 @@ caching, model ids, token limits) reads Anthropic's claude-api skill first: the 
 for model ids, parameters and pricing; never answer those from memory. The real staging run of that path is the build
 manager's (Guardrails, "Run it for real first"): your report says what to try and what a good result looks like.
 
-## Proofs by kind
+## Proofs by kind (tiered, D-408)
 
-Run each in the exact tree you push. See `references/proofs.md` for commands, the sandbox's known failures and how to
-read the results.
+The shared machine runs only fast, targeted checks; full suites run on GitHub. Run each in the exact tree you push. See
+`references/proofs.md` for commands, the sandbox's known failures and how to read the results.
 
-| The task touches | Proof |
+**Locally, per change (fast):**
+
+| The change touches | Local proof |
 | --- | --- |
-| Anything | `npm test` GREEN with new tests for the change; read the total (`# pass`) |
-| The page (page/) | `npm run smoke` GREEN; the harness for each view touched at 1280; screenshots looked at, desktop only. The phone is frozen at "it works" (D-407): no phone layout or polish work, no 390 look passes or screenshots; the 390 smoke and any 390 checks already in a harness still run and must pass |
-| pwa/ | `npm run smoke:pwa` GREEN; `npm run test:run-api` when the run API is touched |
-| Proprietary (page/ds, 01-ui-*) | the Gallery harness, and `node tools/pixdiff.cjs` showing nothing moved that shouldn't |
+| Anything | `npm run format` + `node --test test/format.test.mjs`; the unit test files for the code you touched, with new tests for the change |
+| Style moves, Proprietary (page/ds, 01-ui-*) | `node tools/pixdiff.cjs <step start>` 0 changed pixels (or the deliberate change, with its shots) and the computed-style diff; the Gallery harness when a component changed |
+| Page behaviour (page/app) | the one harness group your change touches (e.g. `EV_ONLY=<group>`), at 1280; screenshots looked at, desktop only |
+| pwa/ | `npm run smoke:pwa`; `npm run test:run-api` when the run API is touched |
 | A model call | the tests above; the staging run is the build manager's |
 
-Before reporting, run `npm run check -- --touched` once (Every session step 5), in the background.
+The phone is frozen at "it works" (D-407): no phone layout or polish work, no 390 look passes or screenshots; 390 checks
+already in a suite still run where the full suite runs.
+
+**Full suites (npm test, smoke, every harness) are not run on the shared machine.** GitHub runs `npm test` and smoke on
+every push; the build manager runs the full harness suite on GitHub once per batch (D-408). Push, then say in your
+report what you ran locally. When the batch run fails, the build manager hands the failure back with its step.
+Never run two full harness suites at once on the shared machine.
 
 ## Commit and push
 
