@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "Lane B done (ea5d7cc, 1b93a6d): 449 owned rules into the views, 1,048 !important stripped where nothing competes, D2b's items moved, .ov-sets .sm narrowed. 135 legacy rules and 211 !important lines left for D2c. D2c started (brief docs/design/proprietary/d2c-brief.md).",
+  "notes": "D2c 37b0df8: the legacy layer is dropped. page/styles.css moved whole into views/legacy-carry.css, and tools/carry.mjs keeps its old precedence (4 ids added), so pixdiff is 0, a full computed-style diff of every element is 0, npm test 1020 passes and every harness is green. The run.cjs 'A run was missed' line is synthetic data, not a bug. Deferred to consolidation: moving the carry's rules into their view files, stripping !important (1,938) and the token done bar, which waits on the tokens branch. The token lint pins today's counts and only lets them go down.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
