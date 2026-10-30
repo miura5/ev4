@@ -6,7 +6,26 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
-## Update (Oct 29, ~8 pm Central): the UI build tonight (read this first)
+## Update (Oct 30, ~12:20 am Central): overnight, D2c running (read this first)
+
+- **Live:** v4.5.19 at ceba846. Matt is asleep. Nothing waits on him until release card #2.
+- **Running:** one agent, B-515 lane D2c (brief docs/design/proprietary/d2c-brief.md). It drops page/styles.css,
+  moves every remaining legacy rule into Proprietary, and strips `!important` once nothing competes (lane B's
+  scratchpad scripts collect/decide/apply/post.mjs and redo.sh). Started ~11:15 pm; due ~12:15; not pushed yet, no
+  stall seen. A liveness Monitor watches its transcript.
+- **Lane B is done** (ea5d7cc, 1b93a6d), by its report: pixdiff 0, npm test 1018, smoke 31, prep 297. It fixed the
+  B-455 pick-objective menu. It left 135 legacy rules (95 never matched in the crawl) and 211 `!important` lines for
+  D2c, and did not run `check --touched`; D2c runs every harness.
+- **Next, in order (D-390, LANES.md):**
+  1. Tokens lane merges branch `tokens` (c32fe5f; worktree scratchpad/tokens) after D2c.
+  2. Five component lanes.
+  3. One staging look.
+  4. View lanes B-564 to B-572 (view-lanes.md).
+  5. One end-to-end run and one whole-release review.
+  6. Release card #2. Live waits on Matt's word.
+- **If the ETA slips past ~1:15 am, tell Matt why in two lines** (guardrail).
+
+## Update (Oct 29, ~8 pm Central): the UI build tonight
 
 - **Live:** v4.5.19 (ceba846). It carries flashcards complete, the bug and probe fixes, and the invisible Proprietary skeleton.
 - **The UI polish design passed** (round 5, with the L frame restored). The doc is https://claude.ai/artifact/9w83U8c79EjxijPXqs9xKi, the reference is in docs/design/ui-polish/ (on staging at /reference), and the tasks are B-539 to B-572 (D-392 to D-396).
