@@ -6258,5 +6258,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "2f50284",
+  "time": "2026-10-30T13:21:54.754Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "f24fcc5",
+  "tasks": [
+   "B-585",
+   "B-582",
+   "B-586"
+  ],
+  "summary": "In the review surface, the card's question (18 px) reads larger than…; Remake stays tappable while its job is being written…; Main fails npm test because a line in page/app/21-study-plan.js from…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
