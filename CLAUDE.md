@@ -67,6 +67,10 @@ It files Matt's asks as they come, answers him, orders the backlog, ships stagin
   lists the fixes that would lift the score most. The build manager files those as tasks and fires their lanes.
 - Test agent: keeps npm test and the harnesses asserting what E.V. should do now. Behaviour and data-safety checks stay
   strict; a check that only pinned a retired look is rewritten or retired.
+- Spike (D-409): a throwaway experiment, sent when a builder stops short for safety, a fix keeps failing, an estimate
+  rests on something unmeasured, or two designs are plausible. Throwaway worktree, no commits or Chart writes, no
+  full suites, about an hour; it reports causes with counts, the fix per cause, what can't be done, and an estimate,
+  and a builder builds from that. One per release; a second needs a line to Matt first.
 - Code reviewer: before a release, a fresh agent (or 2 to 4 splitting it) reads the whole release diff for broken
   behaviour, lost data paths and dead UI.
 
