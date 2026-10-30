@@ -84,6 +84,11 @@
 /* Density switches on the phone's width (today's rows, 44px under 600px) or a coarse pointer, whichever holds. */
 @media (max-width:599px),(pointer:coarse){:root{--line-h:44px;--pad-card:var(--sp-3)}}
 @media (max-width:599px){:root{--kind-dot:6px}}
+/* r4.css's per-mode wash strength and popover lift (B-539), in theme.js's three blocks: dark by default, light when the
+   system says so unless the toggle says dark, and the toggle's light. */
+:root,:root[data-theme="dark"]{--wash:18%;--shadow-pop:0 6px 24px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--wash:12%;--shadow-pop:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)}}
+:root[data-theme="light"]{--wash:12%;--shadow-pop:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)}
 /* One reduced-motion switch zeroes every duration: the system setting, or E.V.'s own Motion setting. */
 @media (prefers-reduced-motion:reduce){:root{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms}}
 :root[data-motion="reduce"]{--dur-1:0.01ms;--dur-2:0.01ms;--dur-3:0.01ms;--dur-4:0.01ms;--dur-5:0.01ms;--dur-fold-fade:0.01ms;--dur-pop-in:0.01ms;--dur-pop-out:0.01ms;--dur-toast:0.01ms;--dur-window-in:0.01ms;--dur-window-out:0.01ms;--dur-row:0.01ms;--stagger-row:0ms;--dur-tick:0.01ms;--hold-tick:0ms}

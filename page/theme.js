@@ -64,7 +64,7 @@
       '#' +
       x
         .map(function (v, i) {
-          return Math.max(0, Math.min(255, Math.round(v + (y[i] - v) * t)))
+          return Math.round(v + (y[i] - v) * t)
             .toString(16)
             .padStart(2, '0');
         })
@@ -99,36 +99,31 @@
   // --faint is the one value the floors move: r4's #8b8b92 (light) and #7d7d86 (dark) read under D-273's 4.6:1, so it
   // darkens (lightens in dark) from r4's value only as far as the floor needs. Coded colours: r4's --ok, --warn, --bad,
   // --info, --violet, --teal and --slate; the kind palette (tokens.css --kind-*) is drawn from them.
-  var R4KEYS =
-    'chrome bg surface raise hover sel line line2 text quiet faint her onHer ok warn bad info violet teal slate'.split(
+  var K =
+    'chrome bg surface raise hover sel line line2 text quiet faint her her2 onHer ok warn bad info violet teal slate'.split(
       ' '
     );
-  var r4 = function (hexes, wash, pop) {
-    var o = { wash: wash, pop: pop };
+  var r4 = function (hexes) {
+    var o = {};
     hexes.split(' ').forEach(function (x, i) {
-      o[R4KEYS[i]] = '#' + x;
+      o[K[i]] = '#' + x;
     });
     return o;
   };
   var R4 = {
     light: r4(
-      'f3f3f4 fbfbfb ffffff f4f4f5 efeff0 e9e9eb ececee dedee1 1c1c1f 5f5f66 8b8b92 b6541d ffffff 2c9a5a a87a0c cc4b45 2f6fde 7c5cdb 1f8f8a 5a6b86',
-      '12%',
-      '0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04)'
+      'f3f3f4 fbfbfb ffffff f4f4f5 efeff0 e9e9eb ececee dedee1 1c1c1f 5f5f66 8b8b92 b6541d bc4741 ffffff 2c9a5a a87a0c cc4b45 2f6fde 7c5cdb 1f8f8a 5a6b86'
     ),
     dark: r4(
-      '101012 151517 1b1b1e 202024 242428 2a2a2f 232327 303036 ececef a3a3ab 7d7d86 e0743a 1a0d05 4cc27e d6a53c ec6a62 6b9cf5 a189f2 45bdb6 93a3be',
-      '18%',
-      '0 6px 24px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05)'
+      '101012 151517 1b1b1e 202024 242428 2a2a2f 232327 303036 ececef a3a3ab 7d7d86 e0743a f48478 1a0d05 4cc27e d6a53c ec6a62 6b9cf5 a189f2 45bdb6 93a3be'
     ),
   };
-  var NEUTRAL = { h: 270, c: 0.6 };
   var CODED = { ok: 'green', warn: 'yellow', bad: 'red', info: 'blue', violet: 'violet', teal: 'teal', slate: 'slate' };
 
   // B-506: the tuner's recipe, the inputs besides mode and contrast: the base's hue and chroma and her accent's.
   // Ember's own (D-268) when none is given; her second face follows her accent by the same turn and strength.
   // B-539: the base is round 4's neutral (D-392); a tuner's other base or accent still runs the LCH generator.
-  var RECIPE = { base: { h: NEUTRAL.h, c: NEUTRAL.c }, accent: { h: EMBER.acc.h, c: EMBER.acc.c } };
+  var RECIPE = { base: { h: 270, c: 0.6 }, accent: { h: EMBER.acc.h, c: EMBER.acc.c } };
   var num = function (v, lo, hi, d) {
     v = Number(v);
     return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d;
@@ -142,42 +137,25 @@
       accent: { h: num(a.h, 0, 360, RECIPE.accent.h), c: num(a.c, 0, 100, RECIPE.accent.c) },
     };
   };
-  var tints = function (T) {
-    T.tint = function (hex) {
-      return mixHex(T.surface, hex, T.tintMix);
-    };
-    T.tintLine = function (hex) {
-      return mixHex(T.line2, hex, 0.35);
-    };
-    return T;
-  };
-  var isR4 = function (R) {
-    return R.base.h === NEUTRAL.h && R.base.c === NEUTRAL.c && R.accent.h === EMBER.acc.h && R.accent.c === EMBER.acc.c;
-  };
-  // Move a text colour toward the text until it holds the floor on every ground.
-  var hold = function (x, text, grounds, floor) {
-    while (
-      grounds.some(function (g) {
-        return cratio(x, g) < floor;
-      })
-    )
-      x = mixHex(x, text, 0.05);
-    return x;
-  };
   /** Round 4's theme (B-539): r4.css at contrast 60, the neutral steps spread or drawn in by contrast. */
-  var r4Theme = function (mode, k, accent2) {
+  var r4Theme = function (mode, k) {
     var A = R4[mode],
       q = Math.min(1, 1.4 - (2 * k) / 3),
-      T = Object.assign({}, A, { mode: mode, k: k, accent: A.her, accent2: accent2, onAccent: A.onHer, sem: {} });
+      T = Object.assign({ mode: mode, k: k, accent: A.her, accent2: A.her2, onAccent: A.onHer, sem: {} }, A);
     ['chrome', 'raise', 'hover', 'sel', 'line', 'line2'].forEach(function (n) {
       T[n] = mixHex(A.bg, A[n], k / 0.6);
     });
-    var G = [T.bg, T.chrome, T.surface, T.hover, T.raise, T.sel];
-    T.quiet = hold(mixHex(A.text, A.quiet, q), A.text, G, 4.5);
-    T.faint = hold(hold(mixHex(A.text, A.faint, q), A.text, [T.chrome, T.surface], 4.6), A.text, G, 4.5);
+    T.quiet = mixHex(A.text, A.quiet, q);
+    // --faint holds 4.6:1 on every ground (D-399)
+    for (
+      T.faint = mixHex(A.text, A.faint, q);
+      [T.bg, T.chrome, T.surface, T.hover, T.raise, T.sel].some(function (g) {
+        return cratio(T.faint, g) < 4.6;
+      });
+    )
+      T.faint = mixHex(T.faint, A.text, 0.05);
     for (var c in CODED) T.sem[CODED[c]] = A[c];
-    T.tintMix = mode === 'dark' ? 0.16 : 0.11;
-    return tints(T);
+    return T;
   };
 
   /** Every token of one theme: mode 'light' or 'dark', contrast 30 to 100, and the tuner's recipe (round 4 when none). */
@@ -192,12 +170,7 @@
       k = Math.max(0.3, Math.min(1, (contrast || 60) / 100)),
       B = V.base,
       dark = mode === 'dark';
-    if (isR4(R))
-      return r4Theme(
-        dark ? 'dark' : 'light',
-        k,
-        dark ? lch2hex(68, V.acc2.c * 0.9, V.acc2.h) : lch2hex(47, V.acc2.c, V.acc2.h)
-      );
+    if (B.h == 270 && B.c == 0.6) return r4Theme(dark ? 'dark' : 'light', k); // round 4's base
     var n = function (L, cm) {
         return lch2hex(L, B.c * (cm == null ? 1 : cm), B.h);
       },
@@ -220,7 +193,6 @@
       T.onAccent = '#ffffff';
       T.semL = 52;
       T.semC = 54;
-      T.tintMix = 0.11;
     } else {
       T.bg = n(10.5);
       T.chrome = n(10.5 - (1.5 + 2 * k));
@@ -238,17 +210,10 @@
       T.onAccent = n(9);
       T.semL = 72;
       T.semC = 48;
-      T.tintMix = 0.16;
     }
-    T.raise = mixHex(T.bg, T.hover, 0.7);
-    T.sel = mixHex(T.hover, T.line, 0.6);
-    T.wash = R4[T.mode].wash;
-    T.pop = R4[T.mode].pop;
     T.sem = {};
     for (var s in SEM) T.sem[s] = lch2hex(T.semL, T.semC, SEM[s]);
-    T.sem.teal = lch2hex(T.semL, T.semC * 0.8, 195);
-    T.sem.slate = lch2hex(T.semL, T.semC * 0.35, 265);
-    return tints(T);
+    return T;
   };
 
   var rgb = function (hex) {
@@ -266,7 +231,7 @@
     var g = T.sem,
       ink = T.onAccent,
       L = 13;
-    while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, NEUTRAL.c * 1.5, NEUTRAL.h);
+    while (cratio(ink, g.green) < 4.5 && L >= 0) ink = lch2hex(L--, 0.9, 270);
     // B-505 (D-372): Proprietary's generated tokens, per mode and contrast: --focus (the text colour, as every focus
     // ring draws today), the four washes of the text colour, the 1 px --ring on --line2, the three lifts, and the
     // coded colours under their Proprietary names with a wash each. Legacy's --warn, --bad, --info and --violet (a grey
@@ -274,10 +239,8 @@
     var ds = {
       '--focus': T.text,
       '--ring': '0 0 0 1px ' + T.line2,
-      '--raise': T.raise,
-      '--sel': T.sel,
-      '--wash': T.wash,
-      '--shadow-pop': T.pop,
+      '--raise': T.raise || T.hover,
+      '--sel': T.sel || T.line,
     };
     WASH.forEach(function (a, i) {
       ds['--wash-' + (i + 1)] = rgba(T.text, a);
@@ -286,8 +249,8 @@
       ds['--shadow-' + (i + 1)] = '0 ' + z[0] + 'px ' + z[1] + 'px rgba(0,0,0,' + z[2] + ')';
     });
     for (var c in CODED) {
-      ds['--' + c] = g[CODED[c]];
-      ds['--' + c + '-wash'] = rgba(g[CODED[c]], CODED_WASH);
+      ds['--' + c] = g[CODED[c]] || T.quiet;
+      ds['--' + c + '-wash'] = rgba(ds['--' + c], CODED_WASH);
     }
     var out = {
       '--bg': T.bg,
