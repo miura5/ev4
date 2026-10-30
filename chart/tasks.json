@@ -9610,7 +9610,7 @@
   "depends": [
    "B-514"
   ],
-  "notes": "D2a pushed df00ad4: the shell (L frame, single scroll pane, header, status, side panels, New menu and dialog) is 268 rules in patterns/shell.css; pane geometry and --status-h in tokens; --line-h renamed; data-ui on 33 static kit elements; with legacy dropped the shell frame is identical. For D2c: [data-readonly] composer/new-wrap rule (pinned by pwa-live.test), the right panel card look, and E-window shell rules (.top-av, .mh-her, body.captions.*, #p-ev).",
+  "notes": "D1a pushed 1a1fc53: 183 E-window rules (thread, captions, Arc stage, composer, quick asks, greeting brief) in views/ev.css, de-duplicated; pixdiff 0. Duplicates kept in legacy for #p-ev, .hero, #ev-send, composer button/textarea, svg sizes, .cap-now: on drop, re-run captions (cap-now stacking, Back to now, #ev-send size). Seen during runs, outside the E window: run.cjs notice-1280 'A run was missed' again (B-573 flake) and one crash in study plans: D2c's full harness pass must rule both in or out.",
   "commit": null,
   "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
  },
