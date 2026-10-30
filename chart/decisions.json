@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-407",
+  "date": "Oct 30",
+  "title": "The phone view is frozen at 'it works' (supersedes D-394's phone baseline): no phone layout or polish work, no 390 px look passes or screenshots in builds or release cards; phone checks shrink to a smoke test that it loads, a tick works and E.V. opens. Existing phone rules are carried as they are. After the consolidation, a dedicated stripped-down phone layout (Linear-mobile style, the basics Matt picks, likely Today with ticking, E.V.'s chat, flashcards and a quick note) is designed as its own round.",
+  "why": "Matt (Oct 30): a squeezed desktop layout never feels native, he rarely uses the phone, and its overhead isn't worth it now; a purpose-built phone layout later is the right shape, as Linear does.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-406",
   "date": "Oct 30",
   "title": "The desktop target is Chrome (installed as an app); Safari desktop is not a supported target and gets no extra test lane. The iPhone app stays WebKit by Apple's rule, tested as today.",
