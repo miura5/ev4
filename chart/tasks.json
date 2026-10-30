@@ -11330,9 +11330,9 @@
   "id": "B-609",
   "kind": "bug",
   "title": "Bug (reported Oct 30): The dayedits schema's kind enum lacks learn, skills-prep and clinical-prep, so New task and Snooze fail on those kinds; and pwa/jobs.mjs never configures core, so NUR 112 loses its NCLEX framing in app jobs.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "dayedits kind enum matches core LIST_KINDS (a test keeps them in step); New task saves all nine kinds and Snooze works on a Learn row; pwa/jobs.mjs configures core so NUR 112 keeps NCLEX framing and BIO 201 gets none (unit test)",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11342,6 +11342,10 @@
   "reportedAt": "2026-10-30T21:58:34.996Z",
   "board": {
    "row": "v4 B-609: The dayedits schema's kind enum lacks learn, skills-prep and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T21:58:55.527Z"
   }
  }
 ]
