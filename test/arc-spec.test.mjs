@@ -28,7 +28,11 @@ function problems(f) {
 
 test('B-205: spec.ui.look.dialArc holds her stage sizes and budget, of the right shape', () => {
   assert.deepEqual(problems(F), []);
-  assert.deepEqual(Object.keys(F).sort(), ['_', 'budget', 'sizes'], 'B-276: only what the page and the harness read');
+  assert.deepEqual(
+    Object.keys(F).sort(),
+    ['_', 'budget', 'colours', 'reach', 'sizes'],
+    'B-276: only what the page and the harness read (B-602: colours and reach feed her chat context)'
+  );
 });
 
 test('B-205: the values the decisions name', () => {
