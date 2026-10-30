@@ -10661,7 +10661,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Built: Today (1d7ed5e) and Study plan (bac691c) ticks read 16 px, 4 px radius, 1.5 px --line2 ring at 1280. Staging look pending.",
   "commit": null,
   "source": "build chat",
   "words": "On Today the checkboxes still show the old inner shading instead of the flat check that Study now shows.",
