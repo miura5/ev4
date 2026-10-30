@@ -127,7 +127,8 @@ function judge(s) {
   if (base === 'ev' && s.width >= 600 && s.greet)
     r(
       'left-aligned (Matt, Oct 23)',
-      /^(left|start)$/.test(s.greet.align) && s.greet.leftGap <= 32,
+      // B-572 (D-393): her words start past her Arc's column (32 px and a 12 px gap), still on the left
+      /^(left|start)$/.test(s.greet.align) && s.greet.leftGap <= 32 + 44,
       JSON.stringify(s.greet)
     );
   return out;

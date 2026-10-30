@@ -245,7 +245,7 @@ body.captions.on-ev .wrap{max-width:680px!important}
   .mh>#sbar .s-clock{color:var(--text)!important}
   .mh>#sbar .s-acts{display:flex!important;gap:6px!important;flex:none!important}
   .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none!important}
-  .mh>#sbar .s-acts button.btn{height:44px!important;min-height:44px!important;min-width:44px!important;padding:0 12px!important;border-radius:7px!important;background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line2)!important;color:var(--text)!important;font:500 calc(12.5px * var(--ts)) var(--sans)!important}
+  .mh>#sbar .s-acts button.btn{height:44px!important;min-height:44px!important;min-width:44px!important;padding:0 12px!important;border-radius:7px!important;color:var(--text)!important;font:500 calc(12.5px * var(--ts)) var(--sans)!important}
   .mh>#sbar .s-main{display:flex!important;align-items:baseline!important;overflow:visible!important}
   .mh>#sbar .s-topic{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
   .mh>#sbar .s-topic::after{content:none!important}
@@ -263,7 +263,7 @@ body.captions.on-ev .wrap{max-width:680px!important}
   body.on-ev .mh>#sbar .s-topic::after{content:" · "!important;font-weight:400!important}
   body.on-ev .mh>#sbar .s-clock{color:var(--text)!important}
   body.on-ev .mh>#sbar .s-acts button:not(.end):not(:first-child){display:none!important}
-  body.on-ev .mh>#sbar .s-acts button.btn{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:7px!important;background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line2)!important;color:var(--text)!important}
+  body.on-ev .mh>#sbar .s-acts button.btn{height:28px!important;min-height:28px!important;padding:0 10px!important;border-radius:7px!important;color:var(--text)!important}
 }
 .estrip{display:none!important}
 @media (min-width:1024px){

@@ -189,7 +189,8 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
         const s = getComputedStyle(document.documentElement);
         return [s.getPropertyValue('--av1').trim(), s.getPropertyValue('--av2').trim()];
       });
-      const want = theme === 'light' ? ['#b5530f', '#a8402f'] : ['#f2a35e', '#f08a78'];
+      // B-572: r4.css's faces (D-392), word for word: dark's front is her own Ember (#e0743a)
+      const want = theme === 'light' ? ['#b5530f', '#a8402f'] : ['#e0743a', '#cf5a45'];
       ok(
         `${tag} her faces are Ember with halftone (D-266)`,
         JSON.stringify(inks) === JSON.stringify(want),

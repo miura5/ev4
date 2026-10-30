@@ -42,9 +42,7 @@
       seg.setAttribute('role', 'group');
       seg.setAttribute('aria-label', 'Energy, 1 to 5');
       for (let n = 1; n <= 5; n++) {
-        const b = el('button', null, String(n));
-        b.type = 'button';
-        b.setAttribute('aria-pressed', String(energy === n));
+        const b = DS.button({ label: String(n), kind: 'ghost', size: 'sm', pressed: energy === n }); // B-572
         b.addEventListener('click', () =>
           guard(b, async () => {
             await saveCheckin({ energy: n });

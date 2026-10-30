@@ -409,6 +409,10 @@ button.tlink:hover{text-decoration-color:currentColor}
    button is the primary, cards on the surface, and Coming up is a plain list under its label. */
 body.captions #p-ev{grid-template-rows:auto auto auto minmax(0,1fr) auto auto}
 body.captions #p-ev>.hero{margin-top:var(--ev-drop,0px)}
+/* B-572 (D-393): her stage folds away while she greets (the greeting carries her Arc), and from 1024 px always (her
+   Arc sits beside her newest line) */
+body.captions.opening #p-ev>.hero{height:0;padding-top:0;margin-top:0;overflow:hidden}
+@media (min-width:1024px){body.captions #p-ev>.hero{height:0;padding-top:0;overflow:hidden}}
 body.captions #p-ev>.thread{grid-row:4}
 body.captions #p-ev>.composer{grid-row:5}
 body.captions #p-ev>#ev-side{grid-row:6}
@@ -730,8 +734,8 @@ body.has-line #today-week .wk-her{display:none}
   /* B-438: a writing clock paused (nothing typed for 2 minutes) dims its light and its time */
   .chatp .ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .chatp:not([hidden]){display:flex}
-  .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:30vh;width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);font:400 var(--fs-2)/1.55 var(--sans)}
-  .chatp.wide{width:640px;top:56px}
+  .chatp{position:fixed;z-index:35;right:10px;bottom:calc(var(--strip-h) + 4px);top:auto;max-height:calc(70vh - var(--strip-h));width:400px;flex-direction:column;box-sizing:border-box;border-radius:14px;background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line),0 12px 32px rgba(0,0,0,.10),0 2px 6px rgba(0,0,0,.05);font:400 var(--fs-2)/1.55 var(--sans)}
+  .chatp.wide{width:640px;top:56px;max-height:none}
   /* B-464: on the Conversation its composer runs under the pop-up's corner; the pop-up stops above it */
   body.on-ev .chatp{bottom:calc(var(--strip-h) + 84px)}
   .chatp .cph{display:flex;align-items:center;gap:4px;padding:14px 10px 6px 18px;flex:none}

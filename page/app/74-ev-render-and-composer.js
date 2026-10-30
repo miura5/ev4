@@ -123,6 +123,11 @@
       // under him mid-scroll. B-452: nor while he scrolls, so the thread never changes height under his scroll. A pull
       // (force) re-measures at once, at rest at the top, and holds his place itself.
       if (!inn || p.hidden || (!force && (!capNow.hidden || scrolling()))) return;
+      // B-572 (D-393): while she greets the greeting sits in the top third and no room is held above it
+      if (document.body.classList.contains('opening')) {
+        if (p.style.getPropertyValue('--ev-drop')) p.style.removeProperty('--ev-drop');
+        return;
+      }
       const kids = [...inn.children].filter(c => !c.classList.contains('cap-pull') && c.getClientRects().length);
       const cur = parseFloat(p.style.getPropertyValue('--ev-drop')) || 0;
       const content = kids.length

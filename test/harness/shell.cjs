@@ -426,7 +426,8 @@ const statusShown = page =>
             const ic = b.querySelector(':scope > svg');
             return ic && cs(ic).color === cs(b).color && !coded.includes(cs(ic).color);
           }),
-          av1: c1 && cs(c1).fill === tok('--av1') && cs(c1).fill !== tok('--her'),
+          // B-572: r4.css (D-392) gives dark's front face her own Ember, so it is held to --av1 alone
+          av1: c1 && cs(c1).fill === tok('--av1'),
           av2: c2 ? cs(c2).fill === tok('--av2') : true,
           avSize: Math.round(side.querySelector('.top-av').getBoundingClientRect().width),
           working:

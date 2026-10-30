@@ -214,7 +214,7 @@
       const nowIdx = lastEv ? cur.indexOf(lastEv) : -1,
         mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
       for (const m of cur) {
-        const rec = msgEl(m, false, m === lastEv);
+        const rec = msgEl(m, m === lastEv && !m.greeting, m === lastEv); // B-572: her Arc beside her newest line
         renderCards(rec, m);
         rec.el.classList.remove('earlier');
         rec.el.classList.toggle('current', m === lastEv && !(mattIdx > nowIdx));

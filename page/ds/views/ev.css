@@ -196,3 +196,30 @@ body.captions.kb #p-ev{min-height:0}
 body.ev-booting #p-ev{opacity:0}
 /* the phone keeps the composer at 16 px or more so iOS never zooms into it (legacy shared this with the kit inputs) */
 @media (max-width:599px){.compose-row textarea{font-size:max(16px,calc(14.5px * var(--ts)))}}
+/* B-572 (D-393): the empty state as the reference: her stage folds away while she greets; the greeting sits in the top
+   third (her Arc beside the hello, the summary under it, then Next up) and the composer stays anchored at the bottom */
+/* (her stage's fold lives beside the stage's own rules in legacy-carry.css, which out-ranks this file) */
+body.captions.opening #thread .cap-in{justify-content:flex-start;padding-top:12vh}
+.greet-head{display:flex;align-items:center;gap:var(--sp-3)}
+.greet-t{margin:0;font:var(--fw-semibold) var(--fs-4)/1.3 var(--sans);color:var(--text)}
+.greet-sum{padding-left:calc(32px + var(--sp-3))}
+.next-up{display:flex;align-items:center;gap:var(--sp-3);margin-top:var(--sp-3);min-height:48px;padding:0 var(--sp-2) 0 var(--sp-3);border-radius:var(--r-md);background:var(--hover);min-width:0}
+.next-up .nu-k{flex:none;font-size:var(--fs-2);color:var(--quiet)}
+.next-up .nu-t{flex:1 1 auto;min-width:0;font:var(--fw-medium) var(--fs-3) var(--sans);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.next-up .nu-m{flex:none;font-size:var(--fs-2);color:var(--quiet);font-variant-numeric:tabular-nums}
+.next-up .nu-go svg{width:12px;height:12px}
+@media (max-width:599px){.next-up .nu-go{min-height:44px}}
+/* from 1024 px her stage is gone: her Arc sits beside her newest line, as the reference's thread */
+@media (min-width:1024px){
+body.captions .msg.ev.current{display:flex;gap:var(--sp-3);align-items:flex-start}
+body.captions .msg.ev.current>.ev-av{display:inline-grid;margin-top:var(--sp-0_5)}
+body.captions .msg.ev.current .msg-body{flex:1 1 auto;min-width:0}
+}
+/* the check's head is a Fold head that carries its chip */
+.check-fold-wrap>.fold-line{display:flex;align-items:center;gap:var(--sp-2);justify-content:space-between;color:var(--text);font-weight:var(--fw-semibold)}
+/* in a surface the surface's own head folds the check, so its rows show without the card's head line */
+.surf .ev-card.check .check-fold-wrap>.fold-line{display:none}
+.surf .ev-card.check .check-fold-wrap>.fold-body{grid-template-rows:1fr;opacity:1;visibility:visible}
+/* Message bubbles as the reference: his line a quiet filled bubble on the right */
+body.captions .msg.matt .bubble{background:var(--hover);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-lg);color:var(--text)}
+body.captions .msg.matt .bubble::before{display:none}

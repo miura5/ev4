@@ -187,8 +187,12 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
             // B-368 (D-316): the greeting's line is not shown (the summary line is); it stays in the record and her context
             head: ((mem.headlines || []).slice(-1)[0] || {}).text || '',
             shown: !!g.querySelector('.bubble'),
-            // B-358 (D-316): one summary line under her greeting, from code; no line per item, no buttons
-            brief: g.querySelectorAll('.brief .brief-line').length === 1 && !g.querySelector('.brief button'),
+            // B-358 (D-316), B-572 (D-393): her hello, one summary line from code and Next up; no line per item, and
+            // no button but Next up's Start
+            brief:
+              g.querySelectorAll('.brief .brief-line').length === 1 &&
+              !!g.querySelector('.brief [data-part=greet-head]') &&
+              [...g.querySelectorAll('.brief button')].every(b => b.closest('[data-part=next-up]')),
             asked: window.__headlineAsked || 0,
             kept: (mem.headlines || []).slice(-1)[0] || null,
             n: (mem.headlines || []).length,
@@ -258,7 +262,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
           );
         }
         ok(
-          `${tag} the greeting shows only its one summary line, no large line, no line per item, no button (D-316)`,
+          `${tag} the greeting is her hello, one summary line and Next up; no large line, no line per item (D-393)`,
           r.brief && !r.shown,
           ''
         );
@@ -393,7 +397,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         const g = document.querySelector('#thread .msg.greet');
         return {
           lines: g.querySelectorAll('.brief .brief-line').length,
-          buttons: g.querySelectorAll('.brief button').length,
+          buttons: [...g.querySelectorAll('.brief button')].filter(b => !b.closest('[data-part=next-up]')).length,
           summary: (g.querySelector('.brief .brief-line') || {}).textContent || '',
         };
       });

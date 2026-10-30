@@ -156,7 +156,8 @@ const state = page =>
       // B-368 (D-316): her greeting's line is kept in the record, not shown
       headline: ((((window.__db.talk || {}).memory || {}).headlines || []).slice(-1)[0] || {}).text || '',
       row: p && p.querySelector('.prep-row').textContent,
-      open: !!(box && !box.hidden && box.getBoundingClientRect().height > 0),
+      // B-572: the list is a Fold's body; closed, the body is 0 high (the list inside keeps its own height)
+      open: !!(box && !box.hidden && (box.closest('.fold-body') || box).getBoundingClientRect().height > 0),
       done: !!(p && p.classList.contains('done')),
       items: p
         ? [...p.querySelectorAll('.prep-item')].map(li => ({
@@ -1386,7 +1387,7 @@ async function tickAll(page) {
         line: cur ? cur.textContent : '',
         head: s ? (s.querySelector('.sf-head .sf-t') || {}).textContent : null,
         row: p ? p.querySelector('.prep-row').textContent : null,
-        open: !!(p && !p.querySelector('.prep-box').hidden),
+        open: !!(p && p.querySelector('.prep-box').closest('.fold-body').getBoundingClientRect().height > 0), // B-572
         items: p
           ? [...p.querySelectorAll('.prep-item')].map(li => ({
               t: li.querySelector('.pi-t').textContent,

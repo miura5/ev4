@@ -438,8 +438,15 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(gc)
     );
     ok(
-      `[${scheme}] opening: her Arc at ${A.core} px on her stage (D-213), no bubbles`,
-      v.step === 'idle' && v.corePx === A.core && v.stageH >= A.stage[0] && v.stageH <= A.stage[1] && !v.bubbles,
+      // B-572 (D-393): while she greets her stage is folded; her Arc sits beside her hello in the top third
+      `[${scheme}] opening: her stage folded, her Arc beside her hello (D-393), no bubbles`,
+      v.step === 'idle' &&
+        v.stageH === 0 &&
+        !v.bubbles &&
+        (await page.evaluate(() => {
+          const h = document.querySelector('#thread .msg.greet [data-part=greet-head] .ev-av');
+          return !!h && h.getClientRects().length > 0 && h.getBoundingClientRect().top < innerHeight / 2;
+        })),
       JSON.stringify({ step: v.step, px: v.corePx, stage: v.stageH })
     );
     ok(
@@ -528,11 +535,18 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     ok(
       // B-357 (D-327): her lines' sizes and the earlier lines' fade are the demo's; her Arc and stage stay (D-213)
-      `[${scheme}] in conversation: her Arc the same ${A.convCore} px on its stage (D-213)`,
+      // B-572 (D-393): from 1024 px her Arc sits beside her newest line and the stage is folded; the phone keeps it
+      scheme === 'desktop'
+        ? `[${scheme}] in conversation: her Arc beside her newest line, no stage (D-393)`
+        : `[${scheme}] in conversation: her Arc the same ${A.convCore} px on its stage (D-213)`,
       v.step === 'conversation' &&
-        Math.abs(v.corePx - A.convCore) <= 1 &&
-        v.stageH >= A.convStage[0] &&
-        v.stageH <= A.convStage[1],
+        (scheme === 'desktop'
+          ? v.stageH === 0 &&
+            (await page.evaluate(() => {
+              const a = document.querySelector('#thread [data-kind=hers].current > .ev-av');
+              return !!a && a.getClientRects().length > 0;
+            }))
+          : Math.abs(v.corePx - A.convCore) <= 1 && v.stageH >= A.convStage[0] && v.stageH <= A.convStage[1]),
       JSON.stringify({ step: v.step, px: v.corePx, now: v.nowSize, past: v.pastSize, o: v.pastOpacity })
     );
     measured[scheme].conversation = {
@@ -673,7 +687,8 @@ async function sideBySide(browser, left, right, out, vp) {
       back.offCentre <= 2 && back.aboveField >= 0 && back.aboveField <= 24 && back.inThread,
       JSON.stringify(back)
     );
-    await page.click('#hero');
+    // B-572: from 1024 px her stage is folded, so Back to now itself returns
+    await page.click(scheme === 'desktop' ? '#ev-now' : '#hero');
     await page.waitForTimeout(900);
     v = await view(page);
     ok(
@@ -885,9 +900,9 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     ok(
       `[${scheme}] an open surface keeps her at her size (the ${scheme === 'phone' ? 'list' : 'surface'} step, D-213)`,
+      // B-572 (D-393): from 1024 px her stage is folded (her Arc is beside her line), so the desktop's stage is 0
       lc.step === (scheme === 'phone' ? 'list' : 'surface') &&
-        lc.stage >= listStage[0] &&
-        lc.stage <= listStage[1] &&
+        (scheme === 'phone' ? lc.stage >= listStage[0] && lc.stage <= listStage[1] : lc.stage === 0) &&
         lc.surfaceOpen,
       JSON.stringify(lc)
     );

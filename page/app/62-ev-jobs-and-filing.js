@@ -272,36 +272,34 @@
       const box = el('div', 'work');
       const open = T.workOpen.has(key);
       const links = (work.changed || []).map(changeLink).filter(Boolean);
-      const line = el('button', 'fold-line work-line', 'Worked for ' + workFor(work.ms));
-      line.type = 'button';
-      line.setAttribute('aria-expanded', String(open && links.length > 0));
-      if (!links.length) line.disabled = true;
-      line.addEventListener('click', () => {
-        if (T.workOpen.has(key)) T.workOpen.delete(key);
-        else T.workOpen.add(key);
-        render();
-      });
-      box.append(line);
-      if (open && links.length) {
-        const ul = el('ul', 'list work-changes');
-        for (const l of links) {
-          const li = el('li');
-          if (l.href) {
-            const a = el('a', 'tlink', l.label);
-            a.href = l.href;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            li.append(a);
-          } else {
-            const b = el('button', 'tlink', l.label);
-            b.type = 'button';
-            b.addEventListener('click', l.go);
-            li.append(b);
-          }
-          ul.append(li);
+      const ul = el('ul', 'list work-changes');
+      for (const l of links) {
+        const li = el('li');
+        if (l.href) {
+          const a = el('a', 'tlink', l.label);
+          a.href = l.href;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          li.append(a);
+        } else {
+          const b = el('button', 'tlink', l.label);
+          b.type = 'button';
+          b.addEventListener('click', l.go);
+          li.append(b);
         }
-        box.append(ul);
+        ul.append(li);
       }
+      // B-572: Proprietary's Fold, so the changes open by height and opacity; the state is kept for the next draw
+      const f = DS.fold({
+        head: 'Worked for ' + workFor(work.ms),
+        open: open && links.length > 0,
+        body: links.length ? ul : null,
+        onToggle: on => (on ? T.workOpen.add(key) : T.workOpen.delete(key)),
+      });
+      const line = f.querySelector('.fold-line');
+      line.classList.add('work-line');
+      if (!links.length) line.disabled = true;
+      box.append(f);
       return box;
     }
     function jobSeen(j) {

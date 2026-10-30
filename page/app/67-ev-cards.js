@@ -695,9 +695,7 @@
         const labels = ['Empty', 'Low', 'Okay', 'Good', 'Charged'];
         labels.forEach((lab, i) => {
           const n = i + 1;
-          const b = el('button');
-          b.type = 'button';
-          b.setAttribute('aria-pressed', String(!!ci && ci.energy === n));
+          const b = DS.button({ kind: 'ghost', pressed: !!ci && ci.energy === n }); // B-572
           b.append(el('b', null, String(n)), el('small', null, lab));
           b.addEventListener('click', () =>
             guard(b, async () => {
@@ -726,25 +724,25 @@
         // checkpoint's card arrives open.
         const key = c.session + '#' + c.n,
           folded = T.checkFold.has(key);
-        box.classList.toggle('folded', folded);
-        const f = el('button', 'fold-line check-fold', `Check ${c.n} · ${plural((c.items || []).length, 'question')}`);
-        f.type = 'button';
-        f.setAttribute('aria-expanded', String(!folded));
-        f.addEventListener('click', () => {
-          const on = !T.checkFold.has(key);
-          on ? T.checkFold.add(key) : T.checkFold.delete(key);
-          box.classList.toggle('folded', on);
-          f.setAttribute('aria-expanded', String(!on));
+        // B-572: Proprietary's Fold: the head line (its chip inside it) over the card's rows, which open by height
+        // and opacity
+        const fb = el('div', 'check-body');
+        const f = DS.fold({
+          head: `Check ${c.n} · ${plural((c.items || []).length, 'question')}`,
+          open: !folded,
+          body: fb,
+          cls: 'check-fold-wrap',
+          onToggle: open => (open ? T.checkFold.delete(key) : T.checkFold.add(key)),
         });
-        const h = el('div', 'card-head check-head');
-        h.append(
-          f,
+        const fl = f.querySelector('.fold-line');
+        fl.classList.add('check-fold');
+        fl.append(
           chip(answered ? 'answered' : live ? 'your turn' : 'session over', answered ? 'ok' : live ? 'accent' : '')
         );
-        box.append(h);
+        box.append(f);
         if (oset) {
           const body = el('div', 'check-open');
-          box.append(body);
+          fb.append(body);
           runner({
             key: 'chk-' + key,
             set: oset,
@@ -762,7 +760,7 @@
           li.append(el('span', 'check-kind ' + kind, KIND[kind]), el('span', null, x.text));
           ol.append(li);
         });
-        box.append(ol);
+        fb.append(ol);
         if (!live) return;
         const a = el('div', 'actions');
         a.append(el('span', 'grow meta', 'Answer any of them below, in your own words.'));
@@ -776,7 +774,7 @@
             { primary: true }
           )
         );
-        box.append(a);
+        fb.append(a);
       },
       session(box, c) {
         const s = sessOf(c.id);
@@ -1015,8 +1013,6 @@
         };
       },
     };
-    const CHEV =
-      '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     // B-358 (D-314): under her greeting line, one summary line as the demo's Main board: what's on today's list, its
     // minutes, and the next graded date the greeting hasn't named; never a line per item and no buttons.
     const SUM_NUM = [
@@ -1087,9 +1083,44 @@
       const parts = [things, mins, graded].filter(Boolean);
       return (parts.length > 1 ? parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] : parts[0]) + '.';
     }
+    // B-572 (D-393): her greeting block as the reference's empty state: her Arc beside a short hello, the summary line
+    // under it, then Next up (the first open item on today's list) with its Start.
+    const GREET_WORD = { morning: 'Good morning', midday: 'Good afternoon', evening: 'Good evening', late: 'Still up' };
+    function greetHead(m) {
+      const part = E.partOfDay ? E.partOfDay(m.at || new Date().toISOString()) : 'evening';
+      return (GREET_WORD[part] || 'Hello') + ', Matt';
+    }
+    function nextUpEl() {
+      let it = null,
+        go = null;
+      try {
+        it = sideOpen()[0] || null;
+        go = it && startGo(it);
+      } catch (e) {
+        if (!(e instanceof ReferenceError || e instanceof TypeError)) throw e; // Today still loading
+      }
+      if (!it) return null;
+      const r = el('div', 'next-up');
+      r.dataset.part = 'next-up';
+      r.append(el('span', 'nu-k', 'Next up'), el('span', 'nu-t', E.rowText ? E.rowText(it) : String(it.text || '')));
+      if (it.minutes) r.append(el('span', 'nu-m', durFmt(it.minutes)));
+      if (go) {
+        const st = DS.button({ label: 'Start', kind: 'ghost', size: 'sm', cls: 'nu-go', onClick: go });
+        st.prepend(svgIcon('M8 5l11 7-11 7z'));
+        r.append(st);
+      }
+      return r;
+    }
     function briefEl(m) {
       const wrap = el('div', 'brief');
-      wrap.append(el('p', 'brief-line', summaryLine(m)));
+      const head = el('div', 'greet-head');
+      head.dataset.part = 'greet-head';
+      head.append(DS.presence({ size: 'md', follow: true }), el('p', 'greet-t', greetHead(m)));
+      const sum = el('div', 'greet-sum');
+      sum.append(el('p', 'brief-line', summaryLine(m)));
+      wrap.append(head, sum);
+      const nu = nextUpEl();
+      if (nu) wrap.append(nu);
       return wrap;
     }
     // The prep check under her greeting (B-104; D-143, D-144): the night-before pack check from the evening on, the
@@ -1127,8 +1158,7 @@
       const night = p.phase === 'night';
       const wrap = el('div', 'prep');
       wrap.dataset.phase = p.phase;
-      const row = el('button', 'prep-row');
-      row.type = 'button';
+      const row = DS.button({ kind: 'ghost', cls: 'prep-row' }); // B-572: Proprietary's Button
       row.append(
         el('span', 'prep-mark', 'Prep'),
         el('span', 'prep-t', (p.lead || (night ? 'Pack for tomorrow: ' : 'Bag check: ')) + p.title)
@@ -1146,7 +1176,6 @@
           (p.lead ? 'Packed: ' : night ? 'Packed for tomorrow: ' : 'Bag checked: ') + p.title;
       }
       row.append(el('span', 'prep-n', l.items.length ? `${n} of ${l.items.length}` : ''));
-      row.insertAdjacentHTML('beforeend', CHEV);
       const box = el('div', 'prep-box');
       box.id = 'prep-' + m.id;
       row.setAttribute('aria-controls', box.id);
@@ -1186,8 +1215,7 @@
       inp.placeholder = 'Something else to bring';
       inp.setAttribute('aria-label', 'Add something to bring');
       inp.maxLength = 80;
-      const add = el('button', null, 'Add');
-      add.type = 'submit';
+      const add = DS.button({ label: 'Add', kind: 'neutral', size: 'sm', type: 'submit' });
       f.append(inp, add);
       f.addEventListener('submit', ev => {
         ev.preventDefault();
@@ -1200,19 +1228,26 @@
       });
       box.append(f);
       const key = m.id + ':' + p.phase;
-      const open = T.prepOpen.has(key) ? T.prepOpen.get(key) : o.open != null ? o.open && !l.done : !l.done;
-      const show = o => {
-        T.prepOpen.set(key, o);
-        box.hidden = !o;
-        row.setAttribute('aria-expanded', String(o));
-        wrap.classList.toggle('open', o);
-      };
-      show(open);
-      row.addEventListener('click', () => show(!wrap.classList.contains('open')));
+      let open = T.prepOpen.has(key) ? T.prepOpen.get(key) : o.open != null ? o.open && !l.done : !l.done;
       // Ticking the last item folds the check away; reopening it is one tap on its line.
-      if (l.done && T.prepWasDone && T.prepWasDone.get(key) === false) show(false);
+      if (l.done && T.prepWasDone && T.prepWasDone.get(key) === false) open = false;
       (T.prepWasDone = T.prepWasDone || new Map()).set(key, l.done);
-      wrap.append(row, box);
+      T.prepOpen.set(key, open);
+      wrap.classList.toggle('open', open);
+      // B-572: Proprietary's Fold, so the list opens by height and opacity; its head carries the row's parts
+      const fold = DS.fold({
+        open,
+        body: box,
+        cls: 'prep-fold',
+        onToggle: on => {
+          T.prepOpen.set(key, on);
+          wrap.classList.toggle('open', on);
+        },
+      });
+      const head = fold.querySelector('.fold-line');
+      head.classList.add('prep-row');
+      head.replaceChildren(...row.childNodes);
+      wrap.append(fold);
       return wrap;
     }
     // B-78: a reply's cards are no longer drawn under her line; they are the surfaces (75-ev-surfaces.js).
