@@ -10972,5 +10972,23 @@
    "outcome": "task",
    "at": "2026-10-30T14:08:23.110Z"
   }
+ },
+ {
+  "id": "B-593",
+  "kind": "bug",
+  "title": "Bug (reported Oct 30): A small native tooltip repeating the label pops up on hover over the view tabs, every Record item, the sidebar Today list, Preferences and Conversation's Coming up list, even where the text is fully visible.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "A small native tooltip repeating the label pops up on hover over the view tabs, every Record item, the sidebar Today list, Preferences and Conversation's Coming up list, even where the text is fully visible.",
+  "reworded": true,
+  "reportedAt": "2026-10-30T16:14:16.463Z",
+  "board": {
+   "row": "v4 B-593: A small native tooltip repeating the label pops up on hover over the…"
+  }
  }
 ]
