@@ -661,3 +661,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-587 | request | 2026-10-30T13:22:28.188Z | Conversation lacks the reference's suggestion chips under the input, and Study's Coming up uses bullets instead of a plain dated list. | UI review, release card 2 | inbox |  |
 | B-588 | request | 2026-10-30T13:22:31.098Z | At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows. | UI review, release card 2 | inbox |  |
 | B-589 | request | 2026-10-30T13:22:34.082Z | Today's Cards row has no checkbox and its Start chip sits apart, so its left edge doesn't line up with the other rows. | UI review, release card 2 | inbox |  |
+| B-590 | request | 2026-10-30T13:22:37.083Z | At 1280 Today's rows stretch very wide, with each title far from its minutes, and a short list leaves a large empty area. | UI review, release card 2 | inbox |  |
