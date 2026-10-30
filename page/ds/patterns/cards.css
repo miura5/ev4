@@ -46,7 +46,7 @@
    patterns layer sits under legacy (D-373), so every declaration says !important until B-515 strips them. A .prep-row
    .chev rule stays in legacy: a later legacy rule shortens its transition. */
 .prep-mark{margin-left:0!important}
-.prep{align-self:stretch!important;margin-top:var(--sp-1_5)!important;border-top:1px solid var(--line)!important;text-align:left!important}
+.prep{align-self:stretch!important;margin-top:var(--sp-1_5)!important;border-top:0!important;text-align:left!important}
 .prep-row{appearance:none!important;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;width:100%!important;min-height:44px!important;padding:var(--sp-1_5) var(--sp-0_5)!important;border:0!important;background:none!important;color:var(--ink2)!important;font:var(--fw-medium) var(--fs-3) var(--sans)!important;text-align:left!important;cursor:pointer!important}
 .prep-row:hover,.prep-row:active,.prep-row:focus{background:none!important;transform:none!important}
 .prep-row:focus-visible{outline:2px solid var(--accent-edge)!important;outline-offset:2px!important}

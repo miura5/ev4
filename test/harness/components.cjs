@@ -281,7 +281,7 @@ if (require.main === module) {
                 [...new Set(today.map(c => `${c.name} ${c.w}x${c.h}`))].join('; ')
             );
         }
-        const want = w < 600 ? 44 : 32;
+        const want = w < 600 ? 52 : 36; // B-544: 36 px on the desk, 52 on the phone
         ok(
           `${tag} C-1: every row of the set measures ${want} px`,
           got.lines.length === 7 && got.lines.every(x => x === want),

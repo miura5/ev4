@@ -361,9 +361,6 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{align-items:center;min-height:44px;padding:0}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k{font-size:calc(12px * var(--ts));color:var(--faint)}
 :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-k.urgent{color:var(--urg)}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick{flex:0 0 16px;width:16px;height:16px;margin:0;border:0;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line2)}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked{background:var(--do);box-shadow:none}
-:where(#p-today,#p-study,#p-progress,#p-record,#p-system) input.tick:checked::after{width:3px;height:7px;border-color:var(--bg);border-width:0 2px 2px 0}
 @media (min-width:600px){
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row,:where(#p-today,#p-study,#p-progress,#p-record,#p-system) .wk-line{min-height:32px;font-size:calc(13px * var(--ts))}
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) .row{padding:4px 0}
@@ -374,7 +371,7 @@ body.on-ev.her-folded .mh-her{display:grid;place-items:center}
 /* the switch is a part of the component set (B-285, at the end of this sheet); here only where it sits */
 /* the right panel's cards: on the ground, a hairline, 32 px rows */
 @media (min-width:1200px){
-  section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);padding:6px 10px 10px;gap:0}
+  section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--surface);border:0;border-radius:12px;box-shadow:none;padding:6px 10px 10px;gap:0}
   section.panel > .cols > .col-side .card>h2,section.panel > .panel > .cols > .col-side .card>.card-head{min-height:36px;display:flex;align-items:center;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
 }
 /* D-270: a text link is text with an underline, neutral */
@@ -395,7 +392,7 @@ button.tlink:hover{text-decoration-color:currentColor}
   body.captions.ev-rest-on #p-ev>#ev-side{position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 12px 0;background:var(--bg);z-index:5;grid-column:auto;grid-row:auto;align-self:auto;margin:0;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin}
   body.captions:not(.side-on) #ev-dates{display:flex}
   /* the panel's cards, wherever the panel is: the ground, a hairline, 12 px corners */
-  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--bg);border:0;border-radius:12px;box-shadow:0 0 0 1px var(--line);-webkit-backdrop-filter:none;backdrop-filter:none}
+  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--surface);border:0;border-radius:12px;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
   #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
   #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 calc(13px * var(--ts)) var(--sans);color:var(--text)}
   

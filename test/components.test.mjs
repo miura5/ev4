@@ -22,7 +22,7 @@ test('B-285: D-285 reads coded yellow back from its colour: the theme gives r4 -
   assert.ok(Math.abs(w.L - 100) < 0.1 && w.C < 0.5, 'white is L100 C0');
 });
 
-test('B-285: the stylesheet holds every part, rows at 32 and 44 px, and switches styled by their picked state', () => {
+test('B-285: the stylesheet holds every part, rows at 36 and 52 px (B-544), and switches styled by their picked state', () => {
   // B-515 D2b: the kit's class rules live in Proprietary's component files; badge, toolbar, bar and field stay in legacy.
   const css = fs.readFileSync(path.join(ROOT, 'page', 'ds', 'views', 'legacy-carry.css'), 'utf8');
   const dir = path.join(ROOT, 'page', 'ds', 'components');
@@ -48,8 +48,8 @@ test('B-285: the stylesheet holds every part, rows at 32 and 44 px, and switches
     '.field',
   ])
     assert.ok(set.includes(part), part);
-  assert.match(set, /\.li\{[^}]*height:32px/);
-  assert.match(set, /@media \(max-width:599px\)\{[\s\S]*\.li\{height:44px/);
+  assert.match(set, /\.li\{[^}]*height:36px/);
+  assert.match(set, /@media \(max-width:599px\)\{[\s\S]*\.li\{height:auto;min-height:52px/);
   assert.doesNotMatch(set, /[×✕]/, 'no close button among the parts');
   const hexes = set.match(/#[0-9a-f]{3,8}\b/gi) || [];
   assert.deepEqual(hexes, [], 'every colour in the set is a token of the generator');

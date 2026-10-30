@@ -3,30 +3,31 @@
    44 px on the phone, C-1) and the stacked row (kind stack, the kit's row()). Legacy's .li, .row and input.tick rules
    still win until B-515 (D-373), so the look below moves nothing today (D-376); the states legacy never drew (hover's
    fill aside) show through already. Two rules say !important for that reason, each named below; both drop at B-515. */
-:where([data-ui='line']:not([data-kind='stack'])){display:flex;align-items:center;gap:var(--sp-3);height:var(--sp-8);padding:0 var(--sp-3);border-bottom:1px solid var(--line);color:var(--text);font-size:var(--fs-2);min-width:0}
+:where([data-ui='line']:not([data-kind='stack'])){display:flex;align-items:center;gap:var(--sp-3);height:calc(var(--sp-8) + var(--sp-1));padding:0 var(--sp-3);border-radius:var(--r-sm);color:var(--text);font-size:var(--fs-3);min-width:0;transition:background var(--dur-2) var(--ease-out)}
 :where([data-ui='line']:not([data-kind='stack'])) > .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 :where([data-ui='line']:not([data-kind='stack'])) > .t{flex:none;color:var(--quiet);font-size:var(--fs-1);font-variant-numeric:tabular-nums}
 :where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:hidden}
 :where([data-ui='line']:not([data-kind='stack'])):is(:hover,:focus-within,[data-state='hover']) > .hov{visibility:visible}
-:where([data-ui='line'][data-kind='stack']){display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-3) 0;border-top:1px solid var(--wash-2);min-width:0}
-:where([data-ui='line'][data-kind='stack']:first-child){border-top:0}
+:where([data-ui='line'][data-kind='stack']){display:flex;gap:var(--sp-3);align-items:flex-start;padding:var(--sp-2) 0;min-width:0}
 :where([data-ui='line'][data-kind='stack']) .grow{flex:1;min-width:0}
 :where([data-ui='line'][data-kind='stack']) .title{overflow-wrap:anywhere}
-:where([data-ui='line'][data-kind='stack']) .meta{margin-top:var(--sp-0_5);color:var(--faint);font-size:var(--fs-2)}
+:where([data-ui='line'][data-kind='stack']) .meta{margin-top:var(--sp-0_5);color:var(--faint);font-size:var(--fs-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* B-544: the title is one line; its full text shows on hover (title) and on a long press (data-full) */
+:where([data-ui='line'][data-kind='stack']) .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:where([data-ui='line'][data-full]) :is(.nm,.title){white-space:normal!important;overflow:visible!important}
 :where([data-ui='line'][data-kind='stack']) .when{min-width:4.6rem;padding-top:var(--sp-0_5);color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);font-variant-numeric:tabular-nums}
 :where([data-ui='line'][data-kind='stack']) .row-badge{margin-left:var(--sp-1_5);vertical-align:1px;height:var(--sp-5)}
-/* the tick: one shape, 22 px drawn */
-:where([data-ui='line']) > input.tick{appearance:none;flex:0 0 calc(var(--sp-5) + var(--sp-0_5));width:calc(var(--sp-5) + var(--sp-0_5));height:calc(var(--sp-5) + var(--sp-0_5));margin:0;border:1.5px solid var(--faint);border-radius:var(--r-sm);background:transparent;cursor:pointer;display:grid;place-content:center;transition:background var(--dur-4) var(--ease-out),border-color var(--dur-4) var(--ease-out)}
-:where([data-ui='line']) > input.tick:checked{background:var(--ok);border-color:var(--ok)}
-:where([data-ui='line']) > input.tick:checked::after{content:"";width:var(--sp-1_5);height:calc(var(--sp-3) - 1px);border:solid var(--do-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
-/* D-383: on the phone the tick is a 44 px tap and still draws 22 px (the Gallery's note). Its box grows by a clear
-   border the margins take back, and the ring it drew as a border it draws as an inset shadow, so no pixel moves. The
-   box properties say !important because legacy's input.tick sets them; the 16 px dot the views' cards draw (legacy's
-   #p-* rule) keeps its own ring and grows by 14 px a side. */
+/* the tick (B-545): flat, 16 px drawn on the desk and 20 px on the phone; a 1.5 px ring at rest, solid green with the
+   ink on it when checked (dark: green at 62% over the surface), no shading */
+:where([data-ui='line']) > input.tick,:where(.check) > input.tick{appearance:none;flex:0 0 var(--sp-4);width:var(--sp-4);height:var(--sp-4);margin:0;border:0;border-radius:var(--r-xs);background:transparent;box-shadow:inset 0 0 0 1.5px var(--line2);cursor:pointer;display:grid;place-content:center;transition:background var(--dur-2) var(--ease-out),box-shadow var(--dur-2) var(--ease-out)}
+:where([data-ui='line']) > input.tick:checked,:where(.check) > input.tick:checked{background:var(--ok);box-shadow:none}
+[data-theme=dark] :where([data-ui='line'],.check) > input.tick:checked{background:color-mix(in srgb,var(--ok) 62%,var(--surface))}
+:where([data-ui='line']) > input.tick:checked::after,:where(.check) > input.tick:checked::after{content:"";width:var(--sp-1);height:var(--sp-2);border:solid var(--do-ink);border-width:0 1.75px 1.75px 0;transform:translateY(-1px) rotate(45deg)}
+:where([data-ui='line'],.check) > input.tick:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px}
+/* D-383: on the phone the tick is a 44 px tap and draws 20 px: a clear 12 px border the margins take back */
 @media (max-width:599px){
-  :where([data-ui='line']) > input.tick{box-sizing:content-box!important;border:11px solid transparent!important;background-clip:padding-box!important;margin:-10px -11px -11px!important;border-radius:18px!important;box-shadow:inset 0 0 0 1.5px var(--faint)}
-  :where([data-ui='line']) > input.tick:checked{box-shadow:none}
-  :where(#p-today,#p-study,#p-progress,#p-record,#p-system) :where([data-ui='line']) > input.tick{border-width:14px!important;margin:-14px!important;border-radius:var(--r-round)!important}
+  :where([data-ui='line']) > input.tick{box-sizing:content-box!important;width:var(--sp-5)!important;height:var(--sp-5)!important;flex-basis:auto!important;border:12px solid transparent!important;background-clip:padding-box!important;margin:-12px!important;border-radius:16px!important}
+  :where([data-ui='line']) > input.tick:checked::after{width:5px;height:10px}
 }
 /* the title that opens the line: a plain button. Legacy's bare button rule draws a pill around any button, so these
    few say !important until B-515. */
@@ -45,18 +46,17 @@
 :where([data-ui='line'][data-state='dragging']){position:relative;z-index:var(--z-raised);background:var(--surface);box-shadow:var(--elev-2);border-radius:var(--r-md);cursor:grabbing}
 /* the Gallery's forced hover shows the hover action over legacy's .li .hov until B-515 */
 [data-ui='line'][data-state='hover'] > .hov{visibility:visible!important}
-@media (max-width:599px){:where([data-ui='line']:not([data-kind='stack'])){height:var(--tap);padding:0 var(--sp-4)}:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:visible}}
+@media (max-width:599px){:where([data-ui='line']:not([data-kind='stack'])){height:auto;min-height:52px;padding:0 var(--sp-3);font-size:var(--fs-4)}:where([data-ui='line']:not([data-kind='stack'])) > .hov{visibility:visible}}
 /* B-515 lane D2b: the kit's class rules (legacy's line look), moved from page/styles.css unchanged in
    selector, value and order, so a class without data-ui still draws as before once legacy drops. */
-.row{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid rgba(var(--tint),.06);min-width:0}
-.row:first-child{border-top:0}
-.li{display:flex;align-items:center;gap:12px;height:32px;padding:0 12px;border-bottom:1px solid var(--line);color:var(--text);font-size:calc(13.5px * var(--ts));min-width:0}
+.row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;min-width:0}
+.li{display:flex;align-items:center;gap:12px;height:36px;padding:0 12px;border-radius:var(--r-sm);color:var(--text);font-size:var(--fs-3);min-width:0}
 .li:hover{background:var(--hover)}
 .li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .t{flex:none;color:var(--quiet);font-size:calc(12.5px * var(--ts));font-variant-numeric:tabular-nums}
 .li .hov{visibility:hidden}
 .li:hover .hov,.li:focus-within .hov{visibility:visible}
 @media (max-width:599px){
-  .li{height:44px;padding:0 16px}
+  .li{height:auto;min-height:52px;padding:0 12px}
   .li .hov{visibility:visible}
 }

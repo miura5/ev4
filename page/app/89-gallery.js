@@ -530,6 +530,21 @@
           row({ title: 'With an action', action: btn('Open', null, { cls: 'quiet' }) })
         );
         cells.push(galCell("today's row()", ul));
+        // B-545: the flat check at rest, checked and focused
+        for (const [label, on, focus] of [
+          ['check rest', false, false],
+          ['check checked', true, false],
+          ['check focus', false, true],
+        ]) {
+          const w = el('span', 'check');
+          const c = el('input', 'tick');
+          c.type = 'checkbox';
+          c.checked = on;
+          c.setAttribute('aria-label', label);
+          if (focus) c.dataset.state = 'focus';
+          w.append(c);
+          cells.push(galCell(label, w));
+        }
       } else if (ui === 'card') {
         const c = el('div', 'ui-card');
         c.append(el('h3', null, 'Readiness'), el('p', 'meta', 'A card holds one thing, one level deep.'));

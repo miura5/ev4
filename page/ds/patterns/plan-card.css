@@ -47,7 +47,7 @@
 #study-objectives .pl-filter button{flex:none;white-space:nowrap}
 :is(.ov-card .fold-line.pm-more,.pl-rows > .fold-line,.pl-carry .fold-line,.plan-sum .pm-rubfold)::after{margin-left:var(--sp-1)}
 .pl-rows{display:flex;flex-direction:column}
-.pl-day{border-bottom:1px solid var(--line)}
+.pl-day{border-bottom:0}
 .pl-rows > :last-child{border-bottom:0!important}
 .pl-dr{all:unset!important;box-sizing:border-box!important;display:grid!important;grid-template-columns:14px 84px minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important;width:100%!important;min-height:40px!important;padding:var(--sp-1)!important;cursor:pointer!important;font-size:calc(13.5px * var(--ts))!important;color:var(--text)!important;border-radius:var(--r-sm)!important}
 .pl-dr:hover{background:var(--hover)!important}
@@ -65,7 +65,7 @@
 .pl-rows > .fold-line:last-child{border-bottom:0!important}
 /* a day's tasks: tick, words over the done-state, the badge, the minutes */
 .pl-tasks{list-style:none;margin:0 0 var(--sp-2);padding:0 0 0 28px;display:flex;flex-direction:column}
-.pl-t{display:flex;align-items:flex-start;gap:10px;padding:7px var(--sp-1);border-top:1px solid var(--line);font-size:calc(13.5px * var(--ts))}
+.pl-t{display:flex;align-items:flex-start;gap:10px;padding:7px var(--sp-1);font-size:calc(13.5px * var(--ts))}
 .pl-tasks > .pl-t:first-child{border-top:0}
 .pl-t input.tick{margin-top:var(--sp-0_5)!important}
 .pl-t input.tick:disabled{cursor:default;opacity:.7}
@@ -76,7 +76,7 @@
 .pl-t.done .title{color:var(--faint)!important;text-decoration:line-through!important}
 .pl-carry{list-style:none}
 .pl-carry .fold-line{margin:0!important;padding:0 var(--sp-1)!important;min-height:36px!important;display:flex!important;align-items:center!important;gap:var(--sp-2)!important;color:var(--quiet)!important;font-size:calc(12.5px * var(--ts))!important}
-.pl-carry + .pl-t{border-top:1px solid var(--line)}
+.pl-carry + .pl-t{border-top:0}
 .pl-notes{margin:0 0 var(--sp-2);padding:0 var(--sp-1) 0 46px;display:flex;flex-direction:column;gap:var(--sp-1_5);font-size:var(--fs-2);color:var(--quiet);line-height:1.45}
 .pl-notes li.gap{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 .pl-working{margin:0 0 10px;font-size:calc(12.5px * var(--ts));color:var(--quiet)}

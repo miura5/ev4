@@ -10,16 +10,16 @@
 #study-weak .sp{flex:1}
 .wk-list{display:flex!important;flex-direction:column!important}
 .wk-list .dayh{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--quiet);padding:14px 18px var(--sp-1_5)}
-.wk-list .wl{display:flex;align-items:center;gap:var(--sp-3);padding:10px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wk-list .wl{display:flex;align-items:center;gap:var(--sp-3);padding:10px 18px;flex-wrap:wrap}
 .wk-list .wl .dot{width:7px;height:7px;border-radius:4px;background:var(--x,var(--line2));flex:none}
 .wk-list .wt{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-0_5)}
 .wk-list .wn{font-size:calc(13.5px * var(--ts));color:var(--text)}
 .wk-list .wl.quiet .wn{color:var(--quiet)}
 .wk-list .wl-all{border-bottom:0;padding:var(--sp-2) 18px var(--sp-1);gap:var(--sp-2)}
-.wk-list .wl-all + .dayh{border-top:1px solid var(--line);margin-top:var(--sp-2)}
+.wk-list .wl-all + .dayh{margin-top:var(--sp-2)}
 .wk-list .wl-note{color:var(--quiet)}
 /* B-407: a To review row, the demo's trow: its topic and where it came from, then Accept, Join, Not now, Decline */
-.wk-list .trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:var(--sp-3) 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.wk-list .trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:var(--sp-3) 18px;background:var(--bg)}
 .wk-list .trow .tt{flex:1!important;min-width:200px!important;display:flex!important;flex-direction:column!important;gap:var(--sp-0_5)}
 .wk-list .trow .tt .wn{font-weight:var(--fw-medium);overflow-wrap:anywhere}
 .wk-list .trow .acts{display:flex;gap:var(--sp-1_5);flex-wrap:wrap}
