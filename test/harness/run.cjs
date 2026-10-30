@@ -2438,6 +2438,32 @@ async function studyPlanChecks(page) {
     await db.collection('exams').doc('B9H').update({ status: 'done' }); // out of the way of the checks after this one
   });
   await pickCourse('NUR 112');
+  // B-577: from the panel breakpoint up, the plan's summary is in the right panel (shown, on top, with its button row
+  // and ⋯) and not in its card, for a draft and for an approved plan
+  const sidePlan = async kind => {
+    for (const w of [1440, 1280]) {
+      await page.setViewportSize({ width: w, height: 860 });
+      await page.waitForTimeout(250);
+      const s = await page.evaluate(() => {
+        const side = document.getElementById('study-side'),
+          sum = side && side.querySelector('.plan-sum');
+        const r = sum ? sum.getBoundingClientRect() : null,
+          at = r && r.height ? document.elementFromPoint(r.left + r.width / 2, r.top + 12) : null;
+        return {
+          side: !!side && !side.hidden && side.getClientRects().length > 0,
+          sum: !!r && r.height > 40 && r.left < innerWidth && !!at && side.contains(at),
+          acts: !!sum && !!sum.querySelector('.pm-act') && /⋯|More/.test(sum.querySelector('.pm-act').innerHTML),
+          inCard: !!document.querySelector('#ov-plans [data-ui=card][data-key="E4-H2"] > .plan-sum'),
+        };
+      });
+      ok(
+        `[${w}] ${kind}: the plan's summary fills the right panel, its button row and ⋯ with it (B-577)`,
+        s.side && s.sum && s.acts && !s.inCard,
+        JSON.stringify(s)
+      );
+    }
+  };
+  await sidePlan('a draft');
   // Approve (from the panel at 1280): the draft is the plan in force, Today opens, a tick moves the done count by one
   await page.setViewportSize({ width: 1280, height: 860 });
   await page.waitForTimeout(250);
@@ -2744,6 +2770,9 @@ async function studyPlanChecks(page) {
       .doc('E4')
       .set({ ...e, plan: 'E4' });
   });
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  await sidePlan('an approved plan');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(250);
 }
