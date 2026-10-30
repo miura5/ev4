@@ -158,8 +158,8 @@ const view = page =>
   page.evaluate(() => {
     const t = document.getElementById('thread'),
       lines = [...t.querySelectorAll('.msg')].filter(m => getComputedStyle(m).display !== 'none');
-    const now = t.querySelector('.msg.ev.current .bubble'),
-      past = t.querySelector('.msg.ev:not(.current) .bubble'),
+    const now = t.querySelector('[data-key][data-kind=hers].current .bubble'),
+      past = t.querySelector('[data-key][data-kind=hers]:not(.current) .bubble'),
       hero = document.getElementById('hero'),
       av = hero.querySelector('.ev-av');
     const cs = x => (x ? getComputedStyle(x) : null);
@@ -208,7 +208,7 @@ async function send(page, text, reply) {
 const atNow = page =>
   page.evaluate(() => {
     const t = document.getElementById('thread'),
-      cur = t.querySelector('.msg.ev.current'),
+      cur = t.querySelector('[data-key][data-kind=hers].current'),
       tr = t.getBoundingClientRect(),
       cr = cur && cur.getBoundingClientRect();
     return (
@@ -457,7 +457,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.waitForTimeout(250);
     // B-209 (D-210): his line stays in the conversation, quiet and right-aligned; there is no echo.
     const mine = await page.evaluate(() => {
-      const m = [...document.querySelectorAll('#thread .msg.matt')].pop(),
+      const m = [...document.querySelectorAll('#thread [data-key][data-kind=his]')].pop(),
         e = document.getElementById('ev-echo');
       const r = m && m.getBoundingClientRect(),
         t = document.getElementById('thread').getBoundingClientRect();
@@ -475,7 +475,7 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     // B-264: her lines read left-aligned at every width, the phone's too
     const herAlign = await page.evaluate(() => {
-      const b = document.querySelector('#thread .msg.ev .bubble');
+      const b = document.querySelector('#thread [data-key][data-kind=hers] .bubble');
       return b ? getComputedStyle(b).textAlign : null;
     });
     ok(`[${scheme}] her lines read left-aligned (B-264)`, /^(left|start)$/.test(herAlign || ''), herAlign);
@@ -483,7 +483,7 @@ async function sideBySide(browser, left, right, out, vp) {
     for (let i = 0; i < 8; i++) {
       seen.push(
         await page.evaluate(() => {
-          const b = document.querySelector('#thread .msg.ev.current .bubble');
+          const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
           return b ? [b.querySelectorAll('.w.on').length, b.querySelectorAll('.w').length] : [0, 0];
         })
       );
@@ -507,7 +507,7 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify(said)
     );
     const done = await page.evaluate(() => {
-      const b = document.querySelector('#thread .msg.ev.current .bubble');
+      const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
       const log = window.EVApp.core.stats().log;
       return {
         all: b.querySelectorAll('.w.on').length === b.querySelectorAll('.w').length,
@@ -562,7 +562,7 @@ async function sideBySide(browser, left, right, out, vp) {
         return {
           words: window.__rv,
           end: end ? end.at - t.t0 : null,
-          total: document.querySelectorAll('#thread .msg.ev.current .bubble .w').length,
+          total: document.querySelectorAll('#thread [data-key][data-kind=hers].current .bubble .w').length,
         };
       });
       const W = rv.words,
@@ -606,7 +606,7 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     measured[scheme].pace = pace;
     for (const [how, act] of [
-      ['a tap on her line', () => page.click('#thread .msg.ev.current .bubble')],
+      ['a tap on her line', () => page.click('#thread [data-key][data-kind=hers].current .bubble')],
       [
         'a scroll',
         async () => {
@@ -619,13 +619,13 @@ async function sideBySide(browser, left, right, out, vp) {
       await send(page, 'again', LONG);
       await page.waitForTimeout(900);
       const before = await page.evaluate(() => {
-        const b = document.querySelector('#thread .msg.ev.current .bubble');
+        const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
         return [b.querySelectorAll('.w.on').length, b.querySelectorAll('.w').length];
       });
       await act();
       await page.waitForTimeout(150);
       const after = await page.evaluate(() => {
-        const b = document.querySelector('#thread .msg.ev.current .bubble');
+        const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
         return [b.querySelectorAll('.w.on').length, b.querySelectorAll('.w').length];
       });
       ok(
@@ -714,7 +714,9 @@ async function sideBySide(browser, left, right, out, vp) {
         v.texts.filter(t => t.startsWith('E:')).length === 7 && v.texts.some(t => /Harness morning line/.test(t))
       );
       const mattPx = await page.evaluate(() => {
-        const m = [...document.querySelectorAll('#thread .msg.matt')].find(x => getComputedStyle(x).display !== 'none');
+        const m = [...document.querySelectorAll('#thread [data-key][data-kind=his]')].find(
+          x => getComputedStyle(x).display !== 'none'
+        );
         return m ? getComputedStyle(m.querySelector('.bubble')).fontSize : null;
       });
       ck(`[${scheme}] his earlier lines are ${A.matt}, grey`, mattPx === A.matt, String(mattPx));
@@ -800,7 +802,7 @@ async function sideBySide(browser, left, right, out, vp) {
         atNow: await atNow(page),
         pin: await page.evaluate(() => {
           const t = document.getElementById('thread'),
-            c = t.querySelector('.msg.ev.current');
+            c = t.querySelector('[data-key][data-kind=hers].current');
           return c
             ? [
                 Math.round(c.getBoundingClientRect().top - t.getBoundingClientRect().top),
@@ -832,7 +834,7 @@ async function sideBySide(browser, left, right, out, vp) {
       page.evaluate(() => {
         const t = document.getElementById('thread').getBoundingClientRect(),
           hero = document.getElementById('hero'),
-          cur = document.querySelector('#thread .msg.ev.current'),
+          cur = document.querySelector('#thread [data-key][data-kind=hers].current'),
           b = cur.querySelector('.bubble').getBoundingClientRect(),
           s = document.getElementById('ev-surf'),
           r = s && s.getBoundingClientRect(),
@@ -1202,7 +1204,7 @@ async function sideBySide(browser, left, right, out, vp) {
     });
     await page.waitForTimeout(600);
     const failed = await page.evaluate(() => {
-      const m = [...document.querySelectorAll('#thread .msg.ev')].pop();
+      const m = [...document.querySelectorAll('#thread [data-key][data-kind=hers]')].pop();
       const bs = m ? [...m.querySelectorAll('button')].map(b => b.textContent.trim()) : [];
       return {
         text: m && m.textContent.slice(0, 60),
@@ -1282,7 +1284,7 @@ async function sideBySide(browser, left, right, out, vp) {
     page.evaluate(() => {
       const sh = document.getElementById('sksheet'),
         pn = document.getElementById('skpanel'),
-        cur = document.querySelector('#thread .msg.ev.current');
+        cur = document.querySelector('#thread [data-key][data-kind=hers].current');
       const vis = e =>
         !!e && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
       return {
@@ -1849,7 +1851,9 @@ async function sideBySide(browser, left, right, out, vp) {
       page.evaluate(() => {
         const c = document.querySelector('.compose-row').getBoundingClientRect(),
           // B-368: her greeting's visible line is its summary line
-          cur = document.querySelector('#thread .msg.ev.current .bubble, #thread .msg.ev.current .brief-line'),
+          cur = document.querySelector(
+            '#thread [data-key][data-kind=hers].current .bubble, #thread [data-key][data-kind=hers].current .brief-line'
+          ),
           r = cur && cur.getBoundingClientRect(),
           H = innerHeight;
         return {
@@ -2033,8 +2037,8 @@ async function sideBySide(browser, left, right, out, vp) {
             return {
               step: document.getElementById('hero').dataset.step,
               px: Math.round(av.getBoundingClientRect().width),
-              now: size('#thread .msg.ev.current .bubble'),
-              past: size('#thread .msg.ev:not(.current) .bubble'),
+              now: size('#thread [data-key][data-kind=hers].current .bubble'),
+              past: size('#thread [data-key][data-kind=hers]:not(.current) .bubble'),
               face: c1 && getComputedStyle(c1).fill,
               back: c2 && getComputedStyle(c2).fill,
               av1: root.getPropertyValue('--av1').trim(),
@@ -2082,7 +2086,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await send(page, 'explain preload', REPLY);
     await page.waitForTimeout(1200); // past the send and settle brightness changes
     const r = await page.evaluate(() => {
-      const b = document.querySelector('#thread .msg.ev.current .bubble');
+      const b = document.querySelector('#thread [data-key][data-kind=hers].current .bubble');
       const ws = [...b.querySelectorAll('.w')];
       return {
         n: ws.length,
@@ -2199,7 +2203,11 @@ async function sideBySide(browser, left, right, out, vp) {
           const e = document.querySelector(q);
           return e ? parseFloat(getComputedStyle(e).fontSize) : null;
         };
-        return { line: px('#thread .msg.ev.current .bubble'), stem: px('#ev-surf .q-stem'), opt: px('#ev-surf .opt') };
+        return {
+          line: px('#thread [data-key][data-kind=hers].current .bubble'),
+          stem: px('#ev-surf .q-stem'),
+          opt: px('#ev-surf .opt'),
+        };
       });
       ok(
         `[surfaces ${tag}] the card's question is no larger than her line, its options smaller`,
@@ -2214,7 +2222,7 @@ async function sideBySide(browser, left, right, out, vp) {
       await page.fill('#ev-input', 'and then');
       await page.click('#ev-send');
       await page.waitForTimeout(4500);
-      await page.click('#thread .msg.ev.current a.cite');
+      await page.click('#thread [data-key][data-kind=hers].current a.cite');
       await page.waitForTimeout(400);
       const s1 = await sf(page);
       ok(
@@ -2231,11 +2239,11 @@ async function sideBySide(browser, left, right, out, vp) {
       );
       await page.screenshot({ path: `${shots}/surfaces-cite-${tag}.png` });
       await page.evaluate(() => {
-        const a = [...document.querySelectorAll('#thread .msg.ev:not(.current) a.cite')].pop();
+        const a = [...document.querySelectorAll('#thread [data-key][data-kind=hers]:not(.current) a.cite')].pop();
         a.scrollIntoView({ block: 'center' });
       });
       await page.waitForTimeout(200);
-      await page.locator('#thread .msg.ev:not(.current) a.cite').last().click();
+      await page.locator('#thread [data-key][data-kind=hers]:not(.current) a.cite').last().click();
       await page.waitForTimeout(400);
       const s2 = await sf(page);
       ok(
@@ -2265,7 +2273,7 @@ async function sideBySide(browser, left, right, out, vp) {
               t0 = performance.now();
             const tick = () => {
               const n = document.querySelector('.cap-now'),
-                cur = document.querySelector('#thread .msg.ev.current');
+                cur = document.querySelector('#thread [data-key][data-kind=hers].current');
               out.push({
                 back: !!n && !n.hidden,
                 hero: Math.round(document.getElementById('hero').getBoundingClientRect().height),

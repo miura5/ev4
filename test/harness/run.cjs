@@ -1487,7 +1487,7 @@ async function workLineChecks(page, scheme) {
       /^ideas\/idea-/.test(m.work.changed[0]),
     JSON.stringify(m && m.work)
   );
-  const wl = page.locator('#thread .msg.ev').last().locator('.work-line');
+  const wl = page.locator('#thread [data-key][data-kind=hers]').last().locator('.work-line');
   const wlh = (await wl.count()) ? await wl.evaluate(e => Math.round(e.getBoundingClientRect().height)) : null;
   ok(
     `${tag}B-227: her line carries one work line, at most 44 px`,
@@ -1496,10 +1496,10 @@ async function workLineChecks(page, scheme) {
   );
   if (wlh != null) await wl.click();
   await page.waitForTimeout(200);
-  const il = page.locator('#thread .msg.ev').last().locator('.work-changes .tlink').first();
+  const il = page.locator('#thread [data-key][data-kind=hers]').last().locator('.work-changes .tlink').first();
   const ilabel = (await il.count()) ? (await il.textContent()).trim() : '';
   await page
-    .locator('#thread .msg.ev')
+    .locator('#thread [data-key][data-kind=hers]')
     .last()
     .screenshot({ path: `${shots}/work-reply-${scheme}.png` });
   if (ilabel) await il.click();
@@ -2904,7 +2904,7 @@ async function tap(page, locator, name) {
     ok(`[${scheme}] no sideways scroll`, !overflow);
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     // ---- E.V.: greeting, quick asks, chat with tools, jobs, guard, check-in (light pass does the interactions)
-    const greet = (await page.locator('#thread .msg.ev').last().textContent()) || '';
+    const greet = (await page.locator('#thread [data-key][data-kind=hers]').last().textContent()) || '';
     // B-90: one strict line (what can't wait, else a greeting and how she can help). B-358 (D-316): under it one summary
     // line, as the demo's Main board, from code: no briefing to fold, no line per item, no button.
     // her greeting's line is kept in talk/memory once its quick call (or core's fallback) settles
@@ -3082,7 +3082,7 @@ async function tap(page, locator, name) {
     );
     // B-362 (D-316): a chip's answer is her one line and one button under it, as the demo: no data card, no surface
     {
-      const last = page.locator('#thread .msg.ev').last();
+      const last = page.locator('#thread [data-key][data-kind=hers]').last();
       const a = {
         text: (
           (await last
@@ -3201,7 +3201,11 @@ async function tap(page, locator, name) {
     ok('job card shows queued', /queued/.test(await page.locator('#ev-surf').textContent()));
     ok(
       'no Go deeper under the quick reply (B-452, Matt)',
-      (await page.locator('#thread .msg.ev').last().locator('button', { hasText: 'Go deeper' }).count()) === 0
+      (await page
+        .locator('#thread [data-key][data-kind=hers]')
+        .last()
+        .locator('button', { hasText: 'Go deeper' })
+        .count()) === 0
     );
     ok(
       'chat context carries the greeting as record data and the reply-once rule',
@@ -3234,7 +3238,10 @@ async function tap(page, locator, name) {
       two.text === 'Here’s what’s still open today.' && two.cards.some(c => c.type === 'today'),
       JSON.stringify(two.text)
     );
-    ok('two-round reply shown once', !/resize/.test(await page.locator('#thread .msg.ev').last().textContent()));
+    ok(
+      'two-round reply shown once',
+      !/resize/.test(await page.locator('#thread [data-key][data-kind=hers]').last().textContent())
+    );
     await page.evaluate(() => {
       window.__chatPre = '';
     });
@@ -3249,7 +3256,7 @@ async function tap(page, locator, name) {
       const t0 = await page.evaluate(() => {
         window.__anims = [];
         document.addEventListener('animationstart', e => window.__anims.push(String(e.target.className)), true);
-        window.__msgNode = document.querySelector('#thread .msg.ev:last-of-type');
+        window.__msgNode = document.querySelector('#thread [data-key][data-kind=hers]:last-of-type');
         window.__firstMsg = document.querySelector('#thread .msg');
         window.__rows0 = [...document.querySelectorAll('#ev-surf .row')].map(r =>
           Math.round(r.getBoundingClientRect().top)
@@ -3411,7 +3418,7 @@ async function tap(page, locator, name) {
     // Now is the bottom, or, when her current line and its card are taller than the captions, her line pinned at the top.
     const bn = await page.evaluate(() => {
       const t = document.getElementById('thread'),
-        cur = t.querySelector('.msg.ev.current'),
+        cur = t.querySelector('[data-key][data-kind=hers].current'),
         tr = t.getBoundingClientRect(),
         cr = cur && cur.getBoundingClientRect();
       return {
@@ -5627,7 +5634,7 @@ async function tap(page, locator, name) {
         return {
           head: sf && sf.querySelector('.sf-head .sf-t').textContent,
           rows: sf ? [...sf.querySelectorAll('.sf-row .sf-t')].map(x => x.textContent) : [],
-          inLine: document.querySelectorAll('#thread .msg.ev .ev-card').length,
+          inLine: document.querySelectorAll('#thread [data-key][data-kind=hers] .ev-card').length,
         };
       });
       ok(
@@ -6165,7 +6172,7 @@ async function tap(page, locator, name) {
           step: h.dataset.step,
           px: Math.round(h.querySelector('.ev-av').getBoundingClientRect().width),
           stage: Math.round(h.getBoundingClientRect().height),
-          lines: document.querySelectorAll('#thread .msg.ev').length,
+          lines: document.querySelectorAll('#thread [data-key][data-kind=hers]').length,
           // B-74 (D-128): the session is its own conversation, opened by the line of his that started it.
           thread: [...document.querySelectorAll('#thread .msg')].map(
             m => (m.classList.contains('ev') ? 'ev: ' : 'matt: ') + m.textContent.trim().slice(0, 40)

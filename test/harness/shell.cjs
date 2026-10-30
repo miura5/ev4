@@ -115,7 +115,7 @@ const statusShown = page =>
   ]) {
     const { page, errors } = await open(browser, { viewport });
     await page
-      .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 })
+      .waitForFunction(() => document.querySelector('#thread [data-key][data-kind=hers]'), null, { timeout: 5000 })
       .catch(() => {});
     await page.screenshot({ path: `${shots}/shell-${scheme}.png` });
     ok(
@@ -133,7 +133,7 @@ const statusShown = page =>
         // B-358, B-368 (D-316): her greeting shows as its one summary line
         /on today’s list/.test(
           await page
-            .locator('#thread .msg.ev')
+            .locator('#thread [data-key][data-kind=hers]')
             .first()
             .textContent()
             .catch(() => '')

@@ -303,8 +303,8 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       const r = await page.evaluate(() => {
         const g = document.querySelector('#thread .msg.greet');
         const mem = (window.__db.talk || {}).memory || {};
-        const mine = [...document.querySelectorAll('#thread .msg.matt')].map(x => x.textContent);
-        const cur = document.querySelector('#thread .msg.ev.current');
+        const mine = [...document.querySelectorAll('#thread [data-key][data-kind=his]')].map(x => x.textContent);
+        const cur = document.querySelector('#thread [data-key][data-kind=hers].current');
         const box = cur && cur.getBoundingClientRect();
         return {
           // B-368: the greeting's line is kept, not shown: its record is the last headline

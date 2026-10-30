@@ -118,7 +118,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     const t0 = Date.now();
     await page.goto(ORIGIN + '/');
     const shown = await page
-      .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 20000 })
+      .waitForFunction(() => document.querySelector('#thread [data-key][data-kind=hers]'), null, { timeout: 20000 })
       .then(() => true)
       .catch(() => false);
     openTime = shown ? Date.now() - t0 : null;
@@ -166,7 +166,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
       await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
       await page.goto(ORIGIN + '/');
       await page
-        .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 8000 })
+        .waitForFunction(() => document.querySelector('#thread [data-key][data-kind=hers]'), null, { timeout: 8000 })
         .catch(() => {});
       const got = await page.evaluate(names => {
         const cs = getComputedStyle(document.documentElement);
@@ -288,7 +288,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
     await page.addInitScript('window.__db=' + JSON.stringify(seed) + ';' + stub);
     await page.goto(ORIGIN + '/');
     await page
-      .waitForFunction(() => document.querySelector('#thread .msg.ev'), null, { timeout: 5000 })
+      .waitForFunction(() => document.querySelector('#thread [data-key][data-kind=hers]'), null, { timeout: 5000 })
       .catch(() => {});
     if ([390, 1280].includes(size.width) && [844, 800].includes(size.height)) {
       // B-303: Inter is the page's font: asked for from Google Fonts, the system font after it in the stack, and read

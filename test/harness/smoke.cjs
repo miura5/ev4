@@ -128,14 +128,14 @@ async function open(browser, viewport) {
 
     // 2. The greeting renders.
     const greeted = await until(page, () => {
-      const m = document.querySelector('#thread .msg.ev');
+      const m = document.querySelector('#thread [data-key][data-kind=hers]');
       return !!m && m.textContent.trim().length > 0;
     });
     ok(
       `${tag} the greeting renders`,
       greeted,
       await page
-        .locator('#thread .msg.ev')
+        .locator('#thread [data-key][data-kind=hers]')
         .first()
         .textContent()
         .catch(() => '')
@@ -419,7 +419,7 @@ async function open(browser, viewport) {
       document.getElementById('ev-form').requestSubmit();
       await new Promise(r => requestAnimationFrame(() => r()));
       const ms = Math.round(performance.now() - t0);
-      const shown = [...document.querySelectorAll('#thread .msg.matt, #thread .cap-echo')].some(m =>
+      const shown = [...document.querySelectorAll('#thread [data-key][data-kind=his], #thread .cap-echo')].some(m =>
         m.textContent.trim().includes(said)
       );
       window.__writeDelayMs = 0;

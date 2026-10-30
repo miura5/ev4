@@ -1373,7 +1373,7 @@ async function tickAll(page) {
   const surf = page =>
     page.evaluate(() => {
       const s = document.getElementById('ev-surf'),
-        cur = document.querySelector('#thread .msg.ev.current .bubble'),
+        cur = document.querySelector('#thread [data-key][data-kind=hers].current .bubble'),
         p = s && s.querySelector('.sf-body .prep');
       return {
         line: cur ? cur.textContent : '',
