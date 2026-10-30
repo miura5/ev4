@@ -20,10 +20,7 @@ const RAW = {
   durations: /\d/,
 };
 // [colours, font sizes, radii, durations] left per file on Oct 30; lower these as tokens replace them, never raise.
-const LEFT = new Map([
-  ['page/ds/base.css', [0, 1, 0, 0]], // B-515 snap (D-402): the body's 16px is the reading size, not a half step
-  ['page/ds/components/06-fold.css', [0, 0, 0, 2]],
-]);
+const LEFT = new Map([]);
 const raw = f => {
   const a = audit(fs.readFileSync(path.join(ROOT, f), 'utf8'));
   return Object.entries(RAW).map(([k, re]) =>

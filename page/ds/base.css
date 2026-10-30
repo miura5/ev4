@@ -6,7 +6,7 @@
 /* B-390: a hidden element is gone on this sheet's own word, not only the host skeleton's (a hidden panel takes no taps) */
 [hidden]{display:none!important}
 html{background:var(--bg)}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:calc(16px * var(--ts));line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;min-height:100vh;
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:calc(var(--fs-input) * var(--ts));line-height:1.5;-webkit-font-smoothing:antialiased;margin:0;min-height:100vh;
   padding:0 max(16px,env(safe-area-inset-right,0px)) calc(var(--dock-h) + 28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 a{color:var(--accent-text)}
 /* B-275 (D-270): selected text is neutral, a grey wash in the text colour, never the system blue */

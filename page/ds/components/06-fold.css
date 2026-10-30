@@ -8,8 +8,8 @@
 :where([data-ui='fold']) > .fold-line[aria-expanded='true']::after{content:' ⌄'}
 :where([data-ui='fold']) > .fold-line:is(:hover,[data-state='hover']){color:var(--text)}
 :where([data-ui='fold']) > .fold-line:is(:focus-visible,[data-state='focus']){outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
-:where([data-ui='fold']) > .fold-body{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows var(--dur-fold-close) var(--ease-in),opacity var(--dur-fold-close) var(--ease-in),visibility 0s linear var(--dur-fold-close)}
-:where([data-ui='fold']) > .fold-line[aria-expanded='true'] + .fold-body{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows var(--dur-fold-open) var(--ease-std),opacity var(--dur-fold-fade) var(--ease-out),visibility 0s}
+:where([data-ui='fold']) > .fold-body{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows var(--dur-fold-close) var(--ease-in),opacity var(--dur-fold-close) var(--ease-in),visibility linear var(--dur-fold-close)}
+:where([data-ui='fold']) > .fold-line[aria-expanded='true'] + .fold-body{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows var(--dur-fold-open) var(--ease-std),opacity var(--dur-fold-fade) var(--ease-out),visibility}
 :where([data-ui='fold']) > .fold-body > .fold-in{min-height:0;overflow:hidden}
 @media (max-width:599px){[data-ui='fold'] > .fold-line{display:flex!important;align-items:center!important;min-height:var(--tap)!important;box-sizing:border-box!important}}
 /* B-515 lane 1: moved from the carry: the fold line's focus, card padding, caret and chevron. */
