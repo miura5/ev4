@@ -11390,5 +11390,23 @@
    "outcome": "task",
    "at": "2026-10-30T23:11:00.600Z"
   }
+ },
+ {
+  "id": "B-612",
+  "kind": "request",
+  "title": "Request (reported Oct 30): The Stop hook should run only the format test and the unit tests for changed files, with a short cap, instead of every test file (up to 300 s in every builder worktree, against D-408).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "instructions audit Oct 30 (Stop hook)",
+  "words": "The Stop hook should run only the format test and the unit tests for changed files, with a short cap, instead of every test file (up to 300 s in every builder worktree, against D-408).",
+  "reworded": true,
+  "reportedAt": "2026-10-30T23:15:16.288Z",
+  "board": {
+   "row": "v4 B-612: The Stop hook should run only the format test and the unit tests for…"
+  }
  }
 ]
