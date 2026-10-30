@@ -6,7 +6,18 @@ reads it right after CLAUDE.md. It holds no personal data: the repository is pub
 **Managing chat:** the chat Matt opened on Oct 28 after the evening hand-off (it took over from
 session_01CWeveciiiW2pUvFQtQJ3HK at about 21:05 UTC and is managing now). One manager at a time.
 
-## Update (Oct 30, later): v4.5.20 LIVE at 2f50284 (the new look); next is B-522 minutes, then the course fallback (read this first)
+## Update (Oct 30, evening Central): v4.5.21 live; old-stylesheet cleanup running (read this first)
+
+- **Live:** v4.5.21 at 7475963 (B-592 typing reveal, B-577 Study panel, B-522 and B-591 minutes).
+- **Running:** cleanup lane 1 of 4 (B-515), from docs/design/proprietary/carry-dryrun.md. It builds the tokens, base, components, Table and Chart blocks, deletes the duplicate and dead rules, then splits the carry into carry-ev, carry-study and carry-notes. Snapping is decided (D-402) and gets its own commit; every other step must show pixdiff 0.
+- **Next:** lanes 2 (E window) and 3 (Study and Today) in parallel, then lane 4 (Notes, Record and the end: carry machinery removed, token lint at zero). Then one staging release and a card.
+- **Matt's working rules for now:**
+  - at most 2 agents at a time, plus 1 bug-fix builder when it is safe;
+  - look tweaks wait until after the cleanup;
+  - **live ships once it's tested and Matt has checked staging and approved. Never time- or exam-gated (D-390).**
+- **Monday evening:** the architecture review (B-415, reframed: map systems and dependencies, adopt or build small, a removal sweep, then the consolidation plan).
+
+## Earlier (Oct 30, later): v4.5.20 LIVE at 2f50284 (the new look)
 
 ## Earlier (Oct 30, afternoon Central): release card #2 sent
 
