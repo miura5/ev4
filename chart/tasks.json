@@ -11221,9 +11221,9 @@
   "id": "B-604",
   "kind": "bug",
   "title": "Bug (reported Oct 30): The pane header lost the view's name after the tab tooltips were removed, so Study showed a status line in place of its title",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A design round for a phone-only layout with the basics Matt picks, approved by him, then built; until then the phone is frozen under D-407.",
+  "milestone": "Later",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11233,6 +11233,10 @@
   "reportedAt": "2026-10-30T19:36:14.212Z",
   "board": {
    "row": "v4 B-604: The pane header lost the view's name after the tab tooltips were…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T19:45:41.063Z"
   }
  },
  {
