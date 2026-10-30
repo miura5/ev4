@@ -10635,9 +10635,9 @@
   "id": "B-577",
   "kind": "bug",
   "title": "Bug (reported Oct 30): On Study at a wide window, the exam plan's summary (draft, rubric score, criteria and its buttons) disappears instead of showing in the right side panel; at a narrower width it shows inline.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "On Study at every width at or above the side-panel breakpoint, the plan summary (status, title, dates, score, criteria, the button row and ⋯) shows in the right panel for a draft and an approved plan, on the staging record with Matt's real courses; it never disappears; below the breakpoint it stays inline.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10647,6 +10647,10 @@
   "reportedAt": "2026-10-30T09:44:36.964Z",
   "board": {
    "row": "v4 B-577: On Study at a wide window, the exam plan's summary (draft, rubric…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-30T09:44:57.674Z"
   }
  }
 ]
