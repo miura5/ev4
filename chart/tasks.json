@@ -12115,9 +12115,9 @@
   "id": "B-642",
   "kind": "request",
   "title": "Request (reported Oct 31): Release review follow-ups (Oct 31): a card answer clears a half-typed line in the side chat box; a refused send restores the card answer to the chat box, not the card; a card check answer outside a timed session can consume a pending plan target; record-past fetches the run twice, trusts --release when no local tag, and compares short shas; releaseOf fetches with no timeout; checks.yml parses HARNESSES with tr and counts PASS lines by log format",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each listed follow-up fixed or declined with a reason in a note; tests for the fixed ones.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12126,6 +12126,10 @@
   "reportedAt": "2026-10-31T12:30:57.028Z",
   "board": {
    "row": "v4 B-642: Release review follow-ups (Oct 31): a card answer clears a half-typed…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:15:52.531Z"
   }
  },
  {
