@@ -4898,7 +4898,7 @@
   "title": "Bug (reported Oct 23): seed-staging refuses a real live export because the live record still holds one pre-v4 day, days/2026-10-16 (a B-34 leftover with no writer). Before #17 it silently made a nearly empty seed marked migrated from v3; now it refuses, which is safer, but staging can't be re-seeded from live until the leftover is handled.",
   "dod": "seed-staging takes a live export that still holds the B-34 leftover day: the leftover is either kept as a legacy copy and marked, or skipped with a named line, never a silent near-empty seed; a seed test plants it; staging re-seeded from a live export once, read back",
   "milestone": "v4.5.x ops",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4909,8 +4909,9 @@
    "row": "v4 B-270: seed-staging refuses a real live export because the live record still…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-24T04:13:15.061Z"
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: seed from a claude.ai live export is retired: live is the ev-live D1 (D-307, D-330) and records copy into D1 (D-321).",
+   "at": "2026-10-31T00:40:01.503Z"
   }
  },
  {
