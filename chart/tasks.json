@@ -11556,9 +11556,9 @@
   "title": "Request (reported Oct 30): Behaviour kit in Proprietary: shared behaviours for confirm or undo, optimistic save, loading, empty and error states, keyboard and closing a window, as block behaviours every view uses (drag closing New task and Undo only on the latest tick were this).",
   "dod": "Proprietary holds the shared behaviours (undo, optimistic save, loading, empty, error, keyboard, close) and the views use them; the Gallery shows each.",
   "milestone": "workflow (ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it.",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
   "words": "Behaviour kit in Proprietary: shared behaviours for confirm or undo, optimistic save, loading, empty and error states, keyboard and closing a window, as block behaviours every view uses (drag closing New task and Undo only on the latest tick were this).",
@@ -11569,7 +11569,8 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-31T01:05:02.763Z"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-617",
