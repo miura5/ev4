@@ -12327,9 +12327,9 @@
   "id": "B-652",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416 release review backlog: an old queued flashcards job runs as general instead of a clean retired failure; weekInsights writes energy null so old checkin days lose energy in the weekly review; an old active skill session is never closed; an old flashcards job card vanishes with no stand-in line; jobresults quizlet/deckId/deckCards kept but not shown",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each listed follow-up fixed or declined with a reason in a note.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12338,6 +12338,10 @@
   "reportedAt": "2026-10-31T14:17:06.744Z",
   "board": {
    "row": "v4 B-652: D-416 release review backlog: an old queued flashcards job runs as…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T22:35:56.076Z"
   }
  },
  {
