@@ -11602,9 +11602,9 @@
   "title": "Request (reported Oct 30): State-aware style diff: the computed-style and pixel diffs also open hover, focus, read-only, folded and dark states, so style changes can't break states nobody looks at (Oct 30's three late breaks).",
   "dod": "csdiff and pixdiff open hover, focus, read-only, folded and dark states; a strip that breaks one of them fails the diff.",
   "milestone": "workflow (ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it.",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
   "words": "State-aware style diff: the computed-style and pixel diffs also open hover, focus, read-only, folded and dark states, so style changes can't break states nobody looks at (Oct 30's three late breaks).",
@@ -11615,7 +11615,8 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-31T01:05:07.549Z"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-619",
