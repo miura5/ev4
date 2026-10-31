@@ -526,3 +526,25 @@ test('B-479: the chat’s start_job can start every kind it offers, flashcards i
   }
   assert.match(spec.jobs.kinds.flashcards.guide, /never a reason for failed/);
 });
+
+test('B-621: a BIO 201 study guide is proved free of NCLEX, and the lines become annotations', async () => {
+  const { proofJobs, nclexCheck, annotations } = await import('../tools/pwa-jobs.mjs');
+  const jobs = proofJobs();
+  assert.equal(jobs['study-guide'].course, 'NUR 112');
+  assert.equal(jobs['study-guide BIO 201'].course, 'BIO 201');
+  const done = text => ({ data: { status: 'done', result: { text } } });
+  assert.ok(nclexCheck('study-guide', jobs['study-guide'], done('NCLEX traps')).ok);
+  assert.ok(!nclexCheck('b', jobs['study-guide BIO 201'], done('the NCLEX traps')).ok);
+  assert.ok(nclexCheck('b', jobs['study-guide BIO 201'], done('exam traps')).ok);
+  assert.equal(nclexCheck('g', { kind: 'general' }, done('x')), null);
+  const a = annotations([
+    { ok: true, what: 'general: done' },
+    { ok: false, what: 'flashcards: jobresults failed (x)\nmore' },
+    { ok: true, what: 'NCLEX check, b (BIO 201): 0 mentions' },
+  ]);
+  assert.deepEqual(a, [
+    '::error::flashcards: jobresults failed (x) more',
+    '::notice::NCLEX check, b (BIO 201): 0 mentions',
+    '::notice::ok: general: done',
+  ]);
+});

@@ -29,6 +29,35 @@ export const PROOF_JOBS = {
   flashcards: '10 flashcards on dosage units and abbreviations.',
   general: 'List the major electrolytes and one sign of each being low.',
 };
+/** The course each proof job names (B-621): the study guide is run once per course, so the real path proves the course
+ * framing of B-601 and B-609 (a nursing guide may say NCLEX; a BIO 201 guide never does). */
+export const PROOF_COURSE = { 'study-guide': 'NUR 112' };
+/** Extra proof jobs, by label: { kind, course, brief }. */
+export const EXTRA_JOBS = {
+  'study-guide BIO 201': {
+    kind: 'study-guide',
+    course: 'BIO 201',
+    brief: 'A one-page study guide on renal filtration and reabsorption.',
+  },
+};
+/** Every proof job, by label: { kind, course, brief }. */
+export const proofJobs = () => ({
+  ...Object.fromEntries(
+    Object.entries(PROOF_JOBS).map(([kind, brief]) => [kind, { kind, course: PROOF_COURSE[kind] || null, brief }])
+  ),
+  ...EXTRA_JOBS,
+});
+/** B-621: a study guide for a course that is not nursing must not say NCLEX; a nursing one may. Null when not judged. */
+export function nclexCheck(label, job, res) {
+  const r = res && res.data;
+  if (job.kind !== 'study-guide' || !r || r.status !== 'done') return null;
+  const n = (String((r.result || {}).text || '').match(/NCLEX/g) || []).length;
+  const nursing = job.course === 'NUR 112';
+  return {
+    ok: nursing || n === 0,
+    what: `NCLEX check, ${label} (${job.course}): ${n} mention${n === 1 ? '' : 's'}${nursing ? ', allowed' : n ? ', must be none' : ''}`,
+  };
+}
 /** What each kind ends as in the app: a share-set is refused there (its page is published on claude.ai only). The
  * others end done, or failed in the job's own words when Haiku judged the made-up record too thin for it: a real
  * model's judgment, which the proof reports. A call that failed, a reply the checks refused or a job left running
@@ -74,6 +103,23 @@ export function judge(kind, job, res, made) {
   }
   lines.push({ ok: !!(job && job.data.fired && job.data.fired.ok), what: `${kind}: handed to the runner at once` });
   return lines;
+}
+
+/** B-621: the result lines as GitHub annotations, readable through the check-runs API where logs are not. GitHub keeps
+ * about 10 of each level per step, so every NO line is its own ::error:: (capped at 50), each NCLEX check its own
+ * ::notice::, and the other ok lines one ::notice::. Statuses, counts and failure reasons only, as the lines are. */
+export function annotations(lines) {
+  const one = s =>
+    String(s)
+      .replace(/[\r\n]+/g, ' ')
+      .slice(0, 400);
+  const bad = lines
+    .filter(l => !l.ok)
+    .slice(0, 50)
+    .map(l => `::error::${one(l.what)}`);
+  const nclex = lines.filter(l => l.ok && /^NCLEX check/.test(l.what)).map(l => `::notice::${one(l.what)}`);
+  const rest = lines.filter(l => l.ok && !/^NCLEX check/.test(l.what)).map(l => l.what);
+  return [...bad, ...nclex, ...(rest.length ? [`::notice::ok: ${rest.join(' | ').replace(/[\r\n]+/g, ' ')}`] : [])];
 }
 
 async function main() {
@@ -136,24 +182,34 @@ async function main() {
     }
     const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
     const ids = {};
-    for (const [kind, brief] of Object.entries(PROOF_JOBS)) {
-      const id = `job-proof-${stamp}-${kind}`;
-      ids[kind] = id;
+    const jobs = proofJobs();
+    for (const [label, { kind, course, brief }] of Object.entries(jobs)) {
+      const id = `job-proof-${stamp}-${label.replace(/\W+/g, '-')}`;
+      ids[label] = id;
       // the page's startJob where no mcp is offered: the job, then the firing that found none
       await page.evaluate(
-        async ({ id, kind, brief, source }) => {
+        async ({ id, kind, course, brief, source }) => {
           const db = await window.claude.use('db');
           const at = new Date().toISOString();
           await db
             .collection('jobs')
             .doc(id)
-            .set({ schema: 2, writer: 'page', at, source, kind, title: 'Staging proof: ' + kind, brief });
+            .set({
+              schema: 2,
+              writer: 'page',
+              at,
+              source,
+              kind,
+              title: 'Staging proof: ' + kind,
+              brief,
+              ...(course ? { course } : {}),
+            });
           await db
             .collection('jobs')
             .doc(id)
             .update({ fired: { at, ok: false, error: 'mcp_unavailable' } });
         },
-        { id, kind, brief, source: APP_SOURCE }
+        { id, kind, course, brief, source: APP_SOURCE }
       );
     }
     // Haiku answers each in well under a minute; the jobs run side by side
@@ -167,8 +223,9 @@ async function main() {
         if (res && res.data.status !== 'running') final[kind] = res;
       }
     }
-    for (const [kind, id] of Object.entries(ids)) {
-      const res = final[kind] || (await get('jobresults', id));
+    for (const [label, id] of Object.entries(ids)) {
+      const kind = jobs[label].kind;
+      const res = final[label] || (await get('jobresults', id));
       const job = await get('jobs', id);
       const r = (res && res.data && res.data.result) || {};
       const made =
@@ -184,7 +241,13 @@ async function main() {
                 return null;
               })()
             : null;
-      lines.push(...judge(kind, job, res, made));
+      lines.push(
+        ...judge(kind, job, res, made).map(l =>
+          label === kind ? l : { ...l, what: l.what.replace(kind + ':', label + ':') }
+        )
+      );
+      const nclex = nclexCheck(label, jobs[label], res);
+      if (nclex) lines.push(nclex);
     }
     await page.screenshot({ path: path.join(shots, 'pwa-jobs-390.png') });
     for (const line of stopped) lines.push({ ok: false, what: line });
@@ -196,6 +259,7 @@ async function main() {
     await browser.close();
   }
   for (const l of lines) console.log(`${l.ok ? 'ok ' : 'NO '} ${l.what}`);
+  if (process.env.GITHUB_ACTIONS) for (const a of annotations(lines)) console.log(a);
   const green = lines.every(l => l.ok);
   console.log(`pwa-jobs: ${green ? 'GREEN' : 'RED'}`);
   process.exit(green ? 0 : 1);
@@ -203,6 +267,9 @@ async function main() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   main().catch(e => {
-    console.error(String((e && e.message) || e));
+    const m = String((e && e.message) || e);
+    console.error(m);
+    if (process.env.GITHUB_ACTIONS)
+      console.log(`::error::pwa-jobs stopped: ${m.replace(/[\r\n]+/g, ' ').slice(0, 400)}`);
     process.exit(1);
   });

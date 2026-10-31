@@ -204,6 +204,8 @@ jobs:
           EV_TOKEN: ${{ secrets.EV_STAGING_TOKEN }}
           EV_RUN_API_URL: ${{ steps.deploy.outputs.url }}
         run: node --test pwa/run-api.test.mjs
+      # B-621: pwa-jobs.mjs prints each result line as an annotation too (::error:: per NO line, ::notice:: for the rest
+      # and for the NCLEX check of the NUR 112 and BIO 201 study guides), readable where logs and artifacts are not
       - name: one real Haiku job of each kind, read back from the staging D1 (B-324)
         if: ${{ inputs.jobs }}
         env:
