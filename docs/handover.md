@@ -7,27 +7,19 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder | B-624 test fix (study-plans.test.mjs:1043 after the retry); sets key for session check sets (check-ss-..., new bug id) | /home/claude/ev4-wt/fix3 | fix3 | Oct 31, ~11:40Z |
+| staging check (Playwright, scratchpad e2e3) | B-624 BIO 201 practice ask at 50767d3 | none (scratchpad) | none | Oct 31, ~12:10Z |
 
 ## Waiting on Matt
 
-He said "ship 5bf4e8d". ship live tagged v4.5.23 at 5bf4e8d and needs staging to carry it; that staging deploy failed its record check on a study-session check set id the spec's sets key lacks (pre-existing, not this release; staging system docs already at v4.5.23). Asked him: ship the next commit (5bf4e8d plus the key fix plus B-624's retry and course, after one staging run) or wait. B-638 filed from his notes-check testing (next release, with D-416).
+Staging GREEN at 50767d3 (v4.5.23+35): 5bf4e8d's card plus B-624 (one retry on API 5xx, course on make_practice) and B-639 (sets key). Matt agreed ("sounds good") to ship this next commit once the BIO 201 check passes: confirm with him "ship 50767d3" before ship live.
 
 ## Next
 
-0. B-624's fix ships to staging as a follow-up on the waiting card (the card's commit 5bf4e8d stays shippable on its own). B-637 (true streaming to the page) is backlog. Then, on Matt's go (his usage resets Monday evening), the simplify release (D-416, B-636). Inventory probe with live usage counts, spikes on what breaks per feature, removal tasks (code removed; records kept, collections marked retired), lanes 2 to 4 by file ownership, full GitHub check, staging, e2e, card. Paused workflow gaps B-614 to B-619 wait behind it.
-1. Staging GREEN at 87561b9. E2E: B-625, B-261, B-527 pass; B-260 not visible on a Saturday (core test). After the fix round: ship staging once more, re-check only the four failed items, then the card. Review backlog filed B-627 to B-635.
-   D-414 recorded for B-260. Builder what-ifs to file: Off day vs a Study day word; an exam today but over reads
-   upcoming till midnight; quizCardFor and in-chat quiz text lack 'again'; deriveExams lacks past-means-done;
-   conversation.mjs Quizlet weekday list separate from classWeekdays; lint 'record the score' on past exams.
-2. Until Monday evening (his usage reset): only his bug reports and tweaks, one builder at a time.
-3. Monday evening, when he says to resume: the six workflow gaps in order, B-614 (vocabulary), B-615 (one write path),
-   B-616 (behaviour kit), B-617 (jobs kit), B-618 (state-aware style diff), B-619 (add-a-feature skill). They are
-   blocked, paused by Matt; unblock them with `log <id> --status open` when he resumes.
-4. Then hands-off (D-410): bugs that break studying first (B-523, B-537, B-484, B-529, B-538, B-536, B-486), then the
-   rest in BACKLOG order. Also queued: B-620 (tenet sweep, D-411), B-622 (UI review fixes), B-606 (parallel checks;
-   pull it forward if a release drags), B-515's last step, B-468 (brief reads health through the Worker; live health
-   read through the Worker on Oct 31 was fresh and clean).
+Matt's order (Oct 31):
+1. Tests and workflow so changes get out: B-467 (red nightly, read the failing check), the shallow-clone tag trap (fetch --tags before ship), B-606 (parallel checks).
+2. B-638 notes-check polish (text-box card for every open-ended check, submit returns on its own, chat-answer reminder).
+3. D-416 simplify release (B-636): inventory with live usage, spikes, removal lanes, full check, staging, card.
+4. Then the bugs and the six workflow gaps B-614 to B-619 (blocked, paused; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637 filed.
 
 ## Last release
 
