@@ -11669,9 +11669,9 @@
   "id": "B-621",
   "kind": "request",
   "title": "Request (reported Oct 30): Workflow fixes from the cold-start dry run: hooks line, md-guard on Bash, check --keep-going, chart writes only on main, line cap, look sizes, handover worktree shape, skill rules",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The cold-start dry-run edits land (CLAUDE.md hooks line and table row, builder-runs and trim-brief refs, both skills and the release card, md-guard on Bash and MultiEdit, check --keep-going in nightly, chart writes refused on a detached HEAD, evcore line cap, no 390 in the look pass or captions, 390 frame budget retired, real-status lint, handover Running-row shape); touched tests green and npm test and smoke green on GitHub",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11680,6 +11680,10 @@
   "reportedAt": "2026-10-31T01:49:41.285Z",
   "board": {
    "row": "v4 B-621: Workflow fixes from the cold-start dry run: hooks line, md-guard on…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:49:51.306Z"
   }
  }
 ]
