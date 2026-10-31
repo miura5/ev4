@@ -6678,5 +6678,22 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.26"
+ },
+ {
+  "target": "staging",
+  "commit": "21c700a",
+  "time": "2026-10-31T23:33:10.585Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "a029f40",
+  "tasks": [
+   "B-653",
+   "B-655"
+  ],
+  "summary": "Images in notes, Quip-style: insert or paste a picture into a note,…; checks.yml: the playwright install --with-deps step hung about 30 min…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
