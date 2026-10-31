@@ -11967,9 +11967,9 @@
   "id": "B-635",
   "kind": "request",
   "title": "Request (reported Oct 31): conversation.mjs refreshes Quizlet on its own weekday list, separate from classWeekdays",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11978,6 +11978,10 @@
   "reportedAt": "2026-10-31T08:56:32.673Z",
   "board": {
    "row": "v4 B-635: conversation.mjs refreshes Quizlet on its own weekday list, separate…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:57:00.170Z"
   }
  },
  {
