@@ -22,6 +22,8 @@
 //   lint [--json]            the record's checks: ids, dependencies, decisions, commits, the inbox (B-94; npm test runs it)
 //   ship <staging|live> [--done B-nn --commit sha]   the deploy checklist: the rules, the reads, deploy's calls, verify,
 //            the record (B-96); --done records those tasks done in the same command (B-147)
+//   ship live --record-past --commit sha --run <pwa-live run id> [--release v4.x.y]   B-641: records a live deploy that
+//            went out (a successful pwa-live run of that commit, read with gh api) but was never recorded; deploys nothing
 //   ship <staging|live> --freeze-page [--matt-ok]   B-472 (D-367): prints the one-time publish of the frozen claude.ai page
 //   rollback live [--to sha] [--matt-ok --apply] [--no-test]   the way back (B-60): the previous live build's content at main's
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
@@ -56,6 +58,7 @@ const ACTIONS = makeActions(validateAgainst);
 import { commitsBehind, mainHead } from '../core/cli.mjs';
 import { readState } from '../core/verifystate.mjs';
 import { build, BOOKKEEPING, INERT } from './build.mjs';
+import { fetchRun, recordPastLive } from './record-past.mjs';
 import { APPS, appRead, appCalls, appLines, expectedApp } from './pwa-app.mjs';
 
 // The record, its constants and the shared helpers live in tools/chart/record.mjs (B-262).
@@ -1174,6 +1177,16 @@ async function ship(o) {
   const root = rootOf(o),
     target = o._[1];
   if (!['staging', 'live'].includes(target)) throw new Error('ship <staging|live>');
+  if (o['record-past']) {
+    if (target !== 'live') throw new Error('--record-past records a past live deploy: ship live --record-past');
+    return recordPastLive(o, {
+      git: args => git(root, args),
+      fetchRun: id => fetchRun(root, id),
+      loadChart: () => loadChart(root),
+      tagAt: c => tagAt(root, c),
+      recordShip: (oo, opts) => recordShip(root, oo, opts),
+    });
+  }
   const rec = loadChart(root),
     refusals = [];
   let shipJobOk = null;
@@ -1498,11 +1511,12 @@ export function pushTag(root, tag) {
  * The record half of a green ship: the deploy (once), and with --done B-nn[,B-mm] those tasks done at --commit (the
  * task's own commit; default the deployed one) in the same command (B-147, W-6). Exported for its test.
  */
-export function recordShip(root, o, { target, manifest, recorded = false }) {
+export function recordShip(root, o, { target, manifest, recorded = false, release = null, time = undefined }) {
   const short = manifest.commit.slice(0, 7);
-  const tag = target === 'live' ? tagAt(root, manifest.commit) : null;
+  // B-641: a past live deploy names its release when no tag is at the commit here; tags.yml makes it on origin.
+  const tag = target === 'live' ? release || tagAt(root, manifest.commit) : null;
   // B-175: the deploy records its release, so a refused push is made on origin by tags.yml.
-  if (tag) console.log(pushTag(root, tag).line);
+  if (tag && !release) console.log(pushTag(root, tag).line);
   if (typeof o.done === 'string')
     for (const id of list(o.done))
       record(
@@ -1541,6 +1555,7 @@ export function recordShip(root, o, { target, manifest, recorded = false }) {
       _: ['log', 'deploy'],
       target,
       commit: manifest.commit,
+      time,
       verify: 'green',
       ok: target === 'live' ? 'Matt' : undefined,
       release: tag || undefined,
