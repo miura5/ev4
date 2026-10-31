@@ -11728,5 +11728,23 @@
    "outcome": "task",
    "at": "2026-10-31T07:28:34.619Z"
   }
+ },
+ {
+  "id": "B-624",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): On the Today conversation page, asking for questions fails repeatedly: several replies read 'Couldn't write questions right now. Try again in a moment.' and one says the batch came back malformed and was binned; no questions arrive.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "On the Today conversation page, asking for questions fails repeatedly: several replies read 'Couldn't write questions right now. Try again in a moment.' and one says the batch came back malformed and was binned; no questions arrive.",
+  "reworded": true,
+  "reportedAt": "2026-10-31T07:38:23.967Z",
+  "board": {
+   "row": "v4 B-624: On the Today conversation page, asking for questions fails…"
+  }
  }
 ]
