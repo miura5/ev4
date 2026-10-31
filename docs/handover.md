@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder, the release's one fix round | B-624 (stream practice asks: upstream 502; bad sourceRef lost the set), B-623 (side-chat quiz Check answer dead; claimsQuestions review blocker), B-626 (reply still says slides don't cover it; no tag) | /home/claude/ev4-wt/fix1 | fix1 | Oct 31, ~09:15Z |
+| builder | B-626 blocker: talk schema lacks the `general` message field, so the staging check failed at 1624b6e (pwa-staging 41187862909); system docs already written at 1624b6e | /home/claude/ev4-wt/fix2 | fix2 | Oct 31, ~09:50Z |
 
 ## Waiting on Matt
 
