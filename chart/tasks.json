@@ -7599,7 +7599,7 @@
   "title": "After Notes: two weeks of use, fixes only",
   "dod": "Two weeks from the Notes live release: only bugs he reports and bugs the nightly finds are built; every new idea is filed and parked; the release card at the end re-rates the seven areas (D-337).",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-409"
   ],
@@ -7612,8 +7612,9 @@
    "row": "v4 B-414: After Notes: two weeks of use, fixes"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-26T08:59:51.639Z"
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: development is sequenced by completion, never time-gated (D-390), and delivery-first (D-366) replaces a fixes-only window.",
+   "at": "2026-10-31T00:40:15.799Z"
   }
  },
  {
