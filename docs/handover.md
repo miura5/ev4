@@ -7,11 +7,11 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| staging check (Playwright, scratchpad e2e3) | B-624 BIO 201 practice ask at 50767d3 | none (scratchpad) | none | Oct 31, ~12:10Z |
+| builder | B-467 red nightly: name the failing checks (annotations or a background local check), fix or retire them | /home/claude/ev4-wt/b467 | b467 | Oct 31, ~12:20Z |
 
 ## Waiting on Matt
 
-Staging GREEN at 50767d3 (v4.5.23+35): 5bf4e8d's card plus B-624 (one retry on API 5xx, course on make_practice) and B-639 (sets key). Matt agreed ("sounds good") to ship this next commit once the BIO 201 check passes: confirm with him "ship 50767d3" before ship live.
+Staging GREEN at 50767d3 (v4.5.23+35): 5bf4e8d's card plus B-624 (one retry on API 5xx, course on make_practice) and B-639 (sets key). Matt agreed ("sounds good") to ship this next commit; the BIO 201 check passed (5 BIO 201 questions in 28 s, twice). Asked him for "ship 50767d3".
 
 ## Next
 
