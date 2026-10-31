@@ -1461,7 +1461,10 @@ test('B-148 (D-4, M-1): BACKLOG.md lists open work first, then Your turn by plac
   // brief --matt prints the record's own list.
   const out = execFileSync('node', [path.join(ROOT, 'tools', 'chart.mjs'), 'brief', '--matt'], { encoding: 'utf8' });
   assert.equal(out.trimEnd(), ['# Your turn', '', ...C.yourTurnLines(rec())].join('\n'));
-  assert.match(out, /### At the Mac\n\n- B-27 /);
+  // Whatever Mac-bound task the Chart has now heads its 'At the Mac' list (no pinned task id).
+  const mac = C.yourTurn(rec()).find(g => g.place === 'mac');
+  if (mac) assert.match(out, new RegExp(`### At the Mac\\n\\n- ${mac.tasks[0].id} `));
+  else assert.doesNotMatch(out, /### At the Mac/);
 });
 
 test("B-149 (D-173): ship live tags the next release (a patch on the minor's newest tag, or the minor with --minor) and pushes the tag", () => {
