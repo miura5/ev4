@@ -4597,7 +4597,7 @@
   "title": "Bug (reported Oct 23): Staging lint: 8 fact-changed errors on jobs/ (5) and talk/2026-10-18, -20, -21: a Fact's write-once fields changed since state/current last hashed them (Oct 22). Seen in evening-cloud-20261023-204137072; not from B-253, which only changes auto-park.",
   "dod": "Find what rewrote the write-once fields of those jobs and talk documents on staging, and whether live has the same; Matt's call first (outside today's scope)",
   "milestone": "v4.5.x ops",
-  "status": "blocked",
+  "status": "declined",
   "depends": [],
   "notes": "the next run (evening-cloud-20261023-204511616) linted 0 errors: the 8 were documents changed between Oct 22's snapshot and today's, re-hashed by the 20:41 run; whether those changes were legitimate is the open question",
   "commit": null,
@@ -4610,10 +4610,10 @@
    "notes": "Reported Oct 23 from build chat, B-253 staging proof"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-23T20:45:04.328Z"
-  },
-  "waitingOn": "Matt"
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: about the claude.ai staging record's Facts (jobs, talk), which is no longer E.V.'s record (D-297, D-307, D-367); the next run linted 0 errors.",
+   "at": "2026-10-31T00:39:58.954Z"
+  }
  },
  {
   "id": "B-255",
