@@ -1,5 +1,20 @@
 [
  {
+  "id": "D-412",
+  "date": "Oct 30",
+  "title": "Stale rules retired under D-411: UI conflicts are the build manager's, the phone has no frame budget or breakpoint rules, and the old roles split is gone",
+  "why": "Cold-start dry run, Oct 31. D-220 sent UI-tenet conflicts to Matt as blocked questions; D-317, D-410 and D-411 make them the build manager's. D-272 measured the frame budget at 390x844 and D-125 set the E.V. tab's phone stack; D-407 freezes the phone, so the budget is measured at 1280 only and the phone rules go. D-311's per-milestone build manager and lane planner gave way to D-351, D-366 and D-410. Checks: captions.cjs and frame.cjs lose their 390 runs. Still to recheck against Proprietary and D-367 in one sweep task: D-124, D-126, D-129, D-327, D-243, D-200, D-201, D-185, D-190.",
+  "status": "accepted",
+  "supersedes": [
+   "D-220",
+   "D-272",
+   "D-125",
+   "D-311"
+  ],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-411",
   "date": "Oct 30",
   "title": "Current direction beats older rules: the build manager retires stale tenets and decisions instead of obeying them",
@@ -1088,7 +1103,7 @@
   "date": "Oct 25",
   "title": "E.V.'s build work is split into roles, each with one job and its own fresh context: a build manager (one chat per milestone, with Matt), a lane planner per hand-off, builders and trimmers in lanes, and a lane watch. Each role's prompt lives in docs/workflow/, the lanes in docs/lanes.md, and no guarded change or tenet is filed while a lane has a task in progress.",
   "why": "Matt, Oct 25: the first lane night's slips came from one overloaded managing chat; one job per role keeps each context small, and the repository keeps the workflow so it isn't lost.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan QL68BeUSw8HB3QFhDTZ4XJ P-1"
@@ -1514,7 +1529,7 @@
   "date": "Oct 23",
   "title": "Her frame budget is measured: 10 s of speech at 390 × 844 (DPR 3, 4× CPU throttle) keeps at most 5% of frames over 25 ms; an idle Dial Arc with no gesture or session draws no frame. Supersedes D-224.",
   "why": "Full frame rate is only safe if the phone budget holds; the measure stays, the eight-drawings cap goes.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [
    "D-224"
   ],
@@ -2171,7 +2186,7 @@
   "date": "Oct 22",
   "title": "When UI tenets disagree in a case, D-208 and D-152 win, then D-146, then the rest; a case still open becomes a blocked question to Matt, never an invented answer.",
   "why": "The build meets features this doc does not draw; this keeps those cases decided the same way every time",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "plan BridyLzngcGUtpeLQorX1U P-11"
@@ -3270,7 +3285,7 @@
   "date": "Oct 18",
   "title": "The E.V. tab's layout follows D-159's two breakpoints: below 1024 px it is the phone stack (her stage, captions and composer in a column at most 660 px, centred) with the open surface as the bottom sheet; from 1024 px it is her stage plus a side column of 300 to 440 px for the open surface and, in a session, Your notes (the last five lines read); the column is there only while it holds something (D-151), otherwise her stage centres, and it slides in from the right when a surface opens (D-163); the tabs sit in the top bar at every width, as B-85 built",
   "why": "On desktop she barely shrinks and the surface sits beside her; one layout still collapses to the phone; restated Oct 20 on Matt's word to the UI tenets written after it: 1024, not 900 (D-159), and the top-bar tabs, not the bottom dock",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "restated": "Oct 20"
