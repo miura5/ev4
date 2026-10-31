@@ -11746,5 +11746,23 @@
   "board": {
    "row": "v4 B-624: On the Today conversation page, asking for questions fails…"
   }
+ },
+ {
+  "id": "B-625",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): The Prep row on Today runs its words together with no spaces: the Prep badge touches the text ('PrepPacked for tomorrow') and the count touches the title ('Chapter 9 lecture exam1 of 1', 'exam0 of 1'), both collapsed and expanded.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "The Prep row on Today runs its words together with no spaces: the Prep badge touches the text ('PrepPacked for tomorrow') and the count touches the title ('Chapter 9 lecture exam1 of 1', 'exam0 of 1'), both collapsed and expanded.",
+  "reworded": true,
+  "reportedAt": "2026-10-31T07:38:23.967Z",
+  "board": {
+   "row": "v4 B-625: The Prep row on Today runs its words together with no spaces: the…"
+  }
  }
 ]
