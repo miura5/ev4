@@ -12285,9 +12285,9 @@
   "id": "B-650",
   "kind": "request",
   "title": "Request (reported Oct 31): B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The session wrap-up no longer asks the model for cards; the old queued flashcards job case is covered by B-651.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12296,6 +12296,10 @@
   "reportedAt": "2026-10-31T14:02:53.574Z",
   "board": {
    "row": "v4 B-650: B-647 review: a flashcards job queued before the removal no longer…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T22:35:53.511Z"
   }
  },
  {
