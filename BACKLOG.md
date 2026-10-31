@@ -695,3 +695,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-629 | request | 2026-10-31T08:56:16.160Z | claimsQuestions misses wordings like 'I'll put together a quiz' | release review Oct 31 | inbox |  |
 | B-630 | request | 2026-10-31T08:56:18.822Z | The note chat matches the Quiz me chip only on exact text; typed variants go to a model turn | release review Oct 31 | inbox |  |
 | B-631 | request | 2026-10-31T08:56:21.893Z | The .fold-line selector change may shift other fold-line rows; needs a visual check | release review Oct 31 | inbox |  |
+| B-632 | request | 2026-10-31T08:56:24.830Z | Off day vs a separate Study day label for Tue/Thu/Fri | release review Oct 31 | inbox |  |

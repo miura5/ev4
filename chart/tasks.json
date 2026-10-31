@@ -11879,5 +11879,22 @@
   "board": {
    "row": "v4 B-631: The .fold-line selector change may shift other fold-line rows; needs…"
   }
+ },
+ {
+  "id": "B-632",
+  "kind": "request",
+  "title": "Request (reported Oct 31): Off day vs a separate Study day label for Tue/Thu/Fri",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "Off day vs a separate Study day label for Tue/Thu/Fri",
+  "reportedAt": "2026-10-31T08:56:24.830Z",
+  "board": {
+   "row": "v4 B-632: Off day vs a separate Study day label for"
+  }
  }
 ]
