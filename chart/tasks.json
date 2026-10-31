@@ -11952,9 +11952,9 @@
   "id": "B-636",
   "kind": "request",
   "title": "Request (reported Oct 31): Matt wants E.V. simplified to what belongs: the views, notes and practice sets. Remove flashcards (he will use Quizlet), the skill checklist, the workout (Cindy AMRAP and the 1,500-rep ladder; he will use Apple Fitness), the mood check-in (he will use a mood tracker), and any other feature, job or function that slipped in unstructured or sits unused. The build manager runs it after the current release: probe for unused features, spike what breaks on removal, remove the code, run the full check.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Inventory (D-416): every feature, view, job kind, pipeline step, collection, prompt and test in E.V., each marked keep (views, notes, practice sets and what they need) or retire, with live usage counts read through the Worker; named retire list includes flashcards, skill checklists, workouts, mood check-in; filed as removal tasks, one per feature, with the spikes' findings (what breaks on removal).",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11964,6 +11964,10 @@
   "reportedAt": "2026-10-31T09:24:25.616Z",
   "board": {
    "row": "v4 B-636: Matt wants E.V. simplified to what belongs: the views, notes and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:24:55.827Z"
   }
  }
 ]
