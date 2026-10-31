@@ -12257,5 +12257,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:21:20.613Z"
   }
+ },
+ {
+  "id": "B-649",
+  "kind": "request",
+  "title": "Request (reported Oct 31): D-416: read live counts for concepts, predictions, share-set jobs and ideas",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-636 inventory spike",
+  "words": "D-416: read live counts for concepts, predictions, share-set jobs and ideas",
+  "reportedAt": "2026-10-31T13:21:23.356Z",
+  "board": {
+   "row": "v4 B-649: D-416: read live counts for concepts, predictions, share-set jobs and…"
+  }
  }
 ]
