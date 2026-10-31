@@ -11487,9 +11487,9 @@
   "id": "B-613",
   "kind": "request",
   "title": "Request (reported Oct 30): Encode the build-manager workflow in an ev-build-manager skill, a hook that refuses new .md files outside an allowlist, and a drift test for skills and CLAUDE.md",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "ev-build-manager skill holds the build-manager loop and procedures with CLAUDE.md shortened to a pointer; a PreToolUse Write hook refuses new .md files outside the allowlist (Matt approved hook and settings changes in the chat Oct 30, D-410); test/skills-drift.test.mjs fails on missing paths, superseded or missing decision ids, and conflicting pinned rule values; npm test and smoke green on GitHub",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11498,6 +11498,10 @@
   "reportedAt": "2026-10-31T00:51:44.842Z",
   "board": {
    "row": "v4 B-613: Encode the build-manager workflow in an ev-build-manager skill, a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T00:51:53.670Z"
   }
  }
 ]
