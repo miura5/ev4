@@ -11737,7 +11737,7 @@
   "milestone": "v4.5.x ops",
   "status": "in progress",
   "depends": [],
-  "notes": "At 5bf4e8d: a bad sourceRef no longer loses the set and failures name their code; the first ask still hit upstream_error 502 at ~45 s, the retry worked. Next: a spike on the 502 (is streaming reaching the Worker for practice asks; which hop times out).",
+  "notes": "Spike (Oct 31): the 502 is the Claude API's own edge (plain-text body passed through by the Worker), no retry anywhere; chat's make_practice passes no course, so a BIO 201 ask is framed for the default course and items get dropped (3 of 5). Building: one bounded retry for 502/503/504/529 before any stream, and a course on make_practice.",
   "commit": null,
   "source": "build chat",
   "words": "On the Today conversation page, asking for questions fails repeatedly: several replies read 'Couldn't write questions right now. Try again in a moment.' and one says the batch came back malformed and was binned; no questions arrive.",
