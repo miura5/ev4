@@ -11510,9 +11510,9 @@
   "title": "Request (reported Oct 30): Data vocabulary: one source (spec) for kinds, statuses and fields; the JSON schemas, core LIST_KINDS, DS.kind and the page's pickers are generated or checked from it, so two lists can never drift (the Learn-can't-save bug).",
   "dod": "One vocabulary in spec; schemas, LIST_KINDS, DS.kind and pickers generated or tested from it; a test fails when any list differs.",
   "milestone": "workflow (ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [],
-  "notes": "",
+  "notes": "Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it.",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
   "words": "Data vocabulary: one source (spec) for kinds, statuses and fields; the JSON schemas, core LIST_KINDS, DS.kind and the page's pickers are generated or checked from it, so two lists can never drift (the Learn-can't-save bug).",
@@ -11523,7 +11523,8 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-31T01:04:58.074Z"
-  }
+  },
+  "waitingOn": "Matt"
  },
  {
   "id": "B-615",
