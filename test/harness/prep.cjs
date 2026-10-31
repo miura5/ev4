@@ -156,6 +156,23 @@ const state = page =>
       // B-368 (D-316): her greeting's line is kept in the record, not shown
       headline: ((((window.__db.talk || {}).memory || {}).headlines || []).slice(-1)[0] || {}).text || '',
       row: p && p.querySelector('.prep-row').textContent,
+      // B-625: the room between the Prep badge, the title and the count (px; null when one is missing or empty)
+      gaps: (() => {
+        const r = p && p.querySelector('.prep-row');
+        if (!r) return null;
+        const box = s => {
+          const e = r.querySelector(s);
+          if (!e || !e.textContent.trim()) return null;
+          const g = document.createRange();
+          g.selectNodeContents(e);
+          return g.getBoundingClientRect();
+        };
+        const [m, t, n] = ['.prep-mark', '.prep-t', '.prep-n'].map(box);
+        return {
+          badgeTitle: m && t ? Math.round(t.left - m.right) : null,
+          titleCount: t && n ? Math.round(n.left - t.right) : null,
+        };
+      })(),
       // B-572: the list is a Fold's body; closed, the body is 0 high (the list inside keeps its own height)
       open: !!(box && !box.hidden && (box.closest('.fold-body') || box).getBoundingClientRect().height > 0),
       done: !!(p && p.classList.contains('done')),
@@ -213,6 +230,11 @@ async function tickAll(page) {
         `[${scheme}] night: the pack check is open under her greeting`,
         s.open && /^Prep\s*Pack for tomorrow: Validation: Head-to-toe assessment/.test(s.row),
         s.row
+      );
+      ok(
+        `[${scheme}] night: the Prep badge, the title and the count have room between them (B-625)`,
+        s.gaps && s.gaps.badgeTitle >= 6 && s.gaps.titleCount >= 6,
+        JSON.stringify(s.gaps)
       );
       // B-189: the materials' items first, each citing its file and page; then what his validation kit adds.
       ok(
