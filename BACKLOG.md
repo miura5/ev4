@@ -693,3 +693,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-627 | request | 2026-10-31T08:56:10.715Z | derive.mjs producers at 371 and 478 call exam views with no date, so past exams are not read as done there | release review Oct 31 | inbox |  |
 | B-628 | request | 2026-10-31T08:56:13.432Z | A past exam with no score (e.g. postponed with an old date) now reads as done | release review Oct 31 | inbox |  |
 | B-629 | request | 2026-10-31T08:56:16.160Z | claimsQuestions misses wordings like 'I'll put together a quiz' | release review Oct 31 | inbox |  |
+| B-630 | request | 2026-10-31T08:56:18.822Z | The note chat matches the Quiz me chip only on exact text; typed variants go to a model turn | release review Oct 31 | inbox |  |
