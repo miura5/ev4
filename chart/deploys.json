@@ -6601,5 +6601,26 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "5273419",
+  "time": "2026-10-31T13:07:18.693Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "50767d3",
+  "from": "50767d3",
+  "tasks": [
+   "B-467",
+   "B-640",
+   "B-641",
+   "B-638",
+   "B-606"
+  ],
+  "summary": "The nightly full check at 5c4e68a (run 40766119523) went red in its…; A fresh shallow clone has no tags, so build and ship stamp…; The live deploy of 50767d3 (pwa-live run 41191526407, Oct 31) has no…; Notes side chat checks: the first check card (two open questions)…; A dispatchable GitHub workflow that runs every page harness for a…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.25"
  }
 ]
