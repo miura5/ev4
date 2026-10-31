@@ -11508,9 +11508,9 @@
   "id": "B-614",
   "kind": "request",
   "title": "Request (reported Oct 30): Data vocabulary: one source (spec) for kinds, statuses and fields; the JSON schemas, core LIST_KINDS, DS.kind and the page's pickers are generated or checked from it, so two lists can never drift (the Learn-can't-save bug).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "One vocabulary in spec; schemas, LIST_KINDS, DS.kind and pickers generated or tested from it; a test fails when any list differs.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11519,6 +11519,10 @@
   "reportedAt": "2026-10-31T01:04:36.524Z",
   "board": {
    "row": "v4 B-614: Data vocabulary: one source (spec) for kinds, statuses and fields;…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:04:58.074Z"
   }
  },
  {
