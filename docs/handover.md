@@ -8,7 +8,7 @@ the repository is public.
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
 | GitHub full suite, nightly run 41179779080 | release batch at f0d1023 (B-260 3f3bd06, B-261 8e3e2b1, B-527 77fbf62, done) | none (GitHub) | main | Oct 31, 07:13Z |
-| builder | B-623 then B-624 (Today chat question requests fail: 'Couldn't write questions', 'malformed batch'), note chat 'Quiz me on this note' promised questions that never came; breaks studying, jumps the batch) | /home/claude/ev4-wt/b623 | b623 | Oct 31, ~07:35Z |
+| builder | B-625 (Prep row spacing), then B-624 diagnostics (show the real error code; stream practice asks if timeouts are clear). B-623 built at ac07d4a (staging proof left) | /home/claude/ev4-wt/b625 | b625 | Oct 31, ~08:00Z |
 
 ## Waiting on Matt
 
@@ -16,7 +16,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
-1. B-260/B-261/B-527 built (worktree pruned); B-623 and B-624 join this release when the builder reports; then B-625 (Prep row spacing) to the next builder, same release. Then: ship staging, one end-to-end run (a
+1. B-260/B-261/B-527 built (worktree pruned); B-623 built (ac07d4a); B-624 cause unproven, the end-to-end run on staging reads its code; B-625 with the builder. Then: ship staging, one end-to-end run (a
    staging morning read back for B-260 and B-261), one code review of the release diff, the click-through, the card.
    D-414 recorded for B-260. Builder what-ifs to file: Off day vs a Study day word; an exam today but over reads
    upcoming till midnight; quizCardFor and in-chat quiz text lack 'again'; deriveExams lacks past-means-done;
