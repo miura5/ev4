@@ -1510,6 +1510,27 @@ test("B-149 (D-173): the spec's specVersion is the newest tag's major.minor or t
   assert.ok(m === newest || m === newest + 1, `specVersion ${spec.specVersion} against the newest tag v4.${newest}`);
 });
 
+// ------------------------------------------------------------------------------------------------ B-606 checks
+test("B-606: checks.yml runs every harness check runs, each alone, from check.mjs's list, plus npm test", async () => {
+  const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/checks.yml'), 'utf8');
+  const { HARNESSES, steps } = await import('../tools/check.mjs');
+  // the matrix is HARNESSES itself, so it cannot drift; and HARNESSES is every harness step check runs
+  assert.match(wf, /import\('\.\/tools\/check\.mjs'\)\.then\(m => console\.log\(JSON\.stringify\(m\.HARNESSES\)\)\)/);
+  assert.match(wf, /name: \$\{\{ fromJSON\(needs\.plan\.outputs\.harnesses\) \}\}/);
+  const run = steps({ record: 'synthetic', shots: '/tmp/x' }).map(s => s[0]);
+  assert.deepEqual(
+    run.filter(n => !['npm test', 'build'].includes(n)),
+    HARNESSES
+  );
+  assert.match(wf, /run: node tools\/build\.mjs/);
+  assert.match(wf, /node test\/harness\/\$H\.cjs synthetic shots\/\$H/);
+  assert.match(wf, /npm test 2>&1/, 'the non-harness part');
+  assert.match(wf, /npx playwright install --with-deps chromium/);
+  assert.match(wf, /node-version: 22/);
+  assert.match(wf, /workflow_dispatch:\n {4}inputs:\n {6}ref:/);
+  assert.match(wf, /GITHUB_STEP_SUMMARY/);
+});
+
 // ------------------------------------------------------------------------------------------------ B-151 nightly check
 test('B-151 (T-1): the nightly workflow runs npm run check with Chromium, keeps the shots, and the inbox reads it', () => {
   const wf = fs.readFileSync(path.join(ROOT, '.github/workflows/nightly.yml'), 'utf8');

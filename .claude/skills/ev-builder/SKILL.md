@@ -87,7 +87,8 @@ The phone is frozen at "it works" (D-407): no phone layout or polish work, no ph
 already in a suite still run where the full suite runs.
 
 **Full suites (npm test, smoke, every harness) are not run on the shared machine.** GitHub runs `npm test` and smoke on
-every push; the build manager runs the full harness suite on GitHub once per batch (D-408). Push, then say in your
+every push; the build manager runs the full harness suite on GitHub once per batch (D-408) with the checks workflow
+(`.github/workflows/checks.yml`, B-606: one parallel job per harness, per-harness pass and fail counts in its summary). Push, then say in your
 report what you ran locally. When the batch run fails, the build manager hands the failure back with its step.
 Never run two full harness suites at once on the shared machine.
 

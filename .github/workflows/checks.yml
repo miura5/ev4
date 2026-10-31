@@ -1,0 +1,138 @@
+# B-606: the full check (`npm run check`) for one commit, on GitHub, as parallel jobs: one job per page harness (the
+# list comes from tools/check.mjs's HARNESSES, so it cannot drift from what check runs) and one for the non-harness
+# steps (npm test). Each harness job builds and runs its harness alone, uploads its log and shots, and writes its pass
+# and fail counts to its job summary; the last job collects them into one table. Dispatch (gh workflow run fails
+# through the proxy, so via REST):
+#   gh api -X POST repos/miura5/ev4/actions/workflows/checks.yml/dispatches -f ref=main -f "inputs[ref]=<sha>"
+name: checks
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit sha to check'
+        required: true
+permissions:
+  contents: read
+run-name: checks ${{ inputs.ref }}
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      harnesses: ${{ steps.list.outputs.harnesses }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: list
+        run: echo "harnesses=$(node -e "import('./tools/check.mjs').then(m => console.log(JSON.stringify(m.HARNESSES)))")" >> "$GITHUB_OUTPUT"
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
+      - name: npm test
+        shell: bash
+        run: |
+          npm test 2>&1 | tee test.log; s=${PIPESTATUS[0]}
+          pass=$(grep -E '^# pass ' test.log | awk '{print $3}'); fail=$(grep -E '^# fail ' test.log | awk '{print $3}')
+          echo "npm test|${pass:-?}|${fail:-?}|$([ $s = 0 ] && echo GREEN || echo RED)" > result-tests.txt
+          echo "| step | pass | fail | result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| $(sed 's/|/ | /g' result-tests.txt) |" >> "$GITHUB_STEP_SUMMARY"
+          if [ $s != 0 ]; then grep -E '^not ok' test.log | head -50 | cut -c1-400 | sed 's/^/::error::/' || true; fi
+          exit $s
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: result-tests
+          path: |
+            result-tests.txt
+            test.log
+          retention-days: 14
+  harness:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        name: ${{ fromJSON(needs.plan.outputs.harnesses) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
+      # The harnesses try the build container's Chromium first and fall back to Playwright's own.
+      - run: npx playwright install --with-deps chromium
+      - run: node tools/build.mjs
+      - name: harness ${{ matrix.name }}
+        shell: bash
+        env:
+          H: ${{ matrix.name }}
+        run: |
+          mkdir -p shots/$H
+          node test/harness/$H.cjs synthetic shots/$H 2>&1 | tee shots/$H.log; s=${PIPESTATUS[0]}
+          # The look pass also needs one screenshot per view per size (check.mjs's missingShots).
+          if [ "$H" = look ] && [ $s = 0 ]; then
+            node -e "const {missingShots}=require('./test/harness/views.cjs');const fs=require('fs');const m=missingShots(fs.readdirSync('shots/look').filter(f=>f.endsWith('.png')),fs.readFileSync('dist/page/staging/index.html','utf8'),null);if(m.length){console.log('FAIL  look: no screenshot for '+m.length+' view(s) at a size: '+m.slice(0,8).join(', '));process.exit(1)}" 2>&1 | tee -a shots/$H.log || s=1
+          fi
+          pass=$(grep -cE '^(PASS|ok)  ' shots/$H.log || true); fail=$(grep -cE '^(FAIL|NO)  ' shots/$H.log || true)
+          echo "$H|$pass|$fail|$([ $s = 0 ] && echo GREEN || echo RED)" > result-$H.txt
+          echo "| harness | pass | fail | result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| $(sed 's/|/ | /g' result-$H.txt) |" >> "$GITHUB_STEP_SUMMARY"
+          tail -3 shots/$H.log | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY"
+          if [ $s != 0 ]; then grep -E '(^| )(NO|RED|not ok|FAIL)( |:)' shots/$H.log | head -50 | cut -c1-400 | sed "s/^/::error title=$H::/" || true; fi
+          exit $s
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: result-${{ matrix.name }}
+          path: |
+            result-${{ matrix.name }}.txt
+            shots/
+          retention-days: 14
+          if-no-files-found: warn
+  summary:
+    needs: [plan, tests, harness]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+          path: results
+      - name: one table
+        shell: bash
+        env:
+          HARNESSES: ${{ needs.plan.outputs.harnesses }}
+        run: |
+          {
+            echo "## checks for \`${{ inputs.ref }}\`"
+            echo "| step | pass | fail | result |"
+            echo "|---|---|---|---|"
+            for f in results/*/result-*.txt; do echo "| $(sed 's/|/ | /g' "$f") |"; done
+            for h in $(echo "$HARNESSES" | tr -d '[]"' | tr ',' ' ') tests; do
+              [ -f results/result-$h/result-$h.txt ] || { echo "| $h | ? | ? | RED (no result) |"; touch missing; }
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
+          [ ! -f missing ] && ! grep -q RED results/*/result-*.txt
