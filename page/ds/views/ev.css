@@ -600,3 +600,5 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
 
 /* The skills panel's head line: in views so it outranks Today's .fold-line all:unset by specificity (B-515, was !important) */
 .sk-panel .sk-pfold{color:var(--ink);font-weight:var(--fw-semibold);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+/* B-623: in the side chat a quiz card's picked answer shows by its radio alone; the letter keeps no ring over it */
+#evchat .opt input:checked~kbd.opt-n{box-shadow:none}

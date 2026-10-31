@@ -520,6 +520,13 @@ test('claimsQuestions: a promise of questions in words is caught, other words ar
     'Writing five questions now; they post here shortly.',
   ])
     assert.equal(EV.claimsQuestions(t), true, t);
-  for (const t of ['Your note covers glycolysis well.', 'Two questions to think about: why ATP? why NADH?', ''])
+  for (const t of [
+    'Your note covers glycolysis well.',
+    'Two questions to think about: why ATP? why NADH?',
+    '',
+    // B-623 review: an offer and advice are not promises
+    'Want me to start writing questions?',
+    'Try writing questions for yourself.',
+  ])
     assert.equal(EV.claimsQuestions(t), false, t);
 });

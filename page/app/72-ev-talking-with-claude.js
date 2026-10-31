@@ -1277,7 +1277,8 @@
       // B-623: questions promised in words with nothing started this turn: start them now, in her words for it
       if (!error && !pend.jobId && !pend.quizzed && E.claimsQuestions(pend.text)) {
         const [t, cards] = quizInChat('', { thread: o.thread || null });
-        pend.text = t;
+        // B-623 review: her reply stays; the quiz line goes after it, never in its place
+        pend.text = pend.text ? pend.text + (t ? '\n\n' + t : '') : t;
         pend.cards.push(...cards);
       }
       pend.pending = false;

@@ -2810,7 +2810,7 @@ const openNoteId = page =>
       JSON.stringify({ noSession, sug })
     );
     // B-623: with no session, the chip is answered in code in this chat (no model turn); and her words promising
-    // questions with nothing started that turn are replaced by the quiz itself, started then
+    // questions with nothing started that turn are followed by the quiz itself, started then (B-623 review: never replaced)
     const QUIZ_LINE = /right here|so I’m writing five|Already writing a batch|needs permission/;
     const evLines = () =>
       page.evaluate(() => [...document.querySelectorAll('#evchat .msgs .mev')].map(e => e.textContent));
@@ -2842,8 +2842,10 @@ const openNoteId = page =>
     );
     const promised = (await evLines()).slice(q1n).join(' ');
     ok(
-      `${tag} a reply promising questions with nothing started is replaced by the quiz, started that turn`,
-      QUIZ_LINE.test(promised) && !/being written/.test(promised),
+      `${tag} a reply promising questions with nothing started keeps her words and the quiz, started that turn, follows`,
+      QUIZ_LINE.test(promised) &&
+        /being written/.test(promised) &&
+        promised.search(/being written/) < promised.search(QUIZ_LINE),
       promised.slice(0, 160)
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));

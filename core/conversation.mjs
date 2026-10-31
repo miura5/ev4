@@ -743,13 +743,20 @@ export function makeConversation(core) {
     return { text: out, general };
   };
 
-  /** B-623: a reply that tells him questions are being written or will post here (true), which only stands when the
-   * turn started them. */
+  /** B-623: a reply that states questions are on their way (being written, will post here, requested), which only
+   * stands when the turn started them. An offer or advice is no promise (B-623 review): a sentence ending in "?" is
+   * skipped, and a bare "writing ... questions" ("Try writing questions for yourself") is not read as one. */
   const claimsQuestions = text =>
-    /\bquestions?\b[^.\n]{0,80}\b(being written|writing|will (appear|post)|post(s)? here|in about a minute|requested)\b/i.test(
-      String(text || '')
-    ) ||
-    /\b(writing|requested|I(’|')m writing|I(’|')ve requested)\b[^.\n]{0,40}\bquestions?\b/i.test(String(text || ''));
+    (String(text || '').match(/[^.!?\n]+[.!?]*/g) || [])
+      .map(x => x.trim())
+      .filter(x => x && !/\?$/.test(x))
+      .some(
+        x =>
+          /\bquestions?\b.{0,80}\b(being written|will (appear|post|arrive|show)|posts? here|in about a minute|requested|on (their|the) way|coming (up|shortly|now))\b/i.test(
+            x
+          ) ||
+          /\b(I(’|')m|I am|I(’|')ve|I have)\s+(just\s+)?(writing|requested|started)\b.{0,40}\bquestions?\b/i.test(x)
+      );
 
   return {
     claimsQuestions,

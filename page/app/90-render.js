@@ -684,6 +684,13 @@
         m.error,
         (m.cards || []).length,
         checks.map(c => {
+          if (c.type === 'set') {
+            // B-623: a quiz card repaints when an answer lands (painted or recorded), a question moves or a retake starts;
+            // without this the cached card kept its first paint and Check answer showed nothing
+            const st = S.sets.find(x => x.id === c.id);
+            const k = 'ev-' + m.id + '#' + (c.n || c.id);
+            return st ? JSON.stringify([answersFor(st), views[k] || '', retakes[st.id] || 0]) : '';
+          }
           const s = sessOf(c.session);
           return s ? s.status + Object.keys(s.events || {}).length : '';
         }),
