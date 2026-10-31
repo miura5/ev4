@@ -103,9 +103,13 @@ test('B-466 (D-366): the full check gates nothing: R-06 is ended in the Chart, a
   assert.doesNotMatch(ship, /fullCheckRefusal|r\.check === 'fullCheck'|nightlyGreen|NIGHTLY_RUNS|check-full\.json/);
   assert.equal(chart.fullCheckRefusal, undefined, 'the R-06 refusal is retired, not kept dead');
   assert.match(
-    flatSource('CLAUDE.md'),
+    flatSource('.claude/skills/ev-build-manager/SKILL.md'),
     /once per batch, before ship staging/,
-    'CLAUDE.md says when to run which (D-408)'
+    'the build manager skill says when to run which (D-408, B-613)'
   );
-  assert.match(flatSource('CLAUDE.md'), /R-06 is ended by D-366/, 'CLAUDE.md step 5 says R-06 is ended');
+  assert.match(
+    flatSource('.claude/skills/ev-build-manager/SKILL.md'),
+    /R-06 is ended by D-366/,
+    'and that R-06 is ended'
+  );
 });

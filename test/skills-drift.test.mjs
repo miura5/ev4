@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from './helpers.mjs';
+import { ROOT, chartCopy } from './helpers.mjs';
 
 const SKILLS = path.join(ROOT, '.claude', 'skills');
 const VENDORED = new Set(['claude-api']); // Anthropic's skill, vendored unchanged
@@ -55,8 +55,9 @@ test('B-613: every repository path, chart command, npm script and workflow file 
 });
 
 test('B-613: every decision a skill cites is in the Chart and not superseded', () => {
+  // a copy of the record (B-153), never the real one
   const status = Object.fromEntries(
-    JSON.parse(fs.readFileSync(path.join(ROOT, 'chart', 'decisions.json'), 'utf8')).map(x => [x.id, x.status])
+    JSON.parse(fs.readFileSync(path.join(chartCopy(), 'chart', 'decisions.json'), 'utf8')).map(x => [x.id, x.status])
   );
   const bad = [];
   for (const d of docs.filter(d => d.rel.startsWith('.claude/')))

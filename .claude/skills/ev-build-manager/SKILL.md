@@ -90,7 +90,7 @@ he tests), take the next batch.
 GitHub runs npm test and smoke on every push. Run the full suite on GitHub once per batch, before ship staging:
 `gh workflow run nightly.yml` (until B-606's parallel checks workflow), then watch it with `gh run list --workflow
 nightly.yml --limit 1`. A failure goes back to the builder whose step caused it (found from the step commits). Never
-run full suites on the shared machine.
+run full suites on the shared machine. A red nightly is filed as a bug and never blocks a release Matt has tested (R-06 is ended by D-366).
 
 ## Ship staging, the end-to-end run, the card, live
 
