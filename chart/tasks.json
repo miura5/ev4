@@ -11930,5 +11930,22 @@
   "board": {
    "row": "v4 B-634: quizCardFor and the in-chat quiz text say N questions without 'again'…"
   }
+ },
+ {
+  "id": "B-635",
+  "kind": "request",
+  "title": "Request (reported Oct 31): conversation.mjs refreshes Quizlet on its own weekday list, separate from classWeekdays",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "conversation.mjs refreshes Quizlet on its own weekday list, separate from classWeekdays",
+  "reportedAt": "2026-10-31T08:56:32.673Z",
+  "board": {
+   "row": "v4 B-635: conversation.mjs refreshes Quizlet on its own weekday list, separate…"
+  }
  }
 ]

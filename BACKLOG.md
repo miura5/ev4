@@ -698,3 +698,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-632 | request | 2026-10-31T08:56:24.830Z | Off day vs a separate Study day label for Tue/Thu/Fri | release review Oct 31 | inbox |  |
 | B-633 | request | 2026-10-31T08:56:27.402Z | An exam dated today that is already over reads upcoming until midnight | release review Oct 31 | inbox |  |
 | B-634 | request | 2026-10-31T08:56:30.026Z | quizCardFor and the in-chat quiz text say N questions without 'again' wording | release review Oct 31 | inbox |  |
+| B-635 | request | 2026-10-31T08:56:32.673Z | conversation.mjs refreshes Quizlet on its own weekday list, separate from classWeekdays | release review Oct 31 | inbox |  |
