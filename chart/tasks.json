@@ -12010,9 +12010,9 @@
   "id": "B-637",
   "kind": "request",
   "title": "Request (reported Oct 31): Stream practice and plan answers from the Worker to the page (TransformStream SSE pass-through, usage counted as it flows, bridge reads SSE) so nothing sits silent and the page can show progress; today the Worker buffers the whole stream before answering",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A streamed ask reaches the page as it is written (SSE through the Worker and bridge), usage counted once, a cut-off detected; a test; one real practice ask on staging shows progress.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12021,6 +12021,10 @@
   "reportedAt": "2026-10-31T09:37:52.155Z",
   "board": {
    "row": "v4 B-637: Stream practice and plan answers from the Worker to the page…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:57:02.781Z"
   }
  },
  {
