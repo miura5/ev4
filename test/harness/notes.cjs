@@ -1979,7 +1979,7 @@ const openNoteId = page =>
       page.evaluate(() => {
         const l = document.querySelector('#notes-editor .n-lkp');
         return {
-          link: !!l && !l.hidden && l.getClientRects().length > 0,
+          link: !!l && l.matches(':popover-open'),
           chat: !document.getElementById('evchat').hidden,
         };
       });

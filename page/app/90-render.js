@@ -546,7 +546,9 @@
           if ((pref && !pref.hidden) || (menu && !menu.hidden)) return;
           // B-409: a menu or popover of the view (Notes' style and course menus, its link box, Record's filter) takes
           // Escape first; the chat stays open
-          const shown = x => !x.hidden && x.getClientRects().length > 0 && !F.pop.contains(x);
+          // a popover counts as open by its state, not by its box: its fade-out keeps it drawn for a moment after it closes
+          const shown = x =>
+            (x.popover ? x.matches(':popover-open') : !x.hidden && x.getClientRects().length > 0) && !F.pop.contains(x);
           if ([...document.querySelectorAll('.menu, .n-lkp, #rec-filter')].some(shown)) return;
           e.preventDefault();
           e.stopPropagation();
