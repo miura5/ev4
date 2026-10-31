@@ -11799,9 +11799,9 @@
   "id": "B-627",
   "kind": "request",
   "title": "Request (reported Oct 31): derive.mjs producers at 371 and 478 call exam views with no date, so past exams are not read as done there",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11810,6 +11810,10 @@
   "reportedAt": "2026-10-31T08:56:10.715Z",
   "board": {
    "row": "v4 B-627: derive.mjs producers at 371 and 478 call exam views with no date, so…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:39.322Z"
   }
  },
  {
