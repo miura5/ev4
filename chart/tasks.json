@@ -10005,7 +10005,7 @@
   "title": "Request (reported Oct 29): An E.V. window on the phone, as a sheet from any view.",
   "dod": "On the phone every view has the E.V. window as a bottom sheet, built on Proprietary's Sheet; staging look at 390. Depends on B-508. (F-59)",
   "milestone": "UX probe fixes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10016,8 +10016,9 @@
    "row": "v4 B-532: An E.V. window on the phone, as a sheet from any"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-29T16:01:24.277Z"
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: the E.V. sheet on the phone is phone work, frozen by D-407 (the phone layout is B-605, later).",
+   "at": "2026-10-31T00:40:18.276Z"
   }
  },
  {
