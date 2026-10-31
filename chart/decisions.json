@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-417",
+  "date": "Oct 31",
+  "title": "Pictures in notes live in the env's R2 bucket under note-images/, served by the Worker to the owner",
+  "why": "B-653 (Matt, Oct 31): the existing export bucket (ev-staging-exports / ev-live-exports) has no expiry rule and the nightly export only writes and lists exports/, so note-images/ objects are never overwritten or pruned; no new bucket, account or workflow step. POST /api/images and GET /api/images/<key> behind the same EV_TOKEN as every /api route; PNG, JPEG, WebP or GIF, at most 8 MB; the page scales a photo past 2000 px down first. A note stores an img block (key, width, alt), never the bytes; removing it from a note keeps the file (B-11).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-416",
   "date": "Oct 31",
   "title": "E.V. is views, notes and practice sets: retire flashcards, skill checklists, workouts, mood check-in and unused features",

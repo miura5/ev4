@@ -213,20 +213,35 @@
       return { content: [], payload: { ok: true } };
     },
   };
+  // B-653: the app's picture store (pwa/bridge.js images), in memory; every put kept, nothing removed
+  const imgStore = (window.__images = new Map());
+  const images = {
+    put: async blob => {
+      const key = 'note-images/' + 'stub' + String(imgStore.size + 1).padStart(20, '0') + '.png';
+      imgStore.set(key, blob);
+      return { key, bytes: blob.size, type: blob.type };
+    },
+    get: async key => {
+      if (!imgStore.has(key)) throw new Error('no such picture');
+      return imgStore.get(key);
+    },
+  };
   window.claude = {
     use: async n =>
-      n === 'db'
-        ? DB
-        : n === 'user'
-          ? { isOwner: async () => !window.__notOwner }
-          : n === 'sample'
-            ? window.__noSample
-              ? null
-              : sample
-            : n === 'mcp'
-              ? window.__noMcp
+      n === 'images'
+        ? images
+        : n === 'db'
+          ? DB
+          : n === 'user'
+            ? { isOwner: async () => !window.__notOwner }
+            : n === 'sample'
+              ? window.__noSample
                 ? null
-                : mcp
-              : null,
+                : sample
+              : n === 'mcp'
+                ? window.__noMcp
+                  ? null
+                  : mcp
+                : null,
   };
 })();

@@ -15,6 +15,7 @@
       doc: null, // its document as last saved (or as read when opened)
       blocks: null,
       course: undefined,
+      img: null, // B-653: the selected picture's block index, or null
       sel: null, // the last selection in the editable, as {a, f} positions
       pend: null, // marks for the next character typed at a caret (B, I, U or S pressed with nothing selected)
       undo: [],
@@ -49,6 +50,7 @@
       numbers: 'M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.8 2.5-.9 2.5.6 0 1.1-2.5 2-2.5 3.4h2.8',
       checks: 'M4 4.5h5v5H4zM5.5 7l1 1 2-2M12 7h8M4 14.5h5v5H4zM12 17h8',
       tick: 'M5 12l5 5 9-10',
+      image: 'M4 5h16v14H4zM4 16l5-5 4 4 2-2 5 5M15 9.5h.01',
       plus: 'M12 5v14M5 12h14',
       note: 'M6 4h9l3 3v13H6zM9 10h6M9 14h6',
       saved: 'M5 12l5 5 9-10',
@@ -191,6 +193,19 @@
     bLink.title = 'Link  ' + keysText('⌘K');
     bLink.setAttribute('aria-haspopup', 'dialog');
     bLink.setAttribute('aria-expanded', 'false');
+    // B-653: a picture from a file; a paste or a drop of an image file does the same
+    const imgPick = el('input');
+    imgPick.type = 'file';
+    imgPick.accept = 'image/png,image/jpeg,image/webp,image/gif';
+    imgPick.hidden = true;
+    imgPick.addEventListener('change', () => {
+      const f = imgPick.files && imgPick.files[0];
+      imgPick.value = '';
+      if (f) noteAddImage(f);
+    });
+    const bImage = nBtn('btn ghost icon sm', 'Image', NI.image, () => imgPick.click());
+    bImage.title = 'Image';
+    bImage.dataset.ui = 'note-image';
     // B-569: the style menu, the course menu and the link box are Proprietary's Popover (the top layer, a tap outside
     // and Esc close it); the page opens each under its button and closes it through its own close, which keeps the
     // note's selection
@@ -249,7 +264,20 @@
     lkRow.append(lkCancel, lkAdd);
     lkPop.append(lkLab, lkIn, lkErr, lkRow);
     const sep = () => el('span', 'fsep');
-    fbar.append(bUndo, bRedo, sep(), bStyle, sep(), ...Object.values(fmtBtns), sep(), bLink, stMenu, lkPop);
+    fbar.append(
+      bUndo,
+      bRedo,
+      sep(),
+      bStyle,
+      sep(),
+      ...Object.values(fmtBtns),
+      sep(),
+      bLink,
+      bImage,
+      imgPick,
+      stMenu,
+      lkPop
+    );
     // a format bar click keeps the editable's selection (focus stays in the note)
     fbar.addEventListener('mousedown', e => {
       if (e.target.closest('button') && !e.target.closest('.n-lkp')) e.preventDefault();
@@ -689,7 +717,9 @@
       const nodes = E.noteRender(NOTE.blocks, nh, nt);
       nodes.forEach((n, i) => {
         if (NOTE.blocks[i].type === 'todo') n.prepend(nCheck(NOTE.blocks[i].checked));
+        if (NOTE.blocks[i].type === 'img') paintImg(n, NOTE.blocks[i], i === NOTE.img);
       });
+      if (NOTE.img != null && (!NOTE.blocks[NOTE.img] || NOTE.blocks[NOTE.img].type !== 'img')) NOTE.img = null;
       body.replaceChildren(...nodes);
       syncEmpty();
       if (sel && focus) setNoteSel(sel);
@@ -1124,6 +1154,19 @@
           e.preventDefault();
           return apply('delete', E.noteDelete(NOTE.blocks, sel), sel);
         }
+        if (collapsed(sel) && back && sel.f.o === 0 && imgBeside(sel, true) != null) {
+          e.preventDefault();
+          return selectImg(imgBeside(sel, true));
+        }
+        if (
+          collapsed(sel) &&
+          !back &&
+          sel.f.o === E.noteText(NOTE.blocks[sel.f.b]).length &&
+          imgBeside(sel, false) != null
+        ) {
+          e.preventDefault();
+          return selectImg(imgBeside(sel, false));
+        }
         if (collapsed(sel) && back && sel.f.o === 0) {
           e.preventDefault();
           return apply('delete', E.noteBackspaceStart(NOTE.blocks, sel.f.b), sel);
@@ -1141,7 +1184,16 @@
     });
     body.addEventListener('compositionend', () => syncFromDom('type'));
     body.addEventListener('dragstart', e => e.preventDefault());
-    body.addEventListener('drop', e => e.preventDefault());
+    body.addEventListener('drop', e => {
+      e.preventDefault();
+      const f = imageFile(e.dataTransfer); // B-653: a picture file dropped in goes in where it lands
+      if (!f) return;
+      const g = gapAt(e.clientY);
+      const b = Math.max(0, g - 1);
+      NOTE.sel = { a: { b, o: E.noteText(NOTE.blocks[b]).length }, f: { b, o: E.noteText(NOTE.blocks[b]).length } };
+      if (g === 0) NOTE.sel = { a: { b: 0, o: 0 }, f: { b: 0, o: 0 } };
+      noteAddImage(f);
+    });
     const NOTE_MIME = 'application/x-ev-note+json';
     function clip(e, cut) {
       const sel = readSel();
@@ -1162,6 +1214,8 @@
       const sel = readSel();
       const d = e.clipboardData;
       if (!sel || !d) return;
+      const f = imageFile(d); // B-653: a pasted picture (a screenshot, a copied image) goes in as its own block
+      if (f) return noteAddImage(f);
       const pasted = E.notePaste({
         json: d.getData(NOTE_MIME),
         html: d.getData('text/html'),
@@ -1222,6 +1276,225 @@
         e.preventDefault();
         return code === 'KeyY' || e.shiftKey ? noteRedo() : noteUndo();
       }
+    });
+
+    // ---- B-653: pictures. A picture is its own block (core/note-images.mjs); its file is in the env's R2 bucket,
+    // fetched through the Worker with the token (window.claude.use('images')) and shown from an object URL. A click
+    // selects it (a blue outline, corner handles); a corner drag resizes it, a drag of the picture moves it between
+    // blocks under a blue line; Delete or Backspace takes it out of the note (its file stays stored, B-11).
+    const IMG_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    const IMG_MAX_BYTES = 8 * 1024 * 1024;
+    const IMG_LONG_SIDE = 2000; // a bigger photo is scaled down on this device before it is sent
+    const imgUrls = new Map(); // key -> object URL (or its promise), for this page's life
+    let imgApi = null;
+    const imagesApi = async () =>
+      imgApi ||
+      (imgApi = await Promise.resolve(window.claude && window.claude.use ? window.claude.use('images') : null).catch(
+        () => null
+      ));
+    function imgUrl(key) {
+      if (!imgUrls.has(key))
+        imgUrls.set(
+          key,
+          imagesApi()
+            .then(api => (api ? api.get(key) : Promise.reject(new Error('no picture store'))))
+            .then(blob => URL.createObjectURL(blob))
+            .catch(e => {
+              imgUrls.delete(key);
+              throw e;
+            })
+        );
+      return imgUrls.get(key);
+    }
+    const noteMaxW = () => Math.max(40, Math.floor(body.clientWidth || 640));
+    function paintImg(fig, b, selected) {
+      fig.classList.toggle('sel', !!selected);
+      fig.setAttribute('data-nb-skip', '');
+      const im = document.createElement('img');
+      im.alt = b.alt || 'Picture';
+      im.draggable = false;
+      im.style.width = Math.min(b.width || E.NOTE_IMG_DEFAULT, noteMaxW()) + 'px';
+      fig.classList.add('wait');
+      fig.append(im);
+      for (const c of ['nw', 'ne', 'sw', 'se']) {
+        const h = el('span', 'h ' + c);
+        h.dataset.corner = c;
+        fig.append(h);
+      }
+      imgUrl(b.key).then(
+        u => {
+          im.src = u;
+          fig.classList.remove('wait');
+        },
+        () => (im.alt = 'This picture could not be loaded')
+      );
+    }
+    function selectImg(i) {
+      NOTE.img = i;
+      [...body.childNodes].forEach(
+        (n, j) => n.classList && n.classList.toggle('sel', j === i && n.dataset.t === 'img')
+      );
+      if (i != null) {
+        body.focus({ preventScroll: true });
+        getSelection().removeAllRanges();
+      }
+    }
+    const figIndex = fig => [...body.childNodes].indexOf(fig);
+    /** A picture file into the note at the caret: scaled down when large, sent, then put in as its own block. */
+    async function noteAddImage(file) {
+      if (!NOTE.blocks || !file) return;
+      if (!IMG_TYPES.includes(file.type)) return toast('A picture is a PNG, JPEG, WebP or GIF.');
+      const api = await imagesApi();
+      if (!api) return toast('Pictures need the E.V. app.');
+      const sel = readSel() || NOTE.sel || { a: { b: 0, o: 0 }, f: { b: 0, o: 0 } };
+      let blob = file,
+        natural = 0;
+      try {
+        const bm = await createImageBitmap(file);
+        natural = bm.width;
+        const long = Math.max(bm.width, bm.height);
+        if (file.type !== 'image/gif' && long > IMG_LONG_SIDE) {
+          const k = IMG_LONG_SIDE / long;
+          const c = document.createElement('canvas');
+          c.width = Math.round(bm.width * k);
+          c.height = Math.round(bm.height * k);
+          c.getContext('2d').drawImage(bm, 0, 0, c.width, c.height);
+          const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          blob = (await new Promise(ok => c.toBlob(ok, type, 0.88))) || file;
+          natural = c.width;
+        }
+        if (bm.close) bm.close();
+      } catch (e) {
+        /* not readable here: sent as it is */
+      }
+      if (blob.size > IMG_MAX_BYTES) return toast('A picture holds at most 8 MB.');
+      let put;
+      try {
+        put = await api.put(blob);
+      } catch (e) {
+        return toast('The picture wasn’t saved: ' + ((e && e.message) || 'error'));
+      }
+      imgUrls.set(put.key, Promise.resolve(URL.createObjectURL(blob)));
+      const max = noteMaxW();
+      const img = E.noteImageBlock(put.key, {
+        width: Math.min(E.NOTE_IMG_DEFAULT, natural || E.NOTE_IMG_DEFAULT),
+        alt: (file.name || '').replace(/\.[a-z0-9]+$/i, '').slice(0, 120),
+        max,
+      });
+      const r = E.noteInsertImage(NOTE.blocks, Math.max(sel.a.b, sel.f.b), img);
+      apply('image', { blocks: r.blocks, sel: { a: { b: r.at + 1, o: 0 } } }, sel);
+      selectImg(r.at);
+    }
+    const imageFile = dt => [...((dt && dt.files) || [])].find(f => IMG_TYPES.includes(f.type));
+    // the drop line: where a moved picture lands, between blocks
+    const dropLine = el('div', 'n-drop');
+    dropLine.hidden = true;
+    nDoc.append(dropLine);
+    function gapAt(y) {
+      const kids = [...body.childNodes];
+      for (let i = 0; i < kids.length; i++) {
+        const r = kids[i].getBoundingClientRect();
+        if (y < r.top + r.height / 2) return i;
+      }
+      return kids.length;
+    }
+    function showDrop(gap) {
+      const kids = [...body.childNodes];
+      const d = nDoc.getBoundingClientRect(),
+        b = body.getBoundingClientRect();
+      const y =
+        gap < kids.length
+          ? kids[gap].getBoundingClientRect().top - 3
+          : kids[kids.length - 1].getBoundingClientRect().bottom + 3;
+      dropLine.style.top = Math.round(y - d.top - 1) + 'px';
+      dropLine.style.left = Math.round(b.left - d.left) + 'px';
+      dropLine.style.width = Math.round(b.width) + 'px';
+      dropLine.hidden = false;
+    }
+    body.addEventListener(
+      'mousedown',
+      e => {
+        const fig = e.target.closest && e.target.closest('figure[data-t=img]');
+        if (!fig || !body.contains(fig)) {
+          if (NOTE.img != null) selectImg(null);
+          return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const i = figIndex(fig);
+        selectImg(i);
+        const corner = e.target.dataset && e.target.dataset.corner;
+        const im = fig.querySelector('img');
+        const x0 = e.clientX,
+          y0 = e.clientY;
+        const w0 = im.getBoundingClientRect().width;
+        let moved = false,
+          gap = null;
+        const move = ev => {
+          if (corner) {
+            const dx = (ev.clientX - x0) * (/w$/.test(corner) ? -1 : 1);
+            im.style.width = Math.max(40, Math.min(noteMaxW(), Math.round(w0 + dx))) + 'px';
+            moved = true;
+            return;
+          }
+          if (!moved && Math.abs(ev.clientY - y0) < 4) return;
+          moved = true;
+          gap = gapAt(ev.clientY);
+          showDrop(gap);
+        };
+        const up = () => {
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', up);
+          dropLine.hidden = true;
+          if (!moved) return;
+          const sel = NOTE.sel;
+          if (corner) {
+            const r = E.noteResizeImage(NOTE.blocks, i, parseFloat(im.style.width), noteMaxW());
+            apply('resize', { blocks: r.blocks, sel }, sel);
+            return selectImg(r.at);
+          }
+          const r = E.noteMoveBlock(NOTE.blocks, i, gap);
+          if (r.blocks === NOTE.blocks) return;
+          apply('move', { blocks: r.blocks, sel: { a: { b: r.at, o: 0 } } }, sel);
+          selectImg(r.at);
+        };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+      },
+      true
+    );
+    body.addEventListener(
+      'keydown',
+      e => {
+        if (NOTE.img == null) return;
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          e.stopPropagation();
+          const i = NOTE.img;
+          NOTE.img = null;
+          const r = E.noteRemoveImage(NOTE.blocks, i);
+          const at = { b: r.at, o: 0 };
+          return apply('delete', { blocks: r.blocks, sel: { a: at } }, { a: at });
+        }
+        if (/^(Shift|Meta|Control|Alt)$/.test(e.key)) return;
+        if (e.key === 'Escape' || e.key.startsWith('Arrow') || e.key === 'Enter' || e.key.length === 1) {
+          const i = NOTE.img;
+          selectImg(null);
+          const b =
+            e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? Math.max(0, i - 1) : Math.min(NOTE.blocks.length - 1, i + 1);
+          e.preventDefault();
+          setNoteSel({ a: { b, o: 0 } });
+        }
+      },
+      true
+    );
+    /** A caret next to a picture: Backspace at the start of the block after it, or Delete at the end of the one before, selects it. */
+    function imgBeside(sel, back) {
+      const j = back ? sel.f.b - 1 : sel.f.b + 1;
+      return NOTE.blocks[j] && NOTE.blocks[j].type === 'img' ? j : null;
+    }
+    body.addEventListener('dragover', e => {
+      if (e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files')) e.preventDefault();
     });
 
     // ---- saving: the whole note through write(), a pause after the last change; nothing typed is dropped on a refusal

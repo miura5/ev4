@@ -12,7 +12,8 @@ export function makeNotes() {
   const LISTS = ['ul', 'ol', 'todo'];
   const MARKS = ['b', 'i', 'u', 's'];
   // notes.schema.json's limits: 4000 blocks, 400 runs a block, 20000 characters a run, 2000 an href, 300 a title
-  const MAX = { blocks: 4000, runs: 400, text: 20000, href: 2000, title: 300, indent: 6 };
+  const MAX = { blocks: 4000, runs: 400, text: 20000, href: 2000, title: 300, indent: 6, imgMin: 40, imgMax: 2000 };
+  const IMG_KEY = /^note-images\/[A-Za-z0-9]{16,64}\.(png|jpg|webp|gif)$/;
   const HREF = /^https?:\/\/[^\s<>"]+$/;
   const ID = /^n-\d{8}-\d{6}-[A-Za-z0-9]{8,40}$/;
 
@@ -72,6 +73,14 @@ export function makeNotes() {
   }
   /** One block as stored: a known type, its runs, checked on a checklist item only, indent 1 to 6 or none. */
   function noteBlock(b) {
+    // B-653: a picture is its own block: the stored key, its width and alt text, no runs of text
+    if (b && b.type === 'img' && IMG_KEY.test(String(b.key || ''))) {
+      const out = { type: 'img', runs: [], key: b.key };
+      const w = Math.floor(Number(b.width) || 0);
+      if (w) out.width = Math.max(MAX.imgMin, Math.min(MAX.imgMax, w));
+      if (typeof b.alt === 'string' && b.alt) out.alt = cleanText(b.alt).slice(0, MAX.title);
+      return out;
+    }
     const type = b && TYPES.includes(b.type) ? b.type : 'p';
     const out = { type, runs: noteRuns(b && b.runs) };
     if (type === 'todo') out.checked = !!(b && b.checked);
@@ -485,6 +494,21 @@ export function makeNotes() {
         return;
       }
       const t = attr(n, 'data-t');
+      if (t === 'img' && !paste) {
+        // B-653: the editor's picture reads back as itself (its key, width and alt), never as text
+        hereEl(n, 0);
+        const w = Number(attr(n, 'data-width')) || 0;
+        const alt = attr(n, 'data-alt');
+        out.push({
+          type: 'img',
+          runs: [],
+          key: attr(n, 'data-key'),
+          ...(w ? { width: w } : {}),
+          ...(alt ? { alt } : {}),
+        });
+        cur = null;
+        return;
+      }
       if (t && TYPES.includes(t) && !paste) {
         const ind = Number(attr(n, 'data-indent')) || 0;
         return block(
@@ -782,6 +806,7 @@ export function makeNotes() {
         out += '</' + open + '>';
         open = null;
       }
+      if (b.type === 'img') continue; // B-653: a picture stays in the note; the clipboard carries its text only
       const inner = b.runs.map(run).join('') || '<br>';
       if (list) {
         if (!open) out += '<' + (open = list) + '>';
@@ -799,6 +824,13 @@ export function makeNotes() {
    */
   function noteRender(blocks, h, t) {
     return noteBlocks(blocks).map(b => {
+      // B-653: a picture paints as an empty, non-editable figure; the page fills in the image it fetches by key
+      if (b.type === 'img') {
+        const a = { 'data-t': 'img', class: 'nb n-img', 'data-key': b.key, contenteditable: 'false' };
+        if (b.width) a['data-width'] = String(b.width);
+        if (b.alt) a['data-alt'] = b.alt;
+        return h('figure', a, []);
+      }
       const kids = b.runs.map(r => {
         let n = t(r.text);
         if (r.s) n = h('s', {}, [n]);

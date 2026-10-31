@@ -179,6 +179,110 @@ const openNoteId = page =>
     .catch(() => chromium.launch());
   const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
 
+  // ---- B-653: pictures at 1280. The Image button's file picker puts a picture in as its own block (stored by the
+  // stub's picture store under note-images/, only the key in the note); a click selects it with a blue outline and
+  // handles; a corner drag resizes it; a drag moves it between blocks under a drop line; Delete takes it out of the
+  // note and the stored file stays. The picture is a tiny PNG made here. EV_NOTES_ONLY=images runs this check alone.
+  if (!process.env.EV_NOTES_ONLY || process.env.EV_NOTES_ONLY === 'images') {
+    const { page, errors } = await open(browser, { width: 1280, height: 860 });
+    const tag = '[1280 images]';
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    await page.click('#tab-notes');
+    await page.click('#notes-new');
+    await until(page, () => !document.getElementById('notes-editor').hidden);
+    await page.click('#note-body');
+    await page.keyboard.type('Heart');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Four chambers.');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('Valves.');
+    await page.keyboard.press('ArrowUp');
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('[data-ui=note-image]')]);
+    await chooser.setFiles({ name: 'heart.png', mimeType: 'image/png', buffer: png });
+    const shown = await until(page, () => !!document.querySelector('#note-body figure[data-t=img] img[src^="blob:"]'));
+    const types = () => page.evaluate(() => [...document.querySelectorAll('#note-body > *')].map(b => b.dataset.t));
+    ok(`${tag} the Image button puts the picture in as its own block`, shown, JSON.stringify(await types()));
+    ok(
+      `${tag} it lands after the caret's line`,
+      JSON.stringify(await types()) === JSON.stringify(['h1', 'p', 'img', 'p']),
+      JSON.stringify(await types())
+    );
+    const fig = '#note-body figure[data-t=img]';
+    await page.click(fig);
+    const sel = await page.evaluate(f => {
+      const e = document.querySelector(f);
+      return {
+        sel: e.classList.contains('sel'),
+        handles: [...e.querySelectorAll('[data-corner]')].filter(h => h.offsetWidth).length,
+        ring: getComputedStyle(e).boxShadow,
+      };
+    }, fig);
+    ok(
+      `${tag} a click selects it: outline and four corner handles`,
+      sel.sel && sel.handles === 4 && /rgb/.test(sel.ring),
+      JSON.stringify(sel)
+    );
+    await page.screenshot({ path: path.join(shots, 'notes-image-selected-1280.png') });
+    // resize from the bottom-right corner
+    const w0 = await page.evaluate(f => document.querySelector(f + ' img').getBoundingClientRect().width, fig);
+    const se = await page.locator(fig + ' [data-corner=se]').boundingBox();
+    await page.mouse.move(se.x + 5, se.y + 5);
+    await page.mouse.down();
+    await page.mouse.move(se.x + 155, se.y + 5, { steps: 5 });
+    await page.mouse.up();
+    await settle(page);
+    const id = await page.evaluate(() => document.getElementById('notes-editor').dataset.note);
+    let doc = await savedDoc(page, id);
+    const imgOf = d => (d && d.blocks.find(b => b.type === 'img')) || null;
+    ok(
+      `${tag} a corner drag resizes it and the width is saved`,
+      imgOf(doc) && Math.abs(imgOf(doc).width - (w0 + 150)) <= 3,
+      JSON.stringify({ w0, saved: imgOf(doc) })
+    );
+    ok(
+      `${tag} the note holds the key, never the bytes`,
+      imgOf(doc) && /^note-images\//.test(imgOf(doc).key) && !/base64|blob:/.test(JSON.stringify(doc)),
+      JSON.stringify(imgOf(doc))
+    );
+    // move it above "Four chambers." (between the heading and the first paragraph)
+    const box = await page.locator(fig).boundingBox();
+    const h1 = await page.locator('#note-body > h1').boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, h1.y + h1.height - 2, { steps: 6 });
+    const line = await page.evaluate(() => !document.querySelector('#p-notes .n-drop').hidden);
+    await page.screenshot({ path: path.join(shots, 'notes-image-dropline-1280.png') });
+    await page.mouse.up();
+    ok(`${tag} a drag shows the drop line`, line, '');
+    ok(
+      `${tag} the drop moves it between blocks`,
+      JSON.stringify(await types()) === JSON.stringify(['h1', 'img', 'p', 'p']),
+      JSON.stringify(await types())
+    );
+    // Delete takes it out of the note; the stored file stays
+    await page.click(fig);
+    await page.keyboard.press('Delete');
+    await settle(page);
+    doc = await savedDoc(page, id);
+    const kept = await page.evaluate(() => window.__images.size);
+    ok(
+      `${tag} Delete takes it out of the note`,
+      doc && !imgOf(doc) && JSON.stringify(await types()) === JSON.stringify(['h1', 'p', 'p']),
+      JSON.stringify(await types())
+    );
+    ok(`${tag} the stored file is kept`, kept === 1, String(kept));
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+  if (process.env.EV_NOTES_ONLY === 'images') {
+    await browser.close();
+    for (const [s, n, d] of results) console.log(`${s}  ${n}${d && s === 'FAIL' ? '\n      ' + d : ''}`);
+    process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
+
   // ---- B-600: the note's own type scale at 1280: title, Heading 1, 2, 3 and body each a step apart, the title as
   // large as Heading 1 was before the polish (30 px). EV_NOTES_ONLY=headings runs this check alone.
   {

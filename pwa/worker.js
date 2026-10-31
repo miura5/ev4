@@ -18,6 +18,7 @@ import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.
 import { exportToR2, newestExport, EXPORT_PREFIX } from './backup.js';
 import { tokenOk, ifVersionOf } from './guard.js';
 import { writeProblem } from './notes.js';
+import { handleImages } from './images.js';
 import { handleClaude } from './claude.js';
 import { startPlanJob, PlanJob } from './planjob.js';
 
@@ -43,6 +44,10 @@ export default {
       return json({ error: 'wrong token' }, 401);
 
     if (url.pathname.startsWith('/api/run/')) return handleRun(request, env, url);
+
+    // B-653: pictures in notes, stored in the env's R2 bucket and served to the owner only (pwa/images.js).
+    const img = await handleImages(request, env, url);
+    if (img) return img;
 
     // B-316: an export now (the staging proof), and the newest export's key. Counts and hashes only, never a document.
     if (url.pathname === '/api/backup/export' && request.method === 'POST') {

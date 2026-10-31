@@ -20,6 +20,7 @@ import { makeCanvasRules } from './canvas-rules.mjs';
 import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
 import { makeNotes } from './notes.mjs';
+import { makeNoteImages } from './note-images.mjs';
 import { makeStudyPlans } from './study-plans.mjs';
 import { makeCourseScope } from './course-scope.mjs';
 import { makeMeasures } from './measures.mjs';
@@ -2314,7 +2315,7 @@ const EVCore = (() => {
 
   // ---------------------------------------------------------------- shareable practice pages (D-110) · core/share.mjs (B-160)
   // ---------------------------------------------------------------- his notes' block model (B-402, D-325) · core/notes.mjs
-  const NOTES = makeNotes();
+  const NOTES = { ...makeNotes(), ...makeNoteImages() }; // B-653: pictures as blocks · core/note-images.mjs
 
   const SHARE = makeShare({
     itemType,

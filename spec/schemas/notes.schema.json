@@ -133,7 +133,7 @@
  "$defs": {
   "block": {
    "type": "object",
-   "description": "one line of the note: a paragraph, a heading, or one item of a bulleted, numbered or check list",
+   "description": "one line of the note: a paragraph, a heading, one item of a bulleted, numbered or check list, or a picture (img, B-653)",
    "properties": {
     "type": {
      "enum": [
@@ -143,7 +143,8 @@
       "h3",
       "ul",
       "ol",
-      "todo"
+      "todo",
+      "img"
      ]
     },
     "runs": {
@@ -161,6 +162,22 @@
      "type": "integer",
      "minimum": 0,
      "maximum": 6
+    },
+    "key": {
+     "type": "string",
+     "pattern": "^note-images/[A-Za-z0-9]{16,64}\\.(png|jpg|webp|gif)$",
+     "description": "B-653: a picture (img only): its key in the env R2 bucket, served by the Worker to the owner; never the bytes"
+    },
+    "width": {
+     "type": "integer",
+     "minimum": 40,
+     "maximum": 2000,
+     "description": "B-653: the picture's shown width in px (img only), clamped to the note's width"
+    },
+    "alt": {
+     "type": "string",
+     "maxLength": 300,
+     "description": "B-653: the picture's alt text (img only)"
     }
    },
    "required": [

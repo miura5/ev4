@@ -1247,12 +1247,28 @@
     }),
   });
 
+  // B-653: pictures in notes, through the Worker's /api/images with the token (pwa/images.js); never a public URL.
+  const images = {
+    put: async blob => {
+      const r = await api('images', { method: 'POST', headers: { 'content-type': blob.type }, body: blob });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'the picture was not saved (' + r.status + ')');
+      return j;
+    },
+    get: async key => {
+      const r = await api('images/' + key);
+      if (!r.ok) throw new Error('no such picture (' + r.status + ')');
+      return r.blob();
+    },
+  };
+
   window.claude = {
     host: 'ev-app', // B-320 (D-306): the app, never the read-only claude.ai live page (page/app/04-model.js)
     use: async n => {
       if (n === 'db') return ready.then(() => DB);
       if (n === 'user') return { isOwner: async () => true };
       if (n === 'sample') return sample;
+      if (n === 'images') return images;
       return null;
     },
   };
