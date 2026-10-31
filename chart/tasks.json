@@ -11841,9 +11841,9 @@
   "id": "B-629",
   "kind": "request",
   "title": "Request (reported Oct 31): claimsQuestions misses wordings like 'I'll put together a quiz'",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11852,6 +11852,10 @@
   "reportedAt": "2026-10-31T08:56:16.160Z",
   "board": {
    "row": "v4 B-629: claimsQuestions misses wordings like 'I'll put together a"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:44.647Z"
   }
  },
  {
