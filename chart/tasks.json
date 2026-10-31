@@ -5403,7 +5403,7 @@
   "title": "Weak spots view (D-281, D-242, C-1, C-11, C-12, D-284, D-288, D-289): \"To review · n\" at the top, absent at zero. Each row shows her topic as the title and her suggested objective in grey, with Accept, Join, Not now and Decline and their keys A, J, H and X. The right panel shows the selected row's words, reason and source. The open rows have Drill and Mark solid with Undo. No Start session, parked list, Make active, or note and skill actions.",
   "dod": "Screenshots at 390 and 1280 in light and dark with three proposed and three open. Each of A, J, H and X at 1280, and each tap at 390, lands as its weakspot event. Join is unavailable when no open spot shares the objective. Mark solid's Undo restores the row. No primary button on the view.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-297",
    "B-232",
@@ -5413,7 +5413,12 @@
   ],
   "notes": "Matt, Oct 24: after exams, with the weak-spot work (B-232 to B-235); the redesign goes live without this screen.",
   "commit": null,
-  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: Weak spots with To review lives in Study (D-281, B-365, B-407); the view moved onto Proprietary (B-511).",
+   "at": "2026-10-31T00:40:11.187Z"
+  }
  },
  {
   "id": "B-301",
