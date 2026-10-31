@@ -11772,5 +11772,23 @@
    "outcome": "task",
    "at": "2026-10-31T07:38:52.591Z"
   }
+ },
+ {
+  "id": "B-626",
+  "kind": "request",
+  "title": "Request (reported Oct 31): E.V.'s chat replies keep adding 'check your materials' and 'my materials don't give this' to plain answers, even repeating it on every line of a thread about basic unit conversions; Matt finds it annoying and wants it gone from her voice.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "E.V.'s chat replies keep adding 'check your materials' and 'my materials don't give this' to plain answers, even repeating it on every line of a thread about basic unit conversions; Matt finds it annoying and wants it gone from her voice.",
+  "reworded": true,
+  "reportedAt": "2026-10-31T07:58:07.061Z",
+  "board": {
+   "row": "v4 B-626: E.V.'s chat replies keep adding 'check your materials' and 'my…"
+  }
  }
 ]
