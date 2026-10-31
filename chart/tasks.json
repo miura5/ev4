@@ -12262,9 +12262,9 @@
   "id": "B-649",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416: read live counts for concepts, predictions, share-set jobs and ideas",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Counts read through the token holder; each at 0 with no reader filed as a retire task or kept with a reason.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12273,6 +12273,10 @@
   "reportedAt": "2026-10-31T13:21:23.356Z",
   "board": {
    "row": "v4 B-649: D-416: read live counts for concepts, predictions, share-set jobs and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:21:25.920Z"
   }
  }
 ]
