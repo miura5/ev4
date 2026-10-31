@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder (started from the Oct 31 chat; may have stopped when it was cleared) | B-467 red nightly: name the failing checks (GitHub annotations, or `npm run check` in the background), fix or retire each, dispatch nightly via REST | /home/claude/ev4-wt/b467 | b467 | Oct 31, ~12:20Z |
+| builder (restarted Oct 31 in a new chat; the first one stopped with no push) | B-467 red nightly: name the failing checks, fix or retire each, dispatch nightly via REST | /home/claude/ev4-wt/b467 | b467 | Oct 31, this chat |
 
 ## Waiting on Matt
 
@@ -16,7 +16,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 ## Next
 
 Matt's order (Oct 31), one builder at a time:
-1. B-467 red nightly (above; check whether the builder pushed, restart it from its worktree if not).
+1. B-467 red nightly (running, above).
 2. The shallow-clone tag trap: a fresh clone has no tags, so build/ship stamps v4.5.0+untagged and staging never matches. Make ship staging/live refuse (or fetch tags) when `git describe --tags` fails; file it as a task.
 3. B-606 parallel checks (faster full suite).
 4. B-638 notes-check polish (text-box card for every open-ended check, submit returns on its own, a reminder when he answers in chat).
