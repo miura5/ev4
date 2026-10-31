@@ -12180,7 +12180,7 @@
   "title": "Request (reported Oct 31): D-416: retire skill checklists",
   "dod": "Skills runner, practice_skill, skill card and core skill steps gone; old kind-skill sessions still load in Record; clinical-prep skills kept; tests updated; targeted checks pass.",
   "milestone": "Simplify (D-416)",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
   "notes": "",
   "commit": null,
