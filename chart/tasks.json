@@ -12031,9 +12031,9 @@
   "id": "B-638",
   "kind": "bug",
   "title": "Bug (reported Oct 31): Notes side chat checks: the first check card (two open questions) showed an Answer button that did nothing, so the answer went in the chat and the second question continued as plain chat; a second check card had a text box and submit button, preferred for every open-ended notes question, but it stuck on Checking until a chat message was sent, then the result appeared. Wanted: every open-ended notes check uses the text-box card; submit returns the result on its own; an answer typed in the chat gets a reminder to answer in the card so the rationale shows and weak spots are recorded. Keep and polish the feature.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Every open-ended notes check is the text-box card; its submit returns the result without another chat message; an answer typed in the chat during an open check gets a one-line reminder to answer in the card; harness checks for each; one real run on staging.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12042,6 +12042,10 @@
   "reportedAt": "2026-10-31T09:54:49.766Z",
   "board": {
    "row": "v4 B-638: Notes side chat checks: the first check card (two open questions)…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:57:05.855Z"
   }
  },
  {
