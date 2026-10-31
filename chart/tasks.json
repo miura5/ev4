@@ -11811,5 +11811,22 @@
   "board": {
    "row": "v4 B-627: derive.mjs producers at 371 and 478 call exam views with no date, so…"
   }
+ },
+ {
+  "id": "B-628",
+  "kind": "request",
+  "title": "Request (reported Oct 31): A past exam with no score (e.g. postponed with an old date) now reads as done",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "A past exam with no score (e.g. postponed with an old date) now reads as done",
+  "reportedAt": "2026-10-31T08:56:13.432Z",
+  "board": {
+   "row": "v4 B-628: A past exam with no score (e.g. postponed with an old date) now reads…"
+  }
  }
 ]
