@@ -4682,7 +4682,7 @@
  {
   "id": "B-260",
   "kind": "bug",
-  "title": "Bug (reported Oct 23): Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
+  "title": "Today marks every weekday as a class day; class weekdays (Mon, Wed) become a setting",
   "dod": "On a weekday with no class (Fri, Tue, Thu for Matt), the day reads as a non-class day, and its budget, review load and new checks follow that. Matt's class weekdays come from the record or spec, not code. A core test plants a Friday; proven by a staging morning run read back. Whether it fits the freeze (a new setting) is decided under D-251 first.",
   "milestone": "v4.5.x ops",
   "status": "open",

@@ -16,7 +16,9 @@ Matt types /clear before every bug, tweak, feature ask or "continue", so every c
 1. Read `docs/handover.md` (CLAUDE.md is already loaded).
 2. Check every agent its Running table lists, by the worktree path and branch on its row: `git worktree list`, and
    each agent's last push (`git log origin/main --since=<its start> --oneline`). Agents started from a cleared chat may
-   have stopped (D-358). A worktree not in the Running table is stale: list it and don't restart it.
+   have stopped (D-358). A worktree not in the Running table is stale: when its branch is merged into main, detached or
+   has no unpushed commits, prune it (`git worktree remove --force <path>`, then `git branch -D <branch>`); list the rest
+   once and don't restart them.
 3. Restart any listed work that stopped, from its worktree, with a builder message that says where it was. Prune the
    finished ones (`git worktree remove <path>`, then `git branch -D <branch>`): repo scratch, not Matt's records, so
    removing them is allowed.
@@ -38,7 +40,8 @@ One goal at a time: **a release on staging with its card sent.** Then wait for M
 he tests), take the next batch.
 
 - **Pick the batch** from BACKLOG.md order: a bug that breaks studying first, then other bugs he reported, then the
-  next major feature or a set of fixes. Lowest open task whose dependencies are done.
+  next major feature or a set of fixes. Lowest open task whose dependencies are done. The skill's order wins; the
+  handover's Next is a hint.
 - **Claim** each task with `log <id> --status "in progress" --note "..."` (the claim is the lock; a refused push means
   another session holds it). A note at each milestone; 90 quiet minutes is stale.
 - **Drive it:** builders → GitHub full suite → ship staging → the end-to-end run → one code review → the UI
@@ -72,9 +75,10 @@ he tests), take the next batch.
 
 ## Intake
 
-- First search BACKLOG.md for an open task that already covers the ask; if one does, `--triage join <id>` it.
-- "bug: ..." or "idea: ..." in the chat: at once `report bug|request --from-chat --reworded "<his point>"`. The
-  repository is public: reword into a neutral sentence that keeps every point (D-263). Then triage it as step 3.
+- First, report the ask: "bug: ..." or "idea: ..." in the chat is at once `report bug|request --from-chat --reworded
+  "<his point>"`. The repository is public: reword into a neutral sentence that keeps every point (D-263).
+- Then, if an open task in BACKLOG.md already covers it, `log <new> --triage join <id>`.
+- Otherwise, triage it into a task (`log <new> --triage task --dod ... --milestone ...`).
 - A bug that breaks studying jumps the batch; anything else joins BACKLOG order.
 - **A big ask** (a redesign, a new view, a new pipeline): a design step first. Send a design agent with his words, the
   record and the demo; decide its open choices yourself and record them as decisions; then split it into tasks with

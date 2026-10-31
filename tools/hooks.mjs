@@ -302,6 +302,14 @@ export function shellMdTargets(cmd) {
     new RegExp(String.raw`\btee\b((?:\s+-[a-z-]+)*)((?:\s+` + word + ')+)', 'gi')
   ))
     for (const w of m[2].trim().split(/\s+/)) out.push(unq(w));
+  // cp and mv: the last operand is the destination.
+  for (const m of String(cmd || '').matchAll(new RegExp(String.raw`\b(?:cp|mv)\b((?:\s+` + word + ')+)', 'g'))) {
+    const ops = m[1]
+      .trim()
+      .split(/\s+/)
+      .filter(w => !/^-/.test(w));
+    if (ops.length >= 2) out.push(unq(ops[ops.length - 1]));
+  }
   return out.filter(f => /\.md$/i.test(f));
 }
 

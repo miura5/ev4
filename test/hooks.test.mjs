@@ -557,6 +557,8 @@ test('B-621: md-guard also refuses a MultiEdit or a shell >, >> or tee that crea
     'cat x >> "docs/b620 notes.md"',
     'printf x | tee -a docs/b620.md',
     `cat <<'X' > ${path.join(ROOT, 'b620.md')}\nX`,
+    'cp /tmp/notes.txt docs/b621-copy.md',
+    'mv -f a.txt b.txt docs/b621-moved.md',
   ])
     assert.match(bash(c) || '', /no new \.md files/, c);
   for (const c of [
@@ -566,6 +568,8 @@ test('B-621: md-guard also refuses a MultiEdit or a shell >, >> or tee that crea
     'echo x > docs/b620.json',
     'node x.mjs 2>&1 | tail -3',
     'grep -n "foo" README.md',
+    'cp docs/handover.md /tmp/handover.md', // destination outside a checkout
+    'mv x.md docs/b621.json',
   ])
     assert.equal(bash(c), null, c);
   assert.match(
