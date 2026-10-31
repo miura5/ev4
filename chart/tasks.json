@@ -12392,9 +12392,9 @@
   "id": "B-655",
   "kind": "bug",
   "title": "Bug (reported Oct 31): checks.yml: the playwright install --with-deps step hung about 30 min on the runner apt mirror in five harness jobs (run 41250074524); give the step a timeout-minutes and a retry, or cache the browser",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "checks.yml browser install step has a timeout and one retry, or the browser is cached; a hung mirror fails fast",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12403,6 +12403,10 @@
   "reportedAt": "2026-10-31T23:23:08.552Z",
   "board": {
    "row": "v4 B-655: checks.yml: the playwright install --with-deps step hung about 30 min…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T23:49:59.956Z"
   }
  },
  {
