@@ -11529,10 +11529,12 @@
   "id": "B-615",
   "kind": "request",
   "title": "Request (reported Oct 30): One write path: a single core module through which every feature reads and writes the record, with schema validation, undo and history built in; existing writers move onto it; it is what Undo everywhere (B-584) and the trash (B-422) build on.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "Every record write goes through one core module with validation, undo and history; no feature writes the record directly (a test greps for it).",
+  "milestone": "workflow (ops)",
+  "status": "open",
+  "depends": [
+   "B-614"
+  ],
   "notes": "",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
@@ -11540,6 +11542,10 @@
   "reportedAt": "2026-10-31T01:04:39.087Z",
   "board": {
    "row": "v4 B-615: One write path: a single core module through which every feature…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:05:00.423Z"
   }
  },
  {
