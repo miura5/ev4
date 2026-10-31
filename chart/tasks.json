@@ -11520,5 +11520,22 @@
   "board": {
    "row": "v4 B-614: Data vocabulary: one source (spec) for kinds, statuses and fields;…"
   }
+ },
+ {
+  "id": "B-615",
+  "kind": "request",
+  "title": "Request (reported Oct 30): One write path: a single core module through which every feature reads and writes the record, with schema validation, undo and history built in; existing writers move onto it; it is what Undo everywhere (B-584) and the trash (B-422) build on.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "workflow gaps, Matt Oct 30",
+  "words": "One write path: a single core module through which every feature reads and writes the record, with schema validation, undo and history built in; existing writers move onto it; it is what Undo everywhere (B-584) and the trash (B-422) build on.",
+  "reportedAt": "2026-10-31T01:04:39.087Z",
+  "board": {
+   "row": "v4 B-615: One write path: a single core module through which every feature…"
+  }
  }
 ]
