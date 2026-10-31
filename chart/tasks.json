@@ -11862,9 +11862,9 @@
   "id": "B-630",
   "kind": "request",
   "title": "Request (reported Oct 31): The note chat matches the Quiz me chip only on exact text; typed variants go to a model turn",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11873,6 +11873,10 @@
   "reportedAt": "2026-10-31T08:56:18.822Z",
   "board": {
    "row": "v4 B-630: The note chat matches the Quiz me chip only on exact text; typed…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:47.301Z"
   }
  },
  {
