@@ -10935,7 +10935,7 @@
   "title": "Request (reported Oct 30): At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows.",
   "dod": "Matches the reference at 1280 and 390 on staging.",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10946,8 +10946,9 @@
    "row": "v4 B-588: At 390 the Undo toast covers Today's List/Week/Add toolbar while it…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-30T13:22:43.547Z"
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: a 390 px layout issue; the phone is frozen at 'it works' (D-407).",
+   "at": "2026-10-31T00:40:23.553Z"
   }
  },
  {
