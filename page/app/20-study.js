@@ -1561,20 +1561,45 @@
       try {
         return await sample.json(prompt, { modelTier: 'default', cache: false });
       } catch (e) {
-        if (e && e.code === 'invalid_json' && e.text) return { items: E.practiceReply.salvageItems(e.text) };
+        if (e && e.code === 'invalid_json' && e.text) {
+          // B-624: what was salvaged from a reply that did not parse, for the "[EV practice]" console line
+          const items = E.practiceReply.salvageItems(e.text);
+          return Object.defineProperty({ items }, 'why', {
+            value: { code: e.code, message: e.message, length: e.text.length, stop: e.stopReason || null },
+          });
+        }
         throw e;
       }
+    }
+    /** B-624: why an ask failed, in the console with the "[EV practice]" prefix, and the short code the page shows
+     * ("upstream_error 524"); no question text. */
+    function practiceFailed(e) {
+      const code = (e && e.code) || (e && e.name) || 'error';
+      const status = e && e.status ? e.status : null;
+      console.warn('[EV practice] ask failed', {
+        code,
+        status,
+        message: String((e && e.message) || e).slice(0, 300),
+      });
+      return code + (status ? ' ' + status : '');
     }
     /** B-446: why a batch held nothing usable, in the console for the next look (counts and checks, no question text). */
     function unusable(res, refs) {
       const items = E.practiceReply.replyItems(res).map(E.practiceReply.normalizeItem);
-      console.warn(
-        'E.V. practice: nothing usable in ' + items.length + ' item(s)',
-        items.map((q, i) => [
-          ...E.validateItem({ ...q, id: 'm' + (i + 1) }).errors,
-          ...(refs && !refs.has(q && q.sourceRef) ? ['sourceRef not one of the passages'] : []),
-        ])
-      );
+      const why = items.map((q, i) => [
+        ...E.validateItem({ ...q, id: 'm' + (i + 1) }).errors,
+        ...(refs && !refs.has(q && q.sourceRef) ? ['sourceRef not one of the passages'] : []),
+      ]);
+      // B-624: how many failed which check, and (a reply that did not parse) its length and stop reason
+      const counts = {};
+      for (const errs of why)
+        for (const m of new Set(errs.map(x => String(x).replace(/^m\d+:?\s*/, '')))) counts[m] = (counts[m] || 0) + 1;
+      console.warn('[EV practice] malformed: nothing usable in ' + items.length + ' item(s)', {
+        ...((res && res.why) || { parsed: true }),
+        failedBy: counts,
+        perItem: why,
+      });
+      return res && res.why ? (res.why.stop ? 'stop ' + res.why.stop : 'unparsed') : items.length + ' failed checks';
     }
     async function morePractice(opt = {}) {
       // opt: {announce: post the result in E.V.'s conversation, topic: a focus he named}
@@ -1697,9 +1722,9 @@
           .filter(c => !c.errors.length)
           .map(c => c.item);
         if (!fresh.length) {
-          unusable(res);
-          out.textContent = 'That batch didn’t come back in a usable shape. Try again in a moment.';
-          say('That batch came back malformed, so I binned it. Ask again in a moment.');
+          const tag = unusable(res); // B-624: its short code on the line
+          out.textContent = 'That batch didn’t come back in a usable shape (' + tag + '). Try again in a moment.';
+          say('That batch came back malformed (' + tag + '), so I binned it. Ask again in a moment.');
           return false;
         }
         await write({
@@ -1740,7 +1765,7 @@
               ? 'You’ve hit a usage limit for now. Try again later.'
               : e && e.code === 'not_granted'
                 ? 'More practice needs permission to ask Claude. Allow it from the page’s Permissions menu.'
-                : 'Couldn’t write questions right now. Try again in a moment.';
+                : 'Couldn’t write questions right now (' + practiceFailed(e) + '). Try again in a moment.';
         say(out.textContent);
         return false;
       } finally {

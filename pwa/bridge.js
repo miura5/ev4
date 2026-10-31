@@ -1134,6 +1134,7 @@
     const messages = turns;
     let text = '';
     let truncated = false;
+    let stop = null;
     for (let round = 0; round < ROUNDS; round++) {
       let r;
       try {
@@ -1165,10 +1166,13 @@
         } catch {}
         if (own && ['ceiling', 'unchanged', 'too_soon'].includes(own.code) && own.error)
           throw fail(own.code, String(own.error), text);
-        throw fail(
-          r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'upstream_error',
-          r.status + ' ' + why.slice(0, 300),
-          text
+        throw Object.assign(
+          fail(
+            r.status === 429 ? 'rate_limited' : r.status === 401 ? 'not_granted' : 'upstream_error',
+            r.status + ' ' + why.slice(0, 300),
+            text
+          ),
+          { status: r.status } // B-624: the HTTP status, for the page's diagnostics
         );
       }
       const res = await r.json();
@@ -1183,6 +1187,7 @@
         if (opts.onText) opts.onText({ text, delta: text.slice(before.length) });
       }
       truncated = res.stop_reason === 'max_tokens';
+      stop = res.stop_reason || null; // B-624
       const uses = res.content.filter(b => b.type === 'tool_use');
       if (res.stop_reason !== 'tool_use' || !uses.length) break;
       messages.push({ role: 'assistant', content: res.content });
@@ -1205,7 +1210,7 @@
       messages.push({ role: 'user', content: results });
     }
     if (!text.trim()) throw fail('empty_completion', 'Claude wrote nothing');
-    return { text, truncated, modelTierApplied: opts.modelTier || 'default' };
+    return { text, truncated, stopReason: stop, modelTierApplied: opts.modelTier || 'default' };
   }
   const parseJson = raw => {
     const tries = [raw, (raw.match(/```(?:json)?\s*([\s\S]*?)```/) || [])[1]];
@@ -1224,8 +1229,14 @@
       // on tool calls only the final round's text is parsed, as on claude.ai
       let last = '';
       const res = await ask(input, { ...opts, onText: u => ((last = u.delta), opts.onText && opts.onText(u)) }, true);
-      if (res.truncated) throw fail('invalid_json', 'cut short', res.text);
-      return parseJson((opts.tools ? last : res.text).trim());
+      // B-624: a JSON failure carries the stop reason, for the page's diagnostics
+      const stopped = e => Object.assign(e, { stopReason: res.stopReason });
+      if (res.truncated) throw stopped(fail('invalid_json', 'cut short', res.text));
+      try {
+        return parseJson((opts.tools ? last : res.text).trim());
+      } catch (e) {
+        throw stopped(e);
+      }
     },
     limits: async () => ({
       maxPromptBytes: 262144,
