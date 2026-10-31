@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder | B-606 parallel checks workflow (checks.yml) | /home/claude/ev4-wt/b606 | b606 | Oct 31, this chat |
+| builder | B-638 notes-check polish (text-box card, submit returns alone, chat reminder) | /home/claude/ev4-wt/b638 | b638 | Oct 31, this chat |
 
 ## Waiting on Matt
 
@@ -16,8 +16,8 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 ## Next
 
 Matt's order (Oct 31), one builder at a time:
-1. B-606 parallel checks (running, above).
-2. B-638 notes-check polish (text-box card for every open-ended check, submit returns on its own, a reminder when he answers in chat).
+1. B-606 done (checks.yml, ~6 min full check; dispatch via REST with inputs[ref]).
+2. B-638 (running, above) notes-check polish (text-box card for every open-ended check, submit returns on its own, a reminder when he answers in chat).
 3. D-416 simplify release (B-636): inventory with live usage, spikes, removal lanes, full check, staging, e2e, card.
 4. Then bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637.
 
