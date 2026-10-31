@@ -11596,9 +11596,9 @@
   "id": "B-618",
   "kind": "request",
   "title": "Request (reported Oct 30): State-aware style diff: the computed-style and pixel diffs also open hover, focus, read-only, folded and dark states, so style changes can't break states nobody looks at (Oct 30's three late breaks).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "csdiff and pixdiff open hover, focus, read-only, folded and dark states; a strip that breaks one of them fails the diff.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11607,6 +11607,10 @@
   "reportedAt": "2026-10-31T01:04:46.351Z",
   "board": {
    "row": "v4 B-618: State-aware style diff: the computed-style and pixel diffs also open…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:05:07.549Z"
   }
  },
  {
