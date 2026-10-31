@@ -4882,7 +4882,7 @@
   "title": "Bug (reported Oct 23): The page keys open surfaces by their index in shownCards(m) (page/app 75:110 and 75:128). When a skills run ends, its card comes back and the indexes shift, so the open surface can show the wrong card. No data is lost; the wrong card is shown.",
   "dod": "An open surface stays on the same card when a skills run ends and its card comes back: surfaces are keyed by a card's own id, not its index; the page harness plants a skills run ending with a surface open",
   "milestone": "v4.5.x ops",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -4893,8 +4893,9 @@
    "row": "v4 B-269: The page keys open surfaces by their index in shownCards(m) (page/app…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-24T04:13:14.861Z"
+   "outcome": "declined",
+   "reason": "Feature retired by D-416 (v4.5.26)",
+   "at": "2026-10-31T15:06:11.138Z"
   }
  },
  {
