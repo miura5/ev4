@@ -71,3 +71,5 @@
 .yt-chips{margin-top:var(--sp-2);justify-content:flex-start}
 .yt-confirm{margin:var(--sp-1_5) 0 0;color:var(--ink2);line-height:var(--lh-ui)}
 
+/* B-626 (D-415): a reply's general-knowledge tag: a Badge sized to its words, under the reply */
+.gen-tag{width:auto;align-self:flex-start}

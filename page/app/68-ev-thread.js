@@ -75,6 +75,9 @@
         const b = el('div', 'bubble' + (m.error ? ' err' : '') + (toCopy ? ' to-copy' : ''));
         b.append(m.role === 'matt' || toCopy ? fmt(m.text) : capWords(fmt(m.text)));
         body.append(b);
+        // B-626 (D-415): a reply from general knowledge carries one quiet tag (its mark never shows as text)
+        if (m.role !== 'matt' && m.general && !m.pending)
+          body.append(DS.badge({ text: 'general knowledge', tone: 'quiet', cls: 'gen-tag', key: 'general' }));
         const st = CAP.rv.get(m.id);
         if (st && CAP.queue.includes(m.id)) {
           b.classList.add('reveal');

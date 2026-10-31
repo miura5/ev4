@@ -730,6 +730,19 @@ export function makeConversation(core) {
   /** B-470: the history marks a line with cards as "[cards: job]"; a reply that echoes the mark never shows it. */
   const withoutCardMarks = text => String(text || '').replace(/[ \t]*\[cards: [^\]\n]*\]/g, '');
 
+  /** B-626 (D-415): a reply from general knowledge rather than a cited passage ends "[general]"; the page strips the
+   * mark (and, while streaming, a mark half written at the end) and shows one quiet tag. {text, general}. */
+  const GENERAL_MARK = '[general]';
+  const generalMark = text => {
+    const t = String(text || '');
+    const general = /\[general\]/i.test(t);
+    const out = t
+      .replace(/[ \t]*\[general\]/gi, '')
+      .replace(/[ \t]*\[(g(e(n(e(r(a(l)?)?)?)?)?)?)?$/i, '')
+      .trimEnd();
+    return { text: out, general };
+  };
+
   /** B-623: a reply that tells him questions are being written or will post here (true), which only stands when the
    * turn started them. */
   const claimsQuestions = text =>
@@ -744,6 +757,8 @@ export function makeConversation(core) {
     noteChatPlan,
     condenseTurns,
     withoutCardMarks,
+    GENERAL_MARK,
+    generalMark,
     restoredBox,
     greeting,
     situation,

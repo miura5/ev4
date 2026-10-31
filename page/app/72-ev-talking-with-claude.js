@@ -19,11 +19,11 @@
       L.push(`How to reply:
 - Plain text, 1 to 4 short sentences unless he asks for more. "- " bullets only for 3 or more parallel items. **bold** sparingly. No headings, no tables.
 - Act with tools instead of describing: attach a card rather than listing what it shows; log what he wants kept (weak spots, ideas, dates, energy); start a background job for anything bigger than one reply. After acting, say what you did in a few words.
-- Grounded explanations: when he asks why, or to explain a weak spot or a missed question, first search the materials for its topic, explain from that passage and cite it, like (Ch 42 Fluids, slide 3). Whatever comes from general knowledge instead, mark "(check your materials)"; never present it as his course's.
-- His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, say so and mark the answer "(check your materials)".
+- Grounded explanations: when he asks why, or to explain a weak spot or a missed question, first search the materials for its topic, explain from that passage and cite it, like (Ch 42 Fluids, slide 3). Whatever comes from general knowledge instead, end the reply with the mark ${E.GENERAL_MARK} (the page shows it as a small tag); never present it as his course's.
+- His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. If his materials don't cover it, answer from general knowledge and end the reply with ${E.GENERAL_MARK}.
 - His daily list is yours to keep: put study tasks he asks for or agrees to on it with edit_list (today, or a day in the next week), take items off or bring them back the same way when he asks, and tick them off with tick_item. Graded work, exams, clinicals and validations stay.
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
-- Teaching: the rule, why it works, one memory hook, and ${E.teachLine(course)}. Mark anything not from his course materials "(check your materials)".
+- Teaching: the rule, why it works, one memory hook, and ${E.teachLine(course)}. When any of it is not from his course materials, end the reply with ${E.GENERAL_MARK}.
 - No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
 - His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
 - Which objectives aren't solid, or how ready he is: answer about the course's next exam (the Next exam lines below), never a past exam. When its objectives are not in the record, say so in one line and answer from its open weak spots and plan. Name a past exam as past if you mention it.
@@ -935,7 +935,9 @@
                       text: h.text,
                     }))
                   )
-                : 'Nothing in his materials matches. Say so, answer from general knowledge, and mark it "(check your materials)".';
+                : 'Nothing in his materials matches. Answer from general knowledge and end the reply with ' +
+                    E.GENERAL_MARK +
+                    '.';
             }
             if (a === 'read') {
               const want = str(i.id, 200);
@@ -1147,8 +1149,9 @@
     // everything when that part is empty or a short sign-off).
     const lastRound = (raw, cut) => {
       // B-470: the history's card mark, when her reply echoes it, never shows
-      const all = E.withoutCardMarks(raw).trim();
-      const tail = E.withoutCardMarks(String(raw || '').slice(cut || 0)).trim();
+      // B-626 (D-415): nor the general-knowledge mark; the reply's tag shows it (pend.general)
+      const all = E.generalMark(E.withoutCardMarks(raw)).text.trim();
+      const tail = E.generalMark(E.withoutCardMarks(String(raw || '').slice(cut || 0))).text.trim();
       return !cut || !tail || (tail.length < 40 && all.length > tail.length * 3) ? all : tail;
     };
     async function chat(text, o = {}) {
@@ -1238,6 +1241,7 @@
           opts
         );
         if (plan) T.noteSeen.set(nk, plan.seen);
+        pend.raw = res.text;
         pend.text = lastRound(res.text, pend.cut) + (res.truncated ? '\n\n(Cut short. Ask for less at once.)' : '');
       } catch (e) {
         const code = (e && e.code) || 'upstream_error';
@@ -1287,6 +1291,7 @@
         ...(o.replyTo ? { replyTo: o.replyTo } : {}),
         ...(o.thread ? { thread: o.thread } : {}),
         ...(pend.jobId ? { jobId: pend.jobId } : {}),
+        ...(!error && E.generalMark(pend.raw || '').general ? { general: true } : {}), // B-626 (D-415)
         ...(error && error !== 'cancelled' ? { error } : {}),
         // B-227 (D-232): a reply that changed something carries its work: how long it took and what it changed.
         ...(pend.wrote.size

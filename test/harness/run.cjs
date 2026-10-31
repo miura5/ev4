@@ -2898,6 +2898,33 @@ async function studyPlanChecks(page) {
   await page.waitForTimeout(250);
 }
 
+// B-626 (D-415): a reply from general knowledge ends "[general]"; the mark becomes one quiet tag, never text (EV_ONLY=general)
+async function generalTagCheck(browser) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+  const errs = [];
+  page.on('pageerror', e => errs.push(e.message));
+  await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+  await openPage(page);
+  await page.waitForTimeout(900);
+  await page.evaluate(() => {
+    window.__chatScript = [];
+    window.__chatReply = 'Fluid shifts out of the vessels, so preload drops. [general]';
+  });
+  await send(page, 'Why does third spacing drop blood pressure?');
+  await page.waitForTimeout(2500);
+  const gt = await page.evaluate(() => {
+    const last = [...document.querySelectorAll('#thread .msg.ev')].pop();
+    return { text: last ? last.textContent : '', tags: last ? last.querySelectorAll('.gen-tag').length : 0 };
+  });
+  await page.screenshot({ path: `${shots}/general-tag-desktop.png` });
+  ok(
+    'B-626: the general-knowledge mark shows as one quiet tag and never as raw text',
+    gt.tags === 1 && /general knowledge/.test(gt.text) && !/\[general\]|check your materials/i.test(gt.text),
+    JSON.stringify(gt)
+  );
+  ok('B-626: no page errors', errs.length === 0, errs.join(' | '));
+  await page.close();
+}
 async function staleStateChecks(browser) {
   // B-577 (Matt, live): state kept on his device (ev3-* keys) that a clean browser lacks: a retired or unknown view, a
   // reopen straight onto Study, a quiz left open (real or gone), a course no longer listed, and garbage. With each
@@ -3051,9 +3078,16 @@ async function tap(page, locator, name) {
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
   }
+  if (process.env.EV_ONLY === 'general') {
+    await group('generalTagCheck', () => generalTagCheck(browser));
+    await browser.close();
+    for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+    return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
   if (process.env.EV_ONLY === 'stale') {
     // B-577: only the kept-state checks (EV_ONLY=stale), for a quick run while working on them
     await group('staleStateChecks', () => staleStateChecks(browser));
+    await group('generalTagCheck', () => generalTagCheck(browser)); // B-626
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
@@ -5969,7 +6003,8 @@ async function tap(page, locator, name) {
       ok(
         'grounded explanations: explain from his materials and cite, or mark it',
         /Grounded explanations: when he asks why, or to explain a weak spot/.test(gc.input[0].content) &&
-          /\(check your materials\)/.test(gc.input[0].content) &&
+          /end the reply with the mark \[general\]/.test(gc.input[0].content) &&
+          !/check your materials/i.test(gc.input[0].content) && // B-626 (D-415)
           gc.tools.includes('materials') &&
           gc.tools.includes('practice_skill')
       );
