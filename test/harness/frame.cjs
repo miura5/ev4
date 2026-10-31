@@ -659,8 +659,7 @@ const SIZES = [
     const wide = await page.evaluate(() => {
       const r = document.querySelector('#rec-list [data-part=row] .r');
       if (!r) return { row: false };
-      r.textContent =
-        'stopped in round 4 after 6:53 (90 reps) · energy 5/5 · ' + '“' + 'a long quoted line '.repeat(12) + '”';
+      r.textContent = 'a long result line · ' + '“' + 'a long quoted line '.repeat(12) + '”';
       return {
         row: true,
         doc: document.documentElement.scrollWidth,

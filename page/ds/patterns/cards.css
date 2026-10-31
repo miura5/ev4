@@ -2,11 +2,6 @@
 .job-title{font-weight:600;margin:0;overflow-wrap:anywhere}
 .result{font-size:var(--fs-4);line-height:1.6;white-space:pre-wrap;margin:0;overflow-wrap:anywhere;color:var(--ink2)}
 .quizlet-block{font:inherit;font-size:var(--fs-2);line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;margin:8px 0 0;padding:8px 10px;max-height:240px;overflow:auto;border-radius:var(--r-md);background:var(--chip);color:var(--ink2)}
-.energy{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
-.energy button{padding:0 4px;min-height:52px;border-radius:var(--r-xl);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
-.energy button small{font-size:var(--fs-1);color:var(--soft);font-weight:500}
-.energy button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.energy button[aria-pressed="true"] small{color:var(--accent-ink)}
 .check-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .check-items li{display:flex;gap:12px;align-items:baseline;overflow-wrap:anywhere;font-size:var(--fs-4);line-height:1.5}
 .check-kind{flex:0 0 46px;text-transform:capitalize;font:500 var(--fs-1) var(--sans);color:var(--ink2)}
@@ -23,23 +18,9 @@
 .check-head .check-fold{color:var(--ink);font-weight:600;font-size:var(--fs-4)}
 .ev-card.check.folded{gap:0}.ev-card.check.folded>:not(.check-head){display:none}
 .bi-prep,.prep-mark{padding:0;border-radius:0;background:none;color:var(--quiet);font:500 var(--fs-1)/1.3 var(--sans);letter-spacing:0}
-.ckin{box-sizing:border-box;margin:0;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:var(--r-lg);background:var(--surface);box-shadow:0 0 0 1px var(--line)}
-.ckin[hidden]{display:none}
-.ckin .ck-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.ckin .ck-head{justify-content:space-between}
-.ckin .lab{font:500 var(--fs-1) var(--sans);color:var(--quiet)}
-.ckin .mini{font-size:var(--fs-2);color:var(--faint)}
-.ckin .ck-q{font-size:var(--fs-3);color:var(--text)}
-.ckin .seg{align-self:center;width:auto}
-.ckin .adv{margin:0;font-size:var(--fs-3);line-height:1.5;color:var(--text)}
-@media (max-width:599px){
-  .ckin{width:100%}
-  .ckin .seg{flex:1;width:auto}
-  .ckin .seg button{flex:1}
-}
 .work{margin-top:2px}.work-line{font-size:var(--fs-2);padding:2px 0}.work-line:disabled{cursor:default}.work-line:disabled::after{content:''}
 .work-changes{margin:2px 0 0}.work-changes li{padding:4px 0;border:0}.work-changes .tlink{text-align:left}
-:is(.energy,.check-items,.check-items li,.sess-sec,.sess-sec ul,.brief-line,.ckin,.ckin .ck-row)[hidden]{display:none}
+:is(.check-items,.check-items li,.sess-sec,.sess-sec ul,.brief-line)[hidden]{display:none}
 
 /* ---- The E.V. window's cards: the prep checklist and Your turn (B-514, D-376, D-391): moved from page/styles.css. */
 .prep-mark{margin-left:0}

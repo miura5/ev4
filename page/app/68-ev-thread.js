@@ -59,8 +59,8 @@
       // A line that arrives while the page is open (a reply from its first dots) reveals word by word; history shows whole.
       // B-183: a line to copy (the design kickoff) shows at once as a short preview; it is text to paste, not speech.
       const toCopy = m.role !== 'matt' && !!m.text && (m.cards || []).some(c => c && c.type === 'copy');
-      // B-368 (D-316): as the demo's Main board, her greeting has no large line of its own: the thread opens with the
-      // check-in card, then her grey summary line (briefEl below); the greeting's text stays in the record and her context.
+      // B-368 (D-316): as the demo's Main board, her greeting has no large line of its own: the thread opens with
+      // her grey summary line (briefEl below); the greeting's text stays in the record and her context.
       const quiet = !!m.greeting;
       if (m.role !== 'matt' && !rec && (m.greeting || T.ready) && !toCopy && !quiet) revealQueue(m);
       const body = el('div', 'msg-body');
@@ -217,7 +217,6 @@
         }
         kids.push(T.capDiv);
       }
-      if (CK.box) kids.push(CK.box); // B-362 (D-316): the check-in card opens the current conversation, as the demo
       const nowIdx = lastEv ? cur.indexOf(lastEv) : -1,
         mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
       for (const m of cur) {

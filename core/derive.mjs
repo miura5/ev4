@@ -205,7 +205,7 @@ export function readinessStamp(v, date) {
  * D-120 (B-72): weeks/<date>.insights, the week's measurements for what plans next, computed by code. Accuracy by
  * objective, format and clinical-judgment step over the last 28 days (four weeks, so an objective has answers enough to
  * rank), each with its counts; the items that discriminate (missed on every attempt, at least two, against those never
- * missed); the recurrence leaders; and each day of the week's study minutes (sessions) and check-in energy against the
+ * missed); the recurrence leaders; and each day of the week's study minutes (sessions; energy is null, D-416) against the
  * next day's accuracy. weakestObjective is the lowest-accuracy objective with at least three answers; lines are the
  * three the Progress tab shows. The weekly's review interprets these numbers; it never recomputes them.
  */
@@ -252,7 +252,6 @@ export function weekInsights(v, db, date) {
     .sort((a, b) => b.derived.recurrence - a.derived.recurrence || (a.id < b.id ? -1 : 1))
     .slice(0, 5)
     .map(w => ({ weakspotId: w.id, topic: w.topic, recurrence: w.derived.recurrence }));
-  const edits = Object.fromEntries((db.dayedits || []).map(e => [e.id || e.date, e]));
   const studyVsNextDay = [];
   for (let d = from7; d <= date; d = EV.addDays(d, 1)) {
     const next = EV.addDays(d, 1);
@@ -260,11 +259,10 @@ export function weekInsights(v, db, date) {
     const minutes = (db.sessions || [])
       .filter(s => s.date === d && s.status !== 'discarded')
       .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
-    const ci = edits[d] && edits[d].checkin;
     studyVsNextDay.push({
       date: d,
       minutes,
-      energy: ci ? ci.energy : null,
+      energy: null, // D-416: the check-in is retired; the field stays so old weeks keep their shape
       nextAnswers: next <= date ? na.length : null,
       nextPct: next <= date ? pct(na.filter(a => a.correct).length, na.length) : null,
     });

@@ -181,7 +181,7 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
   input[type=text],input[type=date],input[type=number],input[type=search],select,textarea,.compose-row textarea,
   :where(#p-today,#p-study,#p-progress,#p-record,#p-system) input[type=text],.chatp .cin2 textarea{font-size:max(var(--fs-input),var(--fs-3))}
 }
-/* B-433: on the phone nothing may widen the document: a row's long result (a workout's quoted words) wraps, and the
+/* B-433: on the phone nothing may widen the document: a row's long result wraps, and the
    page clips any stray overflow, because iOS shrinks a wider page to fit and the whole view reads zoomed out. */
 /* B-433: the installed iPhone app. A moment after launch iOS shortens the app's viewport by the status bar when the
    document cannot scroll, and the tab bar, fixed to that viewport's bottom, floats a band above the screen's. In the

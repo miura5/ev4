@@ -602,29 +602,6 @@
           el('p', 'meta', 'In Quizlet: Create, Import, then paste. Term and definition are separated by a tab.')
         );
       },
-      checkin(box, c, key) {
-        const ci = (M.dayedit && M.dayedit.checkin) || null;
-        box.append(head2('Energy check', ci && ci.energy ? 'logged ' + clock12(ci.at) : ''));
-        const g = el('div', 'energy');
-        const labels = ['Empty', 'Low', 'Okay', 'Good', 'Charged'];
-        labels.forEach((lab, i) => {
-          const n = i + 1;
-          const b = DS.button({ kind: 'ghost', pressed: !!ci && ci.energy === n }); // B-572
-          b.append(el('b', null, String(n)), el('small', null, lab));
-          b.addEventListener('click', () =>
-            guard(b, async () => {
-              const changed = !ci || ci.energy !== n;
-              await saveCheckin({ energy: n });
-              if (changed && !T.posted.has('ci-' + key + n)) {
-                T.posted.add('ci-' + key + n);
-                await evSay(energyAdvice(n), [], { tier: 'local' });
-              }
-            })
-          );
-          g.append(b);
-        });
-        box.append(g, el('p', 'meta', 'Saved to today in your record. A number, not a diagnosis.'));
-      },
       check(box, c, k) {
         const s = sessOf(c.session);
         const st = s ? E.sessionState(s, now()) : null;

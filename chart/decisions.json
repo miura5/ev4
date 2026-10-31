@@ -7,7 +7,8 @@
   "status": "accepted",
   "supersedes": [
    "D-108",
-   "D-107"
+   "D-107",
+   "D-070"
   ],
   "amends": [],
   "source": "log"
@@ -3831,7 +3832,7 @@
   "date": "Oct 17",
   "title": "Check-ins are your own numbers on the day (energy 1 to 5, optional stress and sleep), saved from a card or by E.V.; never a diagnosis",
   "why": "First step toward energy-aware planning, inside B-05",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },

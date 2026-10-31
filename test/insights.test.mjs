@@ -206,7 +206,8 @@ test('B-72 (D-120): weekInsights ranks objectives by accuracy, finds items misse
   assert.equal(r.neverMissed, 1);
   assert.deepEqual(r.recurrence, [{ weakspotId: 'w1', topic: 'Potassium', recurrence: 3 }]);
   const d15 = r.studyVsNextDay.find(x => x.date === '2026-10-15');
-  assert.deepEqual(d15, { date: '2026-10-15', minutes: 45, energy: 4, nextAnswers: 3, nextPct: 33 });
+  // D-416: the check-in is retired, so an old day's energy reads null; the field keeps old weeks' shape
+  assert.deepEqual(d15, { date: '2026-10-15', minutes: 45, energy: null, nextAnswers: 3, nextPct: 33 });
   assert.deepEqual(r.lines, [
     'Weakest objective: E9-1, 0 of 3 right (0%).',
     'Missed every time: Potassium (3 of 3).',

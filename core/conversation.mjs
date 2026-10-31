@@ -14,7 +14,7 @@ export function makeConversation(core) {
    * ctx: {now, date, dayType, items:[{id,text,tag,done,deferred,minutes,set}], reviewLeft, reviewTotal, push,
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
    *       jobs:[{id,kind,title,brief,status,finishedAt,result}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
-   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive,
+   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, sessionActive,
    *       prep:{today: prepDay|null, tomorrow: prepDay|null} (D-143), clinicalOffer:{date,title}|null (D-103)}
    */
   const JOB_NOUN = {
@@ -99,7 +99,7 @@ export function makeConversation(core) {
       }
       if (open.length) cards.push({ type: 'today', filter: 'open' });
     } else if (segment === 'midday') {
-      lines.push('Afternoon check-in.');
+      lines.push('Afternoon.');
       if (items.length)
         lines.push(
           open.length
@@ -206,10 +206,6 @@ export function makeConversation(core) {
       insights.push({
         line: `${soon.title.replace(/:.*$/, '')} in ${diffDays(date, soon.date)} day${diffDays(date, soon.date) === 1 ? '' : 's'}: ${c.readiness.pctSolid ?? 0}% of its weak spots solid, about ${c.readiness.need} correct reviews to go.`,
         card: { type: 'readiness' },
-      });
-    if (c.checkin && c.checkin.energy != null && c.checkin.energy <= 2)
-      insights.push({
-        line: 'You logged low energy today. I trimmed nothing on my own, but say the word and I’ll lighten the list.',
       });
     if (c.quizlet && c.quizlet.refresh && [5, 6, 0].includes(weekday(date)))
       insights.push({ line: `Quizlet pick for this week: ${c.quizlet.refresh}.` });
@@ -372,8 +368,6 @@ export function makeConversation(core) {
         when: build.status === 'failed' ? 'stopped' : 'built',
         tab: 'system',
       });
-    if (c.checkin && c.checkin.energy != null && c.checkin.energy <= 2)
-      put('normal', 'checkin', 'You logged low energy today', { detail: 'Say the word and I’ll lighten the list.' });
     if (c.quizlet && c.quizlet.refresh && [5, 6, 0].includes(weekday(date)))
       put('normal', 'quizlet', `Quizlet pick: ${c.quizlet.refresh}`);
     const rank = { urgent: 0, new: 1, prep: 2, normal: 3 };

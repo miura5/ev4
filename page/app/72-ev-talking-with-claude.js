@@ -18,7 +18,7 @@
       L.push('Never: ' + (P.never || []).join(' '));
       L.push(`How to reply:
 - Plain text, 1 to 4 short sentences unless he asks for more. "- " bullets only for 3 or more parallel items. **bold** sparingly. No headings, no tables.
-- Act with tools instead of describing: attach a card rather than listing what it shows; log what he wants kept (weak spots, ideas, dates, energy); start a background job for anything bigger than one reply. After acting, say what you did in a few words.
+- Act with tools instead of describing: attach a card rather than listing what it shows; log what he wants kept (weak spots, ideas, dates); start a background job for anything bigger than one reply. After acting, say what you did in a few words.
 - Grounded explanations: when he asks why, or to explain a weak spot or a missed question, first search the materials for its topic, explain from that passage and cite it, like (Ch 42 Fluids, slide 3). Whatever comes from general knowledge instead, end the reply with the mark ${E.GENERAL_MARK} (the page shows it as a small tag); never present it as his course's.
 - His course materials are in the materials tool. For course content, a skill or anything his class teaches, search them first and name the file and page you used, like (Skills Packet, p. 12). For a validation run-through, read that skill's checklist pages and follow them step by step. When nothing there covers it, just answer from general knowledge and end the reply with ${E.GENERAL_MARK}.
 - Never comment on what his materials, slides or notes hold or lack, and never announce that you are answering from general knowledge: just answer, and the ${E.GENERAL_MARK} mark at the very end is the only sign (B-626).
@@ -26,7 +26,7 @@
 - His calendar is yours to keep too: add deadlines and events with edit_dates, fix the ones he or you added, take entries off and bring them back when he asks. Graded work, exams, clinicals and validations from Canvas stay. Study tasks go on the list, not the calendar; to move a calendar entry onto the list, add it with edit_list, then remove it with edit_dates.
 - Teaching: the rule, why it works, one memory hook, and ${E.teachLine(course)}. When any of it is not from his course materials, end the reply with ${E.GENERAL_MARK}.
 - No standing reminders (B-99): never add a note about graded work or that a scenario or client is invented.
-- His health: you may log the energy, stress or sleep he reports and shape study suggestions around it. Never diagnose; for real concerns suggest a clinician.
+- His health: never diagnose; for real concerns suggest a clinician.
 - Which objectives aren't solid, or how ready he is: answer about the course's next exam (the Next exam lines below), never a past exam. When its objectives are not in the record, say so in one line and answer from its open weak spots and plan. Name a past exam as past if you mention it.
 - What to do now, or with the time he has: weigh every course's next exam (the "Next exams across his courses" line below), soonest and least ready first, not only the target exam's course. Name each step's course and order the steps by that.
 - Don't invent record data. If it isn't below or in a lookup, say you don't have it.
@@ -215,11 +215,6 @@
               .join('; ') +
             '.'
         );
-      const ci = M.dayedit && M.dayedit.checkin;
-      if (ci)
-        L.push(
-          `Check-in today: energy ${ci.energy ?? '?'}/5${ci.stress ? ', stress ' + ci.stress + '/5' : ''}${ci.sleepHours ? ', slept ' + ci.sleepHours + ' h' : ''}.`
-        );
       const js = [...S.jobs].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 5);
       if (js.length) L.push('Recent jobs: ' + js.map(j => `${j.id} "${j.title}" ${j.status}`).join('; '));
       const sa = activeSession();
@@ -367,7 +362,6 @@
                   'set',
                   'job',
                   'chart',
-                  'checkin',
                   'quizlet',
                   'prep',
                 ],
@@ -578,32 +572,6 @@
             return r.note
               ? `${r.note}: ${r.id}`
               : `${{ add: 'added to', change: 'changed on', remove: 'taken off', restore: 'back on' }[a]} the calendar: ${r.id} "${r.title}" ${r.date}${r.changed ? ' (' + r.changed.join(', ') + ')' : ''}`;
-          },
-        },
-        {
-          name: 'log_checkin',
-          description:
-            'Save how he says he feels today: energy 1-5, optional stress 1-5 and hours slept. His own numbers only; never a diagnosis.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              energy: { type: 'integer', minimum: 1, maximum: 5 },
-              stress: { type: 'integer', minimum: 1, maximum: 5 },
-              sleepHours: { type: 'number', minimum: 0, maximum: 16 },
-            },
-          },
-          execute: async i => {
-            const d = {};
-            const n = (v, lo, hi) => {
-              const x = Number(v);
-              return Number.isFinite(x) && x >= lo && x <= hi ? x : null;
-            };
-            if (n(i.energy, 1, 5) != null) d.energy = Math.round(i.energy);
-            if (n(i.stress, 1, 5) != null) d.stress = Math.round(i.stress);
-            if (n(i.sleepHours, 0, 16) != null) d.sleepHours = Math.round(i.sleepHours * 2) / 2;
-            if (!Object.keys(d).length) throw new Error('give energy, stress or sleepHours');
-            await saveCheckin(d);
-            return 'saved';
           },
         },
         {

@@ -3864,22 +3864,27 @@ async function tap(page, locator, name) {
           !(await page.$('#ev-guard'))
       );
     }
-    // Check-in: local quick ask, energy picker writes days/<today>.checkin and posts advice
+    // D-416: the check-in is retired. I'm wiped still answers locally, with no energy card and nothing written to the day
     await page.evaluate(() => {
       window.__chatScript = [];
     });
     await send(page, 'I’m wiped');
     await page.waitForTimeout(150);
-    await page.locator('#ev-surf').locator('.energy button').nth(1).click();
-    await page.waitForTimeout(300);
-    const ci = await page.evaluate(() => {
-      const d = (window.__db.dayedits || {})[
-        new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())
-      ];
-      return d && d.checkin;
-    });
-    ok('check-in saved to the day’s edits', ci && ci.energy === 2, JSON.stringify(ci));
-    ok('low energy gets a lighter plan', /Minimum viable day/.test((await msgs(page)).slice(-1)[0].text));
+    {
+      const ci = await page.evaluate(() => {
+        const d = (window.__db.dayedits || {})[
+          new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date())
+        ];
+        return d ? d.checkin || null : null;
+      });
+      ok(
+        'I’m wiped: a local reply, no energy picker, no check-in written (D-416)',
+        /lighten today/.test((await msgs(page)).slice(-1)[0].text) &&
+          (await page.locator('.energy button, #ev-ckin').count()) === 0 &&
+          !ci,
+        JSON.stringify(ci)
+      );
+    }
     // B-41: the weak spots to Quizlet quick ask answers locally with a card that copies the cards
     await send(page, 'Weak spots to Quizlet');
     await page.waitForTimeout(250);

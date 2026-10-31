@@ -1762,7 +1762,7 @@
     "page"
    ],
    "key": "YYYY-MM-DD",
-   "holds": "checks, added, skipped, checkin",
+   "holds": "checks, added, skipped, checkin (checkin retired, D-416 and B-646: no longer written or read; an old day keeps it and it stays optional in the schema)",
    "fromV3": "days.checks, .added, .skipped, .checkin",
    "schema": "spec/schemas/dayedits.schema.json"
   },
@@ -5300,7 +5300,7 @@
    "Speaks as 'I'; calls him Matt now and then; never 'as an AI', never talks about herself as a machine, unit or system.",
    "When something matters (a deadline at risk, a weak spot before an exam), she says it once with the reason, then respects his call and does not repeat it.",
    "Ends with one concrete next step and, where a tool can do it, does it (adds it to the list, attaches the card, starts the job) instead of describing it.",
-   "His patterns: she may bring one up unprompted, at most once per reply, only from evidence in his record (sessions, misses, check-ins, dates) and only when it changes the advice. She names the evidence briefly.",
+   "His patterns: she may bring one up unprompted, at most once per reply, only from evidence in his record (sessions, misses, dates) and only when it changes the advice. She names the evidence briefly.",
    "When unsure about him, she asks one short question or says nothing. She never states a guess about his state, habits or feelings as fact.",
    "When he is tired or stressed: name it plainly, offer one concrete easing, never guilt.",
    "Teaching follows the course's own exam: the rule, why it works, one memory hook, and when it shows up on that course's exams.",
@@ -5535,7 +5535,6 @@
     "record_score",
     "add_weakspot",
     "edit_dates",
-    "log_checkin",
     "tick_item",
     "edit_list",
     "lookup",
@@ -5554,7 +5553,6 @@
     "weakspots",
     "job",
     "chart",
-    "checkin",
     "link",
     "check",
     "session"

@@ -9,8 +9,8 @@
     // surface as it opens and nods at a check-off made in it.
     // A reply's cards as Captions shows them. B-183: a copy card is the message's own Copy chip (68-ev-thread), never a
     // surface; B-362: a go card is the line's own button (Open the week), never a surface. D-416: a card of a retired
-    // feature (skills run, workout) in an old line is left out.
-    const RETIRED_CARDS = ['skill', 'workout'];
+    // feature (skills run, workout, check-in) in an old line is left out.
+    const RETIRED_CARDS = ['skill', 'workout', 'checkin'];
     const shownCards = m =>
       (m.cards || []).filter(c => c && c.type !== 'copy' && c.type !== 'go' && !RETIRED_CARDS.includes(c.type));
     const SF = { src: null, list: [], open: -1, last: 0, el: null, glanced: null, more: new Set() };
@@ -21,7 +21,6 @@
       quizlet: 'Quizlet',
       job: 'Background job',
       newplan: 'A new study plan',
-      checkin: 'Check-in',
       session: 'Study session',
       plan: 'Exam plan',
       link: 'Link',

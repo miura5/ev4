@@ -212,7 +212,6 @@
       // and Back to my note); each is still reachable by typing it, or from the session's own controls. D-416: the skills
       // run's Resume chip went with the runner.
       renderSession();
-      renderCheckin();
       const sb = $('ev-send');
       const sk = T.busy ? 'stop' : 'send';
       if (sb.dataset.k !== sk) {

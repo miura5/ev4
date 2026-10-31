@@ -469,10 +469,9 @@ test('B-181: the build line ranks after a failed run and inside the two-insight 
   const g = EV.greeting(
     buildCtx([buildJob('done', { task: 'B-201', commit: 'abc1234', text: 'Say ship it.' })], {
       runs: run,
-      checkin: { energy: 1 },
     })
   );
-  const ins = g.lines.filter(l => /run failed|your “the timer|low energy/.test(l));
+  const ins = g.lines.filter(l => /run failed|your “the timer/.test(l));
   assert.equal(ins.length, 2, JSON.stringify(g.lines));
   assert.match(ins[0], /The evening run failed/);
   assert.match(ins[1], /^B-201 \(your “the timer/);

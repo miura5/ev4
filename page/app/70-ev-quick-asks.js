@@ -102,10 +102,7 @@
           [{ type: 'readiness' }, { type: 'audit' }],
         ];
       },
-      "i'm wiped": () => [
-        'Noted. Energy check, 1 to 5? I’ll size the rest of today to match. No guilt either way.',
-        [{ type: 'checkin' }],
-      ],
+      "i'm wiped": () => ['Noted. Say which ones can wait and I’ll lighten today’s list. No guilt either way.', []],
       'show my progress': () => ['Here’s the week.', [{ type: 'chart' }]],
       // B-353 (D-314): the demo's chips. How did this week go is the week's chart; Plan the rest of today proposes on
       // Today what B-293's Plan the rest would, nothing changed until he accepts.
