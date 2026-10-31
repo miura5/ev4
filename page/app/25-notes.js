@@ -713,14 +713,19 @@
       c.append(nIcon(NI.tick));
       return c;
     }
+    // B-654: the editable's block elements in note order: full-width blocks, and a two-column row's blocks inside its
+    // grid (column 0's first), so block i of the note is blockEls()[i] whether or not it sits in a row
+    const blockEls = () => [...body.querySelectorAll(':scope > [data-t], :scope > .n-row > .n-col > [data-t]')];
     function notePaint(sel, focus = true) {
+      NOTE.blocks = E.noteTidyRows(NOTE.blocks);
       const nodes = E.noteRender(NOTE.blocks, nh, nt);
-      nodes.forEach((n, i) => {
+      if (NOTE.img != null && (!NOTE.blocks[NOTE.img] || NOTE.blocks[NOTE.img].type !== 'img')) NOTE.img = null;
+      body.replaceChildren(...nodes);
+      blockEls().forEach((n, i) => {
+        if (!NOTE.blocks[i]) return;
         if (NOTE.blocks[i].type === 'todo') n.prepend(nCheck(NOTE.blocks[i].checked));
         if (NOTE.blocks[i].type === 'img') paintImg(n, NOTE.blocks[i], i === NOTE.img);
       });
-      if (NOTE.img != null && (!NOTE.blocks[NOTE.img] || NOTE.blocks[NOTE.img].type !== 'img')) NOTE.img = null;
-      body.replaceChildren(...nodes);
       syncEmpty();
       if (sel && focus) setNoteSel(sel);
       syncHead();
@@ -733,25 +738,48 @@
       body.classList.toggle('untitled', blank && first.type === 'h1');
       body.classList.toggle('empty', blank && NOTE.blocks.length === 1 && (first.type === 'p' || first.type === 'h1'));
     }
-    const canonical = () =>
-      body.childNodes.length === NOTE.blocks.length &&
-      [...body.childNodes].every(
-        (n, i) =>
-          n.nodeType === 1 &&
-          n.getAttribute('data-t') === NOTE.blocks[i].type &&
-          !n.querySelector('p,div,h1,h2,h3,h4,h5,h6,li,ul,ol,[data-t],table')
+    const canonical = () => {
+      const els = blockEls();
+      return (
+        els.length === NOTE.blocks.length &&
+        [...body.childNodes].every(
+          n => n.nodeType === 1 && (n.hasAttribute('data-t') || n.hasAttribute('data-nrow'))
+        ) &&
+        [...body.querySelectorAll(':scope > .n-row')].every(r =>
+          [...r.childNodes].every(
+            c =>
+              c.nodeType === 1 &&
+              c.hasAttribute('data-ncol') &&
+              [...c.childNodes].every(k => k.nodeType === 1 && k.hasAttribute('data-t'))
+          )
+        ) &&
+        els.every(
+          (n, i) =>
+            n.getAttribute('data-t') === NOTE.blocks[i].type &&
+            (n.getAttribute('data-row') || '') === (NOTE.blocks[i].row || '') &&
+            !n.querySelector('p,div,h1,h2,h3,h4,h5,h6,li,ul,ol,[data-t],table')
+        )
       );
+    };
     const ZW = /[​‌‍⁠﻿]/g;
     /** A DOM position in the (canonical) editable as {b, o}. */
     function posOf(node, off) {
       if (!body.contains(node)) return null;
-      if (node === body) {
-        const b = Math.min(off, NOTE.blocks.length - 1);
-        return { b, o: off >= body.childNodes.length ? E.noteText(NOTE.blocks[b]).length : 0 };
+      const els = blockEls();
+      const el0 = node.nodeType === 1 ? node : node.parentNode;
+      let blk = el0.closest('[data-t]');
+      if (!blk || !body.contains(blk)) {
+        // a spot between blocks (in the editable, a row or a column): the block it falls before, or the end of the last
+        const kid = node.childNodes[off];
+        const inKid =
+          kid && (kid.matches && kid.matches('[data-t]') ? kid : kid.querySelector && kid.querySelector('[data-t]'));
+        if (inKid) return { b: Math.max(0, els.indexOf(inKid)), o: 0 };
+        const inside = node === body ? els : els.filter(x => node.contains(x));
+        const last = inside[inside.length - 1] || els[els.length - 1];
+        const b = Math.max(0, els.indexOf(last));
+        return { b, o: E.noteText(NOTE.blocks[b] || { runs: [] }).length };
       }
-      let blk = node;
-      while (blk.parentNode !== body) blk = blk.parentNode;
-      const b = [...body.childNodes].indexOf(blk);
+      const b = els.indexOf(blk);
       const r = document.createRange();
       r.setStart(blk, 0);
       try {
@@ -771,8 +799,9 @@
     }
     /** The DOM spot for {b, o}: in the text node holding it, the one before at a boundary (so typing keeps its marks). */
     function domAt(p) {
-      const b = Math.max(0, Math.min(body.childNodes.length - 1, p.b));
-      const blk = body.childNodes[b];
+      const els = blockEls();
+      const b = Math.max(0, Math.min(els.length - 1, p.b));
+      const blk = els[b];
       if (!blk) return [body, 0];
       const w = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT, {
         acceptNode: n => (n.parentNode.closest('[data-nb-skip]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
@@ -846,7 +875,7 @@
         return;
       }
       remember(kind, sel);
-      NOTE.blocks = r.blocks;
+      NOTE.blocks = E.noteTidyRows(r.blocks);
       NOTE.pend = null;
       notePaint(r.sel || { a: r.pos });
       noteChanged();
@@ -1230,7 +1259,7 @@
     body.addEventListener('click', e => {
       const c = e.target.closest('.n-chk');
       if (c) {
-        const b = [...body.childNodes].indexOf(c.parentNode);
+        const b = blockEls().indexOf(c.parentNode);
         if (b < 0) return;
         const sel = readSel() || NOTE.sel;
         const blocks = NOTE.blocks.map((x, i) => (i === b ? { ...x, checked: !x.checked } : x));
@@ -1331,15 +1360,13 @@
     }
     function selectImg(i) {
       NOTE.img = i;
-      [...body.childNodes].forEach(
-        (n, j) => n.classList && n.classList.toggle('sel', j === i && n.dataset.t === 'img')
-      );
+      blockEls().forEach((n, j) => n.classList && n.classList.toggle('sel', j === i && n.dataset.t === 'img'));
       if (i != null) {
         body.focus({ preventScroll: true });
         getSelection().removeAllRanges();
       }
     }
-    const figIndex = fig => [...body.childNodes].indexOf(fig);
+    const figIndex = fig => blockEls().indexOf(fig);
     /** A picture file into the note at the caret: scaled down when large, sent, then put in as its own block. */
     async function noteAddImage(file) {
       if (!NOTE.blocks || !file) return;
@@ -1390,25 +1417,61 @@
     const dropLine = el('div', 'n-drop');
     dropLine.hidden = true;
     nDoc.append(dropLine);
-    function gapAt(y) {
-      const kids = [...body.childNodes];
+    // B-654: blocks in the column under the pointer count (a row's other column is beside, not above or below)
+    const inLane = (r, x) => x == null || (x >= r.left - 12 && x <= r.right + 12);
+    function gapAt(y, x) {
+      const kids = blockEls();
+      let last = kids.length;
       for (let i = 0; i < kids.length; i++) {
         const r = kids[i].getBoundingClientRect();
+        if (kids[i].hasAttribute('data-row') && !inLane(r, x)) continue;
         if (y < r.top + r.height / 2) return i;
+        last = i + 1;
       }
-      return kids.length;
+      return last;
     }
     function showDrop(gap) {
-      const kids = [...body.childNodes];
-      const d = nDoc.getBoundingClientRect(),
-        b = body.getBoundingClientRect();
+      const kids = blockEls();
+      const d = nDoc.getBoundingClientRect();
+      const ref = kids[Math.min(gap, kids.length - 1)];
+      const lane = ref && ref.closest('.n-col') ? ref.closest('.n-col') : body;
+      const b = lane.getBoundingClientRect();
       const y =
         gap < kids.length
           ? kids[gap].getBoundingClientRect().top - 3
           : kids[kids.length - 1].getBoundingClientRect().bottom + 3;
+      dropLine.classList.remove('side');
+      dropLine.style.height = '';
       dropLine.style.top = Math.round(y - d.top - 1) + 'px';
       dropLine.style.left = Math.round(b.left - d.left) + 'px';
       dropLine.style.width = Math.round(b.width) + 'px';
+      dropLine.hidden = false;
+    }
+    /**
+     * B-654: a picture dragged sideways: over the outer quarter of a block's width (not its own), {at, side} for a
+     * two-column row with that block (side 0: the picture on the left), else null.
+     */
+    function sideAt(x, y, self) {
+      const kids = blockEls();
+      for (let i = 0; i < kids.length; i++) {
+        if (i === self || kids[i].dataset.t === 'img') continue;
+        const r = kids[i].getBoundingClientRect();
+        if (y < r.top || y > r.bottom) continue;
+        const lane = kids[i].closest('.n-col') || body;
+        const w = lane.getBoundingClientRect();
+        if (x < w.left + w.width / 4) return { at: i, side: 0, r: w, top: r.top, bottom: r.bottom };
+        if (x > w.right - w.width / 4) return { at: i, side: 1, r: w, top: r.top, bottom: r.bottom };
+      }
+      return null;
+    }
+    function showSide(s) {
+      const d = nDoc.getBoundingClientRect();
+      const x = s.side ? s.r.right + 4 : s.r.left - 6;
+      dropLine.classList.add('side');
+      dropLine.style.top = Math.round(s.top - d.top) + 'px';
+      dropLine.style.height = Math.round(Math.max(24, s.bottom - s.top)) + 'px';
+      dropLine.style.left = Math.round(x - d.left) + 'px';
+      dropLine.style.width = '';
       dropLine.hidden = false;
     }
     body.addEventListener(
@@ -1429,7 +1492,8 @@
           y0 = e.clientY;
         const w0 = im.getBoundingClientRect().width;
         let moved = false,
-          gap = null;
+          gap = null,
+          side = null;
         const move = ev => {
           if (corner) {
             const dx = (ev.clientX - x0) * (/w$/.test(corner) ? -1 : 1);
@@ -1437,9 +1501,12 @@
             moved = true;
             return;
           }
-          if (!moved && Math.abs(ev.clientY - y0) < 4) return;
+          if (!moved && Math.abs(ev.clientY - y0) < 4 && Math.abs(ev.clientX - x0) < 4) return;
           moved = true;
-          gap = gapAt(ev.clientY);
+          // B-654: sideways only once the drag has gone well across, so an up or down move never makes a row
+          side = Math.abs(ev.clientX - x0) > 80 ? sideAt(ev.clientX, ev.clientY, i) : null;
+          if (side) return showSide(side);
+          gap = gapAt(ev.clientY, ev.clientX);
           showDrop(gap);
         };
         const up = () => {
@@ -1453,6 +1520,16 @@
             apply('resize', { blocks: r.blocks, sel }, sel);
             return selectImg(r.at);
           }
+          if (side) {
+            // B-654: beside a block: the two make a two-column row, and the caret waits in the text beside the picture
+            const r = E.noteMakeRow(NOTE.blocks, i, side.at, side.side);
+            if (r.blocks === NOTE.blocks) return;
+            const t = r.text >= 0 ? r.text : r.at;
+            selectImg(null);
+            apply('move', { blocks: r.blocks, sel: { a: { b: t, o: E.noteText(r.blocks[t]).length } } }, sel);
+            return;
+          }
+          if (gap == null) return;
           const r = E.noteMoveBlock(NOTE.blocks, i, gap);
           if (r.blocks === NOTE.blocks) return;
           apply('move', { blocks: r.blocks, sel: { a: { b: r.at, o: 0 } } }, sel);

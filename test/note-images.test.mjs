@@ -134,3 +134,95 @@ test('B-653: a picture block goes in, resizes, moves and comes out; the note sta
   const bad = note([{ type: 'img', runs: [], key: 'https://example.com/x.png' }]);
   assert.match(writeProblem('notes', 'n-20261031-150000-abcdefghijkl', bad, null), /does not fit its shape/);
 });
+
+test('B-654: a picture dragged beside a block makes a two-column row; text types, splits and pastes inside it', () => {
+  const img = EV.noteImageBlock(KEY, { max: 640 });
+  const start = [{ type: 'h1', runs: [{ text: 'Heart' }] }, img, p('Four chambers.'), p('Valves.')];
+  // picture (1) dragged onto the right side of the paragraph (2): picture right, text left
+  const r = EV.noteMakeRow(start, 1, 2, 1);
+  assert.deepEqual(
+    r.blocks.map(b => [b.type, b.row || '', b.col ?? '']),
+    [
+      ['h1', '', ''],
+      ['p', 'r1', 0],
+      ['img', 'r1', 1],
+      ['p', '', ''],
+    ]
+  );
+  assert.equal(r.at, 2);
+  assert.equal(r.text, 1);
+  assert.equal(writeProblem('notes', 'n-20261031-150000-abcdefghijkl', note(r.blocks), null), null);
+  // the picture on the left instead
+  assert.deepEqual(
+    EV.noteMakeRow(start, 1, 2, 0).blocks.map(b => b.type + (b.row ? b.col : '')),
+    ['h1', 'img0', 'p1', 'p']
+  );
+  // Enter in the column keeps the new line in the column; a heading typed there stays in it
+  let e = EV.noteEnter(r.blocks, { a: { b: 1, o: 14 }, f: { b: 1, o: 14 } });
+  assert.deepEqual([e.blocks[2].row, e.blocks[2].col], ['r1', 0]);
+  e = { blocks: EV.noteSetType(e.blocks, { a: e.pos, f: e.pos }, 'h2') };
+  e = EV.noteInsertText(e.blocks, { a: { b: 2, o: 0 }, f: { b: 2, o: 0 } }, 'Valves');
+  assert.deepEqual(e.blocks[2], { type: 'h2', runs: [{ text: 'Valves' }], row: 'r1', col: 0 });
+  // a list item too
+  const l = EV.noteSetType(e.blocks, { a: { b: 1, o: 0 }, f: { b: 1, o: 0 } }, 'ul');
+  assert.deepEqual([l[1].type, l[1].row, l[1].col], ['ul', 'r1', 0]);
+  // Backspace at the start of a column never joins across into the other column
+  assert.equal(EV.noteBackspaceStart(EV.noteMakeRow(start, 1, 2, 0).blocks, 2), null);
+  assert.equal(EV.noteJoin(r.blocks, 1), null);
+  // pasted lines land in the caret's column
+  const pasted = EV.noteInsertBlocks(r.blocks, { a: { b: 1, o: 4 }, f: { b: 1, o: 4 } }, [p('one'), p('two')]);
+  assert.ok(pasted.blocks.slice(1, 3).every(b => b.row === 'r1' && b.col === 0));
+  // copy inside a column carries the lines; pasted at full width they are full width
+  const c = EV.noteCopy(r.blocks, { a: { b: 1, o: 0 }, f: { b: 1, o: 4 } });
+  assert.equal(c.text, 'Four');
+  const out = EV.noteInsertBlocks(r.blocks, { a: { b: 3, o: 0 }, f: { b: 3, o: 0 } }, c.blocks);
+  assert.equal(out.blocks[3].row, undefined);
+  // the title (and the outline's headings) read through rows
+  assert.equal(EV.noteTitleOf(e.blocks), 'Heart');
+  // render groups the row into a grid of two columns and reads back to the same blocks
+  const h = (tag, attrs, kids) => ({ tag, attrs, kids });
+  const nodes = EV.noteRender(e.blocks, h, x => ({ text: x }));
+  assert.equal(nodes.length, 3);
+  assert.equal(nodes[1].attrs.class, 'n-row');
+  assert.deepEqual(
+    nodes[1].kids.map(k => k.kids.length),
+    [2, 1]
+  );
+  const toTree = n =>
+    n.text != null
+      ? { nodeType: 3, nodeValue: n.text }
+      : {
+          nodeType: 1,
+          nodeName: n.tag.toUpperCase(),
+          getAttribute: k => (k in n.attrs ? n.attrs[k] : null),
+          childNodes: n.kids.map(toTree),
+        };
+  const root = { nodeType: 1, nodeName: 'DIV', getAttribute: () => null, childNodes: nodes.map(toTree) };
+  assert.deepEqual(EV.noteFromTree(root).blocks, EV.noteBlocks(e.blocks));
+  // the picture dragged back out to full width: the one-column row is gone, every word kept
+  const m = EV.noteMoveBlock(r.blocks, 2, 0);
+  assert.deepEqual(
+    m.blocks.map(b => b.type + (b.row || '')),
+    ['img', 'h1', 'p', 'p']
+  );
+  // removing the picture leaves the text full width
+  assert.equal(
+    EV.noteBlocks(EV.noteRemoveImage(r.blocks, 2).blocks).some(b => b.row),
+    false
+  );
+  // old notes load unchanged; a lone row mark in a saved note falls back to full width with its text kept
+  assert.deepEqual(EV.noteBlocks(start), start);
+  assert.deepEqual(EV.noteBlocks([p('a'), { ...p('b'), row: 'r9', col: 1 }]), [p('a'), p('b')]);
+  // a row's blocks are gathered, column 0 first
+  const mixed = EV.noteBlocks([
+    { ...p('R'), row: 'r1', col: 1 },
+    { ...p('L'), row: 'r1', col: 0 },
+  ]);
+  assert.deepEqual(
+    mixed.map(b => b.runs[0].text),
+    ['L', 'R']
+  );
+  // the schema refuses a bad column
+  const bad = note([{ ...p('x'), row: 'r1', col: 2 }]);
+  assert.match(writeProblem('notes', 'n-20261031-150000-abcdefghijkl', bad, null), /does not fit its shape/);
+});

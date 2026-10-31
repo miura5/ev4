@@ -133,7 +133,7 @@
  "$defs": {
   "block": {
    "type": "object",
-   "description": "one line of the note: a paragraph, a heading, one item of a bulleted, numbered or check list, or a picture (img, B-653)",
+   "description": "one line of the note: a paragraph, a heading, one item of a bulleted, numbered or check list, or a picture (img, B-653); B-654: a block in a two-column row carries row (the row id) and col (0 left, 1 right), the row blocks together, column 0 first",
    "properties": {
     "type": {
      "enum": [
@@ -178,6 +178,18 @@
      "type": "string",
      "maxLength": 300,
      "description": "B-653: the picture's alt text (img only)"
+    },
+    "row": {
+     "type": "string",
+     "pattern": "^[A-Za-z0-9]{1,16}$",
+     "description": "B-654: the two-column row this block sits in (blocks with the same row are one row; absent at full width)"
+    },
+    "col": {
+     "enum": [
+      0,
+      1
+     ],
+     "description": "B-654: the block column in its row: 0 left, 1 right (with row only)"
     }
    },
    "required": [

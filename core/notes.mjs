@@ -4,6 +4,9 @@
 // blocks, reads its contenteditable back into them, and sends a paste through them: clipboard HTML is tokenized here
 // into an inert tree that is read for text and a few marks, and nothing from it is ever put into the page as markup.
 //   block: {type: p|h1|h2|h3|ul|ol|todo, runs: [{text, b?, i?, u?, s?, href?}], checked? (todo), indent? (1 to 6)}
+//   B-654: a block in a two-column row also carries {row: its row's id, col: 0 or 1}; the row's blocks sit together,
+//   column 0's first, so the blocks stay one flat list (positions, outline, copy and undo unchanged) and only the
+//   paint groups them into a grid. A row with one column left falls back to full-width blocks; no text is dropped.
 //   pos:   {b: block index, o: offset in the block's text}; a selection is {a: pos, f: pos} in either order.
 
 export function makeNotes() {
@@ -15,6 +18,12 @@ export function makeNotes() {
   const MAX = { blocks: 4000, runs: 400, text: 20000, href: 2000, title: 300, indent: 6, imgMin: 40, imgMax: 2000 };
   const IMG_KEY = /^note-images\/[A-Za-z0-9]{16,64}\.(png|jpg|webp|gif)$/;
   const HREF = /^https?:\/\/[^\s<>"]+$/;
+  const ROW = /^[A-Za-z0-9]{1,16}$/;
+  /** B-654: where a block sits: {row, col} in a two-column row, or {} at full width. */
+  const placeOf = b =>
+    b && ROW.test(String(b.row || '')) && (b.col === 0 || b.col === 1) ? { row: b.row, col: b.col } : {};
+  const sameCol = (a, b) =>
+    !!a && !!b && (a.row || '') === (b.row || '') && (a.col == null ? -1 : a.col) === (b.col == null ? -1 : b.col);
   const ID = /^n-\d{8}-\d{6}-[A-Za-z0-9]{8,40}$/;
 
   // ---------------------------------------------------------------- ids
@@ -79,21 +88,53 @@ export function makeNotes() {
       const w = Math.floor(Number(b.width) || 0);
       if (w) out.width = Math.max(MAX.imgMin, Math.min(MAX.imgMax, w));
       if (typeof b.alt === 'string' && b.alt) out.alt = cleanText(b.alt).slice(0, MAX.title);
-      return out;
+      return Object.assign(out, placeOf(b));
     }
     const type = b && TYPES.includes(b.type) ? b.type : 'p';
     const out = { type, runs: noteRuns(b && b.runs) };
     if (type === 'todo') out.checked = !!(b && b.checked);
     const ind = Math.max(0, Math.min(MAX.indent, Math.floor(Number(b && b.indent) || 0)));
     if (ind && LISTS.includes(type)) out.indent = ind;
-    return out;
+    return Object.assign(out, placeOf(b));
+  }
+  /**
+   * B-654: rows kept whole: a row's blocks gathered where it first appears, column 0's before column 1's, and a row
+   * with only one column left made full width again. Blocks are only moved or unmarked, never dropped.
+   */
+  function noteTidyRows(blocks) {
+    if (!blocks.some(b => b.row)) return blocks;
+    const seen = new Map();
+    const out = [];
+    for (const b of blocks) {
+      if (!b.row) {
+        out.push(b);
+        continue;
+      }
+      let g = seen.get(b.row);
+      if (!g) {
+        g = { at: out.length, cols: [[], []] };
+        seen.set(b.row, g);
+        out.push(g);
+      }
+      g.cols[b.col].push(b);
+    }
+    return out.flatMap(x => {
+      if (!x.cols) return [x];
+      if (x.cols[0].length && x.cols[1].length) return [...x.cols[0], ...x.cols[1]];
+      return [...x.cols[0], ...x.cols[1]].map(b => {
+        const c = { ...b };
+        delete c.row;
+        delete c.col;
+        return c;
+      });
+    });
   }
   /**
    * A note's blocks as stored: at least one (an empty paragraph). Never cut to the schema's 4000: the editor refuses a
    * change past it (noteFits), and a save past it is refused by the schema, so no text is ever silently dropped.
    */
   function noteBlocks(blocks) {
-    const out = (Array.isArray(blocks) ? blocks : []).map(noteBlock);
+    const out = noteTidyRows((Array.isArray(blocks) ? blocks : []).map(noteBlock));
     return out.length ? out : [{ type: 'p', runs: [] }];
   }
   /** Blocks with more than the schema's 400 runs split into following paragraphs of 400 runs each, all text kept. */
@@ -228,7 +269,7 @@ export function makeNotes() {
       p = d.pos,
       b = out[p.b];
     if (LISTS.includes(b.type) && !blockText(b)) {
-      out[p.b] = noteBlock({ type: 'p', runs: [] });
+      out[p.b] = noteBlock({ type: 'p', runs: [], ...placeOf(b) });
       return { blocks: out, pos: { b: p.b, o: 0 } };
     }
     const len = blockText(b).length;
@@ -236,10 +277,16 @@ export function makeNotes() {
     const nextType = LISTS.includes(b.type) ? b.type : 'p';
     // Enter at the very start of a heading keeps the heading below and leaves an empty paragraph above
     if (p.o === 0 && len && /^h[123]$/.test(b.type)) {
-      out.splice(p.b, 1, noteBlock({ type: 'p', runs: [] }), b);
+      out.splice(p.b, 1, noteBlock({ type: 'p', runs: [], ...placeOf(b) }), b);
       return { blocks: out, pos: { b: p.b + 1, o: 0 } };
     }
-    const right = noteBlock({ type: nextType, indent: b.indent, runs: sliceRuns(b.runs, p.o), checked: false });
+    const right = noteBlock({
+      type: nextType,
+      indent: b.indent,
+      runs: sliceRuns(b.runs, p.o),
+      checked: false,
+      ...placeOf(b),
+    });
     out.splice(p.b, 1, left, right);
     return { blocks: out, pos: { b: p.b + 1, o: 0 } };
   }
@@ -259,12 +306,12 @@ export function makeNotes() {
       out[b] = noteBlock({ ...cur, type: 'p' });
       return { blocks: out, pos: { b, o: 0 } };
     }
-    if (b === 0) return null;
+    if (b === 0 || !sameCol(out[b - 1], cur)) return null; // B-654: a column's first line never joins the column before
     return noteJoin(out, b - 1);
   }
   /** The block after this one joined onto its end (Delete at a block's end, Backspace at the next one's start). */
   function noteJoin(blocks, b) {
-    if (b < 0 || b >= blocks.length - 1) return null;
+    if (b < 0 || b >= blocks.length - 1 || !sameCol(blocks[b], blocks[b + 1])) return null;
     const out = copy(blocks);
     const o = blockText(out[b]).length;
     out.splice(b, 2, noteBlock({ ...out[b], runs: [...out[b].runs, ...out[b + 1].runs] }));
@@ -342,7 +389,7 @@ export function makeNotes() {
     const head = blockText(block).slice(0, o);
     for (const [re, type, checked] of SHORTCUTS) {
       if (!re.test(head)) continue;
-      const out = noteBlock({ type, runs: sliceRuns(block.runs, o), checked: !!checked });
+      const out = noteBlock({ type, runs: sliceRuns(block.runs, o), checked: !!checked, ...placeOf(block) });
       return { block: out, o: 0 };
     }
     return null;
@@ -424,6 +471,7 @@ export function makeNotes() {
       if (!cur) {
         cur = { type: want.type, runs: [], ...(want.checked != null ? { checked: want.checked } : {}) };
         if (want.indent) cur.indent = want.indent;
+        if (want.row) Object.assign(cur, { row: want.row, col: want.col });
         out.push(cur);
         lastSpace = true;
       }
@@ -484,7 +532,9 @@ export function makeNotes() {
       if (n.nodeType === 3) return text(n, marks);
       if (n.nodeType !== 1) return;
       const name = nameOf(n);
-      if (SKIP.has(name) || attr(n, 'data-nb-skip') != null || attr(n, 'aria-hidden') === 'true') {
+      // a picture is marked data-nb-skip for the caret walk but still reads back as its block (B-654: it was dropped)
+      const pic = !paste && attr(n, 'data-t') === 'img';
+      if (SKIP.has(name) || (attr(n, 'data-nb-skip') != null && !pic) || attr(n, 'aria-hidden') === 'true') {
         hereEl(n, 0);
         return;
       }
@@ -493,7 +543,9 @@ export function makeNotes() {
         else if (out.length && !paste) open(); // a second line break makes an empty line
         return;
       }
+      if (!paste && (attr(n, 'data-nrow') != null || attr(n, 'data-ncol') != null)) return walk(n, marks, list); // B-654
       const t = attr(n, 'data-t');
+      const at0 = paste ? {} : placeOf({ row: attr(n, 'data-row'), col: Number(attr(n, 'data-col')) });
       if (t === 'img' && !paste) {
         // B-653: the editor's picture reads back as itself (its key, width and alt), never as text
         hereEl(n, 0);
@@ -505,6 +557,7 @@ export function makeNotes() {
           key: attr(n, 'data-key'),
           ...(w ? { width: w } : {}),
           ...(alt ? { alt } : {}),
+          ...at0,
         });
         cur = null;
         return;
@@ -512,7 +565,13 @@ export function makeNotes() {
       if (t && TYPES.includes(t) && !paste) {
         const ind = Number(attr(n, 'data-indent')) || 0;
         return block(
-          { type: t, indent: ind, checked: t === 'todo' ? attr(n, 'data-checked') === 'true' : null, keepEmpty: true },
+          {
+            type: t,
+            indent: ind,
+            checked: t === 'todo' ? attr(n, 'data-checked') === 'true' : null,
+            keepEmpty: true,
+            ...at0,
+          },
           () => walk(n, {}, null)
         );
       }
@@ -744,7 +803,13 @@ export function makeNotes() {
     const out = d.blocks,
       p = d.pos,
       b = out[p.b];
-    const add = noteBlocks(pasted);
+    // B-654: pasted lines land in the column the caret is in (or at full width), whatever row they were copied from
+    const add = noteBlocks(pasted).map(x => {
+      const c = { ...x };
+      delete c.row;
+      delete c.col;
+      return Object.assign(c, placeOf(b));
+    });
     if (add.length === 1) {
       const r = noteInsertText(out, { a: p, f: p }, '', null);
       // B-439: one pasted line into an empty paragraph keeps its own style (a heading pasted stays a heading)
@@ -823,10 +888,36 @@ export function makeNotes() {
    * as text nodes and a link only as a checked http(s) href. noteFromTree reads it back into the same blocks.
    */
   function noteRender(blocks, h, t) {
-    return noteBlocks(blocks).map(b => {
+    const els = noteBlocks(blocks).map(b => {
+      const n = renderOne(b, h, t);
+      return { b, n };
+    });
+    // B-654: a row's blocks go in one grid of two columns; every block keeps data-row and data-col to read back
+    const out = [];
+    for (let i = 0; i < els.length;) {
+      const { b } = els[i];
+      if (!b.row) {
+        out.push(els[i++].n);
+        continue;
+      }
+      const cols = [[], []];
+      while (i < els.length && els[i].b.row === b.row) cols[els[i].b.col].push(els[i++].n);
+      out.push(
+        h(
+          'div',
+          { class: 'n-row', 'data-nrow': b.row },
+          cols.map((c, k) => h('div', { class: 'n-col', 'data-ncol': String(k) }, c))
+        )
+      );
+    }
+    return out;
+  }
+  function renderOne(b, h, t) {
+    const place = b.row ? { 'data-row': b.row, 'data-col': String(b.col) } : {};
+    {
       // B-653: a picture paints as an empty, non-editable figure; the page fills in the image it fetches by key
       if (b.type === 'img') {
-        const a = { 'data-t': 'img', class: 'nb n-img', 'data-key': b.key, contenteditable: 'false' };
+        const a = { 'data-t': 'img', class: 'nb n-img', 'data-key': b.key, contenteditable: 'false', ...place };
         if (b.width) a['data-width'] = String(b.width);
         if (b.alt) a['data-alt'] = b.alt;
         return h('figure', a, []);
@@ -841,12 +932,12 @@ export function makeNotes() {
         return n;
       });
       const tag = /^h[123]$/.test(b.type) || b.type === 'p' ? b.type : 'div';
-      const attrs = { 'data-t': b.type, class: 'nb' };
+      const attrs = { 'data-t': b.type, class: 'nb', ...place };
       if (b.indent) attrs['data-indent'] = String(b.indent);
       if (b.type === 'todo') attrs['data-checked'] = String(!!b.checked);
       if (!kids.length) kids.push(h('br', {}, []));
       return h(tag, attrs, kids);
-    });
+    }
   }
 
   // ---------------------------------------------------------------- the document a save writes
@@ -880,6 +971,7 @@ export function makeNotes() {
     noteRuns,
     noteBlock,
     noteBlocks,
+    noteTidyRows,
     noteSplitWide,
     noteFits,
     noteText: blockText,

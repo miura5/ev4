@@ -165,3 +165,7 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3
 #note-body .n-img .h.nw{left:-5px;top:-5px;cursor:nwse-resize}#note-body .n-img .h.ne{right:-5px;top:-5px;cursor:nesw-resize}
 #note-body .n-img .h.sw{left:-5px;bottom:-5px;cursor:nesw-resize}#note-body .n-img .h.se{right:-5px;bottom:-5px;cursor:nwse-resize}
 #p-notes .n-drop{position:absolute;height:2px;background:var(--sem-blue);border-radius:var(--r-xs);pointer-events:none;z-index:3}
+#note-body .n-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin:6px 0}
+#note-body .n-col{min-width:0}
+#note-body .n-col>.n-img:first-child{margin-top:4px}
+#p-notes .n-drop.side{width:2px}

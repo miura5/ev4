@@ -262,7 +262,52 @@ const openNoteId = page =>
       JSON.stringify(await types()) === JSON.stringify(['h1', 'img', 'p', 'p']),
       JSON.stringify(await types())
     );
-    // Delete takes it out of the note; the stored file stays
+    // B-654: dragged sideways onto the right of "Four chambers." it makes a two-column row; text types beside it
+    {
+      const b2 = await page.locator(fig).boundingBox();
+      const para = await page.locator('#note-body > p').first().boundingBox();
+      await page.mouse.move(b2.x + b2.width / 2, b2.y + b2.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(para.x + para.width - 20, para.y + para.height / 2, { steps: 8 });
+      const side = await page.evaluate(() => document.querySelector('#p-notes .n-drop').classList.contains('side'));
+      await page.screenshot({ path: path.join(shots, 'notes-row-dropline-1280.png') });
+      await page.mouse.up();
+      ok(`${tag} B-654: a sideways drag shows the upright drop line`, side, '');
+      const row = () =>
+        page.evaluate(() =>
+          [...document.querySelectorAll('#note-body > .n-row > .n-col')].map(c =>
+            [...c.children].map(b => b.dataset.t + ':' + b.textContent)
+          )
+        );
+      ok(
+        `${tag} B-654: the picture and the line make a two-column row`,
+        JSON.stringify(await row()) === JSON.stringify([['p:Four chambers.'], ['img:']]),
+        JSON.stringify(await row())
+      );
+      await page.keyboard.type(' Right side.');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('## Valves');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('- Mitral');
+      await settle(page);
+      const r2 = await row();
+      ok(
+        `${tag} B-654: text, a heading and a list type in the column beside it`,
+        JSON.stringify(r2) === JSON.stringify([['p:Four chambers. Right side.', 'h2:Valves', 'ul:Mitral'], ['img:']]),
+        JSON.stringify(r2)
+      );
+      const outline = await page.evaluate(() => document.querySelector('#p-notes .n-outline')?.textContent || '');
+      doc = await savedDoc(page, id);
+      const rowBlocks = doc ? doc.blocks.filter(b => b.row) : [];
+      ok(
+        `${tag} B-654: the row is saved as row and col on its blocks`,
+        rowBlocks.length === 4 && rowBlocks.every(b => b.row === rowBlocks[0].row) && imgOf(doc).col === 1,
+        JSON.stringify(doc && doc.blocks)
+      );
+      await page.screenshot({ path: path.join(shots, 'notes-row-1280.png') });
+      ok(`${tag} B-654: no page error in the row`, errors.length === 0, errors.slice(0, 3).join(' | ') + outline);
+    }
+    // Delete takes it out of the note; the stored file stays (the row's text goes back to full width)
     await page.click(fig);
     await page.keyboard.press('Delete');
     await settle(page);
@@ -270,7 +315,7 @@ const openNoteId = page =>
     const kept = await page.evaluate(() => window.__images.size);
     ok(
       `${tag} Delete takes it out of the note`,
-      doc && !imgOf(doc) && JSON.stringify(await types()) === JSON.stringify(['h1', 'p', 'p']),
+      doc && !imgOf(doc) && JSON.stringify(await types()) === JSON.stringify(['h1', 'p', 'h2', 'ul', 'p']),
       JSON.stringify(await types())
     );
     ok(`${tag} the stored file is kept`, kept === 1, String(kept));
