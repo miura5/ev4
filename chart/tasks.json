@@ -11828,5 +11828,22 @@
   "board": {
    "row": "v4 B-628: A past exam with no score (e.g. postponed with an old date) now reads…"
   }
+ },
+ {
+  "id": "B-629",
+  "kind": "request",
+  "title": "Request (reported Oct 31): claimsQuestions misses wordings like 'I'll put together a quiz'",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "claimsQuestions misses wordings like 'I'll put together a quiz'",
+  "reportedAt": "2026-10-31T08:56:16.160Z",
+  "board": {
+   "row": "v4 B-629: claimsQuestions misses wordings like 'I'll put together a"
+  }
  }
 ]
