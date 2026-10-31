@@ -88,6 +88,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-643 | Request (reported Oct 31): Notes check card: after a check is graded its pill still says your turn Done when: After a notes check is graded, its pill no longer says your turn; a test. | — | Release review follow-ups | open |  |
 | B-644 | Request (reported Oct 31): D-416: retire workouts (Cindy AMRAP, ladder) Done when: No workout code, tool, sequences or tests remain in page, core, build or tests; spec.collections.workouts marked retired; D-108 superseded; targeted harness groups pass. | — | Simplify (D-416) | open |  |
 | B-645 | Request (reported Oct 31): D-416: retire skill checklists Done when: Skills runner, practice_skill, skill card and core skill steps gone; old kind-skill sessions still load in Record; clinical-prep skills kept; tests updated; targeted checks pass. | — | Simplify (D-416) | open |  |
+| B-646 | Request (reported Oct 31): D-416: retire the energy and mood check-in Done when: Check-in card, log_checkin, low-energy nudge and weekly energy line gone; dayedits.checkin noted retired and still valid; D-070 superseded; avatar moods untouched. | — | Simplify (D-416) | open |  |
 
 ## Your turn
 
@@ -709,4 +710,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-563 | task |  |  | plan 9w83U8c79EjxijPXqs9xKi | declined |  |
 | B-588 | request | 2026-10-30T13:22:31.098Z | At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows. | UI review, release card 2 | declined |  |
 | B-610 | request | 2026-10-30T23:06:03.689Z | Next cleanup release: clear the remaining roughly 176 !important declarations left after the 630-rule strip, by moving Study-only rules from the patterns layer into the Study view file, merging the toast placement into its component, and retiring the old side-card rules; base, tokens and the cursor policy keep theirs (spike report, Oct 30). | !important spike Oct 30 | declined |  |
-| B-646 | request | 2026-10-31T13:21:07.612Z | D-416: retire the energy and mood check-in | B-636 inventory spike | inbox |  |
