@@ -5383,14 +5383,19 @@
   "title": "Study results (D-238): the results card with the score and New quiz, plus her one line \"N misses are proposed as weak spots\" with Accept all and Review.",
   "dod": "Screenshots at 390 and 1280 in light and dark after a set with two misses. Accept all accepts both with her suggested objectives, and they are in tomorrow's picks. Review opens Weak spots with both under To review.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-298",
    "B-235"
   ],
   "notes": "Matt, Oct 24: after exams, with the weak-spot work (B-232 to B-235); the redesign goes live without this screen.",
   "commit": null,
-  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: the quiz end card's 'N misses are proposed as weak spots' with Accept all and Review is built (B-407, B-455).",
+   "at": "2026-10-31T00:40:08.693Z"
+  }
  },
  {
   "id": "B-300",
