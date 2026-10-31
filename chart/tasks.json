@@ -11946,9 +11946,9 @@
   "id": "B-634",
   "kind": "request",
   "title": "Request (reported Oct 31): quizCardFor and the in-chat quiz text say N questions without 'again' wording",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11957,6 +11957,10 @@
   "reportedAt": "2026-10-31T08:56:30.026Z",
   "board": {
    "row": "v4 B-634: quizCardFor and the in-chat quiz text say N questions without 'again'…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:57.592Z"
   }
  },
  {
