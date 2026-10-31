@@ -12413,9 +12413,9 @@
   "id": "B-656",
   "kind": "request",
   "title": "Request (reported Oct 31): B-653 review backlog: images GET returns 500 on a malformed % key (should be 400); add nosniff to image reads; a picture inserted while typing during the upload lands at the old position; a tampered img block falls back to an empty paragraph; upload reads the whole body before the 8 MB check",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each listed B-653 review item is fixed or declined with a reason",
+  "milestone": "Notes images",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12424,6 +12424,10 @@
   "reportedAt": "2026-10-31T23:35:47.638Z",
   "board": {
    "row": "v4 B-656: B-653 review backlog: images GET returns 500 on a malformed % key…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T23:50:02.530Z"
   }
  }
 ]
