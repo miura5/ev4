@@ -239,7 +239,7 @@ export const RELEASE_SLOT = '__EV_RELEASE__';
  * B-149 (D-173): the release at a commit, from the newest v4.* tag reachable from it: the tag itself at a tagged
  * commit, <tag>+<n> n commits past it (SemVer build metadata), null when no tag is reachable (a shallow clone).
  */
-export function releaseOf(root, commit = 'HEAD') {
+function describeRelease(root, commit) {
   try {
     const d = execFileSync('git', ['-C', root, 'describe', '--tags', '--long', '--match', 'v4.*', commit], {
       encoding: 'utf8',
@@ -250,6 +250,22 @@ export function releaseOf(root, commit = 'HEAD') {
   } catch {
     return null;
   }
+}
+/** B-640: a fresh `git clone --depth 1` has no tags (and no history to describe from), so when describe finds nothing
+ * the release fetches origin's tags once (unshallowing a shallow clone, which describe needs) and asks again. */
+export function releaseOf(root, commit = 'HEAD', { fetchTags = true } = {}) {
+  const first = describeRelease(root, commit);
+  if (first || !fetchTags) return first;
+  const run = args =>
+    execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  try {
+    if (!run(['remote']).split('\n').includes('origin')) return null;
+    const shallow = run(['rev-parse', '--is-shallow-repository']).trim() === 'true';
+    run(['fetch', '--quiet', '--tags', ...(shallow ? ['--unshallow'] : []), 'origin']);
+  } catch {
+    return null;
+  }
+  return describeRelease(root, commit);
 }
 /** D-192 (B-173): every task's entry; its name comes from spec.tasks.nameTemplate, which carries no version. */
 export function taskEntries(spec, release) {

@@ -1182,6 +1182,11 @@ async function ship(o) {
   const dist = path.join(root, 'dist'),
     stateDir = path.join(dist, 'state', target);
   const { manifest } = await build({ root, out: dist });
+  // B-640: an untagged build (a clone whose tags could not be fetched) never ships: staging would never match.
+  if (/\+untagged$/.test(manifest.release || ''))
+    refusals.push(
+      `B-640: the build is ${manifest.release}: git describe --tags found no v4 tag, even after fetching origin's tags. Run git fetch --tags --unshallow origin, then ship again`
+    );
   if (o['freeze-page']) return freezePage({ root, dist, manifest, target, mattOk: Boolean(o['matt-ok']) });
   const read = f => readJson(path.join(dist, 'system', f + '.json'));
   const distDocs = { spec: read('spec'), environments: read('environments') };
