@@ -11794,5 +11794,22 @@
    "outcome": "task",
    "at": "2026-10-31T07:58:39.078Z"
   }
+ },
+ {
+  "id": "B-627",
+  "kind": "request",
+  "title": "Request (reported Oct 31): derive.mjs producers at 371 and 478 call exam views with no date, so past exams are not read as done there",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "derive.mjs producers at 371 and 478 call exam views with no date, so past exams are not read as done there",
+  "reportedAt": "2026-10-31T08:56:10.715Z",
+  "board": {
+   "row": "v4 B-627: derive.mjs producers at 371 and 478 call exam views with no date, so…"
+  }
  }
 ]
