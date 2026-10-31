@@ -12157,9 +12157,9 @@
   "id": "B-644",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416: retire workouts (Cindy AMRAP, ladder)",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "No workout code, tool, sequences or tests remain in page, core, build or tests; spec.collections.workouts marked retired; D-108 superseded; targeted harness groups pass.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12168,6 +12168,10 @@
   "reportedAt": "2026-10-31T13:20:56.928Z",
   "board": {
    "row": "v4 B-644: D-416: retire workouts (Cindy AMRAP,"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:20:59.656Z"
   }
  }
 ]
