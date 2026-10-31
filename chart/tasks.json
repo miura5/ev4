@@ -12340,9 +12340,9 @@
   "id": "B-653",
   "kind": "request",
   "title": "Request (reported Oct 31): Images in notes, Quip-style: insert or paste a picture into a note, select it, drag it between blocks (a blue line shows where it lands), drag it sideways onto a column grid, resize it, and type text in a column beside it. For anatomy and organ notes.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Part 1: in a note Matt can insert (button or paste) a picture; it shows inline as its own block, can be selected, resized by a corner handle, and dragged between blocks with a blue drop line; the file is stored in the env R2 bucket, served by the Worker to the owner only, kept when removed from the note (B-11); a test; one real paste on staging in desktop Chrome at 1280.",
+  "milestone": "Notes images",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12351,6 +12351,10 @@
   "reportedAt": "2026-10-31T22:33:32.341Z",
   "board": {
    "row": "v4 B-653: Images in notes, Quip-style: insert or paste a picture into a note,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T22:35:41.601Z"
   }
  }
 ]
