@@ -11777,9 +11777,9 @@
   "id": "B-626",
   "kind": "request",
   "title": "Request (reported Oct 31): E.V.'s chat replies keep adding 'check your materials' and 'my materials don't give this' to plain answers, even repeating it on every line of a thread about basic unit conversions; Matt finds it annoying and wants it gone from her voice.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Chat replies (Today, note side chat, sessions) no longer say 'check your materials' or 'my materials don't give this'; a general-knowledge reply carries one small page-rendered tag instead; questions keep verify:true; a prompt test fails on the old phrase; one real staging reply read back.",
+  "milestone": "v4.5.x ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11789,6 +11789,10 @@
   "reportedAt": "2026-10-31T07:58:07.061Z",
   "board": {
    "row": "v4 B-626: E.V.'s chat replies keep adding 'check your materials' and 'my…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T07:58:39.078Z"
   }
  }
 ]
