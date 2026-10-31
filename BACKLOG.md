@@ -6,7 +6,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 
 | Id | Task | Depends | Milestone | Status | Notes |
 | --- | --- | --- | --- | --- | --- |
-| B-27 | Mac lane watched (D-087, D-091, D-097): watch() reports missed mac-lane slots without re-firing; restore-drill writes system/seed and a run document in live; evening-mac's push turned on and the live task's notification changed by Matt in the desktop app (a Mac-bound task changes only with Matt present) | B-26 | M7 | in progress | Matt, Oct 23 morning: Okay. |
+| B-27 | Mac lane watched (D-087, D-091, D-097): watch() reports missed mac-lane slots without re-firing; restore-drill writes system/seed and a run document in live; evening-mac's push turned on and the live task's notification changed by Matt in the desktop app (a Mac-bound task changes only with Matt present) | B-26 | M7 | blocked | Backlog audit Oct 31: stopped to retire it (see the decline). |
 | B-44 | BIO 201 objectives and practice (pick 2, D-101): the seed-objectives job kind proposing objectives/<exam>-<n> with sourceRef and course from the unit slides (schema bump), the proposal card with strike-outs and the page write on Matt's OK, and the morning's review and new checks for BIO 201's next exam under the day budget Done when: a core test that a planted BIO 201 unit's slides seed objectives/<exam>-<n> each with sourceRef and course and nothing invented; the objectives 1 to 2 migration with its legacy copies, idempotent; the harness strikes one line on the proposal card and the page writes the rest; a staging seed-objectives worker firing read back; the morning's next BIO 201 review drawn from them inside the day budget; npm test green; npm run check green; ship staging green; live only on Matt's OK | B-42, B-43, B-98, B-230 | M8 | blocked | parked for the freeze week |
 | B-69 | Adaptive intervals, step 1 (D-117): solid stays two right days; a solid weak spot's due date doubles with each further right day (spec.study.params: base 3, cap 14, nearExam 1), the exam-day rule kept; pickReviews draws due solid spots after the open ones within the day budget; a miss reopens it as today (recurrence + 1); the switch flips to adaptive on Matt's OK after one shadow week | B-68 | M10 | blocked | Oct 23: e115c56 is live in v4.5.0, so the review set now picks through spec.study.scheduler; the flip after Sunday's weekly is clear on that count. |
 | B-70 | Learned parameters (D-118): a weekly code step fits per-weak-spot stability and difficulty from his answers (a small FSRS-style model with few parameters, fitted by a seeded search in code, no library) into models/current (Derived, producer weekly, rebuildable from answers; the one new collection: schema, spec row, budget, rebuild entry); the adaptive scheduler reads it when present and falls back to spec.study.params when not | B-69, and 300 answers in the record | M10 | blocked | Blocked on evidence, not on anyone (D-188): learned parameters need 300 answers in the record; B-165 puts the count in the weekly's health line, and triage reads it there. |
@@ -135,7 +135,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 
 ### At the Mac
 
-- B-27 (in progress): a missed evening on the Mac
+- B-27 (blocked): a missed evening on the Mac
 
 ### A decision (a reply in a build chat)
 

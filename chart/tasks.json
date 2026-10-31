@@ -508,11 +508,11 @@
   "title": "Mac lane watched (D-087, D-091, D-097): watch() reports missed mac-lane slots without re-firing; restore-drill writes system/seed and a run document in live; evening-mac's push turned on and the live task's notification changed by Matt in the desktop app (a Mac-bound task changes only with Matt present)",
   "dod": null,
   "milestone": "M7",
-  "status": "in progress",
+  "status": "blocked",
   "depends": [
    "B-26"
   ],
-  "notes": "Matt, Oct 23 morning: Okay.",
+  "notes": "Backlog audit Oct 31: stopped to retire it (see the decline).",
   "commit": null,
   "source": "BACKLOG.md",
   "board": {
