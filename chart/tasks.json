@@ -12300,9 +12300,9 @@
   "id": "B-651",
   "kind": "bug",
   "title": "Bug (reported Oct 31): Staging run of D-416: asking E.V. for flashcards still starts a general background job that writes cards; she should say flashcards live in Quizlet and offer a practice set. The show_card description still lists checkin.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V. declines to make flashcards (no job started), points to Quizlet and offers a practice set; show_card lists no retired card; a test; one real ask on staging.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12311,6 +12311,10 @@
   "reportedAt": "2026-10-31T14:17:01.512Z",
   "board": {
    "row": "v4 B-651: Staging run of D-416: asking E.V. for flashcards still starts a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T14:17:04.179Z"
   }
  }
 ]
