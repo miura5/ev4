@@ -11417,7 +11417,7 @@
   "title": "Request (reported Oct 30): Next cleanup release: clear the remaining roughly 176 !important declarations left after the 630-rule strip, by moving Study-only rules from the patterns layer into the Study view file, merging the toast placement into its component, and retiring the old side-card rules; base, tokens and the cursor policy keep theirs (spike report, Oct 30).",
   "dod": "The !important count in page/ds is down to base and tokens (reduced motion, [hidden]) plus the cursor policy and its exceptions, about 25 to 30; csdiff and pixdiff 0 at each move; hover and focus checked by hand.",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11428,8 +11428,10 @@
    "row": "v4 B-610: Next cleanup release: clear the remaining roughly 176 !important…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-30T23:06:14.507Z"
+   "outcome": "joined",
+   "into": "B-515",
+   "reason": "Backlog audit Oct 31: the !important strip is B-515's cleanup (3cdfe59 dropped 356; about 79 remain).",
+   "at": "2026-10-31T00:40:26.016Z"
   }
  },
  {
