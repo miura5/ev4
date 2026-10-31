@@ -11648,9 +11648,9 @@
   "id": "B-620",
   "kind": "request",
   "title": "Request (reported Oct 30): Sweep the remaining pre-Proprietary tenets under D-411: recheck D-124, D-126, D-129, D-327, D-243, D-200, D-201, D-185 and D-190 against Proprietary, D-366, D-367 and D-407; supersede what conflicts and fix or retire their checks.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each listed decision is kept, restated or superseded with a reason; every check that pinned a superseded one is fixed or retired; skills-drift green.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11659,6 +11659,10 @@
   "reportedAt": "2026-10-31T01:38:58.770Z",
   "board": {
    "row": "v4 B-620: Sweep the remaining pre-Proprietary tenets under D-411: recheck…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:39:05.401Z"
   }
  }
 ]
