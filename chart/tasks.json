@@ -12220,9 +12220,9 @@
   "id": "B-647",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416: retire flashcards",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Deck UI, core/cards.mjs, flashcards job kind, deck worker branches, smoke round trip and Quizlet-cards quick ask gone; decks marked retired; old flashcards jobs still validate; D-368 superseded; Quizlet Saturday read unchanged.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12231,6 +12231,10 @@
   "reportedAt": "2026-10-31T13:21:12.937Z",
   "board": {
    "row": "v4 B-647: D-416: retire"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:21:15.571Z"
   }
  }
 ]
