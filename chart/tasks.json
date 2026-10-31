@@ -11896,5 +11896,22 @@
   "board": {
    "row": "v4 B-632: Off day vs a separate Study day label for"
   }
+ },
+ {
+  "id": "B-633",
+  "kind": "request",
+  "title": "Request (reported Oct 31): An exam dated today that is already over reads upcoming until midnight",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "An exam dated today that is already over reads upcoming until midnight",
+  "reportedAt": "2026-10-31T08:56:27.402Z",
+  "board": {
+   "row": "v4 B-633: An exam dated today that is already over reads upcoming until"
+  }
  }
 ]
