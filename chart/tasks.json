@@ -11624,13 +11624,13 @@
   "title": "Request (reported Oct 30): Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test.",
   "dod": "A skill (ev-add-feature) lists every touch point, uses the kits above, and the skills drift test keeps it true.",
   "milestone": "workflow (ops)",
-  "status": "open",
+  "status": "blocked",
   "depends": [
    "B-615",
    "B-616",
    "B-617"
   ],
-  "notes": "",
+  "notes": "Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it.",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
   "words": "Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test.",
@@ -11641,6 +11641,7 @@
   "triage": {
    "outcome": "task",
    "at": "2026-10-31T01:05:09.852Z"
-  }
+  },
+  "waitingOn": "Matt"
  }
 ]

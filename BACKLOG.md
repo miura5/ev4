@@ -112,7 +112,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-616 | Request (reported Oct 30): Behaviour kit in Proprietary: shared behaviours for confirm or undo, optimistic save, loading, empty and error states, keyboard and closing a window, as block behaviours every view uses (drag closing New task and Undo only on the latest tick were this). Done when: Proprietary holds the shared behaviours (undo, optimistic save, loading, empty, error, keyboard, close) and the views use them; the Gallery shows each. | — | workflow (ops) | blocked | Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it. |
 | B-617 | Request (reported Oct 30): Jobs kit: one way to define a model job, with course framing, grounding, counts and length limits handled by the kit, not each job (NCLEX in BIO notes and the 101-card deck were this). Done when: Every model job is defined through the jobs kit; course framing, grounding and counts are the kit's, with one test per rule. | B-614 | workflow (ops) | blocked | Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it. |
 | B-618 | Request (reported Oct 30): State-aware style diff: the computed-style and pixel diffs also open hover, focus, read-only, folded and dark states, so style changes can't break states nobody looks at (Oct 30's three late breaks). Done when: csdiff and pixdiff open hover, focus, read-only, folded and dark states; a strip that breaks one of them fails the diff. | — | workflow (ops) | blocked | Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it. |
-| B-619 | Request (reported Oct 30): Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test. Done when: A skill (ev-add-feature) lists every touch point, uses the kits above, and the skills drift test keeps it true. | B-615, B-616, B-617 | workflow (ops) | open |  |
+| B-619 | Request (reported Oct 30): Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test. Done when: A skill (ev-add-feature) lists every touch point, uses the kits above, and the skills drift test keeps it true. | B-615, B-616, B-617 | workflow (ops) | blocked | Paused by Matt (Oct 30) to save usage for bugs and tweaks while he trials the skill-based workflow; he resumes it. |
 
 ## Your turn
 
@@ -132,6 +132,7 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-616 (blocked): Behaviour kit in Proprietary: shared behaviours for confirm or undo,…
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
+- B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
 
 ## Done
 
