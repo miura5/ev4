@@ -103,6 +103,21 @@ GitHub runs npm test and smoke on every push. Run the full suite on GitHub once 
 the checks workflow (`.github/workflows/checks.yml`, B-606: one parallel job per harness plus npm test), dispatched
 for the batch's sha with `gh api -X POST repos/miura5/ev4/actions/workflows/checks.yml/dispatches -f ref=main -f "inputs[ref]=<sha>"`, then watched with
 `gh api repos/miura5/ev4/actions/runs?per_page=5`; the summary job's table names each harness's pass and fail counts.
+**Watch every run you start, step by step (B-655).** Waiting only for "completed" lets a hung step pass as slow. Arm a
+Monitor on the run that prints each job's current step and its minutes, and flags a step over its limit:
+
+    ID=<run id>; while :; do r=$(gh api repos/miura5/ev4/actions/runs/$ID/jobs --paginate); now=$(date -u +%s)
+      echo "$r" | jq -r --argjson now $now '.jobs[]|. as $j|.steps[]|select(.status=="in_progress")|
+        (($now-(.started_at|fromdate))/60|floor) as $m|"\($j.name) | \(.name) | \($m)m" +
+        (if ((.name|test("install|npm ci|setup"))and $m>=5) or $m>=15 then " | STALLED" else "" end)'
+      [ "$(gh api repos/miura5/ev4/actions/runs/$ID --jq .status)" = completed ] && break; sleep 120; done
+
+A STALLED line is investigated at once, never reported as "slower than estimated": read the step (`gh api
+repos/miura5/ev4/actions/jobs/<job id>/logs` or Matt's view), and when the hang is the runner (a package mirror, an
+install, a network wait) and not our code, cancel the run and `rerun-failed-jobs` once; a second stall goes to Matt in
+two lines. Any status Matt asks for comes from this per-step read, with each running step and its minutes. The same
+watch applies to pwa-staging.yml and pwa-live.yml runs.
+
 A failure goes back to the builder whose step caused it (found from the step commits). Never
 run full suites on the shared machine. A red nightly is filed as a bug and never blocks a release Matt has tested (R-06 is ended by D-366).
 
