@@ -6449,5 +6449,39 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "92781b3",
+  "time": "2026-10-31T06:52:10.140Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "7475963",
+  "from": "7475963",
+  "tasks": [
+   "B-577",
+   "B-595",
+   "B-593",
+   "B-599",
+   "B-601",
+   "B-602",
+   "B-598",
+   "B-604",
+   "B-596",
+   "B-607",
+   "B-609",
+   "B-600",
+   "B-612",
+   "B-611",
+   "B-594",
+   "B-613",
+   "B-515",
+   "B-621"
+  ],
+  "summary": "On Study at a wide window, the exam plan's summary (draft, rubric…; Selecting text in the New task title by dragging closes the dialog…; A small native tooltip repeating the label pops up on hover over the…; A flashcard deck E.V. made on request (BIO 201 Ch 9 muscles and…; While taking notes with E.V. on BIO 201, she adds NCLEX framing;…; Rewrite E.V.'s persona per D-405 and stop hand-typing page and avatar…; run.cjs:2558 (B-450 tick click in studyPlanChecks) sometimes fails…; The pane header lost the view's name after the tab tooltips were…; Add a Linear-style Picker to Proprietary (a chip that opens a…; The New task Kind menu should offer the same full list of kinds that…; The dayedits schema's kind enum lacks learn, skills-prep and…; In a note, Heading 1 and Heading 2 render at the same size; Heading 1…; The Stop hook should run only the format test and the unit tests for…; Bring CLAUDE.md and the builder, review, UX-probe and trim…; Kind badges in Study's plan rows and on Today use different colours…; Encode the build-manager workflow in an ev-build-manager skill, a…; Proprietary cleanup and token lint; Workflow fixes from the cold-start dry run: hooks line, md-guard on…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.22"
  }
 ]
