@@ -11925,9 +11925,9 @@
   "id": "B-633",
   "kind": "request",
   "title": "Request (reported Oct 31): An exam dated today that is already over reads upcoming until midnight",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
+  "milestone": "Release review follow-ups",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11936,6 +11936,10 @@
   "reportedAt": "2026-10-31T08:56:27.402Z",
   "board": {
    "row": "v4 B-633: An exam dated today that is already over reads upcoming until"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:55.060Z"
   }
  },
  {
