@@ -12035,7 +12035,7 @@
   "milestone": "Simplify (D-416)",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "On staging GREEN at 5273419 with the review fix (card answer kept while E.V. replies); waiting on a real run",
   "commit": null,
   "source": "chat Oct 31 (Matt testing 5bf4e8d)",
   "words": "Notes side chat checks: the first check card (two open questions) showed an Answer button that did nothing, so the answer went in the chat and the second question continued as plain chat; a second check card had a text box and submit button, preferred for every open-ended notes question, but it stuck on Checking until a chat message was sent, then the result appeared. Wanted: every open-ended notes check uses the text-box card; submit returns the result on its own; an answer typed in the chat gets a reminder to answer in the card so the rationale shows and weak spots are recorded. Keep and polish the feature.",
