@@ -67,6 +67,12 @@ test('B-613: every decision a skill cites is in the Chart and not superseded', (
 
 // A rule's value is stated in exactly one home; elsewhere it is pointed to, never restated with its own value.
 const PINNED = [
+  // B-611 (D-408): moved here from smoke.test.mjs with the text it pinned
+  {
+    key: 'full suite per batch',
+    re: /full suite on GitHub once per batch, before ship staging/,
+    home: '.claude/skills/ev-build-manager/SKILL.md',
+  },
   {
     key: 'agents at a time',
     re: /\d+\s+to\s+\d+\s+agents at a time|at most \d+ agents/i,
@@ -100,4 +106,15 @@ test('B-613: each pinned rule is stated in its one home and nowhere else among t
     for (const w of where) if (w !== r.home) strays.push(`${r.key}: restated in ${w}`);
   }
   assert.deepEqual([...homes, ...strays], []);
+});
+
+const HANDOVER = ['## Running', '## Waiting on Matt', '## Next', '## Last release'];
+test('B-613: docs/handover.md keeps the fixed shape the build manager skill states, its four headings in order', () => {
+  const skill = fs.readFileSync(path.join(SKILLS, 'ev-build-manager', 'SKILL.md'), 'utf8');
+  const stated = [...skill.matchAll(/^- `(## [^`]+)`/gm)].map(m => m[1]);
+  assert.deepEqual(stated, HANDOVER, 'the skill states the shape');
+  const heads = [...fs.readFileSync(path.join(ROOT, 'docs', 'handover.md'), 'utf8').matchAll(/^## .+$/gm)].map(m =>
+    m[0].trim()
+  );
+  assert.deepEqual(heads, HANDOVER, 'the handover has exactly these sections');
 });

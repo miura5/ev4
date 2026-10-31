@@ -1,3 +1,5 @@
+E.V. build chat: load the ev-build-manager skill before anything else.
+
 # CLAUDE.md: the build-chat contract for E.V. v4
 
 You are building **E.V. v4**, Matt's homemade study partner (a first-semester ADN nursing student; NUR 112 and

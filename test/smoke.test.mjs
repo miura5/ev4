@@ -55,10 +55,3 @@ test('B-199: the harness names its six checks and both plants', () => {
   assert.ok(h.includes("['page-error', 'broken-tab']"));
   assert.ok(h.includes("['390', { width: 390") && h.includes("['1280', { width: 1280"));
 });
-
-test('B-611 (D-408): CLAUDE.md step 5 says GitHub runs npm test and smoke, the full suite per batch before ship staging', () => {
-  const md = read('CLAUDE.md').replace(/\s+/g, ' ');
-  assert.match(md, /GitHub runs npm test and smoke on every push/);
-  assert.match(md, /full suite on GitHub once per batch, before ship staging/);
-  assert.doesNotMatch(md, /runs nightly and before live/, 'D-366 ended R-06: the full check gates no live release');
-});

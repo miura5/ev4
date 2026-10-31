@@ -11,16 +11,22 @@ chart command is `node tools/chart.mjs <command>` with the session's attribution
 
 ## Session start
 
-1. Read CLAUDE.md, then `docs/handover.md`. If the handover names another chat still managing, ask Matt which one
-   continues before firing anything (the one question allowed here).
-2. `node core/cli.mjs verify-deploy staging` and read its answer. Health: `brief` prints the live record's age or the
-   read to make; older than `spec.constants.health.staleHours` means a run is missing (D-180): read the live
-   watchdog's `last_run` with `list_triggers`, `report bug` unless an open task covers it, and take that first.
-3. `inbox`: file every Board comment (`report bug|request --from-comment <id>`, then the printed reply) and triage
-   every entry: `log <id> --triage task --dod ... --milestone ...`, `--triage join <id>`, or `--triage decline
-   --reason ...`. Nothing is deleted. A red last nightly (`.github/workflows/nightly.yml`, B-151; `inbox` prints the
-   read) is an inbox entry: `report bug --source "nightly <run id>"` unless an open task covers it.
-4. Check every agent the handover lists is running (D-358) before anything else.
+Matt types /clear before every bug, tweak, feature ask or "continue", so every chat starts cold. In this order:
+
+1. Read `docs/handover.md` (CLAUDE.md is already loaded).
+2. Check every agent and worktree it lists: `git worktree list`, and each agent's last push (`git log origin/main
+   --since=<its start> --oneline`). Agents started from a cleared chat may have stopped (D-358).
+3. Restart any work that stopped, from its worktree, with a builder message that says where it was.
+4. Then handle Matt's message; it is the job. "bug", "tweak" or "feature": file it (Intake) and give it to a builder.
+   "continue": take the next batch (The loop).
+
+Before acting on a release or a deploy, also: `node core/cli.mjs verify-deploy staging`; `brief`'s health age (older
+than `spec.constants.health.staleHours` means a run is missing, D-180: read the live watchdog's `last_run` with
+`list_triggers` and `report bug` unless an open task covers it); and `inbox`: file every Board comment (`report
+bug|request --from-comment <id>`, then the printed reply) and triage every entry (`log <id> --triage task --dod ...
+--milestone ...`, `--triage join <id>`, or `--triage decline --reason ...`; nothing is deleted). A red last nightly
+(`.github/workflows/nightly.yml`, B-151; `inbox` prints the read) is an inbox entry: `report bug --source "nightly
+<run id>"` unless an open task covers it.
 
 ## The loop (D-410)
 
@@ -81,7 +87,7 @@ he tests), take the next batch.
 
 ## Checks (D-408)
 
-GitHub runs npm test and smoke on every push. Once per batch, before ship staging, run the full suite on GitHub:
+GitHub runs npm test and smoke on every push. Run the full suite on GitHub once per batch, before ship staging:
 `gh workflow run nightly.yml` (until B-606's parallel checks workflow), then watch it with `gh run list --workflow
 nightly.yml --limit 1`. A failure goes back to the builder whose step caused it (found from the step commits). Never
 run full suites on the shared machine.
@@ -96,7 +102,13 @@ run full suites on the shared machine.
 - **The card:** `references/release-card.md`. Then tell Matt to test it; his testing is the acceptance.
 - **Live only on Matt's word** ("ship <sha>" in the chat or his Ship it tap): `references/ship.md`, Live.
 
-## Before the chat ends
+## The handover (docs/handover.md)
 
-Rewrite `docs/handover.md` (where things stand, what is running, agents and lanes, next steps, anything waiting on
-Matt), commit it and push. A new build manager reads it right after CLAUDE.md.
+Matt may /clear at any time, so the handover is always current. Rewrite it, commit and push at every state change: an
+agent started or finished, staging shipped, a card sent, live shipped. Short, current state only (git keeps history),
+in this fixed shape, these four headings in this order:
+
+- `## Running`: a table of each agent or lane, its task, worktree and branch, and when it started.
+- `## Waiting on Matt`: the card or question he has, or "nothing".
+- `## Next`: the next batch in order.
+- `## Last release`: live version and commit, staging version and commit, and the card's date.
