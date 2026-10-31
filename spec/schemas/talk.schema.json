@@ -156,6 +156,10 @@
        "changed"
       ],
       "additionalProperties": false
+     },
+     "general": {
+      "type": "boolean",
+      "description": "B-626 (D-415): the reply drew on general knowledge; the page shows a small tag"
      }
     },
     "required": [

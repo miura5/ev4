@@ -6,6 +6,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import EV from '../core/evcore.mjs';
+import { loadSchemas } from '../core/schemas.mjs';
+import { makeValidator } from '../core/validate.mjs';
+import { knownWriter } from '../tools/pwa-staging.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
@@ -53,4 +56,23 @@ test('B-626: the side chat (pop-up) renders the general-knowledge tag, as the co
     pop,
     /m\.general && !m\.pending\)\s*node\.append\(DS\.badge\(\{ text: 'general knowledge'[^)]*cls: 'gen-tag'/
   );
+});
+
+// B-626 (staging, Oct 31): the page saves a reply with general: true; the talk schema refused it, so the staging check
+// read talk/<date> as from no known writer
+test('B-626: a talk message with general: true fits the schema, and the staging check knows the page wrote it', () => {
+  const at = '2026-10-31T12:00:00Z';
+  const data = {
+    schema: 4,
+    writer: 'page',
+    source: 'E.V. Home',
+    at,
+    date: '2026-10-31',
+    messages: { 'm-20261031-120000-ev': { role: 'ev', text: 'Preload drops.', at, general: true } },
+  };
+  const r = makeValidator(loadSchemas())('talk', data, { id: '2026-10-31' });
+  assert.ok(r.ok, JSON.stringify(r.errors));
+  assert.equal(knownWriter({ c: 'talk', id: '2026-10-31', data }), 'page');
+  data.messages['m-20261031-120000-ev'].general = 'yes';
+  assert.equal(knownWriter({ c: 'talk', id: '2026-10-31', data }), null, 'a boolean only');
 });
