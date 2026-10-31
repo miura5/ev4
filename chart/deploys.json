@@ -6540,5 +6540,29 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "50767d3",
+  "time": "2026-10-31T10:09:46Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "92781b3",
+  "from": "92781b3",
+  "tasks": [
+   "B-260",
+   "B-261",
+   "B-527",
+   "B-625",
+   "B-623",
+   "B-626",
+   "B-624",
+   "B-639"
+  ],
+  "summary": "Also let's get that bug to the build chat as you said. Also another…; Live record: exams/E4 (Exam 4, dated 2026-10-21) still has status…; The Mini quiz promises five new questions but repeats the same; The Prep row on Today runs its words together with no spaces: the…; In the floating E.V. chat beside a note being written, 'Quiz me on…; E.V.'s chat replies keep adding 'check your materials' and 'my…; On the Today conversation page, asking for questions fails…; The staging deploy check flags a study session's check set (id…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.24"
  }
 ]
