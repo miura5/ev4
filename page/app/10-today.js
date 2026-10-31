@@ -1189,34 +1189,6 @@
       ['class', 'Classes'],
       ['study', 'Study'],
     ];
-    /** B-487 (D-368): one row for every course's due flashcards; it opens a due-cards session (Flip). */
-    function cardsRow() {
-      const n = E.cardsDue(
-        S.decks.filter(d => d && !d.retired),
-        today
-      ).length;
-      if (!n) return null;
-      const li = DS.line({ tag: 'li', key: 'cards', cls: 'li ti-cards' }); // not a day item: no tick, not counted
-      li.replaceChildren();
-      const tk = el('span', 'tk');
-      tk.append(svgIcon('M4 7h12v12H4zM8 4h12v12'));
-      const nm = el('button', 'fc-nm'); // not a task's name: it opens the cards, never a task's view
-      nm.type = 'button';
-      nm.append(titlePart('Cards · ' + n + ' due'));
-      DS.tip(nm, 'Cards · ' + n + ' due');
-      nm.addEventListener('click', () => startDueCards());
-      const st = btn('Start', () => startDueCards(), { cls: 'btn neutral sm ti-start hov' });
-      st.prepend(svgIcon('M8 5l11 7-11 7z'));
-      st.setAttribute('aria-label', 'Start: Cards · ' + n + ' due');
-      li.append(
-        tk,
-        DS.badge({ text: 'Study' }),
-        nm,
-        st, // B-494: the Cards row keeps Start on the phone too; it has no ⋯ menu
-        el('span', 't', '')
-      );
-      return li;
-    }
     function renderToday() {
       // B-448: the list may show an earlier day (the toolbar's arrows); a date that is today or later is today
       if (!(ui.listDay && ui.listDay < today)) ui.listDay = null;
@@ -1291,8 +1263,6 @@
       const offOf = it => P && P.offs.find(p => p.id === it.id);
       const first = todo.find(it => startable(it, isDone) && !offOf(it));
       const ul = el('ul', 'list ti-list');
-      const cards = !ld && (f === 'all' || f === 'study') ? cardsRow() : null; // B-487: Cards · n due
-      if (cards) ul.append(cards);
       for (const it of todo) {
         const p = offOf(it);
         const st = !p && startable(it, isDone) ? (it === first ? 'first' : 'hov') : null;
@@ -1306,7 +1276,7 @@
       const folds = ui.todayFolds || {};
       const kids = [...(P ? [restLine(P, bv)] : [])];
       const after = [];
-      if (todo.length || (P && P.adds.length) || cards) kids.push(ul);
+      if (todo.length || (P && P.adds.length)) kids.push(ul);
       else if (shown.length && f !== 'all')
         kids.push(
           el(

@@ -18,7 +18,7 @@
     }
     /**
      * B-540 (D-395): the kind a badge's word names (learn, practice, review, graded, skills, note, class, reading, quiz,
-     * session, flash), or '' when it names none. The sidebar's dots read it too, so a dot and its row's badge
+     * session), or '' when it names none. The sidebar's dots read it too, so a dot and its row's badge
      * share one colour (02-badge.css: [data-k] and .k-<kind> set --x from --kind-<kind>).
      */
     function dsKind(word) {
@@ -58,8 +58,6 @@
         lecture: 'learn',
         quiz: 'quiz',
         session: 'session',
-        flashcards: 'flash',
-        deck: 'flash',
       };
       return K[w] || '';
     }

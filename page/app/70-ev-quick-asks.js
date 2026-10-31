@@ -121,15 +121,6 @@
           [{ type: 'go', label: 'Review on Today', to: 'today' }],
         ];
       },
-      'weak spots to quizlet': () => {
-        const n = quizletCards().length;
-        return n
-          ? [
-              `${plural(n, 'open weak spot')} as Quizlet cards: the topic on the front, the objective and the last rationale you missed on the back.`,
-              [{ type: 'quizlet' }],
-            ]
-          : ['No open weak spots right now, so nothing to send to Quizlet.', []];
-      },
       'start a study session': () => startSession(),
       'start a note and study': () => startSession(), // B-408: the Notes demo's chip, typed
       'start session': () => startSession(),
@@ -148,33 +139,6 @@
       'add 5 minutes': async () => [await sessionCmd('extend'), []],
       '+5 min': async () => [await sessionCmd('extend'), []],
     };
-    // B-41: the open weak spots as Quizlet import text, nothing written to the record.
-    function quizletCards() {
-      return E.weakspotCards({ weakspots: M.models, objectives: S.objectives, sets: S.sets, answers: S.answers });
-    }
-    async function copyQuizlet(box) {
-      const cards = quizletCards();
-      if (!cards.length) {
-        toast('No open weak spots to copy.');
-        return 0;
-      }
-      const t = E.cardsText(cards);
-      try {
-        await navigator.clipboard.writeText(t); // B-380: no confirmation toast; the caller says what it copied
-      } catch {
-        if (box) {
-          const ta = el('textarea');
-          ta.readOnly = true;
-          ta.value = t;
-          ta.setAttribute('aria-label', 'Weak spots as Quizlet import text');
-          box.append(ta);
-          ta.focus();
-          ta.select();
-        }
-        toast('Select all and copy, then paste into Quizlet’s Import.');
-      }
-      return cards.length;
-    }
     // The greeting's finished job (D-125 as amended): its chip opens the result and answers with the job's card.
     function openJob(id) {
       const j = S.jobs.find(x => x.id === id);

@@ -351,5 +351,8 @@ test('D-386, D-388: the budget, summed over the split files: about 900 lines of 
 
 test('B-621: core/evcore.mjs stays at or under its 2,500-line cap; new logic goes in a focused module', () => {
   const n = fs.readFileSync(path.join(ROOT, 'core', 'evcore.mjs'), 'utf8').split('\n').length;
-  assert.ok(n <= 2500, `core/evcore.mjs: ${n} lines (cap 2,500); put new logic in its own module, as core/cards.mjs`);
+  assert.ok(
+    n <= 2500,
+    `core/evcore.mjs: ${n} lines (cap 2,500); put new logic in its own module, as core/study-plans.mjs`
+  );
 });

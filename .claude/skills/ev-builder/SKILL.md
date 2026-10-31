@@ -50,8 +50,8 @@ Then read, in this order:
 - **No edge-case hunting (D-366).** Test the behaviour Matt uses. A what-if (clock skew, rare drops, phrasing variants,
   timing windows) is one line in your report, never a test or a fix round.
 - **Page writes go through a core composer.** test/actions.test.mjs's D-200 lint fails a bare `write(variable)`.
-- **core/evcore.mjs is at its 2,500-line cap.** New logic goes in a focused module (as core/cards.mjs,
-  core/study-plans.mjs).
+- **core/evcore.mjs is at its 2,500-line cap.** New logic goes in a focused module (as core/study-plans.mjs,
+  core/sessions.mjs).
 - **Harnesses select by role and name, data-ui, data-key or the shell's region ids (D-387)**; never by visual class.
 - **Proprietary components are one file per component (D-388)**; a look change lands through tokens or components,
   never in a view (D-380, D-382).

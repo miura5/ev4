@@ -26,7 +26,6 @@ export const PROOF_JOBS = {
   'exam-retro': 'The retro for E3.',
   'clinical-prep': '2026-10-28: the skills to review for this clinical day.',
   'share-set': 'drill-E4-ch39 for my study group.',
-  flashcards: '10 flashcards on dosage units and abbreviations.',
   general: 'List the major electrolytes and one sign of each being low.',
 };
 /** The course each proof job names (B-621): the study guide is run once per course, so the real path proves the course
@@ -96,10 +95,6 @@ export function judge(kind, job, res, made) {
       });
     if (kind === 'exam-plan')
       lines.push({ ok: !!made, what: made ? `exam-plan: plans/${made.id} written` : 'exam-plan: no plan saved' });
-    if (kind === 'flashcards') {
-      const n = result.deckId ? result.deckCards || 0 : 0; // B-487: a deck in E.V. (decks/<id>)
-      lines.push({ ok: n > 0, what: `flashcards: decks/${result.deckId || '-'} holds ${n} cards` });
-    }
   }
   lines.push({ ok: !!(job && job.data.fired && job.data.fired.ok), what: `${kind}: handed to the runner at once` });
   return lines;

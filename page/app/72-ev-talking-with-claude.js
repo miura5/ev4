@@ -346,25 +346,13 @@
         {
           name: 'show_card',
           description:
-            'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. quizlet: the open weak spots as Quizlet import cards, copied on his tap. prep: what to bring on a class, lab, clinical or validation day (date YYYY-MM-DD, default today), built from his calendar, announcements, course calendar, library and kit, each item naming its source; when he asks what to bring, show it instead of listing things yourself. Returns "shown".',
+            'Attach a live card under your reply. today: today\'s list (filter "open" or "all"). review: today\'s review, answerable inline. readiness: the next exam. audit: the readiness audit, per objective of the next exam with what to reread. dates: next N days (days 1 = tomorrow). weakspots: most due. set: a practice set by id, answerable inline. job: a background job by id. chart: accuracy over the last 7 days. checkin: energy check. prep: what to bring on a class, lab, clinical or validation day (date YYYY-MM-DD, default today), built from his calendar, announcements, course calendar, library and kit, each item naming its source; when he asks what to bring, show it instead of listing things yourself. Returns "shown".',
           inputSchema: {
             type: 'object',
             properties: {
               type: {
                 type: 'string',
-                enum: [
-                  'today',
-                  'review',
-                  'readiness',
-                  'audit',
-                  'dates',
-                  'weakspots',
-                  'set',
-                  'job',
-                  'chart',
-                  'quizlet',
-                  'prep',
-                ],
+                enum: ['today', 'review', 'readiness', 'audit', 'dates', 'weakspots', 'set', 'job', 'chart', 'prep'],
               },
               date: { type: 'string', description: 'prep only: the day, YYYY-MM-DD' },
               filter: { type: 'string', enum: ['open', 'all'] },
@@ -404,7 +392,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. flashcards: a flashcard deck on a topic (put the topic and number in the brief); the deck is made in E.V. for the course, studied in Study under Flashcards. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -1017,8 +1005,8 @@
         {
           name: 'study_session',
           description: COMMENT
-            ? 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (the page reads along and comments only when a line earns it); on the phone, a session that keeps time and asks about his objectives and weak spots. quiz: 1 to 3 questions now, as a check card. end: wrap up and save the summary, weak spots and flashcards. break, resume. Returns what happened.'
-            : 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (checks on his new writing every 7 minutes); on the phone, a session that keeps time and asks about his objectives and weak spots. end: wrap up and save the summary, weak spots and flashcards. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
+            ? 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (the page reads along and comments only when a line earns it); on the phone, a session that keeps time and asks about his objectives and weak spots. quiz: 1 to 3 questions now, as a check card. end: wrap up and save the summary and weak spots. break, resume. Returns what happened.'
+            : 'Run his study session, only when he asks for a session (to quiz him, use quiz_me). start: on a computer, a new note in Notes with a 25-minute session (checks on his new writing every 7 minutes); on the phone, a session that keeps time and asks about his objectives and weak spots. end: wrap up and save the summary and weak spots. break, resume, or extend (5 more minutes before the next check). Returns what happened.',
           inputSchema: {
             type: 'object',
             properties: { action: { type: 'string', enum: ['start', 'end', 'break', 'resume', 'extend', 'quiz'] } },

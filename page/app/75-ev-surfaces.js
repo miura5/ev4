@@ -9,16 +9,18 @@
     // surface as it opens and nods at a check-off made in it.
     // A reply's cards as Captions shows them. B-183: a copy card is the message's own Copy chip (68-ev-thread), never a
     // surface; B-362: a go card is the line's own button (Open the week), never a surface. D-416: a card of a retired
-    // feature (skills run, workout, check-in) in an old line is left out.
-    const RETIRED_CARDS = ['skill', 'workout', 'checkin'];
+    // feature (skills run, workout, check-in, the Quizlet copy, a flashcards job) in an old line is left out.
+    const RETIRED_CARDS = ['skill', 'workout', 'checkin', 'quizlet'];
+    const deckJob = c => c.type === 'job' && S.jobs.some(j => j.id === c.id && j.kind === 'flashcards');
     const shownCards = m =>
-      (m.cards || []).filter(c => c && c.type !== 'copy' && c.type !== 'go' && !RETIRED_CARDS.includes(c.type));
+      (m.cards || []).filter(
+        c => c && c.type !== 'copy' && c.type !== 'go' && !RETIRED_CARDS.includes(c.type) && !deckJob(c)
+      );
     const SF = { src: null, list: [], open: -1, last: 0, el: null, glanced: null, more: new Set() };
     const SF_CHEV =
       '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     const sfTitle = {
       yourturn: 'Your turn',
-      quizlet: 'Quizlet',
       job: 'Background job',
       newplan: 'A new study plan',
       session: 'Study session',

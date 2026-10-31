@@ -152,16 +152,16 @@
       },
       "quizlet": {
        "type": "string",
-       "description": "B-479: a flashcards job: its cards as Quizlet import text, term TAB definition, one card per line"
+       "description": "B-479: a flashcards job: its cards as Quizlet import text, term TAB definition, one card per line (D-416: flashcards are retired; kept so old jobs still validate, no code writes it)"
       },
       "deckId": {
        "type": "string",
-       "description": "B-487: a flashcards job: the decks/<id> it made"
+       "description": "B-487: a flashcards job: the decks/<id> it made (D-416: flashcards are retired; kept so old jobs still validate, no code writes it)"
       },
       "deckCards": {
        "type": "integer",
        "minimum": 0,
-       "description": "B-487: a flashcards job: how many cards its deck holds"
+       "description": "B-487: a flashcards job: how many cards its deck holds (D-416: flashcards are retired; kept so old jobs still validate, no code writes it)"
       }
      },
      "required": [],

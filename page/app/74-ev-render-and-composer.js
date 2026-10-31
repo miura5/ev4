@@ -337,40 +337,6 @@
         { tier: 'local', replyTo: mid }
       );
     }
-    async function flashcardSend(text, fa) {
-      const mid = await mattSay(text);
-      const r = await startJob({
-        kind: 'flashcards',
-        title: fa.title,
-        brief: fa.brief,
-        course: fa.course,
-        deck: fa.deck,
-      });
-      await evSay(
-        r.fired.ok
-          ? fa.deck
-            ? `Making ${fa.count} more cards for ${fa.title.replace(/^Flashcards: /, '')} now. They join the deck; the cards it has keep their schedules.`
-            : `Making ${fa.count} ${fa.course ? fa.course + ' ' : ''}flashcards now. The deck lands in Study under Flashcards.`
-          : 'Couldn’t start the deck: ' + fireCopy(r.fired.error),
-        r.id ? [{ type: 'job', id: r.id }] : [],
-        { tier: 'local', replyTo: mid }
-      );
-    }
-    async function cardsStudySend(text) {
-      const mid = await mattSay(text);
-      const n = E.cardsDue(
-        S.decks.filter(d => d && !d.retired),
-        today
-      ).length;
-      await evSay(
-        n
-          ? `Opening your ${n} due ${n === 1 ? 'card' : 'cards'}.`
-          : 'No cards are due right now. Your decks are in Study under Flashcards.',
-        [],
-        { tier: 'local', replyTo: mid }
-      );
-      if (n) startDueCards();
-    }
     async function sendText(text) {
       try {
         await sendTextNow(text);
@@ -402,19 +368,6 @@
       const nt = NOTE_ASK.exec(text);
       if (nt) {
         await noteSave(text, nt[1]);
-        return;
-      }
-      // B-487 (closes B-485): a line asking for flashcards starts the flashcards job here, by code; no model routes it
-      const fa = E.flashcardAsk(text, S.decks); // B-496: "add 20 cards to <deck>" names one of his decks
-      if (fa) {
-        input.placeholder = placeholder();
-        await flashcardSend(text, fa);
-        return;
-      }
-      // B-495: a line about studying his cards ("study my cards", "review flashcards") opens the due ones, no job
-      if (E.cardsStudyAsk(text)) {
-        input.placeholder = placeholder();
-        await cardsStudySend(text);
         return;
       }
       // B-357: with the demo's five chips (B-358) a finished job's Open the … is asked in words, as Your turn is

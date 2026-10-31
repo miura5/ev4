@@ -262,7 +262,6 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 /* opening: E.V. greets at full size, the greeting sits under the core */
 .ev-card{padding:16px 18px;gap:10px}
 .ev-card .big{font-size:var(--fs-5);letter-spacing:-.02em}
-/* B-479: a flashcards job's Quizlet import text, as Copy copies it */
 .links{display:flex;flex-direction:column;gap:4px}
 .links a{color:var(--accent-text);font-weight:600;overflow-wrap:anywhere}
 .qchip.go svg{width:13px;height:13px}

@@ -55,8 +55,7 @@ test('B-324: each worker kind runs on the record and writes what the worker run 
   };
   for (const kind of Object.keys(spec.jobs.kinds)) {
     const { r, asks, writes, id } = await run(kind, { brief: briefs[kind] || 'fluid volume deficit' });
-    // B-496: a flashcards job of 20 whose first answer brings 3 asks once more, for the 17 missing
-    assert.equal(asks.length, kind === 'flashcards' ? 2 : 1, kind + ': its asks');
+    assert.equal(asks.length, 1, kind + ': its asks');
     const all = flat(writes);
     // the running status first, on its own; then the fold's writes in one batch
     assert.equal(writes[0].length, 1);
@@ -448,36 +447,22 @@ test('B-232 (D-115): the staging check knows a weak-spot bump copy as the migrat
   assert.equal(knownWriter(doc('notes', copy.id, copy.data), new Map(), have), null, 'only in legacy');
 });
 
-test('B-487: a flashcards job makes a deck in E.V. (B-479’s Quizlet block retired), and no set', async () => {
-  const { writes } = await run('flashcards', { brief: 'dosage terms, units and abbreviations' });
-  const all = flat(writes);
-  const done = all.find(w => w.collection === 'jobresults' && w.data.status === 'done');
-  assert.ok(done, 'the job is done');
-  assert.equal(done.data.result.quizlet, undefined);
-  const deck = all.find(w => w.collection === 'decks');
-  assert.equal(done.data.result.deckId, deck.id);
-  // B-496: 20 asked; the stub's first answer brings 3, and the one top-up the other 17, on new terms
-  assert.equal(Object.keys(deck.data.cards).length, 20);
-  assert.match(done.data.result.text, /^Deck ready: 20 cards/);
-  assert.ok(!all.some(w => w.collection === 'sets'), 'no practice set');
-  const talk = all.find(w => w.collection === 'talk');
-  const msg = Object.values(talk.data.messages)[0];
-  assert.match(msg.text, /^Deck ready/);
-  assert.deepEqual(msg.cards, [{ type: 'job', id: done.id }]);
-});
-
-test('B-479: the Quizlet block is term TAB definition, one card per line, verify marks kept', async () => {
-  const EV = (await import('../core/evcore.mjs')).default;
-  assert.equal(
-    EV.cardsText([
-      { term: ' mg/kg ', definition: 'milligrams per\tkilogram\nof body weight' },
-      { term: 'BSA', definition: 'body surface area [verify]', verify: true },
-      { term: 'q6h', definition: 'every 6 hours', verify: true },
-      { term: '', definition: 'no term' },
-      { term: 'PRN' },
-    ]),
-    'mg/kg\tmilligrams per kilogram of body weight\nBSA\tbody surface area [verify]\nq6h\tevery 6 hours [verify]'
-  );
+test('D-416 (B-647): flashcards are retired: no kind starts one, and an old flashcards job still validates', () => {
+  assert.ok(!Object.keys(spec.jobs.kinds).includes('flashcards'));
+  const doc = {
+    schema: 2,
+    writer: 'page',
+    at: NOW.toISOString(),
+    source: 'E.V. Home',
+    kind: 'flashcards',
+    title: 'Flashcards: dosage terms',
+    brief: '10 flashcards on dosage terms',
+    course: 'NUR 112',
+    deck: 'deck-20261029-120000-dosage',
+  };
+  const v = validate('jobs', doc, { id: 'job-20261029-120000-flashcards' });
+  assert.ok(v.ok, JSON.stringify(v.errors || v).slice(0, 300));
+  assert.equal(spec.collections.decks.retired, true);
 });
 
 test('B-462: a finished job is stamped when it finishes, and its done message sits after its start', async () => {
@@ -505,12 +490,11 @@ test('B-462: a finished job is stamped when it finishes, and its done message si
   assert.equal(key, 'm-20261025-150135000-job');
 });
 
-test('B-479: the chat’s start_job can start every kind it offers, flashcards included (the jobs schema takes them)', () => {
+test('B-479: the chat’s start_job can start every kind it offers (the jobs schema takes them)', () => {
   // start_job's kind enum is Object.keys(spec.jobs.kinds) (page/app/72-ev-talking-with-claude.js); the page's
   // jobs/<id> write is held to the jobs schema, which refused flashcards on staging (Oct 29)
   const chat = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
   assert.match(chat, /kind: \{ type: 'string', enum: Object\.keys\(KINDS\) \}/);
-  assert.ok(Object.keys(spec.jobs.kinds).includes('flashcards'));
   for (const kind of Object.keys(spec.jobs.kinds)) {
     const doc = {
       schema: 2,
@@ -518,13 +502,12 @@ test('B-479: the chat’s start_job can start every kind it offers, flashcards i
       at: NOW.toISOString(),
       source: 'E.V. Home',
       kind,
-      title: 'Flashcards: nutrition and elimination terms',
-      brief: 'Make me 8 flashcards on nutrition and elimination terms for NUR 112',
+      title: 'Nutrition and elimination terms',
+      brief: 'Nutrition and elimination terms for NUR 112',
     };
-    const v = validate('jobs', doc, { id: 'job-20261029-120000-flashcards' });
+    const v = validate('jobs', doc, { id: 'job-20261029-120000-' + kind });
     assert.ok(v.ok, kind + ': ' + JSON.stringify(v.errors || v).slice(0, 300));
   }
-  assert.match(spec.jobs.kinds.flashcards.guide, /never a reason for failed/);
 });
 
 test('B-621: a BIO 201 study guide is proved free of NCLEX, and the lines become annotations', async () => {

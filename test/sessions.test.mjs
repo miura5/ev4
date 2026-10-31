@@ -294,7 +294,6 @@ test('session prompts and parsing: Study Watch wording, record context, 1 to 3 i
   assert.deepEqual(w.connections, ['Sodium follows water']);
   assert.equal(w.noteTodos.length, 0);
   assert.deepEqual(w.cards, [{ term: 'Isotonic', definition: '0.9% NaCl stays in the vessels' }]);
-  assert.equal(EV.cardsText(w.cards), 'Isotonic\t0.9% NaCl stays in the vessels');
   assert.match(
     EV.wrapPrompt({
       noteName: 'Ch 42',

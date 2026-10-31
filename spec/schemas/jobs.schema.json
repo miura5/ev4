@@ -50,7 +50,8 @@
     "design",
     "plan",
     "ship"
-   ]
+   ],
+   "description": "flashcards is legacy (D-416, B-647): old jobs of that kind stay valid; spec.jobs.kinds no longer lists it, so nothing starts one."
   },
   "title": {
    "type": "string",
@@ -62,12 +63,12 @@
   },
   "course": {
    "type": "string",
-   "description": "B-449: an exam-plan job: the course to plan; B-487: a flashcards job: the course its deck is for"
+   "description": "B-449: an exam-plan job: the course to plan; B-487: a flashcards job: the course its deck is for (D-416: flashcards are retired; kept so old jobs still validate, no code writes it)"
   },
   "deck": {
    "type": "string",
    "pattern": "^deck-[a-z0-9-]{1,120}$",
-   "description": "B-496: a flashcards job that adds cards to this deck (decks/<id>) instead of making a new one"
+   "description": "B-496: a flashcards job that adds cards to this deck (decks/<id>) instead of making a new one (D-416: flashcards are retired; kept so old jobs still validate, no code writes it)"
   },
   "revise": {
    "type": "string",

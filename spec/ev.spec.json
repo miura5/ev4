@@ -1590,7 +1590,7 @@
     "deck-<YYYYMMDD-HHMMSS>-<slug>",
     "deck-proof-<YYYYMMDDHHMMSS>-<slug>"
    ],
-   "holds": "B-487 (D-368): a flashcard deck for one course: title, course and its cards map (c-<n>), each card with term, definition, an optional verify mark and its own SM-2 schedule; the page adds, edits, rates and retires cards as marks, and a flashcards job that names the deck adds new cards to it (B-496); nothing is deleted",
+   "holds": "B-487 (D-368): a flashcard deck for one course: title, course and its cards map (c-<n>), each card with term, definition, an optional verify mark and its own SM-2 schedule; the page adds, edits, rates and retires cards as marks, and a flashcards job that names the deck adds new cards to it (B-496); nothing is deleted. Retired (D-416, B-647): decks are no longer read or written; the records are kept (B-11)",
    "fromV3": "new (D-368)",
    "schema": "spec/schemas/decks.schema.json",
    "marks": {
@@ -1604,7 +1604,8 @@
     "retired": [
      "page"
     ]
-   }
+   },
+   "retired": true
   },
   "answers": {
    "class": "Fact",
@@ -4264,10 +4265,6 @@
     "label": "Shareable practice page",
     "guide": "The page is already built in code from the set the brief names (D-110): its questions and options, each answer and rationale shown after an attempt, no name and none of his weak-spot data. If context.refused says why the set cannot be shared, say that in failed and make no call. Otherwise make the one Artifact publish in context.groups exactly as listed, change nothing in the page, and answer with one or two warm lines in text (it is private until he shares it from the page’s Share menu; he answers the same set in E.V. so his weak spots still track) and the returned link first in links."
    },
-   "flashcards": {
-    "label": "Flashcards",
-    "guide": "Write the number of flashcards the brief asks for (default 20; a larger ask comes in batches of at most 40, each batch saying how many and the terms already made, which no card repeats) on its topic, grounded in the passages given from his course materials. Each card in items: term (the word, abbreviation, unit or short question) and definition (the meaning, a value with its unit, or the short answer; one line); verify: true on a card whose point is not in his materials. When no passage covers the topic, still write every card from general knowledge, each with verify: true; thin or missing materials are never a reason for failed. The cards become a deck in E.V. for the course, studied there with spaced repetition: make no set and no doc, and leave links out. In text, one short line on what the cards cover."
-   },
    "general": {
     "label": "Background task",
     "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
@@ -5955,9 +5952,6 @@
     },
     {
      "collection": "sets"
-    },
-    {
-     "collection": "decks"
     },
     {
      "collection": "answers"

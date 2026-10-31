@@ -68,18 +68,7 @@ export const CODE_STEPS = {
     const idx = library(db);
     const q = `${job.title} ${job.brief}`;
     const context = {};
-    if (kind === 'study-guide' || kind === 'flashcards') context.passages = passages(idx, q, 6); // B-479
-    if (kind === 'flashcards' && job.deck) {
-      // B-496: more cards for a deck he has: its title and the terms it holds, which the new cards must not repeat
-      const deck = (db.decks || []).find(d => d.id === job.deck);
-      if (deck)
-        context.deck = {
-          title: deck.title,
-          terms: EV.deckCards(deck)
-            .map(c => c.term)
-            .slice(0, 300),
-        };
-    }
+    if (kind === 'study-guide') context.passages = passages(idx, q, 6); // B-479
     if (kind === 'practice-set') {
       context.weakSpots = EV.rankDue(ms.filter(EV.isActive), '9999-12-31', db.exams || [])
         .map(w => ({ w, s: EV.similarity(q, w.topic + ' ' + w.objective) }))
@@ -332,38 +321,6 @@ export const AGENT_FOLDS = {
         result.setId = setId;
         say.push(`Practice set ${setId}: ${items.length} of ${raw.length} questions kept.`);
       } else result.text += ' (The questions didn’t pass my checks, so nothing was saved.)';
-    }
-    if (!failed && job.kind === 'flashcards') {
-      // B-487 (D-368): the cards become a deck in E.V. for the course (B-479's Quizlet block is retired). B-496: a job
-      // that names a deck adds its new cards to that deck, never touching the cards it has.
-      const deck = job.deck ? (db.decks || []).find(d => d.id === job.deck && !d.retired) || null : null;
-      const r = EV.deckFromJob({
-        job,
-        items: answer.items || [],
-        now: ctx.now,
-        source: ctx.source,
-        deck,
-        courses: spec && spec.courses,
-      });
-      const cards = r.n === 1 ? '1 card' : r.n + ' cards';
-      // B-496: the result says what was made, never more: the count asked, how many new cards landed, and the rest
-      // named as missing; with none added, no line of the model's ("Here are 10 more cards…") stands
-      const asked = ctx.askedCards || EV.jobCardCount(job);
-      const short = r.n < asked ? ` Made ${r.n} of the ${asked} asked; ask again to add more.` : '';
-      if (job.deck && !deck) result.text = 'Its deck isn’t in the record any more, so no cards were added.';
-      else if (r.n) {
-        writes.push(r.write);
-        result.deckId = r.write.id;
-        result.deckCards = r.n;
-        result.text =
-          (r.added
-            ? `Added ${cards} to ${r.title}, in Study under ${r.course} Flashcards.`
-            : `Deck ready: ${cards} on ${r.title}, in Study under ${r.course} Flashcards.`) + short;
-        say.push(`Deck ${r.write.id}: ${r.added ? '+' : ''}${cards} of ${asked}.`);
-      } else
-        result.text = r.added
-          ? `No cards were added to ${r.title}: every card that came back was one it already has. Ask again, naming other points to cover.`
-          : 'No cards came back, so no deck was made. Try again.';
     }
     const planCtx = job.kind === 'exam-plan' && ctx.jobBrief ? ctx.jobBrief.context || {} : {};
     const saved = (planId, data, days) => {

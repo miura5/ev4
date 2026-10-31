@@ -204,7 +204,6 @@
           const rec = msgEl(m, false, false);
           rec.el.classList.add('earlier');
           rec.el.classList.remove('current', 'last');
-          renderCards(rec, m);
           kids.push(rec.el);
         }
       }
@@ -221,7 +220,6 @@
         mattIdx = lastMatt ? cur.indexOf(lastMatt) : -1;
       for (const m of cur) {
         const rec = msgEl(m, m === lastEv && !m.greeting, m === lastEv); // B-572: her Arc beside her newest line
-        renderCards(rec, m);
         rec.el.classList.remove('earlier');
         rec.el.classList.toggle('current', m === lastEv && !(mattIdx > nowIdx));
         rec.el.classList.toggle('last', m === lastMatt);

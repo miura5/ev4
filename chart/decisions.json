@@ -8,7 +8,8 @@
   "supersedes": [
    "D-108",
    "D-107",
-   "D-070"
+   "D-070",
+   "D-368"
   ],
   "amends": [],
   "source": "log"
@@ -536,7 +537,7 @@
   "date": "Oct 29",
   "title": "Flashcards return inside E.V. (Matt, Oct 29): course decks with Flip, Multiple choice and Written study, Anki-style spaced repetition per card, a Learn mode, due cards on Today, and a paste import of Quizlet export text; Quizlet stays read-only (B-17) and E.V. no longer routes cards to Quizlet",
   "why": "Matt studies almost entirely in E.V., rarely opens Quizlet and pays for Quizlet Plus; Quizlet has no public API and B-17 keeps it read-only, so the only integration would be copy-paste. E.V. already has the question runner, sets, scoring and due-date scheduling, so decks are a small extension; it replaces B-479/B-485's Quizlet block as the main path.",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": [],
   "source": "log"

@@ -1429,7 +1429,6 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
   const files = [...src.matchAll(/^import \{ (\w+) \} from '\.\/([\w-]+)\.mjs';$/gm)].map(m => m[2]);
   assert.deepEqual(files.sort(), [
     'canvas-rules',
-    'cards',
     'conversation',
     'course-scope',
     'insights',
@@ -1441,7 +1440,6 @@ test("B-160: what stays in E.V. core is the record's rules, under 2,500 lines; e
     'prep',
     'sessions',
     'share',
-    'skills',
     'study-plans',
   ]);
 });
@@ -1487,7 +1485,6 @@ const SPLIT_FILES = [
     ['sessionState', 'closeSession', 'commentPrompt', 'parseComment', 'noteDelta'],
   ],
   ['share', 'makeShare', /function (shareableSet|sharePage)\(/, ['shareableSet', 'sharePage']],
-  ['skills', 'makeSkills', /function weakspotCards/, ['weakspotCards', 'cardsText']],
 ];
 for (const [file, factory, moved, names] of SPLIT_FILES)
   test(`B-155 to B-160: core/${file}.mjs is one factory with no imports, moved out of E.V. core, which still exports its names`, async () => {

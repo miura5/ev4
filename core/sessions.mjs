@@ -1161,7 +1161,6 @@ export function makeSessions(core) {
     const left = kept.match(/\d+(?:\.\d+)?/g) || [];
     return left.length === 1 && Number(left[0]) === v;
   }
-  /** Flashcards as Quizlet import text: term<TAB>definition per line. */
 
   return {
     sessionState,

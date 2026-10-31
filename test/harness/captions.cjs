@@ -861,7 +861,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.evaluate(() => {
       window.__chatScript = [
         { tool: 'show_card', input: { type: 'dates', days: 14 } },
-        { tool: 'show_card', input: { type: 'quizlet' } },
+        { tool: 'show_card', input: { type: 'chart' } },
         { tool: 'show_card', input: { type: 'review' } },
       ];
       window.__chatPre = '';
@@ -909,6 +909,7 @@ async function sideBySide(browser, left, right, out, vp) {
         };
       });
     const lc = await sfView();
+    const CHART = /^(Last 7 days · |No answers in the last week yet)/; // D-416: the chart card stands in for the retired Quizlet one
     const listStage = A.stage; // B-209 (D-213): a surface does not step her down
     ok(
       `[${scheme}] a reply with three cards opens one surface with two rows under its head line, no pill and no close; none under her line`,
@@ -916,7 +917,7 @@ async function sideBySide(browser, left, right, out, vp) {
         lc.open &&
         /^\d+ dates? in the next two weeks$/.test(lc.head || '') &&
         lc.rows.length === 2 &&
-        lc.rows[0] === 'Quizlet' &&
+        CHART.test(lc.rows[0] || '') &&
         /^Review · /.test(lc.rows[1]) &&
         lc.rowH.every(h => h <= 48) &&
         !lc.pills &&
@@ -956,12 +957,12 @@ async function sideBySide(browser, left, right, out, vp) {
     );
     ok(`[${scheme}] she glances toward the surface as it opens (the core's event log)`, glanced);
     await page.screenshot({ path: `${shots}/captions-surface-${scheme}.png` });
-    await page.click('#ev-surf .sf-row[data-type="quizlet"]');
+    await page.click('#ev-surf .sf-row[data-type="chart"]');
     await page.waitForTimeout(300);
     const q = await sfView();
     ok(
       `[${scheme}] tapping a row opens it in place and folds the open one to a row`,
-      q.head === 'Quizlet' &&
+      CHART.test(q.head || '') &&
         q.open &&
         q.cards === 1 &&
         /^\d+ dates? in the next two weeks$/.test(q.rows[0] || '') &&
@@ -973,7 +974,7 @@ async function sideBySide(browser, left, right, out, vp) {
     const f = await sfView();
     ok(
       `[${scheme}] its head line folds it to that one line (rows kept, her core back to the conversation size)`,
-      f.head === 'Quizlet' &&
+      CHART.test(f.head || '') &&
         !f.open &&
         f.cards === 0 &&
         f.rows.length === 2 &&
@@ -984,7 +985,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await page.click('#ev-surf .sf-head');
     await page.waitForTimeout(300);
     const u = await sfView();
-    ok(`[${scheme}] and unfolds from it`, u.head === 'Quizlet' && u.open && u.cards === 1, JSON.stringify(u));
+    ok(`[${scheme}] and unfolds from it`, CHART.test(u.head || '') && u.open && u.cards === 1, JSON.stringify(u));
     // A review answered in the surface: she nods, and its line reads Review · n of N folded and open.
     await page.click('#ev-surf .sf-row[data-type="review"]');
     await page.waitForTimeout(300);

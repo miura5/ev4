@@ -13,7 +13,6 @@
 import { makeLibrary } from './library.mjs';
 import { makeSessions } from './sessions.mjs';
 import { makeConversation } from './conversation.mjs';
-import { makeSkills } from './skills.mjs';
 import { makePrep } from './prep.mjs';
 import { makeInsights } from './insights.mjs';
 import { makeMirror } from './mirror.mjs';
@@ -22,7 +21,6 @@ import { makeShare } from './share.mjs';
 import { makeItemKinds } from './item-kinds.mjs';
 import { makeNotes } from './notes.mjs';
 import { makeStudyPlans } from './study-plans.mjs';
-import { makeCards } from './cards.mjs';
 import { makeCourseScope } from './course-scope.mjs';
 import { makeMeasures } from './measures.mjs';
 const EVCore = (() => {
@@ -2314,9 +2312,6 @@ const EVCore = (() => {
     survivors,
   });
 
-  // ---------------------------------------------------------------- Quizlet cards from weak spots · core/skills.mjs (B-158)
-  const SKILLS = makeSkills({ collectAttempts, isActive });
-
   // ---------------------------------------------------------------- shareable practice pages (D-110) · core/share.mjs (B-160)
   // ---------------------------------------------------------------- his notes' block model (B-402, D-325) · core/notes.mjs
   const NOTES = makeNotes();
@@ -2351,9 +2346,7 @@ const EVCore = (() => {
     ...MIRROR, // the Markdown mirror and the backup's restore plan
     ...CANVAS, // Canvas sync's code side
     ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
-    ...SKILLS, // Quizlet cards and weak-spot cards
     ...SHARE, // shareable practice pages (D-110)
-    ...makeCards({ chicagoDate, addDays, guessCourse: LIB.guessCourse, defaultCourse }), // B-487: decks (core/cards.mjs)
     ...makeStudyPlans({ ...LIB, addDays, liveDates, isActive, examViews, planDrafts, planViews, taskDone, editBase }),
     ...NOTES, // his notes' blocks: the editor's model, paste and the saved document (B-402)
     VERSION,

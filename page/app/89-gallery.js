@@ -32,7 +32,7 @@
       ['--warn', '--surface', 3, 'Coded: almost, attention; kind Skills prep'],
       ['--bad', '--surface', 3, 'Coded: urgent, wrong; kind Graded'],
       ['--info', '--surface', 3, 'Coded: information; kind Learn, Reading'],
-      ['--violet', '--surface', 3, 'Coded: study; kind Practice, Session, Flashcards'],
+      ['--violet', '--surface', 3, 'Coded: study; kind Practice, Session'],
       ['--teal', '--surface', 3, 'Kind Review, Quiz'],
       ['--slate', '--surface', 3, 'Kind Note'],
     ];
@@ -114,7 +114,7 @@
         'Choice',
         'B-508',
         'rest, selected, correct, wrong, revealed, disabled',
-        'The answer options in a quiz or flashcard.',
+        'The answer options in a quiz.',
       ],
       ['meter', 'Meter', 'B-508', 'empty, partial, complete', 'A bar or number that shows progress.'],
       [
@@ -591,23 +591,12 @@
         cells.push(galCell('composer', f));
       } else if (ui === 'choice') {
         const ch = { options: ['Hyponatremia', 'Hyperkalemia', 'Hypocalcemia'], correct: 0 };
+        cells.push(galCell('rest', DS.choice({ options: ch.options })));
         cells.push(
-          galCell(
-            'rest',
-            mcBlock(ch, null, () => {})
-          )
+          galCell('correct', DS.choice({ options: ch.options, picked: 0, correct: ch.correct, answered: true }))
         );
         cells.push(
-          galCell(
-            'correct',
-            mcBlock(ch, 0, () => {})
-          )
-        );
-        cells.push(
-          galCell(
-            'wrong, revealed',
-            mcBlock(ch, 2, () => {})
-          )
+          galCell('wrong, revealed', DS.choice({ options: ch.options, picked: 2, correct: ch.correct, answered: true }))
         );
       } else if (ui === 'meter') {
         for (const [v, cls, label] of [
@@ -716,29 +705,13 @@
         empty('Nothing else today.')
       );
       today.append(ul);
-      const card = el('div', 'ui-card gal-pat');
-      card.append(el('h3', null, 'Flashcard'));
-      const front = el('div', 'fc-card');
-      front.append(el('div', 'fc-q', 'Heparin antidote'));
-      const back = el('div', 'fc-card shown');
-      back.append(el('div', 'fc-q', 'Heparin antidote'), el('div', 'fc-a', 'Protamine sulfate'));
-      card.append(galCell('front', front), galCell('back', back));
       const quiz = el('div', 'ui-card gal-pat');
       quiz.append(el('h3', null, 'Quiz question'), el('p', 'gal-q', 'Serum sodium of 128 mEq/L is'));
       const ch = { options: ['Hyponatremia', 'Normal', 'Hypernatremia'], correct: 0 };
       quiz.append(
-        galCell(
-          'unanswered',
-          mcBlock(ch, null, () => {})
-        ),
-        galCell(
-          'right',
-          mcBlock(ch, 0, () => {})
-        ),
-        galCell(
-          'wrong',
-          mcBlock(ch, 1, () => {})
-        )
+        galCell('unanswered', DS.choice({ options: ch.options })),
+        galCell('right', DS.choice({ options: ch.options, picked: 0, correct: ch.correct, answered: true })),
+        galCell('wrong', DS.choice({ options: ch.options, picked: 1, correct: ch.correct, answered: true }))
       );
       const week = el('div', 'ui-card gal-pat');
       week.append(el('h3', null, 'Plan week'));
@@ -757,7 +730,7 @@
       thread.append(el('h3', null, 'Thread'), galThread(true));
       const grid = el('div', 'gal-pats');
       grid.dataset.state = 'today'; // built from today's helpers until the patterns layer lands
-      grid.append(today, card, quiz, week, thread);
+      grid.append(today, quiz, week, thread);
       s.append(grid);
       return s;
     }

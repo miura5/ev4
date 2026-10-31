@@ -781,7 +781,7 @@
         return J.asRunDb(db);
       };
       const meta = document.querySelector('meta[name="ev-release"]');
-      // B-496: a page run always ends: each ask that gets no answer in askTimeoutMs is stopped, and no flashcards batch
+      // B-496: a page run always ends: each ask that gets no answer in askTimeoutMs is stopped, and no plan batch
       // starts past the run's window, well inside the 20 minutes after which a run left running is marked failed
       const began = Date.now();
       await J.runJob({

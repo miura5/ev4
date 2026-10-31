@@ -431,13 +431,6 @@
           if (st.live) box.append(liveSince(jobSince(j), st.live, 'meta job-since'));
           box.append(el('p', 'meta', st.detail));
         }
-        // B-479: a flashcards job's cards, as the Quizlet import text Copy puts on the clipboard, exactly
-        const qz = j.status === 'done' && typeof r.quizlet === 'string' && r.quizlet ? r.quizlet : '';
-        if (qz) {
-          const pre = el('pre', 'quizlet-block', qz);
-          pre.setAttribute('aria-label', 'Flashcards as Quizlet import text');
-          box.append(pre);
-        }
         const links = (r.links || []).filter(l => l && /^https:\/\//.test(l.url || ''));
         if (links.length) {
           const L = el('div', 'links');
@@ -465,35 +458,6 @@
               { primary: true }
             )
           );
-          any = true;
-        }
-        // B-487: a flashcards job made a deck in E.V.: Open deck studies it
-        if (j.status === 'done' && r.deckId && S.decks.some(d => d.id === r.deckId)) {
-          a.append(btn('Open deck', () => openDeck(r.deckId), { primary: true }));
-          any = true;
-        }
-        if (qz) {
-          const n = qz.split('\n').length;
-          const cp = btn(
-            `Copy ${plural(n, 'card')} for Quizlet`,
-            async () => {
-              try {
-                await navigator.clipboard.writeText(qz);
-                cp.textContent = 'Copied. In Quizlet: Import, then paste';
-              } catch {
-                const ta = el('textarea');
-                ta.readOnly = true;
-                ta.value = qz;
-                ta.setAttribute('aria-label', 'Flashcards as Quizlet import text');
-                box.append(ta);
-                ta.focus();
-                ta.select();
-                toast('Select all and copy, then paste into Quizlet’s Import.');
-              }
-            },
-            { primary: true }
-          );
-          a.append(cp);
           any = true;
         }
         if (j.status === 'done' && j.kind === 'exam-plan') {
@@ -574,33 +538,6 @@
         const wrap = el('div', 'chart');
         wrap.append(svg);
         box.append(wrap);
-      },
-      quizlet(box) {
-        // B-41: the open weak spots as Quizlet cards, copied on his tap; nothing is written to the record
-        const cards = quizletCards();
-        box.append(head2('Weak spots for Quizlet', plural(cards.length, 'card')));
-        const ul = el('ul', 'list');
-        ul.append(...cards.slice(0, 4).map(c => row({ title: c.term, detail: c.definition.slice(0, 140) })));
-        if (cards.length > 4)
-          ul.append(row({ title: `+ ${cards.length - 4} more`, detail: 'All of them go in the copy.' }));
-        const a = el('div', 'actions');
-        {
-          // B-380: the button says it copied (no toast); the fallback opens the text to copy by hand
-          const qb = btn(
-            `Copy ${plural(cards.length, 'card')} for Quizlet`,
-            async () => {
-              const n = await copyQuizlet(box);
-              if (n && !box.querySelector('textarea')) qb.textContent = 'Copied. In Quizlet: Import, then paste';
-            },
-            { primary: true }
-          );
-          a.append(qb);
-        }
-        box.append(
-          ul,
-          a,
-          el('p', 'meta', 'In Quizlet: Create, Import, then paste. Term and definition are separated by a tab.')
-        );
       },
       check(box, c, k) {
         const s = sessOf(c.session);
@@ -749,29 +686,6 @@
           box.append(p);
         }
         const a = el('div', 'actions');
-        if ((s.cards || []).length) {
-          const cp = btn(
-            `Copy ${plural(s.cards.length, 'card')} for Quizlet`,
-            async () => {
-              const t = E.cardsText(s.cards);
-              try {
-                await navigator.clipboard.writeText(t);
-                cp.textContent = 'Copied. In Quizlet: Import, then paste'; // B-380: inline, no toast
-              } catch {
-                const ta = el('textarea');
-                ta.readOnly = true;
-                ta.value = t;
-                ta.setAttribute('aria-label', 'Flashcards as Quizlet import text');
-                box.append(ta);
-                ta.focus();
-                ta.select();
-                toast('Select all and copy, then paste into Quizlet’s Import.');
-              }
-            },
-            { primary: true }
-          );
-          a.append(cp);
-        }
         if (sample && !T.sampleOff)
           a.append(
             btn('5 more on this', () => {
@@ -1167,10 +1081,6 @@
       head.replaceChildren(...row.childNodes);
       wrap.append(fold);
       return wrap;
-    }
-    // B-78: a reply's cards are no longer drawn under her line; they are the surfaces (75-ev-surfaces.js).
-    function renderCards(rec) {
-      if (rec.cardsBox.firstChild) rec.cardsBox.replaceChildren();
     }
     T.checkFold = new Set();
     T.checkDraft = new Map(); // B-638: an items check's typed answer, kept across a repaint

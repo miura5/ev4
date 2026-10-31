@@ -1,7 +1,6 @@
 /* ---- B-515 lane D1b: jobs, check-ins, the check fold, energy buttons, the prep marker, work lines and briefs moved from page/styles.css.; no !important (lane 4b). */
 .job-title{font-weight:600;margin:0;overflow-wrap:anywhere}
 .result{font-size:var(--fs-4);line-height:1.6;white-space:pre-wrap;margin:0;overflow-wrap:anywhere;color:var(--ink2)}
-.quizlet-block{font:inherit;font-size:var(--fs-2);line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;margin:8px 0 0;padding:8px 10px;max-height:240px;overflow:auto;border-radius:var(--r-md);background:var(--chip);color:var(--ink2)}
 .check-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .check-items li{display:flex;gap:12px;align-items:baseline;overflow-wrap:anywhere;font-size:var(--fs-4);line-height:1.5}
 .check-kind{flex:0 0 46px;text-transform:capitalize;font:500 var(--fs-1) var(--sans);color:var(--ink2)}

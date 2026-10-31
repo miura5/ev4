@@ -94,7 +94,7 @@
   /* blue and violet by their generated names: base.css still greys --info and --violet for the old views */
   --kind-learn:var(--sem-blue); --kind-practice:var(--sem-violet); --kind-review:var(--teal); --kind-graded:var(--bad);
   --kind-skills:var(--warn); --kind-note:var(--slate); --kind-class:var(--ok); --kind-reading:var(--sem-blue);
-  --kind-quiz:var(--teal); --kind-session:var(--sem-violet); --kind-flash:var(--sem-violet);
+  --kind-quiz:var(--teal); --kind-session:var(--sem-violet);
   --kind-dot:7px; --kind-text-mix:70%;
 }
 /* Density switches on the phone's width (today's rows, 44px under 600px) or a coarse pointer, whichever holds. */
