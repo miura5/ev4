@@ -12278,5 +12278,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:21:25.920Z"
   }
+ },
+ {
+  "id": "B-650",
+  "kind": "request",
+  "title": "Request (reported Oct 31): B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-647 builder",
+  "words": "B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees",
+  "reportedAt": "2026-10-31T14:02:53.574Z",
+  "board": {
+   "row": "v4 B-650: B-647 review: a flashcards job queued before the removal no longer…"
+  }
  }
 ]
