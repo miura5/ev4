@@ -80,6 +80,35 @@ export const TOKEN_WEIGHTS = {
   cache_creation_input_tokens: 1.25,
   cache_read_input_tokens: 0.1,
 };
+/** B-624: the upstream statuses worth one more try: the edge's transient failures and the API's overload. */
+export const RETRY_STATUS = new Set([502, 503, 504, 529]);
+/** B-624: the wait before the retry, ms; tests set it to 0. */
+export const RETRY = { baseMs: 1000, jitterMs: 1000, maxAfterS: 5 };
+function retryWait(r) {
+  const after = r ? Number(r.headers && r.headers.get && r.headers.get('retry-after')) : NaN;
+  if (after >= 0 && after < RETRY.maxAfterS) return after * 1000;
+  return RETRY.baseMs + Math.random() * RETRY.jitterMs;
+}
+/** B-624: send once, and once more only on a retryable status or a connect error before any headers. */
+export async function withRetry(send, signal) {
+  let r;
+  try {
+    r = await send();
+  } catch (e) {
+    if (signal && signal.aborted) throw e;
+    console.log('[EV claude] retry after connect error:', String((e && e.message) || e).slice(0, 120));
+    await new Promise(ok => setTimeout(ok, retryWait(null)));
+    return send();
+  }
+  if (!RETRY_STATUS.has(r.status) || (signal && signal.aborted)) return r;
+  console.log('[EV claude] retry after', r.status);
+  try {
+    if (r.body && r.body.cancel) await r.body.cancel();
+  } catch {}
+  await new Promise(ok => setTimeout(ok, retryWait(r)));
+  return send();
+}
+
 /** Tokens one Messages API answer used, from its usage numbers, weighted as billed (D-352) and by the model's price
  * against Haiku's (`scale`, B-449: a study plan's Sonnet tokens count 3 each), rounded to a whole number (0 when it has
  * none). */
@@ -461,9 +490,11 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
   // The events are put back together here into the one Messages API reply the callers read.
   // B-624: a practice ask (no purpose) asks to stream too; a long Haiku write sent whole hit the upstream timeout (502)
   const stream = !!use.purpose || (!!body && body.stream === true);
-  let r;
-  try {
-    r = await fetch(apiUrl(env), {
+  // B-624: one retry, after about 1-2 s, for the API edge's transient 502, 503, 504 or 529, or a connect error before
+  // any headers; never once an answer has started (a 200 is billed). The claims stay held across it and usage is
+  // counted once, from the answer that is returned.
+  const send = () =>
+    fetch(apiUrl(env), {
       method: 'POST',
       ...(signal ? { signal } : {}),
       headers: {
@@ -481,6 +512,9 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
           : {}),
       }),
     });
+  let r;
+  try {
+    r = await withRetry(send, signal);
   } catch (e) {
     if (signal && signal.aborted) await keepAndEstimate();
     await unclaim();

@@ -17,7 +17,12 @@ import {
   ceilingProblem,
   readOf,
   cacheOf,
+  RETRY,
 } from '../pwa/claude.js';
+
+// B-624: the retry's wait is real time in the Worker; here it is none
+RETRY.baseMs = 0;
+RETRY.jitterMs = 0;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
@@ -437,4 +442,60 @@ test('B-624: a practice ask (no purpose) that asks to stream is sent with stream
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test('B-624: one retry on a transient 502: a 502 then a 200 answers, counted once, the read kept', async () => {
+  await withApi(100, async ({ ask, sent, usage }) => {
+    const ok = globalThis.fetch;
+    let n = 0;
+    globalThis.fetch = async (url, init) => {
+      n++;
+      if (n === 1) return new Response('upstream request failed', { status: 502 });
+      return ok(url, init);
+    };
+    const read = { read: { note: 'n-20261031-a', h: '40-aaaaaaaa' } };
+    assert.equal((await ask(read)).status, 200);
+    assert.equal(n, 2);
+    assert.equal((await usage()).hour, 100); // one answer, counted once
+    globalThis.fetch = ok;
+    assert.equal((await ask(read)).status, 409); // the read stayed claimed: the same text is unchanged
+    assert.equal(sent.length, 1);
+  });
+});
+
+test('B-624: two 502s fail once with the second error, and the read is given back', async () => {
+  await withApi(100, async ({ ask, usage }) => {
+    const ok = globalThis.fetch;
+    let n = 0;
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: 'edge ' + ++n }), { status: 502 });
+    const read = { read: { note: 'n-20261031-b', h: '40-bbbbbbbb' } };
+    const got = await ask(read);
+    assert.equal(n, 2);
+    assert.equal(got.status, 502);
+    assert.equal(got.body.error, 'edge 2'); // the second error, passed through once
+    globalThis.fetch = ok;
+    assert.equal((await ask(read)).status, 200); // given back: read now
+    assert.equal((await usage()).hour, 100);
+  });
+});
+
+test('B-624: a 400 is not retried; a 200 is never retried; a connect error is retried once', async () => {
+  await withApi(100, async ({ ask }) => {
+    const ok = globalThis.fetch;
+    let n = 0;
+    globalThis.fetch = async () => (n++, new Response('{"error":{"type":"invalid_request_error"}}', { status: 400 }));
+    assert.equal((await ask()).status, 400);
+    assert.equal(n, 1);
+    n = 0;
+    globalThis.fetch = async (u, i) => (n++, ok(u, i));
+    assert.equal((await ask()).status, 200);
+    assert.equal(n, 1);
+    n = 0;
+    globalThis.fetch = async (u, i) => {
+      if (n++ === 0) throw new Error('connect ECONNRESET');
+      return ok(u, i);
+    };
+    assert.equal((await ask()).status, 200);
+    assert.equal(n, 2);
+  });
 });

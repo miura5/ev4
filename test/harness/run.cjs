@@ -3007,6 +3007,20 @@ async function popChatChecks(browser) {
     JSON.stringify({ enabled, fb })
   );
   ok('B-623: the side chat quiz card’s letter does not overlap a radio mark', overlap === false, String(overlap));
+  // B-624: make_practice with a course frames the ask for that course (its frame, objectives and materials)
+  await page.evaluate(() => {
+    window.__jsonCalls = [];
+    window.__chatScript = [{ tool: 'make_practice', input: { course: 'BIO 201' } }];
+    window.__chatReply = 'Writing them.';
+  });
+  await popSend('Give me 5 BIO 201 questions');
+  await page.waitForTimeout(400);
+  const bp = await page.evaluate(() => (window.__jsonCalls || []).map(c => String(c.prompt)).join('\n---\n'));
+  ok(
+    'B-624: make_practice with course BIO 201 frames the ask for BIO 201, not the default nursing course',
+    /You write BIO 201 exam-style/.test(bp) && /for this course/.test(bp),
+    bp.slice(0, 600)
+  );
   ok('B-623/B-626: no page errors in the side chat', errs.length === 0, errs.join(' | '));
   await page.close();
 }

@@ -1009,11 +1009,16 @@
           name: 'make_practice',
           description:
             'Write 5 new practice questions now, aimed at his most due weak spots or the topic given. Takes about a minute and posts as its own message. For more than 5, use start_job with practice-set.',
-          inputSchema: { type: 'object', properties: { topic: { type: 'string' } } },
+          inputSchema: {
+            type: 'object',
+            properties: { topic: { type: 'string' }, course: { type: 'string', enum: E.courses() } },
+          },
           execute: i => {
             pend.quizzed = true; // B-623
             if (morePending) return 'already writing a batch';
-            morePractice({ announce: true, topic: str(i.topic, 200) || undefined, thread: pend.thread });
+            // B-624: framed for the course he asks about (its materials and objectives), else the thread's or view's
+            const course = E.isCourse(str(i.course, 40)) ? str(i.course, 40) : pend.course || undefined;
+            morePractice({ announce: true, topic: str(i.topic, 200) || undefined, course, thread: pend.thread });
             return 'started; they post here in about a minute';
           },
         },
@@ -1211,6 +1216,13 @@
       const nk = o.note ? (o.thread || '') + '|' + o.note : '';
       const nn = o.note ? noteNow(o.note) : null;
       const plan = nn ? E.noteChatPlan(T.noteSeen.get(nk), nn, Date.now()) : null;
+      // B-624: the course this reply is framed by, for make_practice when the model names none
+      pend.course = E.chatCourse({
+        note: nn && nn.course,
+        item: o.course,
+        exam: o.exam && (S.exams.find(e => e.id === o.exam) || {}).course,
+        studyCourse: ui.studyCourse,
+      });
       const inApp = !!(window.claude && window.claude.host === 'ev-app');
       if (plan && inApp) opts.prefix = plan.prefix;
       let error = null;

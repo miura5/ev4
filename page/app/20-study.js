@@ -1721,12 +1721,18 @@
         const id = `more-${today}-${n}`;
         // B-446: mended; a weak spot id not in his record left off, never the question with it. B-455: a review item
         // carries its spot's objective when it has one, else (and a check) one of the candidates, else none
-        const fresh = E.practiceReply
-          .tagItems(res, { ids, spots: M.models })
-          .filter(q => E.validateItem(q).ok)
-          .map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })) // B-193 (D-205)
-          .filter(c => !c.errors.length)
-          .map(c => c.item);
+        const tagged = E.practiceReply.tagItems(res, { ids, spots: M.models });
+        const valid = tagged.filter(q => E.validateItem(q).ok);
+        const crossed = valid.map(q => E.crossCourse(q, { materials: LIB.mats || [], exams: S.exams })); // B-193 (D-205)
+        const fresh = crossed.filter(c => !c.errors.length).map(c => c.item);
+        // B-624: when some items were dropped but some survive, the counts by check (never the items' text)
+        const dropped = {
+          answerKey: tagged.filter(q => !q).length,
+          validateItem: tagged.length - valid.length - tagged.filter(q => !q).length,
+          crossCourse: crossed.length - fresh.length,
+        };
+        if (fresh.length && dropped.answerKey + dropped.validateItem + dropped.crossCourse)
+          console.log('[EV practice] dropped', JSON.stringify(dropped));
         if (!fresh.length) {
           const tag = unusable(res); // B-624: its short code on the line
           out.textContent = 'That batch didn’t come back in a usable shape (' + tag + '). Try again in a moment.';
