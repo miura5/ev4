@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-415",
+  "date": "Oct 31",
+  "title": "Chat replies drop the spoken 'check your materials' hedge",
+  "why": "B-626, Matt: the phrase in every chat reply is noise. B-13 (unchanged) governs questions: generated items still carry verify:true. In chat, the prompts in page/app/72-ev-talking-with-claude.js and core/sessions.mjs stop asking the model to say 'check your materials' or 'my materials don't give this'; when a reply draws on general knowledge rather than a cited passage, the page shows one small quiet tag on that reply instead of words in the prose. Cited answers still name their file and page.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-414",
   "date": "Oct 31",
   "title": "Class weekdays are a spec setting",
