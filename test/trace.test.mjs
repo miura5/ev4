@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { copyRepo } from './helpers.mjs';
+import { copyRepo, git } from './helpers.mjs';
 import * as C from '../tools/chart.mjs';
 import { loadValidator } from '../core/schemas.mjs';
 
@@ -160,6 +160,8 @@ test('B-178 (D-196): ship writes system/yourturn in its system batch, and asks f
   const { deployCalls } = await import('../core/deploy.mjs');
   const crypto = await import('node:crypto');
   const dir = copyRepo({ push: true });
+  // B-640: ship refuses an untagged build, so the copy carries a v4 tag as a real clone does.
+  git(dir, 'tag', 'v4.5.0');
   await build({ root: dir, now: NOW });
   const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'manifest.json'), 'utf8'));
   const yourturn = {
