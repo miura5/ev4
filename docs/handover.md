@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| nothing | | | | |
+| B-654 builder | B-654 note columns | Claude worktree (isolation) | worktree branch | Oct 31 |
 
 ## Waiting on Matt
 
