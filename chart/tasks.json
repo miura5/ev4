@@ -12178,9 +12178,9 @@
   "id": "B-645",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416: retire skill checklists",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Skills runner, practice_skill, skill card and core skill steps gone; old kind-skill sessions still load in Record; clinical-prep skills kept; tests updated; targeted checks pass.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12189,6 +12189,10 @@
   "reportedAt": "2026-10-31T13:21:02.717Z",
   "board": {
    "row": "v4 B-645: D-416: retire skill"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:21:05.185Z"
   }
  }
 ]
