@@ -3655,12 +3655,17 @@
   "title": "Command bar probe and build: first check in the Claude desktop app and in a browser tab which of Cmd-K, Ctrl-K and \"/\" reach the page without the host taking them, and record it as an environments page row; then the key that works focuses the composer with a filtered list of the quick asks and the tabs, Enter runs one, Esc closes; 1 to 6 switch tabs when the composer is not focused",
   "dod": "the environments row with the keys that reach the page; the harness opens the bar by the recorded key at 1280, filters to \"review\", runs Start review, and switches tabs by number; nothing changes at 390; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "v4.4 ui",
-  "status": "blocked",
+  "status": "declined",
   "depends": [],
   "notes": "Matt, Oct 23: Cmd-K opens the Claude search bar, so the host takes it. Still to probe: Ctrl-K and / (in the desktop app and a browser tab); the bar builds on whichever reaches the page.",
   "commit": null,
   "source": "plan XCT16iH6fggp4MxPNRZtHK",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "joined",
+   "into": "B-559",
+   "reason": "Backlog audit Oct 31: the command menu and keys are built in the PWA under B-559 (Cmd-K menu, / focuses the composer); the claude.ai host probe is moot (D-367).",
+   "at": "2026-10-31T00:39:45.808Z"
+  }
  },
  {
   "id": "B-203",
