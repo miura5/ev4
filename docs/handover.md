@@ -7,12 +7,11 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder | B-624: one retry on Claude API 502/503/504/529 before any stream (pwa/claude.js); make_practice carries the course | /home/claude/ev4-wt/b624 | b624 | Oct 31, ~11:00Z |
+| builder | B-624 test fix (study-plans.test.mjs:1043 after the retry); sets key for session check sets (check-ss-..., new bug id) | /home/claude/ev4-wt/fix3 | fix3 | Oct 31, ~11:40Z |
 
 ## Waiting on Matt
 
-The release card for staging v4.5.22+56 at 5bf4e8d (Oct 31): https://claude.ai/artifact/TTeNT57Ym7M7WfgKoAu1hv.
-"ship 5bf4e8d" takes it live. B-260, B-261, B-623, B-625, B-626, B-527 done; B-624 open (502 on the first practice ask).
+He said "ship 5bf4e8d". ship live tagged v4.5.23 at 5bf4e8d and needs staging to carry it; that staging deploy failed its record check on a study-session check set id the spec's sets key lacks (pre-existing, not this release; staging system docs already at v4.5.23). Asked him: ship the next commit (5bf4e8d plus the key fix plus B-624's retry and course, after one staging run) or wait. B-638 filed from his notes-check testing (next release, with D-416).
 
 ## Next
 
