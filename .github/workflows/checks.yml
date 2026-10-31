@@ -48,6 +48,7 @@ jobs:
           npm test 2>&1 | tee test.log; s=${PIPESTATUS[0]}
           pass=$(grep -E '^# pass ' test.log | awk '{print $3}'); fail=$(grep -E '^# fail ' test.log | awk '{print $3}')
           echo "npm test|${pass:-?}|${fail:-?}|$([ $s = 0 ] && echo GREEN || echo RED)" > result-tests.txt
+          echo "::notice title=npm test::$(cat result-tests.txt)"
           echo "| step | pass | fail | result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| $(sed 's/|/ | /g' result-tests.txt) |" >> "$GITHUB_STEP_SUMMARY"
@@ -99,6 +100,7 @@ jobs:
           echo "| harness | pass | fail | result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
           echo "| $(sed 's/|/ | /g' result-$H.txt) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=$H::$(cat result-$H.txt)"
           tail -3 shots/$H.log | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY"
           if [ $s != 0 ]; then grep -E '(^| )(NO|RED|not ok|FAIL)( |:)' shots/$H.log | head -50 | cut -c1-400 | sed "s/^/::error title=$H::/" || true; fi
           exit $s
@@ -135,4 +137,6 @@ jobs:
             done
           } >> "$GITHUB_STEP_SUMMARY"
           cat "$GITHUB_STEP_SUMMARY"
+          # B-606: the table also as one notice, readable through the check-runs API where summaries are not
+          echo "::notice title=checks::$(cat results/*/result-*.txt | tr '\n' ' ')"
           [ ! -f missing ] && ! grep -q RED results/*/result-*.txt
