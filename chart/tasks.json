@@ -12008,9 +12008,9 @@
   "id": "B-639",
   "kind": "bug",
   "title": "Bug (reported Oct 31): The staging deploy check flags a study session's check set (id check-ss-<session>-<n>, written by page/app/64-ev-study-sessions.js:354 since before v4.5.22) as from no known writer, because spec.collections.sets.key has no check-<session>-<n> shape; ship staging fails whenever a session check set exists",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "spec.collections.sets.key accepts the session check-set id shape E.safeId('check-'+session id+'-'+n); a test shows knownWriter accepts a page-written check set with such an id; ship staging GREEN with one on staging.",
+  "milestone": "v4.5.x ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12019,6 +12019,10 @@
   "reportedAt": "2026-10-31T09:56:14.345Z",
   "board": {
    "row": "v4 B-639: The staging deploy check flags a study session's check set (id…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T09:56:25.567Z"
   }
  }
 ]
