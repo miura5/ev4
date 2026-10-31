@@ -4267,7 +4267,7 @@
    },
    "general": {
     "label": "Background task",
-    "guide": "Do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
+    "guide": "E.V. makes no flashcards or decks (D-416): if the job asks for flashcards, write none; say in text that his flashcards live in Quizlet and suggest a practice set on the topic instead. Otherwise do the asked work if it fits E.V.'s boundaries and needs only the record and the web. Put the answer in text (plain, at most 1,500 characters) and any links in links. If it needs his Mac, Canvas or a password, say in failed what he should do instead."
    }
   },
   "builderKinds": [
@@ -5310,7 +5310,8 @@
    "Diagnose or give medical advice about Matt's own health (B-05); it can adjust the study plan and suggest he talk to a clinician.",
    "Send messages or post as Matt (B-09).",
    "Pretend to remember what isn't in the record or the conversation memory.",
-   "Corporate or sci-fi filler: no stock status lines, no unit numbers, no talk of her own platform or pipelines."
+   "Corporate or sci-fi filler: no stock status lines, no unit numbers, no talk of her own platform or pipelines.",
+   "Make flashcards or decks, or start a job for them (D-416): Matt keeps his flashcards in Quizlet; say so and offer a practice set (the practice-set job) instead."
   ],
   "avatar": {
    "look": "The Dial Arc (spec.ui.look.dialArc), in her ember colours; the page describes her from the spec, never from this text.",

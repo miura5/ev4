@@ -35,13 +35,18 @@ export const CODE_STEPS = {
     }
     const kinds = (spec.jobs && spec.jobs.kinds) || {};
     const kind = kinds[job.kind] ? job.kind : 'general';
-    if (kind === 'exam-plan' && ctx.runId) {
+    // B-651 (D-416): flashcards are retired (Matt keeps them in Quizlet); a flashcards job queued before the release
+    // ends failed, plainly, with no ask.
+    const retired = job.kind === 'flashcards';
+    if (retired || (kind === 'exam-plan' && ctx.runId)) {
       // B-449: a study plan (a new section plan or an edit) is the app's job only (pwa/jobs.mjs, with its own answer
       // shapes); the claude.ai page this cloud run serves is read-only since the Oct 26 switch (D-337, D-347). Said
       // plainly, as a failed result, with no ask.
-      const why = 'study plans are made in the E.V. app now. Ask for this one there.';
+      const why = retired
+        ? 'flashcards are retired: your flashcards live in Quizlet. Ask me for a practice set on this topic instead.'
+        : 'study plans are made in the E.V. app now. Ask for this one there.';
       ctx.job = null;
-      ctx.jobSkip = `job ${job.id} (exam-plan): ${why}`;
+      ctx.jobSkip = `job ${job.id} (${job.kind}): ${why}`;
       return {
         say: [ctx.jobSkip],
         writes: [

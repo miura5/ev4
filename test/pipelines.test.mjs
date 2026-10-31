@@ -1260,3 +1260,24 @@ test('B-43 (D-100): a dosage exam five days out gives the morning a dosage drill
   const w3 = RUN.compute({ spec, dir: s3.dir, validate, at });
   assert.ok(w3.status !== 'waiting' || !w3.question.material.drills.some(d => d.numeric));
 });
+
+test('B-651 (D-416): a retired flashcards job ends failed with the Quizlet line, no ask', () => {
+  const at = '2026-10-31T12:00:00Z';
+  const db = {
+    jobs: [
+      {
+        id: 'job-20261031-120000-made-up-cards',
+        kind: 'flashcards',
+        title: 'Flashcards: potassium',
+        brief: '10 cards',
+        at,
+      },
+    ],
+  };
+  const ctx = { input: {}, date: '2026-10-31', now: at };
+  const r = CODE_STEPS['job-brief'](db, ctx, spec);
+  assert.equal(ctx.job, null);
+  assert.equal(r.writes.length, 1);
+  assert.equal(r.writes[0].data.status, 'failed');
+  assert.match(r.writes[0].data.result.text, /flashcards are retired.*Quizlet.*practice set/);
+});

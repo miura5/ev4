@@ -45,3 +45,10 @@ test('the page facts come from the spec: sidebar views and the Dial Arc in ember
   assert.ok(spec.ui.look.dialArc.colours.includes('ember'));
   assert.ok(spec.ui.look.dialArc.reach);
 });
+
+test('B-651 (D-416): she makes no flashcards, points to Quizlet and offers a practice set; show_card lists no checkin', () => {
+  assert.match(spec.persona.never.join(' '), /flashcards.*Quizlet.*practice set/);
+  assert.match(talk, /Never a job for flashcards or decks \(D-416\)/);
+  assert.match(spec.jobs.kinds.general.guide, /no flashcards.*Quizlet.*practice set/);
+  assert.doesNotMatch(talk, /checkin: energy check/);
+});
