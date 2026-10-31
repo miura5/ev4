@@ -95,7 +95,7 @@ jobs:
           if [ "$H" = look ] && [ $s = 0 ]; then
             node -e "const {missingShots}=require('./test/harness/views.cjs');const fs=require('fs');const m=missingShots(fs.readdirSync('shots/look').filter(f=>f.endsWith('.png')),fs.readFileSync('dist/page/staging/index.html','utf8'),null);if(m.length){console.log('FAIL  look: no screenshot for '+m.length+' view(s) at a size: '+m.slice(0,8).join(', '));process.exit(1)}" 2>&1 | tee -a shots/$H.log || s=1
           fi
-          pass=$(grep -cE '^(PASS|ok)  ' shots/$H.log || true); fail=$(grep -cE '^(FAIL|NO)  ' shots/$H.log || true)
+          pass=$(grep -cE '^(PASS|ok) ' shots/$H.log || true); fail=$(grep -cE '^(FAIL|NO) ' shots/$H.log || true)
           echo "$H|$pass|$fail|$([ $s = 0 ] && echo GREEN || echo RED)" > result-$H.txt
           echo "| harness | pass | fail | result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
