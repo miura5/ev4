@@ -11552,9 +11552,9 @@
   "id": "B-616",
   "kind": "request",
   "title": "Request (reported Oct 30): Behaviour kit in Proprietary: shared behaviours for confirm or undo, optimistic save, loading, empty and error states, keyboard and closing a window, as block behaviours every view uses (drag closing New task and Undo only on the latest tick were this).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Proprietary holds the shared behaviours (undo, optimistic save, loading, empty, error, keyboard, close) and the views use them; the Gallery shows each.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11563,6 +11563,10 @@
   "reportedAt": "2026-10-31T01:04:41.426Z",
   "board": {
    "row": "v4 B-616: Behaviour kit in Proprietary: shared behaviours for confirm or undo,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:05:02.763Z"
   }
  },
  {
