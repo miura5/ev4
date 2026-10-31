@@ -519,3 +519,27 @@ test('D-408: the Stop hook picks the format test, changed tests, same-name tests
     ).length <= H.STOP_TEST_MAX
   );
 });
+
+test('B-613 (D-410): a Write that creates a new .md outside the allowlist is refused through the wired hook; an edit, a skill file, a design hand-off and the generated files pass', () => {
+  const pre = (settings.hooks.PreToolUse || []).flatMap(h => h.hooks.map(x => [h.matcher || '', x.command]));
+  assert.ok(pre.some(([m, c]) => new RegExp('^(' + m + ')$').test('Write') && /md-guard$/.test(c)));
+  const run = file =>
+    spawnSync(process.execPath, [path.join(ROOT, 'tools', 'hooks.mjs'), 'md-guard'], {
+      input: JSON.stringify({ tool_name: 'Write', tool_input: { file_path: file } }),
+      encoding: 'utf8',
+      env: { ...process.env, EV_RUN_MARKER: path.join(os.tmpdir(), 'ev-no-marker-b613') },
+    });
+  const no = run(path.join(ROOT, 'docs', 'b613-new-notes.md'));
+  assert.equal(no.status, 2);
+  assert.match(no.stderr, /no new \.md files.*Chart.*skill/);
+  for (const ok of [
+    path.join(ROOT, 'CLAUDE.md'), // exists: an edit
+    path.join(ROOT, '.claude', 'skills', 'x-b613', 'references', 'a.md'),
+    path.join(ROOT, 'docs', 'design', 'x-b613', 'handoff.md'),
+    path.join(ROOT, 'BACKLOG.md'),
+    path.join(os.tmpdir(), 'b613-scratch.md'), // outside any checkout
+    path.join(ROOT, 'docs', 'b613-new.json'), // not markdown
+  ])
+    assert.equal(run(ok).status, 0, ok);
+  assert.equal(H.mdGuard({ tool_name: 'Edit', tool_input: { file_path: path.join(ROOT, 'new-b613.md') } }), null);
+});

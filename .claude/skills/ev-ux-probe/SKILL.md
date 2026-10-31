@@ -40,7 +40,7 @@ journey (J8 and on) written into the filled tester brief in the same shape as th
 Testers and the synthesis agent are fresh agents that have not seen the work or an earlier probe. A delta probe uses
 Tester A only.
 
-## Budget line to Matt (CLAUDE.md, Guardrails)
+## Budget line to Matt (ev-build-manager, Budget per release)
 
 Before starting, one line saying why and what it costs, for example:
 

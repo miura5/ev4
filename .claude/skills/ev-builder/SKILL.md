@@ -30,7 +30,7 @@ Work only in the worktree: a container restart can stop you, and the worktree is
 
 Then read, in this order:
 
-1. CLAUDE.md: Roles, "Delivery first (D-366)", Guardrails, Every session steps 5 and 6, Rules from past failures.
+1. CLAUDE.md: Roles, "Delivery first (D-366)", Every session, Rules from past failures.
 2. `node tools/chart.mjs brief --task <id>` for each task. Its "Done when" is the bar; its notes can refine it, and its
    "Tenets in scope" are what the code review will hold the diff to.
 3. Before changing a large file, its map in `docs/trim/scan/` (core, harness, page, spec, tools-tests).
@@ -44,6 +44,8 @@ Then read, in this order:
   needs one, build everything else and report the exact change; the build manager takes it to Matt.
 - **Stay in your files.** Small local edits elsewhere are fine; a conflict in a file you don't own means abort the
   rebase and tell the build manager, never resolve it in their file.
+- **No liberal .md files (D-410).** Create no new .md unless a skill or the Chart can't hold it: plans, notes and
+  findings go in your report, procedure in a skill. The md-guard hook refuses the rest; editing an existing .md is fine.
 - **Hard limits** are CLAUDE.md's. Nothing personal enters the repository; nothing is deleted from a record.
 - **No edge-case hunting (D-366).** Test the behaviour Matt uses. A what-if (clock skew, rare drops, phrasing variants,
   timing windows) is one line in your report, never a test or a fix round.
@@ -60,7 +62,7 @@ A task that touches E.V.'s model calls (pwa/claude.js, pwa/jobs.mjs, prompts, to
 caching, model ids, token limits) reads Anthropic's claude-api skill first: the `claude-api` project skill in
 `.claude/skills/claude-api/` (vendored unchanged from github.com/anthropics/skills under its Apache 2.0 licence). Use it
 for model ids, parameters and pricing; never answer those from memory. The real staging run of that path is the build
-manager's (Guardrails, "Run it for real first"): your report says what to try and what a good result looks like.
+manager's (ev-build-manager, the end-to-end run): your report says what to try and what a good result looks like.
 
 ## Proofs by kind (tiered, D-408)
 

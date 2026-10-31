@@ -16,7 +16,7 @@ writes to a record. It never blocks anything by itself: the build manager decide
 
 ## Steps
 
-1. Read `CLAUDE.md` (Delivery first, Guardrails, Hard limits), then for the tasks in the range
+1. Read `CLAUDE.md` (Delivery first, Hard limits) and the ev-build-manager skill's budget, then for the tasks in the range
    `node tools/chart.mjs brief --task <id>`: its "Tenets in scope" (B-109) name what the diff is held to.
 2. Read the range: `git log --format='%h %s' <range>`, `git diff --stat <range>`, then the diffs that matter.
 3. Look only for what would hurt Matt:

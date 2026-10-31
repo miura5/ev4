@@ -9,6 +9,8 @@
 //   node tools/hooks.mjs live-guard    B-58: an ArtifactData write or an Artifact publish aimed at the live record or
 //                                      page is refused unless deploy live --matt-ok wrote dist/live-ok in the last 2 h;
 //                                      B-320: so is a Bash dispatch of pwa-live.yml unless that dist/live-ok names its commit
+//   node tools/hooks.mjs md-guard      B-613 (D-410): a Write that creates a new *.md in an E.V. checkout outside the
+//                                      allowlist (MD_ALLOWED) is refused; editing an existing .md always passes
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -269,6 +271,38 @@ export function stopTests(changed, testFiles, readTest = () => '') {
   }
   return [...out].slice(0, STOP_TEST_MAX);
 }
+/** B-613 (D-410): where a new .md may be created, as checkout-relative patterns. Skills hold the workflow, a design
+ * hand-off lives under docs/design/, and chart.mjs writes the three generated files. */
+export const MD_ALLOWED = [
+  /^\.claude\/skills\/.+\.md$/,
+  /^docs\/design\/.+\.md$/,
+  /^(BACKLOG|DECISIONS|CHANGELOG)\.md$/,
+];
+export const MD_REFUSAL =
+  'B-613 (D-410): no new .md files. Put plans, notes, findings and reports in the Chart (node tools/chart.mjs report|log --note) ' +
+  'or in your report back; workflow and procedure go in a skill (.claude/skills/<name>/SKILL.md or its references/); ' +
+  'a design hand-off goes under docs/design/. Editing an existing .md is fine.';
+
+/** The E.V. checkout a path sits in (the nearest ancestor holding tools/hooks.mjs and chart/), or null. */
+export function checkoutOf(file) {
+  for (let d = path.dirname(path.resolve(file)); ; d = path.dirname(d)) {
+    if (fs.existsSync(path.join(d, 'tools', 'hooks.mjs')) && fs.existsSync(path.join(d, 'chart'))) return d;
+    if (path.dirname(d) === d) return null;
+  }
+}
+
+/** B-613: the refusal for a Write creating a new .md outside MD_ALLOWED in an E.V. checkout (worktrees included), else null. */
+export function mdGuard(input, { exists = fs.existsSync } = {}) {
+  const f = input && input.tool_name === 'Write' && input.tool_input && input.tool_input.file_path;
+  if (!f || !/\.md$/i.test(f)) return null;
+  const abs = path.resolve(ROOT, f);
+  if (exists(abs)) return null; // an edit of an existing file
+  const root = checkoutOf(abs);
+  if (!root) return null; // scratchpad and other places outside a checkout
+  const rel = path.relative(root, abs).split(path.sep).join('/');
+  return MD_ALLOWED.some(r => r.test(rel)) ? null : `${rel}: ${MD_REFUSAL}`;
+}
+
 const testOkFile = root => path.join(root, 'dist', 'test-ok');
 
 // Its own test run, never a child of another (node:test skips the files when NODE_TEST_CONTEXT is set at all).
@@ -294,7 +328,7 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
     cmd = argv[0];
   // A pipeline run is not a build chat: no hook acts in it (D-169).
   if (
-    ['stop', 'spec-format', 'live-guard'].includes(cmd) &&
+    ['stop', 'spec-format', 'live-guard', 'md-guard'].includes(cmd) &&
     pipelineRun({ file: marker, timeoutMinutes: runTimeout() })
   )
     return 0;
@@ -357,6 +391,10 @@ export function main(argv = process.argv.slice(2), { marker = process.env.EV_RUN
     const v = liveGuard(input, { liveId: spec.registry.records.live.artifact, liveOk, traceOk });
     return v ? no(v) : 0;
   }
-  return no('usage: node tools/hooks.mjs stop|spec-format|live-guard');
+  if (cmd === 'md-guard') {
+    const v = mdGuard(input);
+    return v ? no(v) : 0;
+  }
+  return no('usage: node tools/hooks.mjs stop|spec-format|live-guard|md-guard');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exitCode = main();

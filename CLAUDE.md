@@ -40,36 +40,11 @@ requirements; architecture; decisions and tenets, recorded with chart.mjs and re
 checks; tooling; staging deploys; and the workflow itself. Only the build manager changes the workflow: a lane, reviewer
 or pipeline run never does. Nothing at staging waits on Matt or goes to him for approval.
 
-**Matt in the loop.** Short plain lines when something changes what he will get (a draft ready, a direction changed, a
-limit hit), never a request to approve staging work. When a release is ready on staging, one release card: its rubric
-score, side-by-side screenshots of each view in desktop Chrome at 1280 (D-406), what changed for him, what was retired, known differences
-and risks, and that live waits on his word. A large decision comes with a short overview in everyday words that he can
-follow and question.
-
-**The team** (detail in the build workflow map, https://claude.ai/artifact/QL68BeUSw8HB3QFhDTZ4XJ). The build manager
-keeps its own context for managing and for Matt, and runs 2 to 4 agents at a time. It never
-builds (D-351): every task, however small, goes to a builder, every probe or design to a research or planning agent, every review to a fresh reviewer. Post-release fixes and
-tweaks go to one builder agent at a time (Matt, D-351); lanes are for larger feature sprints. The build manager
-keeps every agent it starts alive (D-358): a liveness watch runs while any agent works (a transcript quiet for 10
-minutes is checked: finished, or stopped and restarted from its saved work); after Matt interrupts a turn, which stops
-the background agents, it checks them first and restarts what stopped; and a status to Matt starts from whether each
-agent is running, never from its files alone.
-It files Matt's asks as they come, answers him, orders the backlog, ships staging and sends release cards.
-
-- Builders: agents the build manager spawns, each in its own worktree with the ev-builder skill; for a parallel sprint
-  they work in lanes that each own their files (D-385).
-- UI reviewer: a fresh agent that hasn't seen the work. It clicks through the demo and the built page like a person
-  (tools/fidelity/crawl.cjs) for at most 20 minutes, on the synthetic record only, in desktop Chrome at 1280, the screens
-  the release changed; it scores the rubric at one pinned commit and lists the fixes that would lift the score most.
-  The build manager files those as tasks and gives them to builders.
-- Test agent: keeps npm test and the harnesses asserting what E.V. should do now. Behaviour and data-safety checks stay
-  strict; a check that only pinned a retired look is rewritten or retired.
-- Spike (D-409): a throwaway experiment, sent when a builder stops short for safety, a fix keeps failing, an estimate
-  rests on something unmeasured, or two designs are plausible. Throwaway worktree, no commits or Chart writes, no
-  full suites, about an hour; it reports causes with counts, the fix per cause, what can't be done, and an estimate,
-  and a builder builds from that. One per release; a second needs a line to Matt first.
-- Code reviewer: before a release, a fresh agent (or 2 to 4 splitting it) reads the whole release diff for broken
-  behaviour, lost data paths and dead UI.
+**The build manager's playbook is the `ev-build-manager` skill (D-410)**, loaded at the start of every build chat:
+session start, the release loop, judgment, intake, agents (2 to 4 at a time is stated there), checks, ship staging and
+live, the end-to-end run, the release card and the handover. Builders follow the `ev-builder` skill. New .md files are
+refused by the md-guard hook outside skills, design hand-offs and the generated files: plans, notes and reports go in
+the Chart or an agent's report.
 
 **Delivery first (D-366, Matt, Oct 28; supersedes the per-task review loop and D-361/D-364's rounds).** A feature
 goes to staging as soon as it is built and its tests pass, then gets one real end-to-end run there (the actual job,
@@ -80,90 +55,25 @@ drops, wording, routing phrasing, timing windows) are not chased: a reviewer may
 go to the backlog, never into a fix round. A blocker found by Matt or the end-to-end run is fixed and re-shipped
 once; nothing else loops. No per-task review subagents for ordinary changes.
 
-**Guardrails (D-366, after the Oct 28 release that took 12 hours, about 25 review rounds and 8 staging deploys):**
-
-- **Run it for real first.** Any feature that calls a model, a job or an outside service gets one real run on staging
-  before anything else is reviewed. Stubs and fakes in tests prove nothing about the real path.
-- **Budget per release:** one builder per task, one whole-release code review, one UI click-through, one end-to-end run.
-  Anything beyond that (a third deploy to staging, a second review of the same change, a new agent for an edge case)
-  needs a line to Matt first saying why and what it costs.
-- **No new checks for edge cases.** Tests and harness checks cover behaviour Matt uses. A reviewer's what-if (clock
-  skew, rare drops, phrasing variants, timing windows) is a one-line backlog entry, not a test and not a fix.
-- **The UI click-through is capped at 20 minutes:** as the UI reviewer above. Its score is information for the card.
-- **The phone is frozen (D-407)** at "it loads, a tick works, nothing overflows": no phone shots, layout or polish work.
-- **No exam- or time-gating (D-390):** no work waits on or is held for an exam date or a time of day.
-- **Estimate, then report slips.** Give Matt an ETA when a release starts. If it slips by more than an hour, tell him
-  why in two lines and ask whether to ship what works now.
-- **Look at it like Matt would.** Before the card, open each new screen on staging with real data for every course,
-  not just the one the feature was built against.
-
-**Release bar (the rubric).** The UI reviewer scores each factor 1 to 5 (5 matches or excellent, 4 small differences
-only a side-by-side shows, 3 noticeable but fine to use, 2 gets in the way, 1 broken); points are score / 5 x weight.
-
-| Factor | Weight | A 5 looks like |
-| --- | --- | --- |
-| Every demo screen is there, nothing extra | 20 | Every screen and control the demo has, and nothing it doesn't |
-| Works on real data | 20 | No empty, broken or overflowing screens with long titles, exams with no objectives, busy days |
-| Layout and spacing | 15 | Panes, alignment and rhythm read as the demo in desktop Chrome at 1280 |
-| Type and hierarchy | 10 | Sizes and weights put the right thing first, as the demo does |
-| Words | 10 | Labels and E.V.'s lines say what the demo says, or the same in fewer words |
-| Feel | 15 | Clicks respond at once, states are clear, controls are comfortable with mouse and keyboard |
-| Linear-level polish | 10 | Calm, dense, consistent, nothing looks unfinished |
-
-The UI reviewer's score goes on the card for information; it never holds a release or starts a fix wave (D-366).
-A release is ready for Matt's word when, at one commit on main: npm test and smoke are GREEN, ship staging is GREEN and
-the one end-to-end run worked. **Checks (D-408):** GitHub runs npm test and smoke on every push; the build manager runs
-the full suite on GitHub once per batch, before ship staging; the full `npm run check` also runs nightly, and a red
-nightly is filed as a bug and never blocks a release Matt has tested (R-06 is ended by D-366).
-
-**One development chat, one build manager.** E.V. is developed in one long chat. This file and `docs/handover.md` are
-what survive a /clear or a new chat: before clearing or ending, the build manager rewrites `docs/handover.md` (where
-things stand, what is running, agents and lanes, the next steps, and anything waiting on Matt) and pushes it; a new
-build manager reads it right after this file. There is one build manager at a time: a chat that finds the handover
-naming another chat still managing asks Matt which one continues before firing anything.
+**Guardrails, budget, rubric and the release bar** are in the ev-build-manager skill. For everyone: run a feature
+that calls a model, a job or an outside service for real on staging before anything else is reviewed; no new checks for
+edge cases; the phone is frozen at "it works" (D-407); no exam- or time-gating (D-390).
 
 ## Every session
 
-Every command below is `node tools/chart.mjs <command>`; each that writes the record commits it (pass the session's
-attribution lines with `--trailer`, one per line) and regenerates BACKLOG.md, DECISIONS.md and CHANGELOG.md with it.
-`--no-commit` leaves the change for the task's own commit. Steps 1 to 3 and 8 are for the build manager and scheduled
-runs only; a builder agent follows the ev-builder skill.
+Every chart command is `node tools/chart.mjs <command>`; each that writes the record commits it (the session's
+attribution lines as `--trailer`, one per line) and regenerates BACKLOG.md, DECISIONS.md and CHANGELOG.md.
+`--no-commit` leaves the change for the task's own commit. The build manager's session start, triage, claim and loop
+are its skill; a builder follows ev-builder. For everyone:
 
-1. Read this file. Run `node core/cli.mjs verify-deploy staging` and read its answer. Then read the live record's
-   health/current (`brief` prints its age, or the read to make). Older than `spec.constants.health.staleHours`, a run
-   is missing (D-180): read the live watchdog's `last_run` with `list_triggers`, file it with `report bug` unless an
-   open task already covers it, and take that task before any other.
-2. Triage first: `inbox` lists the Board comments to file (`report bug|request --from-comment <id>`, then the printed
-   reply) and every entry waiting in the inbox. Each becomes a task (`log <id> --triage task --dod ... --milestone
-   ...`), joins one (`--triage join <id>`), or is declined with a reason (`--triage decline --reason ...`); nothing
-   is deleted. A red last nightly check (`.github/workflows/nightly.yml`, B-151; `inbox` prints the read) is an inbox
-   entry: file it with `report bug --source "nightly <run id>"` unless an open task covers it. A bug that breaks
-   studying is taken before any other open task. When Matt says "bug: ..." or
-   "idea: ..." in the chat, file it at once with `report bug|request --from-chat --reworded "<his point>"`. The repository is public,
-   so his words are never stored as written: reword them into a clear, neutral sentence that keeps every point (D-263).
-3. Take the lowest `open` task in BACKLOG.md whose dependencies are `done`; `brief --task <id>` is its one page.
-   Start it with `log <id> --status "in progress" --note "..."` and say which task you took. `log` refuses while an
-   entry waits in the inbox. That claim is the lock: it pushes at once, and a refused push means another session holds
-   the task, so take nothing. Log a note at each milestone, so the claim never looks stale; a claim with no note for 90
-   minutes is stale.
-4. A task is one id. If it needs a schema, a spec shape or a decision the design does not give, the build manager
-   decides it and records it (`log decision`); only a large decision (Roles, D-317) is `log <id> --status blocked
-   --note "<the question>" --waiting-on Matt`. A builder run blocks such a task with its question for the build
-   manager and moves to the next open task. Code-level choices are yours.
-5. Builders prove with D-408's fast local checks (ev-builder skill). GitHub runs npm test and smoke on every push; the
-   build manager runs the full suite on GitHub once per batch, before ship staging. A pipeline proof is a scheduled
+1. A task is one id. A schema, spec shape or decision the design does not give is the build manager's to decide and
+   record (`log decision`); only a D-317 large decision is `log <id> --status blocked --note "<the question>"
+   --waiting-on Matt`. Code-level choices are the builder's.
+2. Prove with D-408's fast local checks; GitHub runs npm test and smoke on every push. A pipeline proof is a scheduled
    task fired against staging and its `runs/<id>` read back.
-6. Ship: commit with the task id first in the message (`B-07: lint and rebuild`), then the attribution lines the
-   session gives you; push to `main`. Then `ship staging` and make every call and read it prints, running it again
-   each time, until it says GREEN: it records the deploy, which CHANGELOG.md then carries. **Never deploy live** without
-   Matt's explicit OK in the chat; `ship live --matt-ok` also refuses what `chart/rules.json` forbids (R-02 staging green
-   at the same commit, B-35; R-03 no running study session, B-87; R-04 Matt's OK), so a build reaches live only through staging.
-7. No per-task review (D-366): one whole-release code review (`.claude/skills/review`) for data, cost, security and
-   crashes. Record: `log <id> --status done --commit <sha> --note "<one line>"`, or in the same move as step 6 with
-   `ship staging --done <id> --commit <sha>` once staging is the task's last proof (B-147). A decision is
-   `log decision <next id> --title ... --why ... --status ...`. Never a date on anything that gates work.
-8. Continue with the next open task until none is open or every open task is blocked. Then stop and leave a
-   summary in the last task's notes (`log <id> --note ...`).
+3. Commit with the task id first (`B-07: lint and rebuild`), then the attribution lines; push to `main`. **Never deploy
+   live** without Matt's explicit OK; `ship live --matt-ok` also refuses what `chart/rules.json` forbids, so a build
+   reaches live only through staging. Never a date on anything that gates work.
 
 ## Unattended runs
 

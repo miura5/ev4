@@ -1519,10 +1519,13 @@ test('B-151 (T-1): the nightly workflow runs npm run check with Chromium, keeps 
   assert.match(wf, /run: npm run check -- --shots shots/);
   assert.match(wf, /uses: actions\/upload-artifact@v4[\s\S]*if: always\(\)[\s\S]*path: shots\//);
   assert.match(wf, /permissions:\n {2}contents: read/, 'read-only, like test.yml');
-  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\s+/g, ' ');
+  // B-613: the session start moved to the build manager's skill
+  const claude = fs
+    .readFileSync(path.join(ROOT, '.claude', 'skills', 'ev-build-manager', 'SKILL.md'), 'utf8')
+    .replace(/\s+/g, ' ');
   assert.match(
     claude,
-    /A red last nightly check \(`\.github\/workflows\/nightly\.yml`, B-151; `inbox` prints the read\) is an inbox entry/
+    /A red last nightly \(`\.github\/workflows\/nightly\.yml`, B-151; `inbox` prints the read\) is an inbox entry/
   );
   const out = C.formatInbox({ query: null, comments: [], triage: [] });
   assert.match(out, /^inbox: empty/);
