@@ -6657,5 +6657,26 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "a029f40",
+  "time": "2026-10-31T14:51:59.431Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "5273419",
+  "from": "5273419",
+  "tasks": [
+   "B-644",
+   "B-645",
+   "B-646",
+   "B-647",
+   "B-651"
+  ],
+  "summary": "D-416: retire workouts (Cindy AMRAP,; D-416: retire skill; D-416: retire the energy and mood; D-416: retire; Staging run of D-416: asking E.V. for flashcards still starts a…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.26"
  }
 ]
