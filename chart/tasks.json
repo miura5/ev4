@@ -11664,5 +11664,22 @@
    "outcome": "task",
    "at": "2026-10-31T01:39:05.401Z"
   }
+ },
+ {
+  "id": "B-621",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Workflow fixes from the cold-start dry run: hooks line, md-guard on Bash, check --keep-going, chart writes only on main, line cap, look sizes, handover worktree shape, skill rules",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "cold-start dry run, Oct 31",
+  "words": "Workflow fixes from the cold-start dry run: hooks line, md-guard on Bash, check --keep-going, chart writes only on main, line cap, look sizes, handover worktree shape, skill rules",
+  "reportedAt": "2026-10-31T01:49:41.285Z",
+  "board": {
+   "row": "v4 B-621: Workflow fixes from the cold-start dry run: hooks line, md-guard on…"
+  }
  }
 ]
