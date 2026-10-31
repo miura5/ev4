@@ -11,15 +11,15 @@ the repository is public.
 
 ## Waiting on Matt
 
-The pictures-in-notes card (B-653, Oct 31): staging v4.5.26+22 at 21c700a, GREEN. Live waits on "ship 21c700a" or his Ship it tap. Part 2 (B-654, columns) only on his word.
+nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
-1. On Matt's ship: ship live 21c700a. Then B-654 if he asks.
+1. B-654, pictures in notes part 2, the FULL columns version (Matt chose it Oct 31 over the cheaper text-wrap option): a two-column row block; drag a picture sideways onto a column grid; text types in the column beside it; headings, lists, On this page, copy and save work inside columns. Builds on B-653 (core/note-images.mjs, page/app/25-notes.js, notes schema img block). Estimate given to Matt: 1.5 to 2.5 h total, builder 45 to 90 min, likely one fix round. Then full check (watch it step by step, skill Checks), staging, a real run in a note at 1280, one review, card.
 2. Bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643, B-650, B-652. B-649 needs the live token (unused-collection counts); low priority.
 
 Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh api -X POST repos/miura5/ev4/actions/workflows/<file>/dispatches -f ref=main -f "inputs[commit]=..."` plus the release inputs ship prints, with release as the full build name (v4.5.25+n) and release_at as the 40-character sha. A live deploy whose record entry was lost: `ship live --record-past` (B-641). Every ship live tags a new release, then needs one ship staging at the same commit before live goes GREEN. The live deploy waits for Matt's Approve on GitHub. The staging app is ev-staging.peppercheese1.workers.dev, signed in through the built-in browser.
 
 ## Last release
 
-Live v4.5.26 at a029f40 (GREEN Oct 31, Matt's ship: D-416 simplify, B-644 to B-648, B-651). Staging v4.5.26+22 at 21c700a (pictures in notes). Card: https://claude.ai/artifact/Ao1Q6oLTHC2hqXNZFDZurW (Oct 31).
+Live v4.5.27 at 21c700a (GREEN Oct 31, Matt's ship: B-653 pictures in notes part 1). Staging v4.5.27 at 21c700a. Card: https://claude.ai/artifact/Qd7dfkhJaU51kWCqMT3Rh1 (Oct 31).
