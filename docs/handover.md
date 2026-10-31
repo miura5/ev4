@@ -7,8 +7,8 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| GitHub full suite, nightly run 41179779080 | release batch at f0d1023 (B-260 3f3bd06, B-261 8e3e2b1, B-527 77fbf62, done) | none (GitHub) | main | Oct 31, 07:13Z |
-| builder | B-625 (Prep row spacing), then B-624 diagnostics, then B-626 (drop the check-your-materials hedge, D-415). B-623 built at ac07d4a (staging proof left) | /home/claude/ev4-wt/b625 | b625 | Oct 31, ~08:00Z |
+| end-to-end run on staging (Playwright, scratchpad e2e) | B-623, B-624 (reads the real failure code), B-625, B-626, B-261, B-527 | none (scratchpad) | none | Oct 31, ~08:35Z |
+| release code review | diff 92781b3..87561b9 | none (read-only) | main | Oct 31, ~08:35Z |
 
 ## Waiting on Matt
 
@@ -16,8 +16,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
-1. B-260/B-261/B-527 built (worktree pruned); B-623 built (ac07d4a); B-624 cause unproven, the end-to-end run on staging reads its code; B-625 with the builder. Then: ship staging, one end-to-end run (a
-   staging morning read back for B-260 and B-261), one code review of the release diff, the click-through, the card.
+1. Staging GREEN at 87561b9 (v4.5.22+38). After the e2e and review: fix B-624 from its code if quick, then the card.
    D-414 recorded for B-260. Builder what-ifs to file: Off day vs a Study day word; an exam today but over reads
    upcoming till midnight; quizCardFor and in-chat quiz text lack 'again'; deriveExams lacks past-means-done;
    conversation.mjs Quizlet weekday list separate from classWeekdays; lint 'record the score' on past exams.
@@ -32,5 +31,5 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Last release
 
-Live v4.5.22 at 92781b3 (GREEN Oct 31, Matt's ship); staging v4.5.22 at 92781b3. Card:
+Live v4.5.22 at 92781b3 (GREEN Oct 31, Matt's ship); staging v4.5.22+38 at 87561b9 (GREEN Oct 31). A shallow clone lacks tags and builds a wrong version: fetch --tags before ship staging. Card:
 https://claude.ai/artifact/1BF1CgVSw8b6NN4aHj7ti4. B-515 stays open for the last ~180 `!important`s.
