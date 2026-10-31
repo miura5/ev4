@@ -1660,3 +1660,12 @@ test('B-260: class weekdays come from spec.study.classWeekdays (D-414)', () => {
   assert.equal(EV.dayType({ date: '2026-10-27', dates: [], exams: [] }), 'off');
   assert.equal(EV.dayType({ date: '2026-10-26', dates: [], exams: [] }), 'class');
 });
+
+test('B-261: an exam dated before today reads as done, wherever it is read', () => {
+  const past = { ...E4, id: 'EY', date: '2026-10-30', status: 'upcoming' };
+  const [v] = EV.examViews([past], [], [], '2026-10-31');
+  assert.equal(v.status, 'done');
+  assert.equal(EV.examViews([past], [], [], '2026-10-30')[0].status, 'upcoming', 'on its own day it is still ahead');
+  assert.equal(EV.examViews([past], [], [])[0].status, 'upcoming', 'without a date the stored status stands');
+  assert.deepEqual(EV.nextExams([v], '2026-10-31'), []);
+});

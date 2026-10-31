@@ -214,7 +214,7 @@
       }
       // D-094: every reader sees an exam with its score and status from examedits and its night-before prediction.
       if (key === 'exams' || key === 'examedits' || key === 'predictions') {
-        S.exams = E.examViews(S.examsRaw || [], S.examedits || [], S.predictions || []);
+        S.exams = E.examViews(S.examsRaw || [], S.examedits || [], S.predictions || [], E.chicagoDate(new Date())); // B-261
         if (S.examsRaw) loaded.add('exams');
       }
       if (key === 'dates' || key === 'dateedits' || key === 'exams') deriveExams(); // B-465: the calendar's exams

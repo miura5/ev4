@@ -113,8 +113,8 @@ export function asOf(db, at, spec, { since = null, self = null } = {}) {
 }
 
 /** Weak spot models, dates and plans as every producer sees them. */
-function views(db) {
-  const exams = EV.examViews(db.exams, db.examedits, db.predictions),
+function views(db, date) {
+  const exams = EV.examViews(db.exams, db.examedits, db.predictions, date), // B-261: a past exam reads as done
     sets = db.sets || [],
     answers = db.answers || [];
   return {
@@ -300,7 +300,7 @@ export function weekInsights(v, db, date) {
 
 /** days/<date>, the morning run: the plan and the list at 4:25am. */
 function dayBody(db, { date, now }, spec, stored) {
-  const v = views(db);
+  const v = views(db, date);
   // B-68 (D-116): spec.study.scheduler drives the day; the other scheduler's pick is the shadow beside it.
   const scheduler = STUDY.schedulerOf(spec);
   // B-170 (D-120, D-190): spec.study.aim says what the new checks lead with; the other aim's checks are the day's aim.
@@ -564,7 +564,7 @@ function weekBody(db, { date, verify = null, recap = null }, spec, stored) {
 
 /** predictions/<examId>, the morning run the day before the exam (D-094): readiness as of that morning. */
 function predictionBody(db, { examId, date, now }) {
-  const v = views(db);
+  const v = views(db, date);
   const atts = EV.collectAttempts(v.sets, v.answers).all;
   // The exam being predicted never informs its own prediction (its score, once entered, comes after).
   const exams = v.exams.filter(e => e.id !== examId);

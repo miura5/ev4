@@ -188,9 +188,11 @@ export function makeInsights(core) {
    * An exam as readers see it (D-094): the Fact, with Matt's score and any status override from examedits/<id> and the
    * night-before prediction from predictions/<id>. Nothing of either is stored on the exam.
    */
-  function examView(exam, edit, prediction) {
+  function examView(exam, edit, prediction, today) {
     if (!exam) return exam;
     const v = { ...exam };
+    // B-261: read side; with today (Central), a stored exam dated before it reads as done, whatever its stored status.
+    if (today && v.date && v.date < today && v.status !== 'done') v.status = 'done';
     if (edit) {
       if (typeof edit.score === 'number') v.score = edit.score;
       if (edit.scoreAt) v.scoreAt = edit.scoreAt;
@@ -202,10 +204,10 @@ export function makeInsights(core) {
     }
     return v;
   }
-  function examViews(exams, examedits, predictions) {
+  function examViews(exams, examedits, predictions, today) {
     const e = new Map((examedits || []).map(x => [x.id, x])),
       p = new Map((predictions || []).map(x => [x.id, x]));
-    return (exams || []).map(x => examView(x, e.get(x.id), p.get(x.id)));
+    return (exams || []).map(x => examView(x, e.get(x.id), p.get(x.id), today));
   }
   function calibrate(exam) {
     if (!exam || !exam.prediction || typeof exam.score !== 'number') return null;
