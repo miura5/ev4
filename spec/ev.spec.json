@@ -1573,7 +1573,8 @@
     "<exam>-drill-<n>",
     "more-<date>-<n>",
     "job-<YYYYMMDD-HHMMSS>-<slug>",
-    "job-proof-<YYYYMMDDHHMMSS>-<slug>"
+    "job-proof-<YYYYMMDDHHMMSS>-<slug>",
+    "check-ss-<YYYYMMDD-HHMMSS>-<slug>-<n>"
    ],
    "holds": "items, kind, date, exam; items never change once written",
    "fromV3": "sets minus answers",

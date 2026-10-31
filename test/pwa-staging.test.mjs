@@ -569,3 +569,39 @@ test('B-311: the personal-data scan covers pwa/ and finds nothing there', () => 
   assert.ok(files.includes('pwa/seed.mjs') && files.includes('pwa/worker.js'), 'pwa/ is in the scan');
   assert.deepEqual(scanFiles(ROOT, files), []);
 });
+
+test('B-639: a study session check set (check-<session>-<n>, as page/app/64-ev-study-sessions.js names it) passes the staging check as a page save', () => {
+  const stamp = '20261031093534';
+  const sid = EV.safeId(`ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-${EV.slug('Fluid & electrolytes', 24)}`);
+  const id = EV.safeId(`check-${sid}-2`);
+  assert.equal(id, 'check-ss-20261031-093534-fluid-electrolytes-2');
+  assert.equal(keyOk('sets', id), true);
+  assert.equal(keyOk('sets', EV.safeId(`check-ss-${stamp.slice(0, 8)}-${stamp.slice(8)}-study-session-1`)), true);
+  const text = 'Hyponatremia shows as confusion and seizures when sodium falls below 135.';
+  const item = EV.parseOpenCheck(
+    {
+      item: {
+        stem: 'Why does low sodium cause confusion?',
+        sourceLine: text,
+        keyPoints: [
+          { text: 'sodium below 135', keywords: [['sodium'], ['135']] },
+          { text: 'confusion and seizures', keywords: [['confusion'], ['seizures']] },
+        ],
+        modelAnswer: 'Low sodium below 135 shifts water into brain cells, causing confusion and seizures.',
+      },
+    },
+    { text, noteId: 'n1', id: 'o1', topic: 'Fluids' }
+  );
+  assert.ok(item);
+  const data = {
+    ...EV.envelope('page', 'Study session', '2026-10-31T14:40:00Z'),
+    schema: 3,
+    kind: 'check',
+    title: 'Check 2 · Fluids',
+    date: EV.chicagoDate('2026-10-31T14:40:00Z'),
+    exam: null,
+    items: [item],
+  };
+  assert.equal(knownWriter({ c: 'sets', id, data }), 'page');
+  assert.equal(knownWriter({ c: 'sets', id: 'check-' + sid + '-2-x y', data }), null);
+});
