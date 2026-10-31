@@ -12215,5 +12215,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:21:10.183Z"
   }
+ },
+ {
+  "id": "B-647",
+  "kind": "request",
+  "title": "Request (reported Oct 31): D-416: retire flashcards",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-636 inventory spike",
+  "words": "D-416: retire flashcards",
+  "reportedAt": "2026-10-31T13:21:12.937Z",
+  "board": {
+   "row": "v4 B-647: D-416: retire"
+  }
  }
 ]
