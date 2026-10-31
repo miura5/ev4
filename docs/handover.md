@@ -7,8 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| end-to-end run on staging (Playwright, scratchpad e2e) | B-623, B-624 (reads the real failure code), B-625, B-626, B-261, B-527 | none (scratchpad) | none | Oct 31, ~08:35Z |
-| release code review | diff 92781b3..87561b9 | none (read-only) | main | Oct 31, ~08:35Z |
+| builder, the release's one fix round | B-624 (stream practice asks: upstream 502; bad sourceRef lost the set), B-623 (side-chat quiz Check answer dead; claimsQuestions review blocker), B-626 (reply still says slides don't cover it; no tag) | /home/claude/ev4-wt/fix1 | fix1 | Oct 31, ~09:15Z |
 
 ## Waiting on Matt
 
@@ -16,7 +15,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
-1. Staging GREEN at 87561b9 (v4.5.22+38). After the e2e and review: fix B-624 from its code if quick, then the card.
+1. Staging GREEN at 87561b9. E2E: B-625, B-261, B-527 pass; B-260 not visible on a Saturday (core test). After the fix round: ship staging once more, re-check only the four failed items, then the card. Review backlog filed B-627 to B-635.
    D-414 recorded for B-260. Builder what-ifs to file: Off day vs a Study day word; an exam today but over reads
    upcoming till midnight; quizCardFor and in-chat quiz text lack 'again'; deriveExams lacks past-means-done;
    conversation.mjs Quizlet weekday list separate from classWeekdays; lint 'record the score' on past exams.
