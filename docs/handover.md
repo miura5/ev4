@@ -11,7 +11,7 @@ the repository is public.
 
 ## Waiting on Matt
 
-Release card for 5273419 (v4.5.24+37: B-638, B-467, B-606, B-640, B-641): https://claude.ai/artifact/7PjLR5W68KcuLBYUZyLfPN. He tests, then "ship 5273419". Run once the shallow-clone fix is live? ship live needs local tags: git fetch --tags first.
+Release card for 5273419 (v4.5.24+37: B-638, B-467, B-606, B-640, B-641): https://claude.ai/artifact/7PjLR5W68KcuLBYUZyLfPN. He tests, then "ship 5273419". Before ship live: git fetch --tags.
 
 ## Next
 
