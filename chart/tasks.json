@@ -11862,5 +11862,22 @@
   "board": {
    "row": "v4 B-630: The note chat matches the Quiz me chip only on exact text; typed…"
   }
+ },
+ {
+  "id": "B-631",
+  "kind": "request",
+  "title": "Request (reported Oct 31): The .fold-line selector change may shift other fold-line rows; needs a visual check",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "The .fold-line selector change may shift other fold-line rows; needs a visual check",
+  "reportedAt": "2026-10-31T08:56:21.893Z",
+  "board": {
+   "row": "v4 B-631: The .fold-line selector change may shift other fold-line rows; needs…"
+  }
  }
 ]
