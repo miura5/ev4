@@ -1526,7 +1526,11 @@
    "base": 3,
    "cap": 14,
    "nearExam": 1
-  }
+  },
+  "classWeekdays": [
+   1,
+   3
+  ]
  },
  "collections": {
   "weakspots": {

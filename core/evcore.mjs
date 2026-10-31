@@ -1169,8 +1169,7 @@ const EVCore = (() => {
     if (on('exam').some(d => /\bexam\b/i.test(d.title || '') && !/sim/i.test(d.title || ''))) return 'exam';
     if (on('clinical').length) return 'clinical';
     if (on('validation').length) return 'validation';
-    const wd = weekday(date);
-    return wd === 0 || wd === 6 ? 'off' : 'class';
+    return ((SPEC && SPEC.study && SPEC.study.classWeekdays) || []).includes(weekday(date) || 7) ? 'class' : 'off'; // D-414
   }
   /** The exams ahead that set the review load, nearest first: each active course's reviewKinds (D-099). */
   function nextExams(exams, date) {

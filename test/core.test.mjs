@@ -712,7 +712,7 @@ test('day type comes from exams and dates', () => {
     'off',
     'a BIO calendar entry of a kind its course does not count leaves the day as it is'
   );
-  assert.equal(EV.dayType({ date: '2026-10-22', dates, exams: [E4] }), 'class');
+  assert.equal(EV.dayType({ date: '2026-10-22', dates, exams: [E4] }), 'off', 'B-260: Thursday is no class day');
   assert.equal(
     EV.dayType({
       date: '2026-10-20',
@@ -720,8 +720,8 @@ test('day type comes from exams and dates', () => {
       dateedits: [{ id: 'c', removed: { at: at('2026-10-18'), by: 'Matt' } }],
       exams: [E4],
     }),
-    'class',
-    'a date taken off in dateedits is gone'
+    'off',
+    'a date taken off in dateedits is gone (a Tuesday: no class, B-260)'
   );
 });
 
@@ -1651,4 +1651,12 @@ test('B-392: a heads-up row says its day once', () => {
   assert.equal(EV.rowText({ id: 'soon-h', text: soon['soon-h'] }), 'Charting activity (due 11:59pm)');
   assert.equal(EV.rowText({ id: 'date-q', text: 'Reading (~20 min)' }), 'Reading');
   assert.equal(EV.headsUpTitle('Quiz'), 'Quiz (due tomorrow)');
+});
+
+test('B-260: class weekdays come from spec.study.classWeekdays (D-414)', () => {
+  // 2026-10-30 is a Friday, 2026-10-26 a Monday, 2026-10-27 a Tuesday.
+  assert.deepEqual(spec.study.classWeekdays, [1, 3]);
+  assert.equal(EV.dayType({ date: '2026-10-30', dates: [], exams: [] }), 'off');
+  assert.equal(EV.dayType({ date: '2026-10-27', dates: [], exams: [] }), 'off');
+  assert.equal(EV.dayType({ date: '2026-10-26', dates: [], exams: [] }), 'class');
 });

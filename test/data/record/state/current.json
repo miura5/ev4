@@ -38,8 +38,8 @@
    }
   },
   "today": {
-   "dayType": "class",
-   "push": "Class day · 2 reviews ready · New on Canvas: Sample announcement",
+   "dayType": "off",
+   "push": "Off day · 2 reviews ready · New on Canvas: Sample announcement",
    "reviewSet": "review-2026-10-16",
    "reviewItems": 2,
    "answered": 0
