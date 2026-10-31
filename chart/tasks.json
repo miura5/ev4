@@ -12222,7 +12222,7 @@
   "title": "Request (reported Oct 31): D-416: retire flashcards",
   "dod": "Deck UI, core/cards.mjs, flashcards job kind, deck worker branches, smoke round trip and Quizlet-cards quick ask gone; decks marked retired; old flashcards jobs still validate; D-368 superseded; Quizlet Saturday read unchanged.",
   "milestone": "Simplify (D-416)",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
   "notes": "",
   "commit": null,
