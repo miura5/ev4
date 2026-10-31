@@ -12127,5 +12127,22 @@
   "board": {
    "row": "v4 B-642: Release review follow-ups (Oct 31): a card answer clears a half-typed…"
   }
+ },
+ {
+  "id": "B-643",
+  "kind": "request",
+  "title": "Request (reported Oct 31): Notes check card: after a check is graded its pill still says your turn",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager: B-638 staging run",
+  "words": "Notes check card: after a check is graded its pill still says your turn",
+  "reportedAt": "2026-10-31T12:54:30.869Z",
+  "board": {
+   "row": "v4 B-643: Notes check card: after a check is graded its pill still says your…"
+  }
  }
 ]
