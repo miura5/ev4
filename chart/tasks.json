@@ -12375,7 +12375,7 @@
   "depends": [
    "B-653"
   ],
-  "notes": "",
+  "notes": "Matt chose the full columns version (Oct 31); next build chat takes it first",
   "commit": null,
   "source": "Matt in the build chat, Oct 31",
   "words": "Images in notes part 2: drag a picture sideways onto a column grid so text can sit in a column beside it (a two-column row block in notes), Quip-style.",
