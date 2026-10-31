@@ -783,7 +783,7 @@
     }
     /** B-517: the conversation's quiz: its card under her line, or five written for the course and posted when ready.
      *  [text, cards], as a quick ask answers. Never a study session, a note or another view. */
-    function quizInChat(named, { objective = null } = {}) {
+    function quizInChat(named, { objective = null, thread = null } = {}) {
       const course = quizCourse(named);
       const card = quizCardFor(course, { objective });
       if (card)
@@ -794,7 +794,7 @@
       if (!sample || T.sampleOff)
         return ['There are no questions for ' + course + ' yet, and writing them needs permission to ask Claude.', []];
       if (morePending) return ['Already writing a batch. It posts here when it’s ready.', []];
-      morePractice({ announce: true, course });
+      morePractice({ announce: true, course, thread }); // B-623: they post in the chat that asked
       return [`No ${course} questions yet, so I’m writing five. They post here in about a minute.`, []];
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
@@ -1584,7 +1584,10 @@
         out = $('more-status');
       b.disabled = true;
       out.textContent = 'Writing 5 questions…';
-      const say = (text, cards) => (opt.announce ? evSay(text, cards || [], { tier: 'default' }) : null);
+      const say = (text, cards) =>
+        opt.announce
+          ? evSay(text, cards || [], { tier: 'default', ...(opt.thread ? { thread: opt.thread } : {}) })
+          : null;
       try {
         if (E.isDosageTopic(opt.topic)) return await moreDosage(opt, { say, out });
         // B-375: opt.course (Study's Quiz me with nothing to quiz on) writes for that course: its exam's objectives,

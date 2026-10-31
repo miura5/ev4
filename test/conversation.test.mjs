@@ -511,3 +511,15 @@ test('B-190: a reopen within the window and the same part of the day resumes; ot
     ['morning', 'midday', 'evening', 'late']
   );
 });
+
+// B-623: a reply that promises questions is caught; other replies are not
+test('claimsQuestions: a promise of questions in words is caught, other words are not', () => {
+  for (const t of [
+    'Five Chapter 9 questions are being written from your BIO 201 record and will appear here in about a minute.',
+    'I’ve just requested the five BIO 201 questions now.',
+    'Writing five questions now; they post here shortly.',
+  ])
+    assert.equal(EV.claimsQuestions(t), true, t);
+  for (const t of ['Your note covers glycolysis well.', 'Two questions to think about: why ATP? why NADH?', ''])
+    assert.equal(EV.claimsQuestions(t), false, t);
+});

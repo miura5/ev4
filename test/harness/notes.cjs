@@ -2775,12 +2775,10 @@ const openNoteId = page =>
     const chips = () =>
       page.evaluate(() => [...document.querySelectorAll('#evchat .pchips .qchip')].map(b => b.textContent));
     const inSession = await chatOpens();
-    await page.evaluate(() => {
-      window.__chatScript = [];
-      window.__chatReply = 'Here are three questions on acid-base.';
-    });
+    // B-623: the chip is answered in code (the session's check), never left to her words
+    const n0 = await page.evaluate(() => document.querySelectorAll('#evchat .msgs .mev').length);
     await page.click('#evchat .pchips .qchip');
-    await until(page, () => /three questions/.test(document.getElementById('evchat').textContent), null, 6000);
+    await until(page, n => document.querySelectorAll('#evchat .msgs .mev').length > n, n0, 6000);
     const again = await chips();
     await page.keyboard.press('Escape');
     await page.click('#ev-sslot .s-brk');
@@ -2810,6 +2808,43 @@ const openNoteId = page =>
       `${tag} with no session running, her chat still opens from the note`,
       noSession && !!sug,
       JSON.stringify({ noSession, sug })
+    );
+    // B-623: with no session, the chip is answered in code in this chat (no model turn); and her words promising
+    // questions with nothing started that turn are replaced by the quiz itself, started then
+    const QUIZ_LINE = /right here|so I’m writing five|Already writing a batch|needs permission/;
+    const evLines = () =>
+      page.evaluate(() => [...document.querySelectorAll('#evchat .msgs .mev')].map(e => e.textContent));
+    await page.evaluate(() => {
+      window.__chatScript = [];
+      window.__chatReply = 'MODEL-SAID-THIS';
+    });
+    const q0n = (await evLines()).length;
+    await page.fill('#evc-input', 'Quiz me on this note');
+    await page.press('#evc-input', 'Enter');
+    await until(page, n => document.querySelectorAll('#evchat .msgs .mev').length > n, q0n, 6000);
+    const chipLine = (await evLines()).slice(q0n).join(' ');
+    ok(
+      `${tag} "Quiz me on this note" with no session starts the quiz in code, in this chat, with no model reply`,
+      QUIZ_LINE.test(chipLine) && !/MODEL-SAID-THIS/.test(chipLine),
+      chipLine.slice(0, 160)
+    );
+    await page.evaluate(() => {
+      window.__chatReply = 'Five Chapter 9 questions are being written and will appear here in about a minute.';
+    });
+    const q1n = (await evLines()).length;
+    await page.fill('#evc-input', 'Can you test me?');
+    await page.press('#evc-input', 'Enter');
+    await until(
+      page,
+      n => document.querySelectorAll('#evchat .msgs .mev').length > n && !document.querySelector('#evchat .dots'),
+      q1n,
+      6000
+    );
+    const promised = (await evLines()).slice(q1n).join(' ');
+    ok(
+      `${tag} a reply promising questions with nothing started is replaced by the quiz, started that turn`,
+      QUIZ_LINE.test(promised) && !/being written/.test(promised),
+      promised.slice(0, 160)
     );
     ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await page.context().close();

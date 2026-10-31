@@ -658,6 +658,15 @@
       }
       noteAnswer(mid, th); // B-406: in a Notes session's chat, his line answers its open check
       const nid = openNoteId();
+      // B-623: Quiz me on this note is answered in code: the card here, or five started now and posted in this chat
+      if (nid && text === NOTE_QUIZ) {
+        const s = activeSession();
+        // a running session on this note: its own check (it posts in the session's chat); else the course's quiz
+        const r =
+          s && s.status === 'active' && noteOfSession(s) === nid ? await quizNow() : quizInChat('', { thread: th });
+        if (r) await evSay(r[0], r[1] || [], { replyTo: mid, thread: th });
+        return;
+      }
       await chat(text, {
         replyTo: mid,
         fromMatt: true,
@@ -667,7 +676,8 @@
       });
     }
     function popMsgEl(m, last) {
-      const checks = (m.cards || []).filter(c => c && c.type === 'check' && CARDS.check);
+      // B-623: a quiz (set) card is answered in place here too, as a check is
+      const checks = (m.cards || []).filter(c => c && ['check', 'set'].includes(c.type) && CARDS[c.type]);
       const sig = JSON.stringify([
         m.text,
         !!m.pending,
@@ -699,7 +709,7 @@
         for (const c of !m.pending ? checks : []) {
           const box = el('div', 'card ev-card');
           try {
-            CARDS.check(box, c, m.id + '#' + c.n);
+            CARDS[c.type](box, c, m.id + '#' + (c.n || c.id));
           } catch (e) {
             box.replaceChildren(el('p', 'empty', 'This check couldn’t load.'));
           }

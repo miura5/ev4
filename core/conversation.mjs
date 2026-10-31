@@ -730,7 +730,16 @@ export function makeConversation(core) {
   /** B-470: the history marks a line with cards as "[cards: job]"; a reply that echoes the mark never shows it. */
   const withoutCardMarks = text => String(text || '').replace(/[ \t]*\[cards: [^\]\n]*\]/g, '');
 
+  /** B-623: a reply that tells him questions are being written or will post here (true), which only stands when the
+   * turn started them. */
+  const claimsQuestions = text =>
+    /\bquestions?\b[^.\n]{0,80}\b(being written|writing|will (appear|post)|post(s)? here|in about a minute|requested)\b/i.test(
+      String(text || '')
+    ) ||
+    /\b(writing|requested|I(’|')m writing|I(’|')ve requested)\b[^.\n]{0,40}\bquestions?\b/i.test(String(text || ''));
+
   return {
+    claimsQuestions,
     noteLineChanges,
     noteChatPlan,
     condenseTurns,

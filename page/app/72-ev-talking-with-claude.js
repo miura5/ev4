@@ -1008,8 +1008,9 @@
             'Write 5 new practice questions now, aimed at his most due weak spots or the topic given. Takes about a minute and posts as its own message. For more than 5, use start_job with practice-set.',
           inputSchema: { type: 'object', properties: { topic: { type: 'string' } } },
           execute: i => {
+            pend.quizzed = true; // B-623
             if (morePending) return 'already writing a batch';
-            morePractice({ announce: true, topic: str(i.topic, 200) || undefined });
+            morePractice({ announce: true, topic: str(i.topic, 200) || undefined, thread: pend.thread });
             return 'started; they post here in about a minute';
           },
         },
@@ -1028,8 +1029,10 @@
           execute: i => {
             const o = S.objectives.find(x => x.id === str(i.objective, 40)) || null;
             const ex = o && S.exams.find(e => e.id === o.exam);
+            pend.quizzed = true; // B-623
             const [text, cards] = quizInChat(str(i.course, 40) || (ex ? E.courseOf(ex) : ''), {
               objective: o ? o.id : null,
+              thread: pend.thread,
             });
             cards.forEach(c => addCard(c, true));
             return text;
@@ -1266,6 +1269,12 @@
         T.ctl = null;
         T.streaming = false;
         T.noteAsk = null;
+      }
+      // B-623: questions promised in words with nothing started this turn: start them now, in her words for it
+      if (!error && !pend.jobId && !pend.quizzed && E.claimsQuestions(pend.text)) {
+        const [t, cards] = quizInChat('', { thread: o.thread || null });
+        pend.text = t;
+        pend.cards.push(...cards);
       }
       pend.pending = false;
       await postMsg({
