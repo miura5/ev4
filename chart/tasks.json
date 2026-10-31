@@ -10468,11 +10468,16 @@
   "title": "Safari settings tip: one line in System on desktop Safari only, saying to turn off navigation controls and turn on title-bar colour",
   "dod": "The line shows only in desktop Safari",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
-  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+  "source": "plan 9w83U8c79EjxijPXqs9xKi",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: Safari desktop is not a supported target (D-406); any Safari tip left in the shell can go with the B-515 cleanup.",
+   "at": "2026-10-31T00:40:21.106Z"
+  }
  },
  {
   "id": "B-564",
