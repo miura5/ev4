@@ -12,14 +12,13 @@
     const oneAnswer = s => E.validItems(s).filter(q => E.itemType(q) === 'single');
     let miniN = 0;
     function miniPick(set, lead, only = null) {
-      const ans = answersOf(set),
-        all = oneAnswer(set).filter(q => !only || only(q)), // B-498: a course's mini quiz holds its course's only
-        mine = lead ? all.filter(lead) : [],
-        rest = all.filter(q => !mine.includes(q)),
-        fresh = qs => qs.filter(q => !ans[q.id]),
-        seen = qs => qs.filter(q => ans[q.id]);
-      const pick = [...fresh(mine), ...seen(mine), ...fresh(rest), ...seen(rest)].slice(0, 5);
-      if (pick.some(q => ans[q.id])) retakes[set.id] = now();
+      // B-527: unseen first, then the least recently answered, so a retake rotates (core miniOrder)
+      const { pick } = E.miniOrder(
+        oneAnswer(set).filter(q => !only || only(q)), // B-498: a course's mini quiz holds its course's only
+        answersOf(set),
+        { lead }
+      );
+      if (pick.some(q => answersOf(set)[q.id])) retakes[set.id] = now();
       return pick;
     }
     function startMini(set, label, lead, only = null) {
@@ -722,6 +721,16 @@
       const c = cur && courseSet(cur);
       return c ? Math.min(5, oneAnswer(c.set).filter(q => !c.only || c.only(q)).length) : 5;
     }
+    /** B-527: how many of the course's mini quiz are new to him; fewer than it holds means it practises some again. */
+    function miniFresh(cur) {
+      const c = cur && courseSet(cur);
+      return c
+        ? E.miniOrder(
+            oneAnswer(c.set).filter(q => !c.only || c.only(q)),
+            answersOf(c.set)
+          ).fresh
+        : 5;
+    }
     function miniWords(cur) {
       const n = miniCount(cur);
       return n === 1 ? 'one question' : numWord(n).toLowerCase() + ' questions';
@@ -799,15 +808,35 @@
       const c = cur && courseSet(cur);
       const q = c && E.validItems(c.set).find(x => !answersOf(c.set)[x.id] && (!c.only || c.only(x)));
       const teaser = q ? String(q.stem || q.q || q.text || '').trim() : '';
+      // B-527: honest words: a set he has answered is practised again, never promised as five new
+      const n = miniCount(cur),
+        fresh = Math.min(miniFresh(cur), n),
+        again = c && fresh < n;
+      const words = again
+        ? fresh
+          ? `${miniWords(cur)}, ${numWord(fresh).toLowerCase()} new`
+          : `practice again · ${miniWords(cur)} you’ve answered`
+        : miniWords(cur);
       card.replaceChildren(
         // B-371 (D-316): the demo's words
-        el('span', 'lab', 'Mini quiz · ' + miniWords(cur) + ' from this course'), // B-385: the number it holds
+        el('span', 'lab', 'Mini quiz · ' + words + ' from this course'), // B-385: the number it holds
         // B-375: with nothing waiting, Take the quiz writes five for the course
-        el('div', 'mq-q', teaser || 'Five new questions from this course, written when you start.'),
+        el(
+          'div',
+          'mq-q',
+          teaser ||
+            (c
+              ? `Practice again: ${miniWords(cur)} you’ve answered before, least recent first.`
+              : 'Five new questions from this course, written when you start.')
+        ),
         el('div', 'mini', 'Misses are proposed as weak spots, for you to review.') // B-407: as the answer's own write does
       );
       const r = el('div', 'mq-row');
-      r.append(btn('Take the quiz', ev => courseQuiz(ev.currentTarget), { cls: 'btn neutral' }));
+      r.append(
+        btn(again && !fresh ? 'Practice again' : 'Take the quiz', ev => courseQuiz(ev.currentTarget), {
+          cls: 'btn neutral',
+        })
+      );
       card.append(r);
     }
     /** B-482: the course a set belongs to: its exam's, the course Quiz me wrote it for, its questions' objectives'

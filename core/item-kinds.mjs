@@ -266,6 +266,21 @@ export function makeItemKinds(core) {
     return best;
   }
   /**
+   * B-527: a mini quiz's pick from items (one-answer questions, in the set's order) given latest ({[itemId]: newest
+   * attempt}): the lead's unseen first, then the rest unseen, then the seen ones least recently answered first, so a
+   * retake rotates instead of repeating the same few. {pick, fresh: how many of the pick are unseen}.
+   */
+  function miniOrder(items, latest, { lead = null, n = 5 } = {}) {
+    const ans = latest || {},
+      at = q => String((ans[q.id] && ans[q.id].at) || '');
+    const mine = lead ? items.filter(lead) : [],
+      rest = items.filter(q => !mine.includes(q));
+    const fresh = qs => qs.filter(q => !ans[q.id]),
+      seen = qs => qs.filter(q => ans[q.id]).sort((a, b) => at(a).localeCompare(at(b)));
+    const pick = [...fresh(mine), ...fresh(rest), ...seen(mine), ...seen(rest)].slice(0, n);
+    return { pick, fresh: pick.filter(q => !ans[q.id]).length };
+  }
+  /**
    * B-192: the display order of a set's items: {[itemId]: {options: [option index, in the order shown]} or {rows: [row
    * index, in the order shown]}}; numeric and open items have none. items in the set's order.
    */
@@ -755,6 +770,7 @@ export function makeItemKinds(core) {
       setShortfall, // B-480
     }, // B-446, B-455
     displayOrder,
+    miniOrder,
     gradeOpenLocal,
     gradePrompt,
     isDosageMaterial,

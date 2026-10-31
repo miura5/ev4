@@ -2,7 +2,6 @@
 // The same file runs in node (pipelines, tests) and in the E.V. Home page (published beside it as core.js).
 // Pure functions only: no network, no storage, no clock unless a `now` is passed in.
 // Source of truth for constants: spec/ev.spec.json (configure(spec) loads them).
-//
 // v4 changes from v3 (Data architecture): nothing derived is stored, so a weak spot's state is always computed here
 // from its facts, its events and the answers; answers live in answers/<setId> (item id -> attempt key -> attempt);
 // what the page changes by hand lives in Edit documents replaced whole (dayedits, dateedits, planedits,
@@ -383,6 +382,7 @@ const EVCore = (() => {
     parseGrade,
     unitOf,
     displayOrder,
+    miniOrder,
     crossCourse,
     practiceReply,
   } = makeItemKinds({
@@ -2412,6 +2412,7 @@ const EVCore = (() => {
     validItems,
     scoreAnswer,
     displayOrder, // B-192
+    miniOrder,
     crossCourse, // B-193
     gradeOpenLocal,
     gradePrompt,

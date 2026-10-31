@@ -1669,3 +1669,31 @@ test('B-261: an exam dated before today reads as done, wherever it is read', () 
   assert.equal(EV.examViews([past], [], [])[0].status, 'upcoming', 'without a date the stored status stands');
   assert.deepEqual(EV.nextExams([v], '2026-10-31'), []);
 });
+
+test('B-527: the mini quiz rotates through a three-question set and says how many are new', () => {
+  const items = ['a', 'b', 'c'].map(id => ({ id }));
+  let r = EV.miniOrder(items, {});
+  assert.deepEqual(
+    r.pick.map(q => q.id),
+    ['a', 'b', 'c']
+  );
+  assert.equal(r.fresh, 3, 'three, not five, and all new');
+  r = EV.miniOrder(items, { a: { at: '2026-10-30T10:00Z' } });
+  assert.deepEqual(
+    r.pick.map(q => q.id),
+    ['b', 'c', 'a'],
+    'unseen first'
+  );
+  assert.equal(r.fresh, 2);
+  r = EV.miniOrder(items, {
+    a: { at: '2026-10-30T12:00Z' },
+    b: { at: '2026-10-30T10:00Z' },
+    c: { at: '2026-10-30T11:00Z' },
+  });
+  assert.deepEqual(
+    r.pick.map(q => q.id),
+    ['b', 'c', 'a'],
+    'all seen: least recently answered first'
+  );
+  assert.equal(r.fresh, 0, 'none new: the page says Practice again');
+});
