@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-413",
+  "date": "Oct 31",
+  "title": "D-404 carry-over: where its material lives, and the one hard-limit question it owns",
+  "why": "Captured from the Oct 30 build chat so a new build manager has it. The D-404 overview doc ('Decision 404', pinned by Matt) is https://claude.ai/artifact/XyjeerMNbAzinQLvzer9DH; the roadmap page is https://claude.ai/artifact/VWffPann79ynDYzN8F7Eyb. The model's name is open (the build manager suggested Portrait; Matt has not chosen). Matt said he overrides the hard limits for his own data; only one thing follows from that, decided explicitly with him at D-404 planning over winter break: whether E.V. may keep his own health and wellbeing data (B-05). Every other hard limit stands unchanged. The engineering course is reframed to prepare him for D-404; a research agent writes its final curriculum at that planning. Concept tags across exams are designed there too (B-608 is the quiet capture).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-412",
   "date": "Oct 30",
   "title": "Stale rules retired under D-411: UI conflicts are the build manager's, the phone has no frame budget or breakpoint rules, and the old roles split is gone",
