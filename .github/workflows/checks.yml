@@ -126,9 +126,10 @@ jobs:
         shell: bash
         env:
           HARNESSES: ${{ needs.plan.outputs.harnesses }}
+          REF: ${{ inputs.ref }}
         run: |
           {
-            echo "## checks for \`${{ inputs.ref }}\`"
+            echo "## checks for \`$REF\`"
             echo "| step | pass | fail | result |"
             echo "|---|---|---|---|"
             for f in results/*/result-*.txt; do echo "| $(sed 's/|/ | /g' "$f") |"; done
