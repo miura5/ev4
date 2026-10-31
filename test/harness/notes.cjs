@@ -1983,12 +1983,20 @@ const openNoteId = page =>
           chat: !document.getElementById('evchat').hidden,
         };
       });
+    // B-467: wait on each state, not a fixed 150 ms (the nightly runner was slower than that)
+    const settle = fn => page.waitForFunction(fn, null, { timeout: 3000 }).catch(() => {});
+    const linkOpen = () => {
+      const l = document.querySelector('#notes-editor .n-lkp');
+      return !!l && l.matches(':popover-open');
+    };
+    await settle(linkOpen);
     const before = await vis();
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(150);
+    await settle(`!(${linkOpen})()`);
+    await page.waitForTimeout(100);
     const after = await vis();
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(150);
+    await settle(() => document.getElementById('evchat').hidden);
     const last = await vis();
     ok(
       `${tag} Escape in the link box closes only the link box; the next Escape closes the chat`,
@@ -2204,7 +2212,17 @@ const openNoteId = page =>
     );
     const pickSel = '#weak-list .trow[data-id="ws-harness-noobj"] .pick-btn';
     await page.click(pickSel);
-    await page.waitForTimeout(150);
+    // B-467: wait for the menu to be open and focused, not a fixed 150 ms (red on the slower nightly runner)
+    await page
+      .waitForFunction(
+        () => {
+          const m = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu');
+          return !!m && m.matches(':popover-open') && m.contains(document.activeElement);
+        },
+        null,
+        { timeout: 3000 }
+      )
+      .catch(() => {});
     const menu = await page.evaluate(() => {
       const m = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-menu');
       const b = document.querySelector('#weak-list .trow[data-id="ws-harness-noobj"] .pick-btn');
