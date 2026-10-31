@@ -8,7 +8,7 @@ the repository is public.
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
 | GitHub full suite, nightly run 41179779080 | release batch at f0d1023 (B-260 3f3bd06, B-261 8e3e2b1, B-527 77fbf62, done) | none (GitHub) | main | Oct 31, 07:13Z |
-| builder | B-625 (Prep row spacing), then B-624 diagnostics (show the real error code; stream practice asks if timeouts are clear). B-623 built at ac07d4a (staging proof left) | /home/claude/ev4-wt/b625 | b625 | Oct 31, ~08:00Z |
+| builder | B-625 (Prep row spacing), then B-624 diagnostics, then B-626 (drop the check-your-materials hedge, D-415). B-623 built at ac07d4a (staging proof left) | /home/claude/ev4-wt/b625 | b625 | Oct 31, ~08:00Z |
 
 ## Waiting on Matt
 
