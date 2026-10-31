@@ -1554,7 +1554,7 @@
   "title": "Captions rollout, narrowed (D-187, amending D-136 and D-139 as D-145 left them): the first live session after B-79 goes live is read back with the session, note and comments fields; B-75, B-78, B-79 and B-80 each ship by the normal path, staging green at the commit and live on Matt's OK",
   "dod": "the first live study session after B-79 is live read back from the live record with its session, note and comments fields present and well-formed; npm test green",
   "milestone": "M11 gate",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-211"
   ],
@@ -1566,7 +1566,11 @@
    "why": "The gate that takes Captions to live",
    "notes": "Gate: waits on B-74 to B-80 and Matt's OK"
   },
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: B-79 and B-80 were declined, and the captions rollout gate belonged to the claude.ai page era (D-367).",
+   "at": "2026-10-31T00:39:41.070Z"
+  }
  },
  {
   "id": "B-82",
