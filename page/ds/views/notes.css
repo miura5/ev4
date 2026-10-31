@@ -160,8 +160,8 @@ body[data-view=notes] .mh .n-sync:not([hidden])~.new-wrap{margin-left:var(--sp-3
 #note-body .n-img img{display:block;max-width:100%;height:auto;border-radius:var(--r-xs);pointer-events:none}
 #note-body .n-img.wait{min-height:120px;min-width:160px;background:var(--wash-2)}
 #note-body .n-img.sel{box-shadow:0 0 0 2px var(--sem-blue)}
-#note-body .n-img .h{position:absolute;width:10px;height:10px;background:var(--bg);border:2px solid var(--sem-blue);border-radius:2px;box-sizing:border-box;display:none}
+#note-body .n-img .h{position:absolute;width:10px;height:10px;background:var(--bg);border:2px solid var(--sem-blue);border-radius:var(--r-xs);box-sizing:border-box;display:none}
 #note-body .n-img.sel .h{display:block}
 #note-body .n-img .h.nw{left:-5px;top:-5px;cursor:nwse-resize}#note-body .n-img .h.ne{right:-5px;top:-5px;cursor:nesw-resize}
 #note-body .n-img .h.sw{left:-5px;bottom:-5px;cursor:nesw-resize}#note-body .n-img .h.se{right:-5px;bottom:-5px;cursor:nwse-resize}
-#p-notes .n-drop{position:absolute;height:2px;background:var(--sem-blue);border-radius:1px;pointer-events:none;z-index:3}
+#p-notes .n-drop{position:absolute;height:2px;background:var(--sem-blue);border-radius:var(--r-xs);pointer-events:none;z-index:3}
