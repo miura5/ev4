@@ -12089,5 +12089,22 @@
    "outcome": "task",
    "at": "2026-10-31T11:00:21.351Z"
   }
+ },
+ {
+  "id": "B-641",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): The live deploy of 50767d3 (pwa-live run 41191526407, Oct 31) has no live entry in chart/deploys.json because the chat that shipped it ended before pushing the record, so the release tags workflow never made v4.5.23 or v4.5.24 and the next ship live would reuse an old version",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager: Oct 31 session start",
+  "words": "The live deploy of 50767d3 (pwa-live run 41191526407, Oct 31) has no live entry in chart/deploys.json because the chat that shipped it ended before pushing the record, so the release tags workflow never made v4.5.23 or v4.5.24 and the next ship live would reuse an old version",
+  "reportedAt": "2026-10-31T11:04:44.967Z",
+  "board": {
+   "row": "v4 B-641: The live deploy of 50767d3 (pwa-live run 41191526407, Oct 31) has no…"
+  }
  }
 ]
