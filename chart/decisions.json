@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-411",
+  "date": "Oct 30",
+  "title": "Current direction beats older rules: the build manager retires stale tenets and decisions instead of obeying them",
+  "why": "Matt, Oct 30: since the PWA cutover and Proprietary, the build manager and Matt are aligned on design and vision, and older tenets, decisions and checks scattered through the codebase are often stale. When an older rule conflicts with the current direction (Proprietary, Matt's recent asks and decisions), the build manager does not follow it and does not ask Matt: it retires it with a superseding decision, brings or retires the checks that enforce it, and lists the retirement once on the release card under what was retired. Matt explicitly permits these overrides. Example: B-361's 'graded badges never red' gave way to B-594's badges matching the kind colour. Large decisions (D-317) stay his.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-410",
   "date": "Oct 30",
   "title": "The release loop runs on the build manager's judgment; the workflow lives in skills and hooks, not prose",
