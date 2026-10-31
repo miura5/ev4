@@ -4147,14 +4147,18 @@
   "title": "Capture routing and her suggestion (D-237, D-239): planAnswer, intakeSession and the filing path write proposed spots through weakspot-propose (an exact twin still takes the miss); \"weak spot: …\" and Make it a weak spot write through weakspot-log; core's suggestTriage returns an objective, a duplicate candidate with its score and a reason of at most 140 characters, deterministically; her topic leads and his words are kept",
   "dod": "core tests on the synthetic record: a planted miss with no twin becomes proposed with an objective and a reason; an exact twin takes the miss; a session near-repeat at 0.6 is suggested as a duplicate with its score; \"weak spot: I keep mixing up insulin peaks\" files committed with those words under her topic; a staging session-intake firing writes proposed spots, read back from its runs/<id>; npm test green; npm run smoke green; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-233"
   ],
   "notes": "parked for the freeze week",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: misses propose weak spots to To review through weakspot-propose (B-233, B-407, B-455, done).",
+   "at": "2026-10-31T00:39:51.235Z"
+  }
  },
  {
   "id": "B-235",
