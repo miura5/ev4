@@ -6641,5 +6641,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "a029f40",
+  "time": "2026-10-31T14:23:52.990Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "79c12f0",
+  "tasks": [
+   "B-651"
+  ],
+  "summary": "Staging run of D-416: asking E.V. for flashcards still starts a…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
