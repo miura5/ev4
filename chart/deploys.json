@@ -6433,5 +6433,21 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "staging",
+  "commit": "92781b3",
+  "time": "2026-10-31T02:50:56.146Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "dea7c03",
+  "tasks": [
+   "B-621"
+  ],
+  "summary": "Workflow fixes from the cold-start dry run: hooks line, md-guard on…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
