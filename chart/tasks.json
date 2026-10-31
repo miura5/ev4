@@ -5124,7 +5124,7 @@
   "title": "Matt's look at the redesign, then live",
   "dod": "On staging, on his phone and at 1280, Matt walks all five views in both themes and says whether the phone layout holds; then ship live on his explicit OK",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-277",
    "B-303",
@@ -5141,7 +5141,12 @@
   ],
   "notes": "Matt's look, Oct 25 morning: not approved. Staging (117bbe9, every lane merged) does not match the v4 demo: Study looks untouched and nearly empty; Today, Progress and Record sit in a narrow centred column; pieces of the demo are missing; the polish isn't there. Live is held. A fidelity review of staging against the demo is running; its gap list becomes the fix tasks.",
   "commit": null,
-  "source": "plan 5reEBoToU1W5pmnq5q48ij"
+  "source": "plan 5reEBoToU1W5pmnq5q48ij",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: live has shipped several releases since (through 7475963); releases now go by D-366's release card and Matt's word.",
+   "at": "2026-10-31T00:40:03.925Z"
+  }
  },
  {
   "id": "B-284",
