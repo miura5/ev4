@@ -12159,7 +12159,7 @@
   "title": "Request (reported Oct 31): D-416: retire workouts (Cindy AMRAP, ladder)",
   "dod": "No workout code, tool, sequences or tests remain in page, core, build or tests; spec.collections.workouts marked retired; D-108 superseded; targeted harness groups pass.",
   "milestone": "Simplify (D-416)",
-  "status": "open",
+  "status": "in progress",
   "depends": [],
   "notes": "",
   "commit": null,
