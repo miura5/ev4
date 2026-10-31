@@ -116,3 +116,24 @@ test('B-613: the build manager skill states the handover in its fixed shape, fou
   const stated = [...skill.matchAll(/^- `(## [^`]+)`/gm)].map(m => m[1]);
   assert.deepEqual(stated, HANDOVER);
 });
+
+// B-621: the Running table's rows each name a worktree path and a branch, so a cold chat can tell its agents' worktrees
+// from stale ones; "see git worktree list" is refused. Read from the skill's stated shape (B-425: no test reads docs/).
+const runningRowProblems = rowShape => {
+  const bad = [];
+  if (/(?<!never ")see git worktree list/i.test(rowShape)) bad.push('defers to "see git worktree list"');
+  if (!/worktree path/i.test(rowShape)) bad.push('names no worktree path per row');
+  if (!/\bbranch\b/i.test(rowShape)) bad.push('names no branch per row');
+  return bad;
+};
+test('B-621: the handover Running table requires a worktree path and a branch per row', () => {
+  const skill = fs.readFileSync(path.join(SKILLS, 'ev-build-manager', 'SKILL.md'), 'utf8');
+  const m = skill.match(/^- `## Running`:([\s\S]*?)(?=^- `## )/m);
+  assert.ok(m, 'the skill states the Running table');
+  assert.deepEqual(runningRowProblems(m[1]), []);
+  assert.deepEqual(runningRowProblems('a table of each agent, see git worktree list'), [
+    'defers to "see git worktree list"',
+    'names no worktree path per row',
+    'names no branch per row',
+  ]);
+});

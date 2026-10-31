@@ -2,7 +2,9 @@
 // Every check, in the order they must run (B-101): npm test, the build, the page harnesses (core.cjs alone: it
 // measures frame times, so nothing runs beside it), then the look pass's
 // phone and desktop screenshots. Stops at the first failure and names it.
-//   npm run check [-- --record <dir>] [--shots <dir>] [--touched [--since <sha>]]
+//   npm run check [-- --record <dir>] [--shots <dir>] [--touched [--since <sha>]] [--keep-going]
+// --keep-going (B-621): run every step whatever fails, collect each RED and print them in one summary at the end
+// (exit 1 if any); the nightly runs so, so one red harness no longer hides the rest.
 // --touched (B-219, Matt Oct 22): npm test, the build, and only the harnesses whose paths the change since the last
 // staging deploy touched (harnessesFor below; a path it does not know runs them all), the look pass at the four first
 // sizes. The full check runs nightly (nightly.yml); a red nightly is filed as a bug and never gates a live release
@@ -146,6 +148,26 @@ export function steps({ record, shots, only = null }) {
   });
 }
 
+/** Run the steps in order. Without keepGoing it stops at the first RED; with it, every step runs. The REDs, in order. */
+export function runSteps(list, { keepGoing = false, cwd = ROOT, log = console.log } = {}) {
+  const reds = [];
+  for (const [name, cmd, args] of list) {
+    const t = Date.now();
+    log(`\n== ${name}`);
+    const r = spawnSync(cmd, args, { cwd, stdio: 'inherit' });
+    if (r.status !== 0) {
+      reds.push(`${name} (exit ${r.status ?? r.signal})`);
+      log(`\ncheck: RED at ${name} (exit ${r.status ?? r.signal})`);
+      if (!keepGoing) break;
+      continue;
+    }
+    log(`== ${name}: ok (${Math.round((Date.now() - t) / 1000)} s)`);
+  }
+  return reds;
+}
+/** B-621: the summary block --keep-going prints at the end. */
+export const redSummary = reds => `\n== check summary: ${reds.length} RED\n` + reds.map(r => `  RED: ${r}`).join('\n');
+
 export function main(argv = process.argv.slice(2)) {
   const shots = opt(argv, 'shots', '/tmp/ev4-check');
   // Without --record each harness writes its own synthetic record as it starts (recordDir('synthetic')), anchored to the
@@ -167,15 +189,23 @@ export function main(argv = process.argv.slice(2)) {
     console.error(`check: no record at ${record}`);
     return 2;
   }
-  for (const [name, cmd, args] of steps({ record, shots, only })) {
-    const t = Date.now();
-    console.log(`\n== ${name}`);
-    const r = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit' });
-    if (r.status !== 0) {
-      console.log(`\ncheck: RED at ${name} (exit ${r.status ?? r.signal})`);
+  const keepGoing = argv.includes('--keep-going');
+  const reds = runSteps(steps({ record, shots, only }), { keepGoing });
+  if (reds.length && !keepGoing) return 1;
+  if (keepGoing) {
+    const look = path.join(shots, 'look');
+    if (!reds.some(r => r.startsWith('build ')) && fs.existsSync(look)) {
+      const shotsNow = fs.readdirSync(look).filter(f => f.endsWith('.png'));
+      const page = path.join(ROOT, 'dist', 'page', 'staging', 'index.html');
+      const missing = fs.existsSync(page)
+        ? missingShots(shotsNow, fs.readFileSync(page, 'utf8'), touched ? FIRST : null)
+        : [];
+      if (missing.length) reds.push(`look: no screenshot for ${missing.length} view(s) at a size`);
+    }
+    if (reds.length) {
+      console.log(redSummary(reds));
       return 1;
     }
-    console.log(`== ${name}: ok (${Math.round((Date.now() - t) / 1000)} s)`);
   }
   if (touched && !only.includes('look')) {
     console.log(

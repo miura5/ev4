@@ -543,3 +543,33 @@ test('B-613 (D-410): a Write that creates a new .md outside the allowlist is ref
     assert.equal(run(ok).status, 0, ok);
   assert.equal(H.mdGuard({ tool_name: 'Edit', tool_input: { file_path: path.join(ROOT, 'new-b613.md') } }), null);
 });
+
+test('B-621: md-guard also refuses a MultiEdit or a shell >, >> or tee that creates a new .md outside the allowlist', () => {
+  const pre = (settings.hooks.PreToolUse || []).flatMap(h => h.hooks.map(x => [h.matcher || '', x.command]));
+  for (const t of ['MultiEdit', 'Bash'])
+    assert.ok(
+      pre.some(([m, c]) => new RegExp('^(' + m + ')$').test(t) && /md-guard$/.test(c)),
+      t
+    );
+  const bash = command => H.mdGuard({ tool_name: 'Bash', cwd: ROOT, tool_input: { command } });
+  for (const c of [
+    'echo hi > docs/b620-notes.md',
+    'cat x >> "docs/b620 notes.md"',
+    'printf x | tee -a docs/b620.md',
+    `cat <<'X' > ${path.join(ROOT, 'b620.md')}\nX`,
+  ])
+    assert.match(bash(c) || '', /no new \.md files/, c);
+  for (const c of [
+    'echo hi > /tmp/b620.md', // outside a checkout
+    'echo hi >> CLAUDE.md', // exists
+    'echo x > .claude/skills/x-b620/SKILL.md', // allowed
+    'echo x > docs/b620.json',
+    'node x.mjs 2>&1 | tail -3',
+    'grep -n "foo" README.md',
+  ])
+    assert.equal(bash(c), null, c);
+  assert.match(
+    H.mdGuard({ tool_name: 'MultiEdit', tool_input: { file_path: path.join(ROOT, 'docs', 'b620-m.md') } }) || '',
+    /no new \.md/
+  );
+});

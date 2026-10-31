@@ -14,11 +14,15 @@ chart command is `node tools/chart.mjs <command>` with the session's attribution
 Matt types /clear before every bug, tweak, feature ask or "continue", so every chat starts cold. In this order:
 
 1. Read `docs/handover.md` (CLAUDE.md is already loaded).
-2. Check every agent and worktree it lists: `git worktree list`, and each agent's last push (`git log origin/main
-   --since=<its start> --oneline`). Agents started from a cleared chat may have stopped (D-358).
-3. Restart any work that stopped, from its worktree, with a builder message that says where it was.
+2. Check every agent its Running table lists, by the worktree path and branch on its row: `git worktree list`, and
+   each agent's last push (`git log origin/main --since=<its start> --oneline`). Agents started from a cleared chat may
+   have stopped (D-358). A worktree not in the Running table is stale: list it and don't restart it.
+3. Restart any listed work that stopped, from its worktree, with a builder message that says where it was. Prune the
+   finished ones (`git worktree remove <path>`, then `git branch -D <branch>`): repo scratch, not Matt's records, so
+   removing them is allowed.
 4. Then handle Matt's message; it is the job. "bug", "tweak" or "feature": file it (Intake) and give it to a builder.
-   "continue": take the next batch (The loop).
+   "continue": take the next batch (The loop). A bare "ship" means the commit on the last release card; with no card
+   waiting, reply that nothing is waiting.
 
 Before acting on a release or a deploy, also: `node core/cli.mjs verify-deploy staging`; `brief`'s health age (older
 than `spec.constants.health.staleHours` means a run is missing, D-180: read the live watchdog's `last_run` with
@@ -58,6 +62,9 @@ he tests), take the next batch.
   one line with the reason when it would hurt E.V. Never a question list.
 - **Matt in the loop:** short plain lines when something changes what he gets; never a request to approve staging work.
 - **No edge-case chasing:** a reviewer's what-if is a one-line backlog entry, never a test or a fix round.
+- **Current direction wins (D-411):** an older tenet, decision or check that conflicts with Proprietary or Matt's
+  recent asks is retired by you with a superseding `log decision`, and its check is fixed or retired in the same batch.
+  Don't follow it, don't ask Matt, and list it on the card under what was retired.
 - **No gating** on an exam date or a time of day (D-390). The phone is frozen at "it works" (D-407).
 - **No liberal .md files (D-410):** no new .md unless a skill or the Chart can't hold it. Plans, notes and reports go
   in the Chart (`report`, `log --note`) or the agent's report; procedure goes in a skill. The md-guard hook refuses the
@@ -65,6 +72,7 @@ he tests), take the next batch.
 
 ## Intake
 
+- First search BACKLOG.md for an open task that already covers the ask; if one does, `--triage join <id>` it.
 - "bug: ..." or "idea: ..." in the chat: at once `report bug|request --from-chat --reworded "<his point>"`. The
   repository is public: reword into a neutral sentence that keeps every point (D-263). Then triage it as step 3.
 - A bug that breaks studying jumps the batch; anything else joins BACKLOG order.
@@ -108,7 +116,8 @@ Matt may /clear at any time, so the handover is always current. Rewrite it, comm
 agent started or finished, staging shipped, a card sent, live shipped. Short, current state only (git keeps history),
 in this fixed shape, these four headings in this order:
 
-- `## Running`: a table of each agent or lane, its task, worktree and branch, and when it started.
+- `## Running`: a table, one row per agent or lane: its task, its worktree path, its branch, and when it started.
+  Every row names a worktree path and a branch (never "see git worktree list"); "nothing" when none runs.
 - `## Waiting on Matt`: the card or question he has, or "nothing".
 - `## Next`: the next batch in order.
 - `## Last release`: live version and commit, staging version and commit, and the card's date.

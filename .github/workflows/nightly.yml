@@ -29,12 +29,13 @@ jobs:
       - run: git config --global user.name 'E.V. CI' && git config --global user.email 'ci@example.invalid'
       # The harnesses try the build container's Chromium first and fall back to Playwright's own.
       - run: npx playwright install --with-deps chromium
-      - run: npm run check -- --shots shots 2>&1 | tee check.log; exit ${PIPESTATUS[0]}
+      - run: npm run check -- --shots shots --keep-going 2>&1 | tee check.log; s=${PIPESTATUS[0]}; mkdir -p shots; cp check.log shots/; exit $s
         shell: bash
-      # B-320: a red check's reasons as annotations, readable through the API where the log itself is not.
+      # B-320, B-621: every FAIL, RED and not-ok line as an annotation (capped at 50), readable through the API where
+      # the log itself is not; the full log rides in the artifact as shots/check.log.
       - if: failure()
         shell: bash
-        run: grep -A3 -E '(^| )(NO|RED|not ok|FAIL)( |:)' check.log | tail -16 | cut -c1-400 | sed 's/^/::error::/' || true
+        run: grep -E '(^| )(NO|RED|not ok|FAIL)( |:)' check.log | head -50 | cut -c1-400 | sed 's/^/::error::/' || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

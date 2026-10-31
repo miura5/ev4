@@ -20,7 +20,8 @@ first turn until that arrives, B-187), and a run fired with words to file files 
 A session started by the `ev4-builder` task is the builder (D-194). Its prompt's first step is `node tools/guard.mjs
 --mark`, which writes /tmp/ev/builder-run: under it `log`, `plan` and `ship` refuse a push that touches a guarded path,
 `log decision` refuses a tenet and deploy prints no trigger call (B-184, D-200). A builder run reads no live record, so
-its step 1 health read is the live watchdog's `last_run` from `list_triggers` (`brief` prints it). The message it was
+its session-start health read (the ev-build-manager skill's session-start reads: `node core/cli.mjs verify-deploy
+staging`, `brief`'s health age, then `inbox`) takes the live watchdog's `last_run` from `list_triggers` (`brief` prints it). The message it was
 fired with says what it is for:
 
 - `Job <id>`: one ArtifactData get of jobs/<id> (from live; from staging when live has no such document), then by the
@@ -39,8 +40,8 @@ fired with says what it is for:
   it refuses a job that is not kind ship, not written by his page, names another commit, has a result or is over 24
   hours old. Then the trace names live at the commit GREEN, or where it stopped. Rollback stays a build chat's act
   with Matt present.
-- Words to file (bug:, idea: or request:): `report --from-chat --reworded` first, then as Every session says.
-- `continue`: Every session, from step 1.
+- Words to file (bug:, idea: or request:): `report --from-chat --reworded` first, then as the ev-build-manager skill's session start says (verify-deploy, `brief`'s health, `inbox`).
+- `continue`: the ev-build-manager session-start reads (verify-deploy, `brief`'s health, `inbox`), then the next task.
 
 Every run started with a job ends with `trace --job <id> --record <the job's record> --status done|failed --note "..."`
 and the calls it prints, done or not, so the page shows what happened. A run started with a job or with words to file

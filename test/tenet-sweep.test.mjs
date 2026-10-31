@@ -1,5 +1,5 @@
 // B-217: the sweep after four Oct 22 tenets (the layout tenet and three since superseded themselves: the two motion
-// tenets by D-271 and D-272, swept by B-276 below; the grey interface, itself since retired by D-327) superseded the
+// tenets by D-271 and the frame-budget tenet (now D-412), swept by B-276 below; the grey interface, itself since retired by D-327) superseded the
 // four tenets in GONE. No open task,
 // rule or test cites a superseded tenet as current (history may name it, marked as such), and the checks hold to the
 // new tenets' words: violet retired, one clock (test/interface-motion.test.mjs), and a 0.16 s settle (the 680 px
@@ -102,7 +102,7 @@ test("B-217 (the tenets since superseded): spec.ui.tenets' checks cite the new t
   assert.equal(OLD.test(checks.replace(/[^"]*(superseded|history|was D-)[^"]*/gi, '')), false);
 });
 
-// B-276: the sweep for D-271 and D-272, which took the place of the two Oct 22 motion tenets (two clocks, her own a
+// B-276: the sweep for D-271 and the frame-budget tenet (now D-412), which took the place of the two Oct 22 motion tenets (two clocks, her own a
 // stepped one, and a cap on how often she draws). Their ids are written here by number only, so this file cites neither:
 // the Chart lint's superseded-tenet check fails any test or open task that names one, once the supersessions are
 // recorded. Here: spec.ui.tenets does not name them, and page/ and test/ keep no word of the old stepped clock or its cap.

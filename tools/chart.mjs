@@ -832,7 +832,21 @@ const onMainWithOrigin = root => {
     return false;
   }
 };
+// B-621: where HEAD stands when a repository has an origin: 'main', a branch name, or null when detached.
+const headBranch = root => {
+  try {
+    git(root, ['remote', 'get-url', 'origin']);
+  } catch {
+    return undefined;
+  }
+  const b = git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).trim();
+  return b === 'HEAD' ? null : b;
+};
 export function syncRecord(root) {
+  // B-621: a detached HEAD has no branch to carry a Chart entry to main, so the entry would be lost. A worktree branch
+  // is allowed (builders push HEAD:main from one); the result line then names the push still to make.
+  if (headBranch(root) === null)
+    throw new Error('HEAD is detached: check out main (or a branch you will push to main) before writing the Chart');
   if (!onMainWithOrigin(root)) return 'no origin to take first';
   git(root, ['fetch', '-q', 'origin', 'main']);
   try {
@@ -850,6 +864,13 @@ export function syncRecord(root) {
   return null;
 }
 export function pushRecord(root, run = builderRun()) {
+  const branch = headBranch(root);
+  if (branch && branch !== 'main')
+    return {
+      pushed: false,
+      why: `on branch ${branch}`,
+      next: 'git fetch origin main && git rebase origin/main && git push origin HEAD:main',
+    };
   if (!onMainWithOrigin(root)) return { pushed: false, why: 'no origin', next: null };
   // B-184 (D-200): a builder run never pushes a change to a guarded path.
   const refused = pushRefusal(root, run);

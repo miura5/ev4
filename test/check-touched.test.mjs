@@ -113,3 +113,29 @@ test('B-466 (D-366): the full check gates nothing: R-06 is ended in the Chart, a
     'and that R-06 is ended'
   );
 });
+
+test('B-621: --keep-going runs every step and collects each RED for the summary', async () => {
+  const { runSteps, redSummary } = await import('../tools/check.mjs');
+  const n = process.execPath,
+    lines = [];
+  const reds = runSteps(
+    [
+      ['planted red one', n, ['-e', 'process.exit(3)']],
+      ['green', n, ['-e', '0']],
+      ['planted red two', n, ['-e', 'process.exit(1)']],
+    ],
+    { keepGoing: true, log: l => lines.push(l) }
+  );
+  assert.deepEqual(reds, ['planted red one (exit 3)', 'planted red two (exit 1)']);
+  assert.match(redSummary(reds), /2 RED\n {2}RED: planted red one \(exit 3\)\n {2}RED: planted red two/);
+  assert.deepEqual(
+    runSteps(
+      [
+        ['r', n, ['-e', 'process.exit(1)']],
+        ['g', n, ['-e', '0']],
+      ],
+      { log: () => {} }
+    ),
+    ['r (exit 1)']
+  );
+});

@@ -9,7 +9,7 @@
 //   node tools/hooks.mjs live-guard    B-58: an ArtifactData write or an Artifact publish aimed at the live record or
 //                                      page is refused unless deploy live --matt-ok wrote dist/live-ok in the last 2 h;
 //                                      B-320: so is a Bash dispatch of pwa-live.yml unless that dist/live-ok names its commit
-//   node tools/hooks.mjs md-guard      B-613 (D-410): a Write that creates a new *.md in an E.V. checkout outside the
+//   node tools/hooks.mjs md-guard      B-613 (D-410): a Write, MultiEdit or Bash redirect that creates a new *.md in an E.V. checkout outside the
 //                                      allowlist (MD_ALLOWED) is refused; editing an existing .md always passes
 import fs from 'node:fs';
 import path from 'node:path';
@@ -291,16 +291,45 @@ export function checkoutOf(file) {
   }
 }
 
-/** B-613: the refusal for a Write creating a new .md outside MD_ALLOWED in an E.V. checkout (worktrees included), else null. */
-export function mdGuard(input, { exists = fs.existsSync } = {}) {
-  const f = input && input.tool_name === 'Write' && input.tool_input && input.tool_input.file_path;
+/** B-621: the *.md paths a shell command writes with >, >> or tee (quotes stripped). */
+export function shellMdTargets(cmd) {
+  const out = [],
+    word = String.raw`("[^"]*"|'[^']*'|[^\s;&|<>()]+)`;
+  const unq = w => w.replace(/^["']|["']$/g, '');
+  for (const m of String(cmd || '').matchAll(new RegExp(String.raw`(?:^|[^0-9&<>])>>?\|?\s*` + word, 'g')))
+    out.push(unq(m[1]));
+  for (const m of String(cmd || '').matchAll(
+    new RegExp(String.raw`\btee\b((?:\s+-[a-z-]+)*)((?:\s+` + word + ')+)', 'gi')
+  ))
+    for (const w of m[2].trim().split(/\s+/)) out.push(unq(w));
+  return out.filter(f => /\.md$/i.test(f));
+}
+
+/** One path: the refusal when it would create a new .md outside MD_ALLOWED in an E.V. checkout, else null. */
+function mdRefusal(f, base, exists) {
   if (!f || !/\.md$/i.test(f)) return null;
-  const abs = path.resolve(ROOT, f);
+  const abs = path.resolve(base, f);
   if (exists(abs)) return null; // an edit of an existing file
   const root = checkoutOf(abs);
   if (!root) return null; // scratchpad and other places outside a checkout
   const rel = path.relative(root, abs).split(path.sep).join('/');
   return MD_ALLOWED.some(r => r.test(rel)) ? null : `${rel}: ${MD_REFUSAL}`;
+}
+
+/** B-613, B-621: the refusal for a Write or MultiEdit creating a new .md, or a Bash command redirecting or tee-ing to
+ *  one, outside MD_ALLOWED in an E.V. checkout (worktrees included), else null. */
+export function mdGuard(input, { exists = fs.existsSync } = {}) {
+  const t = input && input.tool_name,
+    ti = (input && input.tool_input) || {};
+  if (t === 'Write' || t === 'MultiEdit') return mdRefusal(ti.file_path, ROOT, exists);
+  if (t === 'Bash') {
+    const base = input.cwd || process.cwd();
+    for (const f of shellMdTargets(ti.command)) {
+      const r = mdRefusal(f, base, exists);
+      if (r) return r;
+    }
+  }
+  return null;
 }
 
 const testOkFile = root => path.join(root, 'dist', 'test-ok');

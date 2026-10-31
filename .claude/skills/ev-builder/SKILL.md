@@ -55,6 +55,10 @@ Then read, in this order:
 - **Harnesses select by role and name, data-ui, data-key or the shell's region ids (D-387)**; never by visual class.
 - **Proprietary components are one file per component (D-388)**; a look change lands through tokens or components,
   never in a view (D-380, D-382).
+- **Current direction wins (D-411).** An old rule or check that conflicts with the current direction (Proprietary,
+  Matt's recent asks and decisions) or your brief: report the conflict to the build manager rather than bending to the
+  old rule. A check pinning a superseded rule is rewritten or retired in the same commit and named in the report.
+- **Style work:** until B-618, check hover, focus, read-only, folded and dark by hand, and name them in the report.
 
 ## Model-path tasks
 
@@ -92,6 +96,9 @@ Never run two full harness suites at once on the shared machine.
 - **Format before every push (B-586):** the table's first row, on every push; on Oct 30 builder pushes turned main red
   on formatting alone (B-575, B-579, B-586).
 - One commit per task: `B-xxx: <what changed, in words>`, then the attribution lines from the message.
+- A change to chart/, a skill, CLAUDE.md or docs runs `node --test test/chart.test.mjs test/hooks.test.mjs
+  test/skills-drift.test.mjs` before push.
+- Before push, `git diff origin/main...HEAD --stat` touches only your owned files and the task's.
 - `git fetch origin main && git rebase origin/main`, the format test and your touched unit tests again if the rebase brought anything in, then
   `git push origin HEAD:main`. Refused: rebase and push again. Never force-push, never a merge commit.
 - Whoever turns main red fixes it or reverts within 30 minutes; the others hold their pushes until it is green.

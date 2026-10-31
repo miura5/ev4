@@ -9,14 +9,12 @@ import { ROOT, flatSource } from './helpers.mjs';
 const V = createRequire(import.meta.url)('./harness/views.cjs');
 const html = fs.readFileSync(path.join(ROOT, 'page', 'index.src.html'), 'utf8');
 
-test('B-113, B-203: the look pass shoots every view of every tab at the twelve sizes, the phone, 735, 1706 and 2560 first', () => {
+test('B-113, B-203, B-621 (D-407): the look pass shoots every view of every tab at ten sizes, no 390, 735, 1706 and 2560 first; smoke keeps the phone', () => {
   assert.deepEqual(
     V.SIZES.map(s => s.tag),
     [
       '375x667',
-      '390x844',
       '430x932',
-      '390x450',
       '560x830',
       '735x830',
       '960x1000',
@@ -27,7 +25,11 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
       '2560x1240',
     ]
   );
-  assert.deepEqual(V.FIRST, ['390x844', '735x830', '1706x1240', '2560x1240']);
+  assert.deepEqual(V.FIRST, ['735x830', '1706x1240', '2560x1240']);
+  assert.ok(!V.SIZES.some(s => s.width === 390), 'D-407: no 390 in the look pass');
+  const smoke = flatSource('test/harness/smoke.cjs');
+  assert.match(smoke, /\[\'390\', \{width: 390, height: 844\}\]/, 'smoke still boots the page at 390');
+  assert.match(smoke, /nothing overflows the phone/, 'and checks nothing overflows there');
   assert.deepEqual(
     V.viewsOf(html).map(v => v.id),
     [
@@ -42,7 +44,7 @@ test('B-113, B-203: the look pass shoots every view of every tab at the twelve s
     ]
   );
   const all = V.viewsOf(html).flatMap(v => V.SIZES.map(s => V.shotName(v, s)));
-  assert.equal(all.length, 96); // B-297, B-359, B-450: 8 views (Study: Objectives, Weak spots and the review's quiz card; Progress: Readiness; Record: its log)
+  assert.equal(all.length, 80); // B-297, B-359, B-450: 8 views (Study: Objectives, Weak spots and the review's quiz card; Progress: Readiness; Record: its log)
   assert.deepEqual(V.missingShots(all, html), []);
   assert.match(
     flatSource('test/harness/look.cjs'),
@@ -60,7 +62,7 @@ test('B-113: a view added to the page without a screenshot fails', () => {
   );
   assert.notEqual(planted, html);
   const missing = V.missingShots(shots, planted);
-  assert.equal(missing.length, 12);
+  assert.equal(missing.length, 10);
   assert.ok(
     missing.every(f => f.startsWith('look-study-cards-')),
     missing.join(', ')

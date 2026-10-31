@@ -126,6 +126,12 @@ async function open(browser, viewport) {
       await page.evaluate(() => (document.getElementById('status') || {}).textContent || '')
     );
 
+    // B-621 (D-407): the phone is held to "it works": it loads and nothing runs off the side.
+    if (scheme === '390') {
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      ok(`${tag} nothing overflows the phone's width`, wide <= 0, `${wide} px past the edge`);
+    }
+
     // 2. The greeting renders.
     const greeted = await until(page, () => {
       const m = document.querySelector('#thread [data-key][data-kind=hers]');

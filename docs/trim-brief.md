@@ -22,25 +22,12 @@ this brief, nothing else.
 Read CLAUDE.md's hard limits and this brief. The build chat's "Every session" steps don't apply to a trimmer: you take
 no backlog task and write nothing to `chart/`.
 
-1. **If `docs/trim/inventory.md` doesn't exist, write it first** (it is also freeze-exit task B-258). It has one row
-   for each of these:
-   - every rule in `chart/rules.json`
-   - every hook in `.claude/settings.json`
-   - every workflow in `.github/workflows/`
-   - every pipeline in `spec.pipelines`
-   - every tool in `tools/`
-   - every section of CLAUDE.md
-
-   Columns:
-   - What it is.
-   - The failure it prevents, named with its decision or incident.
-   - When it last fired, with evidence from git log, run records or Chart notes, or "never" or "unknown".
-   - Lines.
-   - Risk to studying if it goes: none, low or high.
-   - Suggestion: keep, shrink or retire.
-
-   Open it as its own pull request. It removes nothing.
-2. **Otherwise take the top row marked shrink or retire that no open pull request has claimed.** Order:
+1. **The inventory goes in the pull request description** (B-621; no inventory file). One row for each of these:
+   every rule in `chart/rules.json`, every hook in `.claude/settings.json`, every workflow in `.github/workflows/`,
+   every pipeline in `spec.pipelines`, every tool in `tools/` and every section of CLAUDE.md. Columns: what it is; the
+   failure it prevents, with its decision or incident; when it last fired (git log, run records or Chart notes, or
+   "never" or "unknown"); lines; risk to studying if it goes (none, low or high); keep, shrink or retire.
+2. **Take the top row marked shrink or retire that no open pull request has claimed.** Order:
    1. Process that never fired, and cuts that are only text in `tools/`, `.github/`, `.claude/` or `docs/`.
    2. CLAUDE.md: the gotchas move to a lessons file, and only rules that still name a failure stay.
    3. Dead code.
@@ -129,5 +116,5 @@ The queue cap doesn't apply to it. The file has two parts:
   Each gets a size, a risk to studying (none, low or high), and a suggested branch name. Rank them by value for the
   long term: what makes the next change smaller and safer, not what is quickest to delete.
 
-The build chat folds approved findings into the queue in `docs/trim/inventory.md`. The maps stay as a guide: a
+The build chat folds approved findings into the queue from the inventory in the pull request description. The maps stay as a guide: a
 build chat about to change a mapped file reads its map first.

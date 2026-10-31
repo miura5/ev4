@@ -408,7 +408,8 @@ async function sideBySide(browser, left, right, out, vp) {
       JSON.stringify({ coreX: d.coreX, coreY: d.coreY, lineY: d.lineY, composerW: d.composerW })
     );
   };
-  for (const scheme of ['phone', 'desktop']) {
+  for (const scheme of ['desktop']) {
+    // B-621 (D-407): the 390 run is retired; the phone is held to smoke's load-and-no-overflow check.
     const ctx = await browser.newContext({
       viewport: scheme === 'phone' ? { width: 390, height: 844 } : { width: 1280, height: 860 },
       colorScheme: 'dark',
@@ -1363,8 +1364,8 @@ async function sideBySide(browser, left, right, out, vp) {
         .filter(([id, s]) => s.kind === 'skill' && /harness/.test(id))
         .map(([id, s]) => ({ id, status: s.status, endedBy: s.endedBy || null, summary: s.summary || '' }))
     );
-  for (const scheme of ['phone', 'half', 'desktop']) {
-    // B-122: 390, 735 (the phone's sheet, half the laptop) and 1280
+  for (const scheme of ['half', 'desktop']) {
+    // B-122, B-621 (D-407: no 390 run): 735 (the phone's sheet, half the laptop) and 1280
     const vp =
         scheme === 'phone'
           ? { width: 390, height: 844 }
@@ -1518,7 +1519,7 @@ async function sideBySide(browser, left, right, out, vp) {
     await c3.close();
   }
   // B-122 (D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
-  // checkpoint's card arrives open; at 390, 735 and 1280.
+  // checkpoint's card arrives open; at 735 and 1280.
   {
     const ITEMS = [
       { kind: 'why', text: 'Why does 0.45% saline move water into the cells?' },
@@ -1608,7 +1609,7 @@ async function sideBySide(browser, left, right, out, vp) {
         };
       });
     for (const vp of [
-      { width: 390, height: 844 },
+      // B-621 (D-407): no 390 run
       { width: 735, height: 830 },
       { width: 1280, height: 860 },
     ]) {

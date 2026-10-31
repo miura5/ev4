@@ -1891,3 +1891,48 @@ test('D-263: report --reworded files his point in neutral words, still proven by
     /no message in this session/
   );
 });
+
+test('B-621: a Chart write refuses a detached HEAD; on a worktree branch it commits and names the push to main', () => {
+  const dir = copyRepo({ push: true });
+  const [id] = openTasks(dir, 1);
+  const g = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' });
+  const log = note =>
+    execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), 'log', id, '--note', note, '--root', dir], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  g('checkout', '-q', '--detach');
+  assert.throws(() => log('detached'), /HEAD is detached/);
+  g('checkout', '-q', '-b', 'builder-x');
+  assert.match(log('on a branch'), /committed \w{7}; the push was refused \(on branch builder-x\)\. Next: .*HEAD:main/);
+});
+
+// B-621: a test never pins the status of a real task: the Chart moves on, and such a test turns red on a status change.
+// A line that reads the real record (rec(), loading the Chart at the repository root, chart/tasks.json) and a literal B-id and a status is
+// refused; tests plant their own ids (B-9xx) in a sample or a copy.
+const realStatusPins = (name, src) =>
+  src
+    .split('\n')
+    .map((l, i) => [l, i + 1])
+    .filter(
+      ([l]) =>
+        new RegExp(String.raw`\brec\(\)|load` + String.raw`Chart\(ROOT\)|chart\/tasks\.json`).test(l) &&
+        /'B-\d+'/.test(l) &&
+        /\.status\b|\bstatus:/.test(l) &&
+        !/B-621-allow/.test(l)
+    )
+    .map(([, n]) => `${name}:${n}`);
+test('B-621: no test asserts the status of a real B-id; tests use planted ids', () => {
+  const planted = '  assert.equal(re' + "c().tasks.find(t => t.id === 'B-42').status, 'done');"; // in pieces: the lint reads this file
+  assert.deepEqual(realStatusPins('x.test.mjs', planted), ['x.test.mjs:1']);
+  assert.deepEqual(
+    realStatusPins('x.test.mjs', "  assert.equal(sample().tasks.find(t => t.id === 'B-910').status, 'open');"),
+    []
+  );
+  const dir = path.join(ROOT, 'test');
+  const found = fs
+    .readdirSync(dir)
+    .filter(f => f.endsWith('.test.mjs'))
+    .flatMap(f => realStatusPins(f, fs.readFileSync(path.join(dir, f), 'utf8')));
+  assert.deepEqual(found, []);
+});

@@ -113,9 +113,10 @@ included, is open to E.V.'s runs, agents and app logic to read and analyze, with
 goes in (D-335, Matt's call; it ends the journal's named read, D-106 and D-113, and D-325's skip of notes). The record
 stays owner-only, and reading never writes. Personal data never enters
 this repository (`fixtures/` and `dist/` are ignored; a test greps for exports). **In a build chat**, Matt's explicit OK is
-required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load three hooks
-(.claude/settings.json, B-56 to B-58): at the end of a turn the format test and the changed files' own tests (D-408, 90 s cap), the spec's JSON form, and a guard that refuses a
-live write or publish unless `deploy live --matt-ok` wrote dist/live-ok; pipeline runs never load them (B-65).
+required for: publishing the live page, creating or changing a Mac-bound task, touching the live record by hand. A refused action is reported in Notes, never worked around. Build chats load four hooks
+(.claude/settings.json, B-56 to B-58, B-613): at the end of a turn the format test and the changed files' own tests (D-408, 90 s cap), the spec's JSON form, and a guard that refuses a
+live write or publish unless `ship live --matt-ok` wrote dist/live-ok, and md-guard (B-613), which refuses a new .md
+outside skills, design hand-offs and the generated files; pipeline runs never load them (B-65).
 
 ## Rules from past failures
 
@@ -151,4 +152,4 @@ restored at main's head and shipped through staging like any change.
 | The view Matt uses | The app (PWA): the ev-live and ev-staging Workers over D1 (`spec.registry.records.<target>.app`); every proof, click-through and screenshot is taken there (D-367) |
 | Live and staging records (artifact pages frozen, D-367) | live https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg, staging https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`); ship no longer publishes either page; the records hold the system documents until B-473 |
 | Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
-| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs the checks as the Release bar says (D-408; B-151; `gh workflow run nightly.yml` runs the full one now) |
+| Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs the checks as the ev-build-manager skill's Checks say (D-408; B-151; `gh workflow run nightly.yml` runs the full one now) |

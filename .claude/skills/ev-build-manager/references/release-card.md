@@ -6,8 +6,9 @@ One card per release, when it is on staging, GREEN, and the end-to-end run worke
 2. **What changed for him**, in plain words, by view.
 3. **Side-by-side screenshots** of each changed view in desktop Chrome at 1280 (D-406; no phone shots, D-407).
 4. **The rubric score** from the UI click-through (information only).
-5. **What was retired**, including any check retired or rewritten for a superseded rule.
-6. **The end-to-end run**: what ran, how long, what it cost.
+5. **What was retired** (D-411), including any check retired or rewritten for a superseded rule.
+6. **The end-to-end run**: what ran, how long, what it cost; and the release's usage: agents started, full-suite runs,
+   staging deploys.
 7. **Known differences and risks**, and the code review's verdict with its backlog lines.
 8. **What to try** when he tests.
 

@@ -4,7 +4,7 @@
 // and the five gestures, checking what the round 15 canvas's States board says of each (where the gap points, how wide,
 // solid or halftone, closed, flat to him), that each gesture settles, that a still idle draws nothing, a session's
 // filled segments at 0, 25, 50 and 100% of the stretch to its next check (B-273), and that the sidebar's 24 px dial turns to face him for a notice (D-216). Reduced motion gives one
-// still per mood. Her frame budget is measured over 10 s of speech at 390x844, DPR 3, 4x CPU throttle, and 3 s of idle
+// still per mood. (B-621: the 390 frame budget is retired, D-407.) Idle is measured at 390x844, DPR 3, 4x CPU throttle: 3 s of idle
 // there records no frame at all (B-274).
 //   node test/harness/core.cjs [record dir | synthetic] [screenshots dir] [--json <file>]
 // Run `node tools/build.mjs` first. Exit code 1 when any check fails.
@@ -43,7 +43,7 @@ if (seed.talk) delete seed.talk[today];
 for (const c of ['sessions', 'workouts'])
   for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || dayOf(d.startedAt)) === today) delete seed[c][id];
 const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
-const F = spec.ui.look.dialArc; // her stage sizes and budget (D-213, D-272)
+const F = spec.ui.look.dialArc; // her stage sizes and budget (D-213, D-412)
 const GDUR = { send: 1.2, done: 1.6, error: 1.8, glance: 2.2, settle: 2.4 };
 const stub = fs.readFileSync(path.join(__dirname, 'stub.js'), 'utf8');
 const ORIGIN = 'https://ev.local';
@@ -78,7 +78,6 @@ async function openPage(page) {
   );
   await page.waitForTimeout(600);
 }
-const { advisory, allPass } = require('./quarantine.cjs');
 const results = [];
 const ok = (name, cond, detail = '') => {
   results.push([cond ? 'PASS' : 'FAIL', name, detail]);
@@ -340,46 +339,10 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
       await hold(page, 'idle');
     }
     if (scheme === 'phone') {
-      // Her frame budget (D-272): 10 s of speech, 4x CPU throttle, DPR 3. B-152 (D-176): advisory here, its numbers
-      // printed; B-207 holds it.
+      // B-621: the 390 frame budget (D-412) is retired with the phone's look work (D-407); the desktop's numbers
+      // below are still recorded. Idle still costs nothing.
       const B = F.budget;
-      const measureBudget = async () => {
-        const cdp = await ctx.newCDPSession(page);
-        await cdp.send('Emulation.setCPUThrottlingRate', { rate: B.cpuThrottle });
-        await page.waitForTimeout(1500);
-        const m = await page.evaluate(`(${SPEECH})(${B.speechSec})`);
-        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-        const slow = m.frames.filter(f => f > B.slowFrameMs).length;
-        return {
-          renderer: 'svg',
-          frames: m.frames.length,
-          framesOver25ms: slow,
-          slowSharePct: r2((100 * slow) / Math.max(1, m.frames.length)),
-          p95FrameMs: r2(p95(m.frames)),
-          p95DrawMs: r2(p95(m.draws)),
-          redrawsPerSec: r2(m.heroPerSec),
-          dpr: B.dpr,
-          throttle: B.cpuThrottle,
-          viewport: B.viewport,
-        };
-      };
-      budget.phone = await advisory(
-        results,
-        'core-frame-budget',
-        `[phone] frame budget (D-272): at most ${B.maxSlowSharePct}% of frames over ${B.slowFrameMs} ms over ${B.speechSec} s of speech, ${B.cpuThrottle}x throttle, DPR ${B.dpr}`,
-        measureBudget,
-        b => {
-          const v = allPass([
-            [
-              b.framesOver25ms <= (B.maxSlowSharePct / 100) * b.frames && b.frames > 300 ? 'PASS' : 'FAIL',
-              'slow frames',
-              `${b.framesOver25ms} of ${b.frames}`,
-            ],
-          ]);
-          return { ok: v.ok, numbers: JSON.stringify(b) + (v.ok ? '' : ' · missed: ' + v.numbers) };
-        }
-      );
-      // Idle costs nothing (D-271, D-272; B-274): once she settles, her loop stops, so idle at the same throttle
+      // Idle costs nothing (D-271, D-412; B-274): once she settles, her loop stops, so idle at the same throttle
       // records no frame at all, not merely no drawing.
       {
         const cdp = await ctx.newCDPSession(page);
@@ -395,7 +358,7 @@ const SPEECH = `async (secs) => { const C = window.EVApp.core; const text = 'Pre
         await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
         budget.idle = s;
         ok(
-          `[phone] ${B.idleSec} s of idle at ${B.cpuThrottle}x throttle, DPR ${B.dpr}: zero frames, her loop stopped (D-272)`,
+          `[phone] ${B.idleSec} s of idle at ${B.cpuThrottle}x throttle, DPR ${B.dpr}: zero frames, her loop stopped (D-412)`,
           s.frames === 0 && s.redraws === B.idleRedraws && !s.running,
           JSON.stringify(s)
         );
