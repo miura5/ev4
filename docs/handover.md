@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder | B-626 blocker: talk schema lacks the `general` message field, so the staging check failed at 1624b6e (pwa-staging 41187862909); system docs already written at 1624b6e | /home/claude/ev4-wt/fix2 | fix2 | Oct 31, ~09:50Z |
+| staging re-check (Playwright, scratchpad e2e2) | B-624, B-623, B-626 at 5bf4e8d | none (scratchpad) | none | Oct 31, ~10:10Z |
 
 ## Waiting on Matt
 
@@ -30,5 +30,5 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Last release
 
-Live v4.5.22 at 92781b3 (GREEN Oct 31, Matt's ship); staging v4.5.22+38 at 87561b9 (GREEN Oct 31). A shallow clone lacks tags and builds a wrong version: fetch --tags before ship staging. Card:
+Live v4.5.22 at 92781b3 (GREEN Oct 31, Matt's ship); staging v4.5.22+56 at 5bf4e8d (GREEN Oct 31). A shallow clone lacks tags and builds a wrong version: fetch --tags before ship staging. Card:
 https://claude.ai/artifact/1BF1CgVSw8b6NN4aHj7ti4. B-515 stays open for the last ~180 `!important`s.
