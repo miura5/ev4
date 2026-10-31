@@ -3291,7 +3291,7 @@
   "title": "Ship it from the page (D-198): the job card of a build that is staging green offers \"Ship it (<commit>)\" naming the commit and its tasks; the tap (code only) writes jobs/<id> (kind ship, the commit, the task ids, brief \"ship it\") and fires the builder; ship live --matt-ok --from-job <id> writes dist/live-ok only when the job as fetched in the session has kind ship, writer page, a commit equal to the build's manifest.commit, no jobresults/<id> yet, and an age under 24 hours, then the printed calls, the reads and verify-deploy until GREEN as today, the tag by D-173, and the trace naming live at the commit GREEN or where it stopped; chart/rules.json R-04 carries the second form; CLAUDE.md's Unattended line allows a live deploy in a builder run only on a ship job; rollback stays a build-chat act with Matt present",
   "dod": "chart tests for each refusal (wrong commit, consumed, stale, wrong kind, wrong writer, no fetched job) and the pass; the harness at 390 and 1280: the chip only on a staging-green build at that commit, and start_job refuses kind ship; npm test green; npm run check green; ship staging green; the first page OK on a real build read back (dist/live-ok written by --from-job, the trace, verify-deploy live GREEN); live only on Matt's OK, which is the tap",
   "milestone": "v4.4 live",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-184",
    "B-178",
@@ -3305,7 +3305,11 @@
    "Will do",
    "Not yet"
   ],
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: builder-job buttons are dropped from the app (D-304) and the page is retired (D-367); live ships on Matt's word in the chat (R-04).",
+   "at": "2026-10-31T00:39:43.466Z"
+  }
  },
  {
   "id": "B-186",
