@@ -11503,5 +11503,22 @@
    "outcome": "task",
    "at": "2026-10-31T00:51:53.670Z"
   }
+ },
+ {
+  "id": "B-614",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Data vocabulary: one source (spec) for kinds, statuses and fields; the JSON schemas, core LIST_KINDS, DS.kind and the page's pickers are generated or checked from it, so two lists can never drift (the Learn-can't-save bug).",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "workflow gaps, Matt Oct 30",
+  "words": "Data vocabulary: one source (spec) for kinds, statuses and fields; the JSON schemas, core LIST_KINDS, DS.kind and the page's pickers are generated or checked from it, so two lists can never drift (the Learn-can't-save bug).",
+  "reportedAt": "2026-10-31T01:04:36.524Z",
+  "board": {
+   "row": "v4 B-614: Data vocabulary: one source (spec) for kinds, statuses and fields;…"
+  }
  }
 ]
