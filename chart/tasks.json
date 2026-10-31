@@ -11573,10 +11573,12 @@
   "id": "B-617",
   "kind": "request",
   "title": "Request (reported Oct 30): Jobs kit: one way to define a model job, with course framing, grounding, counts and length limits handled by the kit, not each job (NCLEX in BIO notes and the 101-card deck were this).",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "Every model job is defined through the jobs kit; course framing, grounding and counts are the kit's, with one test per rule.",
+  "milestone": "workflow (ops)",
+  "status": "open",
+  "depends": [
+   "B-614"
+  ],
   "notes": "",
   "commit": null,
   "source": "workflow gaps, Matt Oct 30",
@@ -11584,6 +11586,10 @@
   "reportedAt": "2026-10-31T01:04:43.908Z",
   "board": {
    "row": "v4 B-617: Jobs kit: one way to define a model job, with course framing,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T01:05:05.180Z"
   }
  },
  {
