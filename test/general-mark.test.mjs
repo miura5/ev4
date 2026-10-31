@@ -31,3 +31,26 @@ test('B-626: the mark is stripped and read as a flag, also half written while st
   assert.deepEqual(EV.generalMark('Preload drops. [gene'), { text: 'Preload drops.', general: false });
   assert.equal(EV.generalMark('A [bracket] kept.').text, 'A [bracket] kept.');
 });
+
+// B-626 (staging, Oct 31): the side chat said "Your course slides don't give this conversion" with no tag
+const GAP = /don[’']t give this|slides don[’']t|materials don[’']t/i;
+test('B-626: no chat prompt or persona line announces a materials gap; the prompt forbids it', () => {
+  const talk = fs.readFileSync(path.join(ROOT, 'page/app/72-ev-talking-with-claude.js'), 'utf8');
+  const sess = fs.readFileSync(path.join(ROOT, 'core/sessions.mjs'), 'utf8');
+  for (const [name, src] of [
+    ['72-ev-talking-with-claude.js', talk],
+    ['core/sessions.mjs', sess],
+    ['persona', JSON.stringify(spec.persona)],
+  ])
+    assert.doesNotMatch(src, GAP, name);
+  assert.match(talk, /never announce that you are answering from general knowledge/);
+  assert.match(sess, /never say whether his materials, slides or notes cover it/);
+});
+
+test('B-626: the side chat (pop-up) renders the general-knowledge tag, as the conversation does', () => {
+  const pop = fs.readFileSync(path.join(ROOT, 'page/app/90-render.js'), 'utf8');
+  assert.match(
+    pop,
+    /m\.general && !m\.pending\)\s*node\.append\(DS\.badge\(\{ text: 'general knowledge'[^)]*cls: 'gen-tag'/
+  );
+});

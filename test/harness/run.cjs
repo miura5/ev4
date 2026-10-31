@@ -2925,6 +2925,91 @@ async function generalTagCheck(browser) {
   ok('B-626: no page errors', errs.length === 0, errs.join(' | '));
   await page.close();
 }
+// B-626: the side chat (pop-up) shows the same tag; B-623: a quiz card there is answered in place (EV_ONLY=general)
+async function popChatChecks(browser) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+  const errs = [];
+  page.on('pageerror', e => errs.push(e.message));
+  await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+  await openPage(page);
+  await page.waitForTimeout(900);
+  await page.click('#tab-study');
+  await page.waitForTimeout(300);
+  await page.click('#ev-btn');
+  await page.waitForSelector('#evchat:not([hidden]) #evc-input');
+  const popSend = async t => {
+    const n = await page.evaluate(() => document.querySelectorAll('#evchat .msgs .mev').length);
+    await page.fill('#evc-input', t);
+    await page.press('#evc-input', 'Enter');
+    await page.waitForFunction(
+      n => document.querySelectorAll('#evchat .msgs .mev').length > n && !document.querySelector('#evchat .dots'),
+      n,
+      { timeout: 8000 }
+    );
+    await page.waitForTimeout(400);
+  };
+  await page.evaluate(() => {
+    window.__chatScript = [];
+    window.__chatReply = 'About 5 mL in one teaspoon. [general]';
+  });
+  await popSend('how many mL in a teaspoon');
+  const gt = await page.evaluate(() => {
+    const last = [...document.querySelectorAll('#evchat .msgs .mev')].pop();
+    return { text: last ? last.textContent : '', tags: last ? last.querySelectorAll('.gen-tag').length : 0 };
+  });
+  ok(
+    'B-626: the side chat shows the general-knowledge tag once and never the raw mark',
+    gt.tags === 1 && !/\[general\]/.test(gt.text),
+    JSON.stringify(gt)
+  );
+  const opts = ['Glycolysis', 'Krebs cycle', 'Electron transport', 'Fermentation'];
+  const item = n => ({
+    type: 'single',
+    topic: 'cell energy',
+    stem: `Question ${n}: which stage makes the most ATP in aerobic respiration?`,
+    options: opts,
+    correct: [2],
+    rationales: opts.map(o => 'Why: ' + o),
+    cjStep: 'analyze-cues',
+  });
+  await page.evaluate(
+    items => {
+      window.__sampleReply = { items };
+      window.__chatScript = [{ tool: 'make_practice', input: {} }];
+      window.__chatReply = 'On it.';
+    },
+    [item(1), item(2), item(3)]
+  );
+  await popSend('Quiz me on cell energy');
+  await page.waitForSelector('#evchat .msgs .opts .opt', { timeout: 8000 });
+  await page.click('#evchat .msgs .opts .opt >> nth=2');
+  const submit = page.locator('#evchat .msgs button', { hasText: 'Check answer' }).first();
+  const enabled = (await submit.count()) ? await submit.isEnabled() : null;
+  if (enabled) await submit.click();
+  const fb = await page
+    .waitForSelector('#evchat .msgs .verdict', { timeout: 4000 })
+    .then(h => h.textContent())
+    .catch(() => '');
+  const overlap = await page.evaluate(() => {
+    const lab = document.querySelector('#evchat .msgs .opts .opt');
+    const inp = lab && lab.querySelector('input');
+    const kb = lab && lab.querySelector('kbd.opt-n');
+    if (!inp || !kb) return null;
+    const a = inp.getBoundingClientRect(),
+      b = kb.getBoundingClientRect();
+    const shown = getComputedStyle(inp).opacity !== '0' && a.width > 2;
+    return shown && a.right > b.left && b.right > a.left && a.bottom > b.top && b.bottom > a.top;
+  });
+  await page.screenshot({ path: `${shots}/pop-quiz-answered.png` });
+  ok(
+    'B-623: a quiz card in the side chat is answered in place: a pick enables Check answer and the verdict shows',
+    enabled === true && /\S/.test(fb),
+    JSON.stringify({ enabled, fb })
+  );
+  ok('B-623: the side chat quiz card’s letter does not overlap a radio mark', overlap === false, String(overlap));
+  ok('B-623/B-626: no page errors in the side chat', errs.length === 0, errs.join(' | '));
+  await page.close();
+}
 async function staleStateChecks(browser) {
   // B-577 (Matt, live): state kept on his device (ev3-* keys) that a clean browser lacks: a retired or unknown view, a
   // reopen straight onto Study, a quiz left open (real or gone), a course no longer listed, and garbage. With each
@@ -3080,6 +3165,7 @@ async function tap(page, locator, name) {
   }
   if (process.env.EV_ONLY === 'general') {
     await group('generalTagCheck', () => generalTagCheck(browser));
+    await group('popChatChecks', () => popChatChecks(browser));
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
@@ -3088,6 +3174,7 @@ async function tap(page, locator, name) {
     // B-577: only the kept-state checks (EV_ONLY=stale), for a quick run while working on them
     await group('staleStateChecks', () => staleStateChecks(browser));
     await group('generalTagCheck', () => generalTagCheck(browser)); // B-626
+    await group('popChatChecks', () => popChatChecks(browser)); // B-623, B-626
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);

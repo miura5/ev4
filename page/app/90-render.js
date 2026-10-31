@@ -681,6 +681,7 @@
       const sig = JSON.stringify([
         m.text,
         !!m.pending,
+        !!m.general,
         m.error,
         (m.cards || []).length,
         checks.map(c => {
@@ -712,6 +713,9 @@
           d.append(el('i'), el('i'), el('i'));
           node.append(d);
         } else node.append(fmt(m.text));
+        // B-626 (D-415): a reply from general knowledge carries its one quiet tag here too, as in the conversation
+        if (m.general && !m.pending)
+          node.append(DS.badge({ text: 'general knowledge', tone: 'quiet', cls: 'gen-tag', key: 'general' }));
         // B-406: a Notes session's check, as the Conversation shows it, in the session's own chat
         for (const c of !m.pending ? checks : []) {
           const box = el('div', 'card ev-card');

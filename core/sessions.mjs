@@ -546,7 +546,7 @@ export function makeSessions(core) {
   const SESSION_RULES = [
     "You are E.V., Matt's study partner for nursing school (" + courses().join(', ') + '). Follow these rules:',
     // B-626 (D-415): a check or reply in a session is JSON text, so no mark; it says plainly what is general
-    '- Ground everything in Matt\'s own note. When a point comes from general knowledge instead, say so in a few plain words ("in general").',
+    '- Ground everything in Matt\'s own note. When a point comes from general knowledge instead, say so in a few plain words ("in general"); never say whether his materials, slides or notes cover it (B-626).',
     '- Ask before telling. Keep each item short and plain.',
   ].join('\n');
 
