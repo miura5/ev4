@@ -11690,9 +11690,9 @@
   "id": "B-622",
   "kind": "request",
   "title": "Request (reported Oct 30): UI review of the cleanup release (88/100): Picker chips hint what each sets, distinct hues for Learn vs Reading and Practice vs Study, a calmer long note title (H1 size or line-height), a neutral disabled Add task button, and an H3 plus a graded task in the synthetic record.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Each of the five is done or declined with a reason; shots at 1280.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11701,6 +11701,10 @@
   "reportedAt": "2026-10-31T02:58:50.567Z",
   "board": {
    "row": "v4 B-622: UI review of the cleanup release (88/100): Picker chips hint what…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T02:58:53.065Z"
   }
  }
 ]
