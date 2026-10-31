@@ -508,7 +508,7 @@
   "title": "Mac lane watched (D-087, D-091, D-097): watch() reports missed mac-lane slots without re-firing; restore-drill writes system/seed and a run document in live; evening-mac's push turned on and the live task's notification changed by Matt in the desktop app (a Mac-bound task changes only with Matt present)",
   "dod": null,
   "milestone": "M7",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-26"
   ],
@@ -523,8 +523,11 @@
   "jobs": [
    "job-20261022-021528-b-27"
   ],
-  "waitingOn": "Matt",
-  "waitingWhere": "mac"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: Study Watch retired (D-298); backups and the live restore drill run on D1 and R2 (D-302, D-322, D-330); the artifact is no longer the live record (D-307).",
+   "at": "2026-10-31T00:39:38.632Z"
+  }
  },
  {
   "id": "B-28",
