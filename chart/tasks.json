@@ -11913,5 +11913,22 @@
   "board": {
    "row": "v4 B-633: An exam dated today that is already over reads upcoming until"
   }
+ },
+ {
+  "id": "B-634",
+  "kind": "request",
+  "title": "Request (reported Oct 31): quizCardFor and the in-chat quiz text say N questions without 'again' wording",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "release review Oct 31",
+  "words": "quizCardFor and the in-chat quiz text say N questions without 'again' wording",
+  "reportedAt": "2026-10-31T08:56:30.026Z",
+  "board": {
+   "row": "v4 B-634: quizCardFor and the in-chat quiz text say N questions without 'again'…"
+  }
  }
 ]
