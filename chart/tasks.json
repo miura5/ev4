@@ -12295,5 +12295,22 @@
   "board": {
    "row": "v4 B-650: B-647 review: a flashcards job queued before the removal no longer…"
   }
+ },
+ {
+  "id": "B-651",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): Staging run of D-416: asking E.V. for flashcards still starts a general background job that writes cards; she should say flashcards live in Quizlet and offer a practice set. The show_card description still lists checkin.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build manager: D-416 staging run",
+  "words": "Staging run of D-416: asking E.V. for flashcards still starts a general background job that writes cards; she should say flashcards live in Quizlet and offer a practice set. The show_card description still lists checkin.",
+  "reportedAt": "2026-10-31T14:17:01.512Z",
+  "board": {
+   "row": "v4 B-651: Staging run of D-416: asking E.V. for flashcards still starts a…"
+  }
  }
 ]
