@@ -11969,5 +11969,22 @@
    "outcome": "task",
    "at": "2026-10-31T09:24:55.827Z"
   }
+ },
+ {
+  "id": "B-637",
+  "kind": "request",
+  "title": "Request (reported Oct 31): Stream practice and plan answers from the Worker to the page (TransformStream SSE pass-through, usage counted as it flows, bridge reads SSE) so nothing sits silent and the page can show progress; today the Worker buffers the whole stream before answering",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-624 spike Oct 31",
+  "words": "Stream practice and plan answers from the Worker to the page (TransformStream SSE pass-through, usage counted as it flows, bridge reads SSE) so nothing sits silent and the page can show progress; today the Worker buffers the whole stream before answering",
+  "reportedAt": "2026-10-31T09:37:52.155Z",
+  "board": {
+   "row": "v4 B-637: Stream practice and plan answers from the Worker to the page…"
+  }
  }
 ]

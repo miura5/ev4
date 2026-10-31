@@ -700,3 +700,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-633 | request | 2026-10-31T08:56:27.402Z | An exam dated today that is already over reads upcoming until midnight | release review Oct 31 | inbox |  |
 | B-634 | request | 2026-10-31T08:56:30.026Z | quizCardFor and the in-chat quiz text say N questions without 'again' wording | release review Oct 31 | inbox |  |
 | B-635 | request | 2026-10-31T08:56:32.673Z | conversation.mjs refreshes Quizlet on its own weekday list, separate from classWeekdays | release review Oct 31 | inbox |  |
+| B-637 | request | 2026-10-31T09:37:52.155Z | Stream practice and plan answers from the Worker to the page (TransformStream SSE pass-through, usage counted as it flows, bridge reads SSE) so nothing sits silent and the page can show progress; today the Worker buffers the whole stream before answering | B-624 spike Oct 31 | inbox |  |
