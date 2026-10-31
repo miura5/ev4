@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-414",
+  "date": "Oct 31",
+  "title": "Class weekdays are a spec setting",
+  "why": "B-260: Today treated every weekday as a class day; Matt has class on Monday and Wednesday only. spec.study.classWeekdays (ISO weekday numbers, now [1,3]) is the one source; core reads it and every other weekday is a study day with its budget, review load and new checks. A course or the record may override it later without a schema change.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-413",
   "date": "Oct 31",
   "title": "D-404 carry-over: where its material lives, and the one hard-limit question it owns",
