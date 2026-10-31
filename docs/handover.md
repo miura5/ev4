@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder (restarted Oct 31 in a new chat; the first one stopped with no push) | B-467 red nightly: name the failing checks, fix or retire each, dispatch nightly via REST | /home/claude/ev4-wt/b467 | b467 | Oct 31, this chat |
+| builder | B-640 shallow-clone tag trap: fetch tags or refuse in ship when git describe --tags fails | /home/claude/ev4-wt/b640 | b640 | Oct 31, this chat |
 
 ## Waiting on Matt
 
@@ -16,8 +16,8 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 ## Next
 
 Matt's order (Oct 31), one builder at a time:
-1. B-467 red nightly (running, above).
-2. The shallow-clone tag trap: a fresh clone has no tags, so build/ship stamps v4.5.0+untagged and staging never matches. Make ship staging/live refuse (or fetch tags) when `git describe --tags` fails; file it as a task.
+1. B-467 done (245ea9e, nightly 41192946490 green).
+2. B-640 shallow-clone tag trap (running, above).
 3. B-606 parallel checks (faster full suite).
 4. B-638 notes-check polish (text-box card for every open-ended check, submit returns on its own, a reminder when he answers in chat).
 5. D-416 simplify release (B-636): inventory with live usage, spikes, removal lanes, full check, staging, e2e, card.
