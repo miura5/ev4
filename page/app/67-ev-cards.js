@@ -787,8 +787,10 @@
           go.disabled = ta.disabled = true;
           go.textContent = 'Checking…';
           try {
-            await checkSend(s, text);
-            T.checkDraft.delete(key);
+            // B-638: a reply in flight (or the record not loaded) sends nothing; his answer stays in the card
+            if ((await checkSend(s, text)) === false)
+              toast('E.V. is still replying — your answer is kept, press Check answer again.');
+            else T.checkDraft.delete(key);
           } catch (e) {
             toast('Couldn’t send that answer: ' + ((e && (e.message || e.code)) || 'error'));
           } finally {

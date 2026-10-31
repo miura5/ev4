@@ -655,10 +655,10 @@
     const CHECK_NUDGE = 'To see the why and keep your weak spots, answer in the check card above.';
     async function popSend(raw, o = {}) {
       const text = String(raw || '').trim();
-      if (!text || T.busy) return;
+      if (!text || T.busy) return false; // B-638: not sent; the caller keeps his words
       if (!M) {
         toast('Still loading your record.');
-        return;
+        return false;
       }
       // a chat reopened from history goes on in its own thread (closing it again marks it again)
       if (!POP.th) POP.th = newThread();
@@ -670,7 +670,7 @@
       try {
         mid = await mattSay(text, { thread: th, restoreTo: popRestore });
       } catch (e) {
-        if (e && e.refused) return; // his words are back in the pop-up's box
+        if (e && e.refused) return false; // his words are back in the pop-up's box
         throw e;
       }
       // B-406: in a Notes session's chat, the card's answer answers its open check. B-638: a line typed in the chat
@@ -689,7 +689,7 @@
         const r =
           s && s.status === 'active' && noteOfSession(s) === nid ? await quizNow() : quizInChat('', { thread: th });
         if (r) await evSay(r[0], r[1] || [], { replyTo: mid, thread: th });
-        return;
+        return true;
       }
       await chat(text, {
         replyTo: mid,
@@ -698,6 +698,7 @@
         view: nid ? noteView(nid) : viewName(),
         ...(nid ? { note: nid } : {}), // B-442: the open note goes with the ask, once whole, then as changes
       });
+      return true;
     }
     function popMsgEl(m, last) {
       // B-623: a quiz (set) card is answered in place here too, as a check is

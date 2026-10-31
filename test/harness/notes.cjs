@@ -1291,7 +1291,40 @@ const openNoteId = page =>
       JSON.stringify({ nudged, typedAnswered })
     );
     await until(page, () => !document.querySelector('#evchat .msgs .dots'), null, 4000);
+    // B-638: with a reply in flight, Check answer keeps his answer in the card and records nothing
+    await page.evaluate(() => {
+      window.__chatHold = new Promise(r => (window.__chatRelease = r));
+    });
+    await page.fill('#evc-input', 'What about U waves?');
+    await page.press('#evc-input', 'Enter');
+    await until(page, () => !!document.querySelector('#evchat .msgs .dots'), null, 4000);
     await page.fill('#evchat .msgs .check textarea[data-ui=check-answer]', 'They peak');
+    await page.click('#evchat .msgs .check [data-ui=check-submit]');
+    const kept = await until(
+      page,
+      () =>
+        /still replying/.test(document.body.textContent) &&
+        !document.querySelector('#evchat .msgs .check [data-ui=check-submit]').disabled,
+      null,
+      4000
+    );
+    const held = await page.evaluate(
+      i => ({
+        draft: (document.querySelector('#evchat .msgs .check textarea[data-ui=check-answer]') || {}).value,
+        answered: Object.values((window.__db.sessions[i] || {}).events || {}).some(e => e.type === 'answer'),
+      }),
+      sa.id
+    );
+    ok(
+      `${tag} B-638 Check answer while E.V. is replying keeps the answer in the card and records nothing`,
+      kept && held.draft === 'They peak' && !held.answered,
+      JSON.stringify({ kept, ...held })
+    );
+    await page.evaluate(() => {
+      window.__chatHold = null;
+      window.__chatRelease();
+    });
+    await until(page, () => !document.querySelector('#evchat .msgs .dots'), null, 6000);
     await page.click('#evchat .msgs .check [data-ui=check-submit]');
     const answered = await until(
       page,

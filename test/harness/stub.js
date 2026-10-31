@@ -125,6 +125,8 @@
       e.code = window.__chatFail;
       throw e;
     }
+    // window.__chatHold: a promise; the reply waits on it (a reply in flight, B-638)
+    if (window.__chatHold) await window.__chatHold;
     // window.__chatPre: text written in the first round, before the tools run. Like the platform, every round's text
     // comes back joined by a blank line, both on onText and in the result.
     const pre = window.__chatPre || '';
