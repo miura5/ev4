@@ -1559,7 +1559,7 @@
     /** B-446: a practice ask; a reply cut short or wrapped in words keeps every whole question it holds. */
     async function askItems(prompt) {
       try {
-        return await sample.json(prompt, { modelTier: 'default', cache: false });
+        return await sample.json(prompt, { modelTier: 'default', cache: false, stream: true }); // B-624: streamed
       } catch (e) {
         if (e && e.code === 'invalid_json' && e.text) {
           // B-624: what was salvaged from a reply that did not parse, for the "[EV practice]" console line
@@ -1574,7 +1574,12 @@
     /** B-624: why an ask failed, in the console with the "[EV practice]" prefix, and the short code the page shows
      * ("upstream_error 524"); no question text. */
     function practiceFailed(e) {
-      const code = (e && e.code) || (e && e.name) || 'error';
+      // B-624: an error with no code of its own reads by its cause ("shape": the set's write refused its shape), never
+      // as a bare "(Error)"
+      const msg = String((e && e.message) || e);
+      const code =
+        (e && e.code) ||
+        (/does not fit its shape/.test(msg) ? 'shape' : e && e.name && e.name !== 'Error' ? e.name : 'error');
       const status = e && e.status ? e.status : null;
       console.warn('[EV practice] ask failed', {
         code,
@@ -1706,6 +1711,7 @@
           'Write exactly 5 questions. "single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
             JSON.stringify(E.CJ_STEPS) +
             '. Set verify true when the point relies on general knowledge rather than his chapters.',
+          'sourceRef is optional: leave it out, or give the ref of the passage the question rests on, which always starts with materials/ or note/ (B-624).',
           'Shape: {"items":[{"weakspotId":"<id or omit>","objective":"E4-3","topic":"<short>","type":"single"|"sata","stem":"...","options":["..."],"correct":[0],"rationales":["..."],"cjStep":"analyze-cues","verify":false} or {"type":"matrix","objective":"...","topic":"...","stem":"...","matrix":{"columns":["Expected","Unexpected"],"rows":[{"text":"...","correct":0,"rationale":"..."}]},"cjStep":"recognize-cues","verify":false}]}',
         ]
           .filter(Boolean)

@@ -430,6 +430,10 @@ export function makeItemKinds(core) {
       if (steps.includes(s)) q.cjStep = s;
       else if (steps.length) delete q.cjStep; // a step it could not name is no step, not a refused question
     }
+    // B-624: a sourceRef the sets schema would refuse (it must start materials/ or note/) is left off, so one bad ref
+    // never loses the whole set's write; a valid one stays as written
+    if (q.sourceRef !== undefined && !(typeof q.sourceRef === 'string' && /^(materials|note)\//.test(q.sourceRef)))
+      delete q.sourceRef;
     return keep(q, ITEM_KEYS);
   }
   /** B-455: an item's objective held to the candidates its prompt named (the set's exam's, else its course's): kept

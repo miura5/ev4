@@ -361,3 +361,30 @@ test('B-455 (review): the candidates each prompt gets, and the general path tags
     ['m1', 'm2']
   );
 });
+
+test('B-624: a planted bad sourceRef is left off the item, so the set still fits its shape; a valid one stays', () => {
+  const schema = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/schemas/sets.schema.json'), 'utf8'));
+  const base = { type: 'single', topic: 'a', options: opts, correct: [0], rationales: why, cjStep: 'analyze-cues' };
+  const items = EV.practiceReply.tagItems({
+    items: [
+      { ...base, stem: stem(1), sourceRef: 'BIO 201 slides, chapter 3' },
+      { ...base, stem: stem(2), sourceRef: 'materials/bio-ch3' },
+      { ...base, stem: stem(3), sourceRef: 'note/n1#line' },
+    ],
+  });
+  assert.equal(items.length, 3);
+  assert.equal('sourceRef' in items[0], false, 'the bad ref is left off');
+  assert.equal(items[1].sourceRef, 'materials/bio-ch3');
+  assert.equal(items[2].sourceRef, 'note/n1#line');
+  const refSchema = JSON.stringify(schema).match(/"\^\(materials\|note\)\/[^"]*"/);
+  assert.ok(refSchema, 'the sets schema still holds the pattern, unchanged');
+  const re = new RegExp(JSON.parse(refSchema[0]));
+  for (const q of items) assert.ok(q.sourceRef === undefined || re.test(q.sourceRef));
+  const page = fs.readFileSync(path.join(ROOT, 'page/app/20-study.js'), 'utf8');
+  assert.match(page, /always starts with materials\/ or note\//, 'the prompt names the ref shape');
+  assert.match(
+    page,
+    /does not fit its shape\/\.test\(msg\) \? 'shape'/,
+    'a shape refusal shows "shape", not "(Error)"'
+  );
+});

@@ -459,7 +459,8 @@ export async function handleClaude(request, env, url, { signal = null } = {}) {
   // B-459: a study plan's asks (make, fix and edit) stream. Sent whole, a Sonnet plan sat silent for minutes and the
   // Claude API's own edge answered 524 at about two minutes (staging, Oct 28); streamed, events flow all the while.
   // The events are put back together here into the one Messages API reply the callers read.
-  const stream = !!use.purpose;
+  // B-624: a practice ask (no purpose) asks to stream too; a long Haiku write sent whole hit the upstream timeout (502)
+  const stream = !!use.purpose || (!!body && body.stream === true);
   let r;
   try {
     r = await fetch(apiUrl(env), {

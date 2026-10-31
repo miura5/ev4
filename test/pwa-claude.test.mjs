@@ -399,3 +399,42 @@ test('D-352: the ceilings count tokens as billed: a cache read at 0.1, a cache w
     globalThis.fetch = realFetch;
   }
 });
+
+test('B-624: a practice ask (no purpose) that asks to stream is sent with stream: true and put back together', async () => {
+  const { toSse } = await import('../pwa/job-stub.mjs');
+  const env = { EV_TOKEN: 't', ANTHROPIC_API_KEY: 'k', DB: fakeD1(), ASSETS: { fetch: () => new Response('') } };
+  const sent = [];
+  const realFetch = globalThis.fetch;
+  const full = {
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'text', text: '{"items":[]}' }],
+    stop_reason: 'end_turn',
+    usage: { input_tokens: 5, output_tokens: 5 },
+  };
+  globalThis.fetch = async (url, init) => {
+    const b = JSON.parse(init.body);
+    sent.push(b);
+    return new Response(b.stream ? toSse(full) : JSON.stringify(full), { status: 200 });
+  };
+  try {
+    const post = async extra =>
+      worker.fetch(
+        new Request('https://ev.example/api/claude', {
+          method: 'POST',
+          headers: { authorization: 'Bearer t', 'content-type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: 'hi' }], ...extra }),
+        }),
+        env
+      );
+    const r = await post({ stream: true });
+    assert.equal(r.status, 200);
+    assert.equal(sent[0].stream, true);
+    assert.equal(sent[0].model, 'claude-haiku-5-5', 'the usual model');
+    assert.equal((await r.json()).content[0].text, '{"items":[]}');
+    await post({});
+    assert.equal(sent[1].stream, undefined, 'an ask that did not ask to stream is sent whole');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

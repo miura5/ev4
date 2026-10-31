@@ -1148,6 +1148,7 @@
             // B-418 (D-339): a read-along ask names the note and its text's mark, for the Worker's read limits
             ...(opts.read && round === 0 ? { read: opts.read } : {}),
             ...(prefix ? { cache: [{ m: 0, b: 0 }] } : {}), // B-442: the Worker marks it; never raw cache_control
+            ...(opts.stream ? { stream: true } : {}), // B-624: a practice ask streams, so a long write is never cut at 45 s
           }),
           signal: opts.signal,
         });

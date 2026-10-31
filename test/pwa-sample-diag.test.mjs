@@ -61,3 +61,38 @@ test('B-624: the page names the cause on its line and in the "[EV practice]" con
   assert.match(src, /'\[EV practice\] malformed: nothing usable in '/);
   assert.match(src, /came back malformed \(' \+ tag \+ '\)/);
 });
+
+test('B-624: a practice ask streams: the shim forwards stream: true and the page asks for it', async () => {
+  const src = fs.readFileSync(path.join(ROOT, 'pwa/bridge.js'), 'utf8');
+  const window = {};
+  const bodies = [];
+  const fetch = async (url, init) => {
+    if (!/\/api\/claude/.test(url))
+      return new Response('{"docs":[]}', { headers: { 'content-type': 'application/json' } });
+    bodies.push(JSON.parse(init.body));
+    return msg('{"items":[]}', 'end_turn');
+  };
+  const document = {
+    body: null,
+    visibilityState: 'visible',
+    addEventListener: () => {},
+    querySelector: () => null,
+    createElement: () => ({}),
+  };
+  new Function('window', 'document', 'localStorage', 'navigator', 'fetch', 'setInterval', 'addEventListener', src)(
+    window,
+    document,
+    { getItem: () => 'token', setItem: () => {} },
+    {},
+    fetch,
+    () => 0,
+    () => {}
+  );
+  const sample = await window.claude.use('sample');
+  await sample.json('q', { stream: true });
+  assert.equal(bodies[0].stream, true);
+  await sample.json('q');
+  assert.equal(bodies[1].stream, undefined);
+  const page = fs.readFileSync(path.join(ROOT, 'page/app/20-study.js'), 'utf8');
+  assert.match(page, /sample\.json\(prompt, \{ modelTier: 'default', cache: false, stream: true \}\)/);
+});
