@@ -12173,5 +12173,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:20:59.656Z"
   }
+ },
+ {
+  "id": "B-645",
+  "kind": "request",
+  "title": "Request (reported Oct 31): D-416: retire skill checklists",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-636 inventory spike",
+  "words": "D-416: retire skill checklists",
+  "reportedAt": "2026-10-31T13:21:02.717Z",
+  "board": {
+   "row": "v4 B-645: D-416: retire skill"
+  }
  }
 ]
