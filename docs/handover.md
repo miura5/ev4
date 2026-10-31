@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| Builder: flashcards | B-647 | .claude/worktrees/agent-aa71822bdb491074a | worktree-agent-aa71822bdb491074a | Oct 31 |
+| GitHub full check (checks.yml) | B-648 | none (GitHub Actions) | main at b5743b1 | Oct 31 |
 
 ## Waiting on Matt
 
@@ -16,7 +16,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 ## Next
 
 Matt's order (Oct 31), one builder at a time:
-1. D-416 simplify release: inventory done (B-636). B-644 to B-646 done on main (2628796c). B-647 flashcards building; then B-648 closeout and full check, staging, e2e, card. B-649 needs the live token (counts); low priority.
+1. D-416 simplify release: inventory done (B-636). B-644 to B-646 done on main (2628796c). B-647 done (79c12f03). Now B-648: full check running, then B-648 closeout and full check, staging, e2e, card. B-649 needs the live token (counts); low priority.
 2. Then bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643.
 
 Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh api -X POST repos/miura5/ev4/actions/workflows/<file>/dispatches -f ref=main -f "inputs[commit]=..."` plus the release inputs ship prints. A live deploy whose record entry was lost: `ship live --record-past` (B-641). Every ship live tags a new release, then needs one ship staging at the same commit before live goes GREEN. The live deploy waits for Matt's Approve on GitHub.
