@@ -5363,14 +5363,19 @@
   "title": "Study quiz card (folds B-281's Study part; D-165, D-231, C-13): the question runner restyled. A to D and \"Enter\" labels show from 1024 px and are hidden on the phone. Verdict and why. The This quiz list in the right panel. Misses are proposed quietly, with no triage before the set ends.",
   "dod": "Screenshots at 390 and 1280 in light and dark: a question and an answered miss. The \"Enter\" label inside the primary measures 4.5:1 or more in both themes, at full opacity. No key labels at 390. A miss writes a proposed spot through weakspot-propose and shows no Accept button.",
   "milestone": "v4.8 redesign",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-297",
    "B-234"
   ],
   "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
-  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG"
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: the quiz runner moved onto Proprietary (B-511) and misses propose quietly (B-407); phone key-label parts frozen (D-407).",
+   "at": "2026-10-31T00:40:06.267Z"
+  }
  },
  {
   "id": "B-299",
