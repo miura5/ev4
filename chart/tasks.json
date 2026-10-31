@@ -12236,5 +12236,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:21:15.571Z"
   }
+ },
+ {
+  "id": "B-648",
+  "kind": "request",
+  "title": "Request (reported Oct 31): D-416: spec closeout and full check",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-636 inventory spike",
+  "words": "D-416: spec closeout and full check",
+  "reportedAt": "2026-10-31T13:21:18.173Z",
+  "board": {
+   "row": "v4 B-648: D-416: spec closeout and full"
+  }
  }
 ]
