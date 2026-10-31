@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| spike (no commits) | B-624 502 on practice asks | /home/claude/ev4-wt/spike624 (if made) | none | Oct 31, ~10:40Z |
+| builder | B-624: one retry on Claude API 502/503/504/529 before any stream (pwa/claude.js); make_practice carries the course | /home/claude/ev4-wt/b624 | b624 | Oct 31, ~11:00Z |
 
 ## Waiting on Matt
 
@@ -16,7 +16,7 @@ The release card for staging v4.5.22+56 at 5bf4e8d (Oct 31): https://claude.ai/a
 
 ## Next
 
-0. First a spike on B-624's 502 (practice asks from chat; is streaming reaching the Worker; which hop times out), one builder. Then, on Matt's go (his usage resets Monday evening), the simplify release (D-416, B-636). Inventory probe with live usage counts, spikes on what breaks per feature, removal tasks (code removed; records kept, collections marked retired), lanes 2 to 4 by file ownership, full GitHub check, staging, e2e, card. Paused workflow gaps B-614 to B-619 wait behind it.
+0. B-624's fix ships to staging as a follow-up on the waiting card (the card's commit 5bf4e8d stays shippable on its own). B-637 (true streaming to the page) is backlog. Then, on Matt's go (his usage resets Monday evening), the simplify release (D-416, B-636). Inventory probe with live usage counts, spikes on what breaks per feature, removal tasks (code removed; records kept, collections marked retired), lanes 2 to 4 by file ownership, full GitHub check, staging, e2e, card. Paused workflow gaps B-614 to B-619 wait behind it.
 1. Staging GREEN at 87561b9. E2E: B-625, B-261, B-527 pass; B-260 not visible on a Saturday (core test). After the fix round: ship staging once more, re-check only the four failed items, then the card. Review backlog filed B-627 to B-635.
    D-414 recorded for B-260. Builder what-ifs to file: Off day vs a Study day word; an exam today but over reads
    upcoming till midnight; quizCardFor and in-chat quiz text lack 'again'; deriveExams lacks past-means-done;
