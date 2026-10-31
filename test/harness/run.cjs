@@ -6774,23 +6774,36 @@ async function tap(page, locator, name) {
         /Check 1 · 2 questions/.test(await ss.locator('#p-ev').textContent()) &&
         (await ss.locator('#ev-surf').locator('ol.check-items li').count()) === 2
     );
-    // Answer in the composer: recorded on the session, and Claude sees the check's questions
+    // B-638: answered in the card's own text box (the Answer button that pointed at the composer is retired): recorded
+    // on the session, and Claude sees the check's questions
     await ss.evaluate(() => {
       window.__sampleFn &&
         (window.__chatReply = 'Right: less solute outside, so water moves in. What happens to cell size?');
       window.__chatScript = [];
     });
-    await ss.locator('#ev-surf').locator('button', { hasText: 'Answer' }).click();
     ok(
-      'Answer focuses the composer',
-      await ss.evaluate(
-        () =>
-          document.activeElement &&
-          document.activeElement.id === 'ev-input' &&
-          /Answer check 1/.test(document.activeElement.placeholder)
-      )
+      'the check card has its own text box and Check answer, no Answer button (B-638)',
+      (await ss.locator('#ev-surf textarea[data-ui=check-answer]').count()) === 1 &&
+        (await ss
+          .locator('#ev-surf')
+          .locator('button', { hasText: /^Answer$/ })
+          .count()) === 0
     );
-    await send(ss, 'There is less solute in the fluid so water moves into the cells');
+    await ss.fill(
+      '#ev-surf textarea[data-ui=check-answer]',
+      'There is less solute in the fluid so water moves into the cells'
+    );
+    await ss.click('#ev-surf [data-ui=check-submit]');
+    await ss
+      .waitForFunction(
+        () =>
+          Object.values(window.__db.sessions || {}).some(x =>
+            Object.values(x.events || {}).some(e => e.type === 'answer')
+          ),
+        null,
+        { timeout: 6000 }
+      )
+      .catch(() => {});
     await ss.waitForTimeout(400);
     S1 = await sess();
     const ans = Object.values(S1.events).find(e => e.type === 'answer');
