@@ -4687,7 +4687,7 @@
   "milestone": "v4.5.x ops",
   "status": "open",
   "depends": [],
-  "notes": "Lead from the build chat (Oct 23): core/evcore.mjs dayType() returns 'class' for every weekday with no exam, clinical or validation entry. Nothing records which weekdays Matt has class (Mon and Wed), so Friday reads as a class day, which also sets that day's budget (180 min), its review load and new checks. A fix likely needs his class weekdays as config, which may fall outside the freeze's no-new-field rule (D-251); decide that in triage.",
+  "notes": "Reworded (D-263): Today marks every weekday as a class day; Matt has class only on Monday and Wednesday, so the class weekdays become a setting and other days read as study days. The old D-251 freeze question is moot: the build manager decides (D-317, D-410).",
   "commit": null,
   "source": "build chat",
   "words": "Also let's get that bug to the build chat as you said. Also another bug in live I noticed is it says today is a class day even though it's friday. I only have class on monday and wednesday.",
