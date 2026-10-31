@@ -11706,5 +11706,23 @@
    "outcome": "task",
    "at": "2026-10-31T02:58:53.065Z"
   }
+ },
+ {
+  "id": "B-623",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): In the floating E.V. chat beside a note being written, 'Quiz me on this note' replied that five questions were being written and would appear in about a minute, but none appeared; asked twice more, E.V. repeated the promise, then said it had not actually started them and requested them only then. The quiz request must actually start the question job when E.V. says it has, the questions must appear in the chat, and E.V. must never claim a job is running when none was started.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "build chat",
+  "words": "In the floating E.V. chat beside a note being written, 'Quiz me on this note' replied that five questions were being written and would appear in about a minute, but none appeared; asked twice more, E.V. repeated the promise, then said it had not actually started them and requested them only then. The quiz request must actually start the question job when E.V. says it has, the questions must appear in the chat, and E.V. must never claim a job is running when none was started.",
+  "reworded": true,
+  "reportedAt": "2026-10-31T07:28:07.390Z",
+  "board": {
+   "row": "v4 B-623: In the floating E.V. chat beside a note being written, 'Quiz me on…"
+  }
  }
 ]
