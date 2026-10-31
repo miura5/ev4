@@ -597,3 +597,6 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
 @media (min-width:1024px){
   body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
 }
+
+/* The skills panel's head line: in views so it outranks Today's .fold-line all:unset by specificity (B-515, was !important) */
+.sk-panel .sk-pfold{color:var(--ink);font-weight:var(--fw-semibold);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}

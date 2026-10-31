@@ -46,14 +46,13 @@ body.skill-on .qchips{display:none}
 .sk-head button{flex:0 0 auto;min-height:36px}
 .sk-static{cursor:default;padding-right:2px}.sk-static::after{display:none}
 .sk-clock{font-variant-numeric:tabular-nums}
-.sk-pfold{color:var(--ink);font-weight:var(--fw-semibold)}.sk-panel.folded{gap:0}
+.sk-panel.folded{gap:0}
 .sk-sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:inset 0 0 0 1px var(--line2);border-radius:var(--r-lg)}
 .sk-count{color:var(--quiet)}
 .sk-step.cur{background:var(--raised)}
 .sk-mark{color:var(--do)}
 .sk-step.miss .sk-mark{color:var(--urg)}
 .sk-panel .sk-head{min-width:0}
-.sk-panel .sk-pfold{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 @media (min-width:1200px){
   body.skill-on .sk-sheet .sk-tog{pointer-events:none;padding-right:2px}
   body.skill-on .sk-sheet .sk-tog::after{display:none}
