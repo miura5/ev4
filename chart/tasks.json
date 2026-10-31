@@ -12369,10 +12369,12 @@
   "id": "B-654",
   "kind": "request",
   "title": "Request (reported Oct 31): Images in notes part 2: drag a picture sideways onto a column grid so text can sit in a column beside it (a two-column row block in notes), Quip-style.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
-  "depends": [],
+  "dod": "A picture can be dragged beside a block into a two-column row; text types in the column beside it; headings, On this page and copy-paste work inside; seen on staging at 1280.",
+  "milestone": "Notes images",
+  "status": "open",
+  "depends": [
+   "B-653"
+  ],
   "notes": "",
   "commit": null,
   "source": "Matt in the build chat, Oct 31",
@@ -12380,6 +12382,10 @@
   "reportedAt": "2026-10-31T22:35:44.139Z",
   "board": {
    "row": "v4 B-654: Images in notes part 2: drag a picture sideways onto a column grid so…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T22:35:58.582Z"
   }
  }
 ]
