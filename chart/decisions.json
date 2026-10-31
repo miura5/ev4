@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-410",
+  "date": "Oct 30",
+  "title": "The release loop runs on the build manager's judgment; the workflow lives in skills and hooks, not prose",
+  "why": "Matt, Oct 30: development continues at the current pace while he steps back to study until about Nov 20. The build manager works toward one goal, a release on staging with its card delivered, then takes the next major feature or batch of fixes once Matt ships. Matt only reports bugs and asks, and says ship; every other judgment is the build manager's, and it does not send him questions (large decisions per D-317 stay his, brought only when unavoidable). A big ask (a redesign, a new view) starts with a design step the build manager decides itself. The workflow is encoded as reusable skills and hooks with checks that fail when they drift, instead of growing .md files; new .md files are made only when a skill or the Chart cannot hold the content. No usage pacer; checks improve through the GitHub full-suite work (B-606); the phone stays frozen (D-407).",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-409",
   "date": "Oct 30",
   "title": "Spikes: a throwaway experiment when a careful builder falls short",
