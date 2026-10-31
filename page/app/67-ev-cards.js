@@ -762,19 +762,44 @@
         });
         fb.append(ol);
         if (!live) return;
+        // B-638: answered in the card, in his own words, as an open check is: a text box and Check answer. The answer
+        // goes into this check's chat as his line (it answers the check there, and the reply gives the why); the Answer
+        // button that only pointed at a composer did nothing in a Notes session's chat.
+        const ta = document.createElement('textarea');
+        ta.className = 'open-in';
+        ta.rows = 3;
+        ta.maxLength = 1200;
+        ta.dataset.ui = 'check-answer';
+        ta.setAttribute('aria-label', `Your answer to check ${c.n}`);
+        ta.placeholder = 'Answer any of them, in your own words';
+        ta.value = T.checkDraft.get(key) || '';
+        const go = btn(T.checkSent.has(key) ? 'Checking…' : 'Check answer', null, { primary: true });
+        go.dataset.ui = 'check-submit';
+        go.disabled = T.checkSent.has(key) || !ta.value.trim();
+        ta.addEventListener('input', () => {
+          T.checkDraft.set(key, ta.value);
+          go.disabled = T.checkSent.has(key) || !ta.value.trim();
+        });
+        go.addEventListener('click', async () => {
+          const text = ta.value.trim();
+          if (!text) return;
+          T.checkSent.add(key);
+          go.disabled = ta.disabled = true;
+          go.textContent = 'Checking…';
+          try {
+            await checkSend(s, text);
+            T.checkDraft.delete(key);
+          } catch (e) {
+            toast('Couldn’t send that answer: ' + ((e && (e.message || e.code)) || 'error'));
+          } finally {
+            T.checkSent.delete(key);
+            go.textContent = 'Check answer';
+            go.disabled = ta.disabled = false;
+          }
+        });
         const a = el('div', 'actions');
-        a.append(el('span', 'grow meta', 'Answer any of them below, in your own words.'));
-        a.append(
-          btn(
-            'Answer',
-            () => {
-              input.placeholder = `Answer check ${c.n}…`;
-              input.focus();
-            },
-            { primary: true }
-          )
-        );
-        fb.append(a);
+        a.append(el('span', 'grow'), go);
+        fb.append(ta, a);
       },
       session(box, c) {
         const s = sessOf(c.id);
@@ -1255,4 +1280,7 @@
       if (rec.cardsBox.firstChild) rec.cardsBox.replaceChildren();
     }
     T.checkFold = new Set();
+    T.checkDraft = new Map(); // B-638: an items check's typed answer, kept across a repaint
+    T.checkSent = new Set(); // B-638: an items check whose answer is on its way
+    T.nudged = new Set(); // B-638: the checks whose chat already had its answer-in-the-card reminder
 

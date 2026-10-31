@@ -636,7 +636,24 @@
         F.input.setSelectionRange(F.input.value.length, F.input.value.length);
       }, 0);
     }
-    async function popSend(raw) {
+    // B-638: an items check's Check answer sends his words as his line in the check's chat: a Notes session's in the
+    // pop-up, the Conversation's otherwise
+    async function checkSend(s, text) {
+      if (s && isTimed(s)) {
+        if (!POP.th || POP.th !== sThread(s)) POP.th = sThread(s);
+        return popSend(text, { check: true });
+      }
+      return sendTextNow(text);
+    }
+    // B-638: the check open in this chat, unanswered, while the session runs (null otherwise)
+    function openCheckIn(th) {
+      const s = activeSession();
+      if (!s || s.status !== 'active' || !isTimed(s) || th !== sThread(s)) return null;
+      const st = E.sessionState(s, now());
+      return st.lastCheck && !st.answered[st.lastCheck.n] ? st.lastCheck.n : null;
+    }
+    const CHECK_NUDGE = 'To see the why and keep your weak spots, answer in the check card above.';
+    async function popSend(raw, o = {}) {
       const text = String(raw || '').trim();
       if (!text || T.busy) return;
       if (!M) {
@@ -656,7 +673,14 @@
         if (e && e.refused) return; // his words are back in the pop-up's box
         throw e;
       }
-      noteAnswer(mid, th); // B-406: in a Notes session's chat, his line answers its open check
+      // B-406: in a Notes session's chat, the card's answer answers its open check. B-638: a line typed in the chat
+      // while a check is open gets one reminder (once a check) to answer in the card, then the chat goes on as usual.
+      const openN = o.check ? null : openCheckIn(th);
+      if (o.check) noteAnswer(mid, th);
+      else if (openN != null && !T.nudged.has(th + '#' + openN)) {
+        T.nudged.add(th + '#' + openN);
+        await evSay(CHECK_NUDGE, [], { tier: 'local', replyTo: mid, thread: th });
+      }
       const nid = openNoteId();
       // B-623: Quiz me on this note is answered in code: the card here, or five started now and posted in this chat
       if (nid && text === NOTE_QUIZ) {
@@ -693,7 +717,15 @@
             return st ? JSON.stringify([answersFor(st), views[k] || '', retakes[st.id] || 0]) : '';
           }
           const s = sessOf(c.session);
-          return s ? s.status + Object.keys(s.events || {}).length : '';
+          // B-638: an open check (its own set) repaints when its answer lands, painted or recorded; without this the
+          // cached card kept Checking… until a chat line added a session event
+          const os = c.setId ? S.sets.find(x => x.id === c.setId) : null;
+          const ok = 'chk-' + c.session + '#' + c.n;
+          return (
+            (s ? s.status + Object.keys(s.events || {}).length : '') +
+            (os ? JSON.stringify([answersFor(os), views[ok] || '']) : '') +
+            (T.checkSent.has(c.session + '#' + c.n) ? 's' : '')
+          );
         }),
         last,
         T.busy,

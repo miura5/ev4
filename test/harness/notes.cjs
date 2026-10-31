@@ -1259,17 +1259,107 @@ const openNoteId = page =>
       JSON.stringify({ carded, reader: check.reader, card: check.card.slice(0, 80), popHead })
     );
     ok(`${tag} the pop-up is the session's chat, as the demo names it`, /Studying with E\.V\./.test(popHead), popHead);
+    // B-638: every check in the session's chat is answered in its card (a text box and Check answer); a line typed
+    // in the chat while a check is open gets one reminder to answer in the card, and does not answer the check
     await page.evaluate(() => (window.__chatScript = []));
+    const card1 = await page.evaluate(() => {
+      const c = document.querySelector('#evchat .msgs .check');
+      return {
+        box: !!c.querySelector('textarea[data-ui=check-answer]'),
+        submit: !!c.querySelector('[data-ui=check-submit]'),
+        answerBtn: [...c.querySelectorAll('button')].some(b => b.textContent.trim() === 'Answer'),
+      };
+    });
+    ok(
+      `${tag} B-638 a check in the Notes chat is the text-box card (text box and Check answer, no Answer button)`,
+      card1.box && card1.submit && !card1.answerBtn,
+      JSON.stringify(card1)
+    );
+    const nudgeSel = () =>
+      [...document.querySelectorAll('#evchat .msgs .mev')].filter(m => /answer in the check card/.test(m.textContent))
+        .length;
     await page.fill('#evc-input', 'They peak');
     await page.press('#evc-input', 'Enter');
+    const nudged = await until(page, nudgeSel, null, 4000);
+    const typedAnswered = await page.evaluate(
+      i => Object.values((window.__db.sessions[i] || {}).events || {}).some(e => e.type === 'answer'),
+      sa.id
+    );
+    ok(
+      `${tag} B-638 an answer typed in the chat during an open check gets a one-line reminder to answer in the card`,
+      nudged && !typedAnswered && (await page.evaluate(nudgeSel)) === 1,
+      JSON.stringify({ nudged, typedAnswered })
+    );
+    await until(page, () => !document.querySelector('#evchat .msgs .dots'), null, 4000);
+    await page.fill('#evchat .msgs .check textarea[data-ui=check-answer]', 'They peak');
+    await page.click('#evchat .msgs .check [data-ui=check-submit]');
     const answered = await until(
       page,
-      i => Object.values((window.__db.sessions[i] || {}).events || {}).some(e => e.type === 'answer' && e.n === 1),
+      i =>
+        Object.values((window.__db.sessions[i] || {}).events || {}).some(e => e.type === 'answer' && e.n === 1) &&
+        /answered/.test((document.querySelector('#evchat .msgs .check .check-fold') || {}).textContent || ''),
       sa.id,
-      4000
+      6000
     );
-    ok(`${tag} his line in the session's chat answers its check`, answered, '');
+    ok(`${tag} B-638 Check answer in the card answers its check, and the card shows it answered`, answered, '');
     await page.screenshot({ path: path.join(shots, 'notes-session-check-1280.png') });
+
+    // B-638: an open check (its own set) returns its result on Check answer alone, with no chat line after it
+    await page.evaluate(() => {
+      window.__chatScript = [{ tool: 'study_session', input: { action: 'quiz' } }];
+      window.__sampleFn = p => {
+        const t = JSON.stringify(p);
+        if (/explain one idea/.test(t))
+          return {
+            item: {
+              stem: 'Why does hyperkalemia peak the T waves?',
+              keyPoints: [
+                { text: 'Hyperkalemia peaks T waves', keywords: [['hyperkalemia'], ['peaks']] },
+                { text: 'Hypokalemia flattens T waves', keywords: [['hypokalemia'], ['flattens']] },
+              ],
+              modelAnswer: 'High potassium peaks the T waves; low potassium flattens them.',
+              sourceLine: 'Hypokalemia flattens the T waves and brings U waves.',
+            },
+          };
+        if (/one boolean per key point/.test(t)) return { hits: [true, false] };
+        if (/short items|items/.test(t)) return { items: [{ text: 'What does a U wave mean?', kind: 'why' }] };
+        return {};
+      };
+    });
+    const nMsgs = () => page.evaluate(() => document.querySelectorAll('#evchat .msgs > *').length);
+    await page.fill('#evc-input', 'Quiz me on this note');
+    await page.press('#evc-input', 'Enter');
+    const open2 = await until(
+      page,
+      () => !!document.querySelector('#evchat .msgs .check .check-open textarea'),
+      null,
+      8000
+    );
+    await until(page, () => !document.querySelector('#evchat .msgs .dots'), null, 4000);
+    await page.evaluate(() => (window.__chatScript = []));
+    const before2 = await nMsgs();
+    let graded = false;
+    if (open2) {
+      await page.fill('#evchat .msgs .check .check-open textarea', 'High potassium peaks them');
+      const sub = page.locator('#evchat .msgs .check .check-open button', { hasText: 'Check answer' });
+      await sub.click();
+      graded = await until(
+        page,
+        () => {
+          const c = [...document.querySelectorAll('#evchat .msgs .check .check-open')].pop();
+          return !!c && !/Checking/.test(c.textContent) && !!c.querySelector('.verdict, .q-expl');
+        },
+        null,
+        8000
+      );
+    }
+    const after2 = await nMsgs();
+    ok(
+      `${tag} B-638 an open check's Check answer shows its result in the card on its own (no chat line needed)`,
+      open2 && graded && after2 === before2,
+      JSON.stringify({ open2, graded, before2, after2 })
+    );
+    await page.screenshot({ path: path.join(shots, 'b638-open-check-1280.png') });
 
     // a second New note ends and logs the running session first, and offers Undo
     const leftBefore = secsLeft((await slot()).left);
