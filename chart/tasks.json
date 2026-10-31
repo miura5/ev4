@@ -1387,7 +1387,7 @@
   "title": "Item pool ahead (D-121): a worker job of kind pool writes up to N grounded items per objective of the next exam into sets of kind pool (sourceRef, identifier scan, the check function), fired by the page from the weekly's card; the morning draws new checks from the pool before writing new ones",
   "dod": "a core test that a pool job writes at most N items per objective of the next exam into sets of kind pool, each with sourceRef, a clean identifier scan and the check function passing; the morning draws a new check from the pool before writing one; the harness fires the job from the weekly's card at 390 and 1280; a staging pool worker firing read back; N named in spec.study; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "M10",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-72",
    "B-230"
@@ -1395,7 +1395,11 @@
   "notes": "parked for the freeze week",
   "commit": null,
   "source": "BACKLOG.md",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: superseded: it was a claude.ai worker job fired from the weekly's card; app jobs run through the Worker's API (D-308) and practice sets and flashcards (D-368) now cover drawing items; re-file at D-404 planning if wanted.",
+   "at": "2026-10-31T00:40:35.495Z"
+  }
  },
  {
   "id": "B-74",
