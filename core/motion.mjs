@@ -184,14 +184,14 @@ export function glanceAngle(detail, from) {
 
 /**
  * Her size for the stage (D-122): phone steps below sizes.desktop.minWidthPx, desktop steps from it. state is idle,
- * conversation, session, list (a list surface open), skills (the skills runner) or surface; a step a layout does not
- * name falls back to the nearest it does (desktop: any surface, session, list or skills is the surface step; phone: a
+ * conversation, session, list (a list surface open) or surface; a step a layout does not
+ * name falls back to the nearest it does (desktop: any surface, session or list is the surface step; phone: a
  * surface is the list step). Returns {px, pct, layout}.
  */
 export function coreSize(width, state, Z) {
   const desk = width >= Z.desktop.minWidthPx,
     L = desk ? Z.desktop : Z.phone;
-  const map = desk ? { session: 'surface', list: 'surface', skills: 'surface' } : { surface: 'list' };
+  const map = desk ? { session: 'surface', list: 'surface' } : { surface: 'list' };
   const key = L.steps[state] != null ? state : map[state] && L.steps[map[state]] != null ? map[state] : 'idle';
   const pct = L.steps[key];
   return { px: Math.round((L.basePx * pct) / 100), pct, layout: desk ? 'desktop' : 'phone', step: key };

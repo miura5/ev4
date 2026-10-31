@@ -1007,15 +1007,6 @@
       return ending ? 1 : st.toCheck;
     }
     function sessionTick() {
-      const sk = activeSkill(); // B-82: a skills run left alone for the conversation idle gap ends itself, saved as left unfinished
-      if (sk && !SK.ending && E.skillIdle(sk, now())) {
-        SK.ending = true;
-        finishSkill(sk, 'idle')
-          .catch(() => {})
-          .finally(() => {
-            SK.ending = false;
-          });
-      }
       const s = activeSession();
       const unc = !s && uncountedOn(openNoteId());
       if (unc !== !!SS.uncountedShown) {

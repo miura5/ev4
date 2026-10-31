@@ -1263,10 +1263,7 @@ async function sideBySide(browser, left, right, out, vp) {
     ok(`[${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }
-  // B-82 (Matt, Oct 19): a skills run in Captions. The bottom sheet is the whole runner (her line carries no card while
-  // it goes), its count line has End (B-122, D-161: no Hide; its peek line folds the sheet, the desktop panel folds by
-  // its head line), End brings the summary card back; a run found going on a fresh visit waits behind the Resume chip;
-  // one untouched for the conversation idle gap ends itself. A made-up checklist, planted as a lab material.
+  // A made-up skills packet, planted as a lab material (the cite checks below read it), and an old skills run.
   const PACKET = {
     schema: 1,
     writer: 'canvas-sync',
@@ -1321,202 +1318,31 @@ async function sideBySide(browser, left, right, out, vp) {
       },
     };
   };
-  const skillView = page =>
-    page.evaluate(() => {
-      const sh = document.getElementById('sksheet'),
-        pn = document.getElementById('skpanel'),
-        cur = document.querySelector('#thread [data-key][data-kind=hers].current');
-      const vis = e =>
-        !!e && !e.hidden && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().height > 0;
-      return {
-        sheet: vis(sh),
-        panel: vis(pn),
-        count: (document.querySelector('#sksheet .sk-count') || {}).textContent || null,
-        minis: [...document.querySelectorAll('#sksheet .sk-mini')].map(b => b.textContent),
-        panelBtns: [...document.querySelectorAll('#skpanel button')].map(b => b.textContent),
-        sheetOpen: !!sh && sh.classList.contains('open'),
-        panelH: pn ? Math.round(pn.getBoundingClientRect().height) : 0,
-        panelActs: !!document.querySelector('#skpanel .sk-step'),
-        bar: (document.querySelector('#kbar .s-clock') || {}).textContent || null,
-        barBtns: [...document.querySelectorAll('#kbar button')].map(b => b.textContent),
-        barInHeader: !!document.querySelector('#mh > #kbar'),
-        // B-405 (D-327): the approved board's chat pop-up has its Close (it files the chat in history); it is not the
-        // skills run's, so it is outside this check
-        closers: [...document.querySelectorAll('button,[role=button]')]
-          .filter(b => !b.closest('#evchat'))
-          .map(b => b.textContent.trim() || b.getAttribute('aria-label') || '')
-          .filter(t => /^(hide|close|dismiss)\b|^[×✕✖]$/i.test(t)),
-        // B-78: a reply's card is a surface (#ev-surf), not under her line
-        cards: cur ? document.querySelectorAll('#ev-surf .sf-body .ev-card').length : -1,
-        cardText: (document.querySelector('#ev-surf .sf-body .ev-card') || { textContent: '' }).textContent.slice(
-          0,
-          160
-        ),
-        greetCurrent: !!document.querySelector('#thread .msg.greet.current'),
-        step: document.getElementById('hero').dataset.step,
-        chips: [...document.querySelectorAll('#qchips .qchip')].filter(vis).map(c => c.textContent),
-        unit: document.getElementById('readout').textContent,
-      };
-    });
-  const skillState = page =>
-    page.evaluate(() =>
-      Object.entries(window.__db.sessions || {})
-        .filter(([id, s]) => s.kind === 'skill' && /harness/.test(id))
-        .map(([id, s]) => ({ id, status: s.status, endedBy: s.endedBy || null, summary: s.summary || '' }))
-    );
-  for (const scheme of ['half', 'desktop']) {
-    // B-122, B-621 (D-407: no 390 run): 735 (the phone's sheet, half the laptop) and 1280
-    const vp =
-        scheme === 'phone'
-          ? { width: 390, height: 844 }
-          : scheme === 'half'
-            ? { width: 735, height: 830 }
-            : { width: 1280, height: 860 },
-      phone = scheme !== 'desktop';
-    const ctx = await browser.newContext({ viewport: vp, colorScheme: 'dark' });
+  // D-416: the skills checklists are retired. A run left going in an old record (kind skill) opens with no runner, no
+  // Resume chip and no page error, and Record still lists it.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
-    await openPage(page, skillSeed());
-    await page.waitForTimeout(1500);
+    await openPage(page, skillSeed(plantedRun('ss-skill-harness-going', 30, [[1, 20, 'pass']])));
+    await page.waitForTimeout(2000);
+    const v = await page.evaluate(() => ({
+      sheet: !!document.getElementById('sksheet'),
+      chips: [...document.querySelectorAll('#qchips .qchip')].map(b => b.textContent),
+    }));
+    await page.click('#tab-record');
+    await page.waitForTimeout(300);
+    await page.click('#rec-types [data-v="all"]');
+    await page.waitForTimeout(200);
+    const rows = await page.locator('#rec-list [data-part=row][data-kind="session"]').allTextContents();
     ok(
-      `[skills ${scheme}] beside her name, her status word; the readout code has left the screen (D-210)`,
-      // B-352, B-361 (D-316): the demo's status words
-      // B-381, B-384: a problem (a late health check, a failed run) is her status line, as a short whole phrase
-      /^(online|ready when you are|replying|listening|thinking…?|working|in a session|on a break|check ready|resting|something’s ready|health check is late|.*run failed)\b/i.test(
-        (await skillView(page)).unit
-      ) && !/EV-04/.test((await skillView(page)).unit),
-      (await skillView(page)).unit
+      '[skills retired] an old skills run loads: no runner, no Resume chip, its row in Record',
+      !v.sheet && !v.chips.some(c => /^Resume /.test(c)) && rows.some(r => /HARNESS BED BATH/i.test(r)),
+      JSON.stringify({ v, rows: rows.slice(0, 4) })
     );
-    await page.evaluate(() => {
-      window.__chatPre = '';
-      window.__chatScript = [
-        { tool: 'practice_skill', input: { action: 'start', skill: 'harness bed bath', page: 4 } },
-      ];
-      window.__chatReply = 'Harness bed bath: six steps. Mark each one as you go.';
-    });
-    await page.fill('#ev-input', 'practice harness bed bath');
-    await page.click('#ev-send');
-    await page.waitForTimeout(4500);
-    let v = await skillView(page);
-    ok(
-      `[skills ${scheme}] a run starts: her line carries no card; the step is in the pane${phone ? '' : ', the list in the right panel'} (D-217)`,
-      v.cards === 0 && v.sheet && (phone ? !v.panel : v.panel),
-      JSON.stringify(v)
-    );
-    ok(
-      `[skills ${scheme}] her core steps to the skills size (${phone ? "D-122's 44%" : 'the surface step'})`,
-      v.step === (phone ? 'skills' : 'surface'),
-      JSON.stringify(v)
-    );
-    ok(
-      `[skills ${scheme}] the pane header bar says Step 1 of 6 and holds End; the pane and the panel hold no End and no Hide (D-217)`,
-      v.barInHeader &&
-        v.bar === 'Step 1 of 6' &&
-        v.barBtns.join(',') === 'End' &&
-        /Step 1 of 6$/.test(v.count) &&
-        !v.minis.length &&
-        !v.panelBtns.some(b => /^(End|Hide|Stop)$/.test(b)),
-      JSON.stringify({ bar: v.bar, barBtns: v.barBtns, count: v.count, minis: v.minis, panelBtns: v.panelBtns })
-    );
-    ok(
-      `[skills ${scheme}] no button named Hide, Close or × anywhere on the page`,
-      !v.closers.length,
-      JSON.stringify(v.closers)
-    );
-    await page.screenshot({ path: `${shots}/skills-run-${scheme}.png` });
-    await page.click('#sksheet .sk-acts button:has-text("Did it")');
-    await page.waitForTimeout(500);
-    // The way out is the thing folding: the peek line on the phone, the head line beside her on the desktop.
-    if (phone) {
-      await page.click('#sksheet .sk-tog');
-      await page.waitForTimeout(300);
-      const o = await skillView(page);
-      await page.click('#sksheet .sk-tog');
-      await page.waitForTimeout(300);
-      v = await skillView(page);
-      ok(
-        `[skills ${scheme}] the peek line unfolds the sheet to the whole list and folds it again`,
-        o.sheetOpen && !v.sheetOpen && v.sheet && /Step 2 of 6$/.test(v.count),
-        JSON.stringify({ o: o.sheetOpen, v: v.sheetOpen, count: v.count })
-      );
-    } else {
-      const h0 = (await skillView(page)).panelH;
-      await page.click('#skpanel .sk-pfold');
-      await page.waitForTimeout(300);
-      const f = await skillView(page);
-      await page.screenshot({ path: `${shots}/skills-folded-${scheme}.png` });
-      await page.click('#skpanel .sk-pfold');
-      await page.waitForTimeout(300);
-      v = await skillView(page);
-      ok(
-        "[skills desktop] the panel's head line folds it to one line and unfolds it",
-        f.panel && f.panelH <= 84 && !f.panelActs && v.panelActs && v.panelH === h0,
-        JSON.stringify({ h0, folded: f.panelH, acts: f.panelActs, back: v.panelH })
-      );
-    }
-    await page.click('#kbar button:has-text("End")');
-    await page.waitForTimeout(900);
-    v = await skillView(page);
-    const st = await skillState(page);
-    ok(
-      `[skills ${scheme}] End ends the run, saved; the summary card comes back under her line`,
-      st.length === 1 &&
-        st[0].status === 'ended' &&
-        st[0].endedBy === 'ended' &&
-        !v.sheet &&
-        !v.panel &&
-        v.cards === 1 &&
-        /1 of 6 steps done right\. Stopped before the end\./.test(v.cardText),
-      JSON.stringify({ st, v })
-    );
-    ok(`[skills ${scheme}] no page errors`, errors.length === 0, errors.join(' | '));
+    ok('[skills retired] no page errors', errors.length === 0, errors.join(' | '));
     await ctx.close();
-    // A fresh visit with a run going (started 30 min ago, one step marked 20 min ago): the greeting is her line, the
-    // runner waits behind the Resume chip.
-    const c2 = await browser.newContext({ viewport: vp, colorScheme: 'dark' });
-    const p2 = await c2.newPage();
-    await openPage(p2, skillSeed(plantedRun('ss-skill-harness-going', 30, [[1, 20, 'pass']])));
-    await p2.waitForTimeout(2500);
-    v = await skillView(p2);
-    ok(
-      `[skills ${scheme}] a fresh visit with a run going: the greeting is her line, the runner waits, Resume leads the chips`,
-      v.greetCurrent && !v.sheet && !v.panel && v.chips[0] === 'Resume Harness bed bath · 2 of 6' && v.step === 'idle',
-      JSON.stringify(v)
-    );
-    await p2.screenshot({ path: `${shots}/skills-return-${scheme}.png` });
-    await p2.click('#qchips .qchip:has-text("Resume")');
-    await p2.waitForTimeout(600);
-    v = await skillView(p2);
-    ok(
-      `[skills ${scheme}] tapping Resume brings the runner back at step 2`,
-      v.sheet &&
-        /Step 2 of 6$/.test(v.count) &&
-        v.bar === 'Step 2 of 6' &&
-        (phone || v.panel) &&
-        !v.chips.some(c => /^Resume /.test(c)),
-      JSON.stringify(v)
-    );
-    await c2.close();
-    // A run untouched for the conversation idle gap (started 3 h ago, last step 125 min ago) ends itself on open.
-    const c3 = await browser.newContext({ viewport: vp, colorScheme: 'dark' });
-    const p3 = await c3.newPage();
-    await openPage(p3, skillSeed(plantedRun('ss-skill-harness-stale', 180, [[1, 125, 'pass']])));
-    await p3.waitForTimeout(3000);
-    v = await skillView(p3);
-    const st3 = await skillState(p3);
-    ok(
-      `[skills ${scheme}] a run untouched for 2 h ends itself as left unfinished; no Resume chip, no runner`,
-      st3.length === 1 &&
-        st3[0].status === 'ended' &&
-        st3[0].endedBy === 'idle' &&
-        /Left unfinished/.test(st3[0].summary) &&
-        !v.sheet &&
-        !v.panel &&
-        !v.chips.some(c => /^Resume /.test(c)),
-      JSON.stringify({ st3, v })
-    );
-    await c3.close();
   }
   // B-122 (D-161): a session's check folds to its head line by a tap on it and back, files nothing, and the next
   // checkpoint's card arrives open; at 735 and 1280.

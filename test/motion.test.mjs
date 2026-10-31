@@ -206,8 +206,8 @@ test('her size steps (D-122): phone 260 px, desktop 340 px from 1024 px wide (D-
   const Z = P.sizes,
     px = (w, s) => MO.coreSize(w, s, Z).px;
   assert.deepEqual(
-    ['idle', 'conversation', 'session', 'list', 'skills'].map(s => px(390, s)),
-    [260, 208, 172, 135, 114]
+    ['idle', 'conversation', 'session', 'list'].map(s => px(390, s)),
+    [260, 208, 172, 135]
   );
   assert.deepEqual(
     ['idle', 'conversation', 'surface'].map(s => px(1280, s)),
@@ -303,7 +303,7 @@ test('spec.ui.look.core (history since D-212): every core v2 parameter, the seve
   assert.deepEqual(Object.keys(P.gestures).sort(), [...MO.GESTURES].sort());
   for (const g of MO.GESTURES) assert.ok(P.gestures[g].durationSec > 0 && P.gestures[g].durationSec <= 3, g);
   assert.deepEqual(P.sizes, {
-    phone: { basePx: 260, steps: { idle: 100, conversation: 80, session: 66, list: 52, skills: 44 } },
+    phone: { basePx: 260, steps: { idle: 100, conversation: 80, session: 66, list: 52 } },
     desktop: { basePx: 340, minWidthPx: 1024, steps: { idle: 100, conversation: 80, surface: 70 } },
   });
   assert.deepEqual(

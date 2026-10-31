@@ -5927,127 +5927,15 @@ async function tap(page, locator, name) {
     ok('staging readout says staging', /staging/i.test(await st.textContent('#readout')));
     await st.close();
 
-    // ---- B-18: skills practice, the readiness audit, grounded explanations (B-408 retired the page's session filing)
+    // ---- B-18: the readiness audit, grounded explanations (B-408 retired the page's session filing)
     {
       const fp = await browser.newPage({ viewport: { width: 390, height: 844 } });
       const fErr = [];
       fp.on('pageerror', e => fErr.push(e.message));
       await fp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-      // B-408 retired the page's Study Watch filing (the reader); this page goes on with skills practice and the rest
+      // B-408 retired the page's Study Watch filing (the reader); this page goes on with the readiness audit and the rest
       await openPage(fp, 'staging');
       await fp.waitForTimeout(1500);
-      // Skills practice: E.V. finds the checklist in the library and runs it in a card, one step at a time
-      await fp.evaluate(() => {
-        window.__toolResults = [];
-        window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'head to toe assessment' } }];
-        window.__chatReply = 'Let’s run it.';
-      });
-      await send(fp, 'Run me through the head to toe validation');
-      await fp.waitForTimeout(800);
-      const sk = await fp.evaluate(
-        () =>
-          Object.entries(window.__db.sessions)
-            .filter(([id, x]) => id.startsWith('ss-skill-') && x.status === 'active')
-            .map(([id, x]) => ({ id, ...x }))[0]
-      );
-      ok(
-        'practice_skill starts a skills session from the checklist in his materials',
-        sk &&
-          sk.kind === 'skill' &&
-          sk.status === 'active' &&
-          sk.skill.steps.length >= 4 &&
-          /p\. 12/.test(sk.skill.cite),
-        JSON.stringify(sk && { t: sk.topic, n: sk.skill.steps.length, c: sk.skill.cite }) +
-          ' ' +
-          JSON.stringify(await fp.evaluate(() => window.__toolResults))
-      );
-      const card = () => fp.locator('#ev-surf[data-type="skill"]'); // B-78: a card is a surface
-      // B-82: while the run goes the sheet is the whole runner; her line carries no card.
-      ok(
-        'the run shows in the sheet at step 1 with Did it and Missed it; her line carries no card',
-        (await card().locator('.ev-card').count()) === 0 &&
-          /Step 1 of \d+/.test(await fp.textContent('#sksheet')) &&
-          (await fp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).count()) === 1
-      );
-      await fp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).click();
-      await fp.waitForTimeout(400);
-      await fp.locator('#sksheet .sk-acts button', { hasText: 'Missed it' }).click();
-      await fp.waitForTimeout(400);
-      const sw = await fp.evaluate(
-        id =>
-          Object.values(window.__db.weakspots).filter(w => w.kind === 'skill' && w.origin && w.origin.session === id),
-        sk.id
-      );
-      ok(
-        'a missed step is a weak spot of kind skill at once',
-        sw.length === 1 && /: step 2, /.test(sw[0].topic) && /Step 3 of \d+/.test(await fp.textContent('#sksheet')),
-        JSON.stringify(sw.map(w => w.topic))
-      );
-      await fp.screenshot({ path: `${shots}/skills-card.png` });
-      // B-51 (D-107): on the phone a bottom sheet keeps the current step in view; marking works from it as from the card
-      ok(
-        '[phone] the sheet peeks with the current step and its count, the side panel hidden',
-        (await fp.isVisible('#sksheet')) &&
-          /Step 3 of \d+/.test(await fp.textContent('#sksheet')) &&
-          !(await fp.isVisible('#skpanel')),
-        await fp.textContent('#sksheet')
-      );
-      const sb = await fp.locator('#sksheet').boundingBox();
-      const vh = fp.viewportSize().height;
-      ok(
-        '[phone] the sheet sits on screen, without scrolling',
-        sb && sb.y > vh / 3 && sb.y + sb.height <= vh,
-        JSON.stringify(sb)
-      );
-      await fp.locator('#sksheet .sk-peek button', { hasText: 'Did it' }).click();
-      await fp.waitForTimeout(400);
-      ok(
-        '[phone] Did it on the sheet marks step 3',
-        /Step 4 of \d+/.test(await fp.textContent('#sksheet')) && (await card().locator('.ev-card').count()) === 0
-      );
-      await fp.locator('#sksheet .sk-tog').click();
-      await fp.waitForTimeout(300);
-      const opened = await fp.evaluate(() =>
-        [...document.querySelectorAll('#sksheet .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0])
-      );
-      ok(
-        '[phone] the sheet opens to the whole ticked list, the current step marked, with the tally',
-        opened.slice(0, 4).join(',') === 'pass,miss,pass,cur' &&
-          (await fp.locator('#sksheet .sk-tog').getAttribute('aria-expanded')) === 'true' &&
-          /3 of \d+ done · 1 missed/.test(await fp.textContent('#sksheet .sk-head')),
-        opened.join(',')
-      );
-      await fp.screenshot({ path: `${shots}/skills-sheet-phone.png` });
-      await fp.locator('#sksheet .sk-tog').click();
-      await fp.waitForTimeout(200);
-      ok(
-        "[phone] End is the pane header bar's, beside the step count (D-217)",
-        /^Step 4 of \d+ · 1 missed$/.test(await fp.textContent('#kbar .s-clock')) &&
-          (await fp.locator('#sksheet button', { hasText: 'End' }).count()) === 0,
-        await fp.textContent('#kbar')
-      );
-      await fp.locator('#kbar button', { hasText: 'End' }).click();
-      await fp.waitForTimeout(400);
-      ok(
-        '[phone] the sheet and the bar go when the run ends',
-        !(await fp.isVisible('#sksheet')) && !(await fp.isVisible('#kbar'))
-      );
-      const ended = await fp.evaluate(id => window.__db.sessions[id], sk.id);
-      ok(
-        'Stop ends the run with its summary, and the summary card comes back under her line',
-        ended.status === 'ended' &&
-          /^2 of \d+ steps done right, missed step 2\. Stopped before the end\.$/.test(ended.summary) &&
-          /missed step 2/.test(await card().textContent()),
-        ended.summary
-      );
-      await studyView(fp, 'weak'); // B-297 (D-281)
-      await fp.waitForTimeout(200);
-      ok(
-        'the missed step is kept as a skill weak spot in the record; Weak spots shows no Notes and skills section (B-365)',
-        (await fp.evaluate(() =>
-          Object.values(window.__db.weakspots || {}).some(w => w.kind === 'skill' && /: step 2, /.test(w.topic || ''))
-        )) && !(await fp.locator('#study-weak button', { hasText: /^(Practiced|Done|Make active)$/ }).count())
-      );
       await fp.click('#tab-ev');
       await fp.waitForTimeout(150);
       // The readiness audit: per objective, what to reread, from "How ready am I?"
@@ -6104,78 +5992,10 @@ async function tap(page, locator, name) {
           /end the reply with the mark \[general\]/.test(gc.input[0].content) &&
           !/check your materials/i.test(gc.input[0].content) && // B-626 (D-415)
           gc.tools.includes('materials') &&
-          gc.tools.includes('practice_skill')
+          !gc.tools.includes('practice_skill') // D-416: the skills checklists are retired
       );
       ok('B-18: no page errors', fErr.length === 0, fErr.join(' | '));
       await fp.close();
-    }
-    // ---- B-212 (D-217): from 1200 px the checklist is the right panel; the step and its buttons stay in the pane
-    {
-      const dp = await browser.newPage({ viewport: { width: 1280, height: 860 } });
-      const dErr = [];
-      dp.on('pageerror', e => dErr.push(e.message));
-      await dp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-      await openPage(dp, 'staging');
-      await dp.waitForTimeout(1500);
-      await dp.evaluate(() => {
-        window.__chatScript = [{ tool: 'practice_skill', input: { action: 'start', skill: 'head to toe assessment' } }];
-        window.__chatReply = 'Let’s run it.';
-      });
-      await send(dp, 'Run me through the head to toe validation');
-      await dp.waitForTimeout(800);
-      const dcard = () => dp.locator('#ev-surf[data-type="skill"]'); // B-78: a card is a surface
-      ok(
-        '[desktop] the right panel shows the whole checklist; the pane holds the step with Did it; the header bar says Step 1 with End',
-        (await dp.isVisible('#ev-side #skpanel')) &&
-          (await dp.isVisible('#sksheet')) &&
-          (await dp.locator('#skpanel .sk-step').count()) >= 4 &&
-          (await dp.locator('#skpanel .sk-acts').count()) === 0 &&
-          /Step 1 of \d+/.test(await dp.textContent('#sksheet')) &&
-          /^Step 1 of \d+$/.test(await dp.textContent('#kbar .s-clock')) &&
-          (await dp.locator('#kbar button').allTextContents()).join() === 'End',
-        await dp.evaluate(() => (document.getElementById('kbar') || {}).textContent)
-      );
-      const pb = await dp.locator('#skpanel').boundingBox(),
-        tb = await dp.locator('#thread').boundingBox();
-      ok(
-        '[desktop] the panel sits to the right of the pane, in view',
-        pb && tb && pb.x >= tb.x + tb.width && pb.y < 860 && pb.x + pb.width <= 1280,
-        JSON.stringify({ pb, tb })
-      );
-      await dp.locator('#sksheet .sk-acts button', { hasText: 'Did it' }).click();
-      await dp.waitForTimeout(400);
-      await dp.locator('#sksheet .sk-acts button', { hasText: 'Missed it' }).click();
-      await dp.waitForTimeout(400);
-      const marks = await dp.evaluate(() =>
-        [...document.querySelectorAll('#skpanel .sk-step')].map(li => (li.className.match(/pass|miss|cur/) || [''])[0])
-      );
-      ok(
-        "[desktop] marking in the pane ticks the right panel's list, with the tally",
-        marks.slice(0, 3).join(',') === 'pass,miss,cur' &&
-          /2 of \d+ done · 1 missed/.test(await dp.textContent('#skpanel')),
-        marks.join(',')
-      );
-      ok(
-        '[desktop] her line carries no card while the panel runs (B-82)',
-        (await dcard().locator('.ev-card').count()) === 0
-      );
-      await dp.screenshot({ path: `${shots}/skills-panel-desktop.png` });
-      ok(
-        '[desktop] no horizontal scroll with the panel open',
-        await dp.evaluate(() => document.documentElement.scrollWidth <= innerWidth)
-      );
-      await dp.locator('#kbar button', { hasText: 'End' }).click();
-      await dp.waitForTimeout(400);
-      ok(
-        '[desktop] End in the header bar ends the run; the panel and the bar go',
-        !(await dp.isVisible('#skpanel')) &&
-          !(await dp.isVisible('#kbar')) &&
-          (await dp.evaluate(() =>
-            Object.values(window.__db.sessions).some(x => x.kind === 'skill' && x.status === 'ended')
-          ))
-      );
-      ok('B-51: no page errors', dErr.length === 0, dErr.join(' | '));
-      await dp.close();
     }
     // ---- B-54 (D-110): the shared page itself, at both widths: answers and reasons show only after an attempt
     for (const [label, vp] of [

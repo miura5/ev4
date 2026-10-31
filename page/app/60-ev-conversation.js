@@ -717,7 +717,7 @@
     // B-209 (D-213): her stage size follows the layout and what is on screen, from spec.ui.look.dialArc.sizes: 104 px on
     // the phone, 112 or 128 px beside the sidebar (under or from 900 px wide), 140 or 168 px with the details panel
     // (from 1000 px tall), 70% of that in a session. The step names the state (idle, conversation, list or surface,
-    // session, skills) as the Captions layout reads it.
+    // session) as the Captions layout reads it.
     const FZ = EV_SPEC.ui.look.dialArc.sizes;
     function stagePx(state) {
       const w = innerWidth,

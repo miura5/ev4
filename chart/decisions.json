@@ -6,7 +6,8 @@
   "why": "Matt (Oct 31): these never felt like they belong and block polish; Quizlet, Apple Fitness and a mood tracker do them better. Code, UI, jobs, pipeline steps, prompts and tests for them are removed from the repository (D-166). Records are never deleted (B-11): their collections are marked retired in the spec, kept in backups and exports, no longer read or written. Quizlet stays read-only as a source (B-17). Supersedes the flashcards decision (D-368) and any tenet or check that pins the retired features; their checks are retired with them. Removal runs after the current release, as its own release, with an inventory probe and spikes first.",
   "status": "accepted",
   "supersedes": [
-   "D-108"
+   "D-108",
+   "D-107"
   ],
   "amends": [],
   "source": "log"
@@ -3495,7 +3496,7 @@
   "date": "Oct 18",
   "title": "The skills checklist stays in view while you practise: on the phone a bottom sheet with a peek bar (the current step and its count) that opens to the full ticked list; at 1024px and up a side panel beside the thread",
   "why": "You should never scroll up to tick a step",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },

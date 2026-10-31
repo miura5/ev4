@@ -121,7 +121,7 @@ body.captions .msg.matt .bubble{font-size:var(--fs-3)}
 body.captions.surface-open .msg.ev.current .bubble{font-size:var(--fs-5)}
 }
 body.captions .bubble a.cite{color:var(--accent-text);text-decoration:underline;text-decoration-color:var(--accent-edge);text-underline-offset:3px;cursor:pointer}
-body.captions #p-ev,body.captions.skill-on #p-ev{align-items:stretch}
+body.captions #p-ev{align-items:stretch}
 .bubble.to-copy,body.captions .msg.ev .bubble.to-copy,body.captions .msg.ev.current .bubble.to-copy{font-size:var(--fs-3);line-height:1.5;text-align:left;max-height:9em;overflow:hidden;-webkit-mask-image:linear-gradient(black 55%,transparent);mask-image:linear-gradient(black 55%,transparent);color:var(--soft);opacity:1}
 .copy-chip{align-self:center;margin-top:6px}
 @media (max-width:599px){
@@ -281,8 +281,6 @@ body.opening .hero,body.core-big .hero{max-height:360px;opacity:1;margin:0 0 -10
 .update{position:fixed;left:0;right:0;margin:0 auto;width:max-content;top:calc(64px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;background:var(--raised);color:var(--text);border:1px solid var(--line2);font-size:var(--fs-3);padding:8px 8px 8px 16px;border-radius:var(--r-pill);max-width:calc(100% - 32px);z-index:21;box-shadow:0 10px 30px -10px var(--shade-6)}
 .update span{white-space:nowrap}
 .update button{padding:6px 14px;min-height:0}
-/* D-107: the skills checklist in view. Phone: a bottom sheet on the composer (peek bar, opens to the list). 1024px and up: a side panel beside the thread. */
-/* B-212 (D-217): the run's steps stay in the pane at every width; from 1200 px its list is the right panel's */
 /* D-110: share a calendar set as a page */
 a.btn-link{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--accent-edge);color:var(--accent-text);text-decoration:none;font-weight:500;white-space:nowrap}
 .share-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--accent-edge);border-radius:var(--r-xl);background:var(--accent-bg)}
@@ -317,7 +315,7 @@ body.captions .hero>.ev-av{transition:opacity var(--dur-4) var(--ease-out)}
 /* B-368: the card, then her grey summary line, the thread's gap apart */
 /* B-88: what she is reading: one line above the input, her quote under her comment, and on desktop his notes beside her. */
 /* B-85: a card that only informs is one tappable line that opens its tab; a card he acts in stays whole. */
-/* B-452 (Matt): no quick-ask pills; the row holds only a skills run's Resume chip, and takes no room without it. */
+/* B-452 (Matt): no quick-ask pills; the row takes no room while empty (D-416: the Resume chip went with the skills runner). */
 /* B-592 (D-401): her newest line writes itself out letter by letter with a thin caret in her colour leading it; the
    caret is steady while she writes and fades after her last letter. Emphasised words are a weight, in the text colour. */
 body.captions .w{display:inline-block}
@@ -579,7 +577,7 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
 @media (min-width:1200px){
   section.panel > .cols > .col-side .card,section.panel > .panel > .cols > .col-side .card{background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:none;padding:6px 10px 10px;gap:0}
   section.panel > .cols > .col-side .card>h2,section.panel > .panel > .cols > .col-side .card>.card-head{min-height:36px;display:flex;align-items:center;font:600 var(--fs-2) var(--sans);color:var(--text)}
-  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.sk-panel,body.captions #ev-side>.card{background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+  #study-side .card,#ev-dates,body.captions #ev-side>.surf,body.captions #ev-side>.card{background:var(--surface);border:0;border-radius:var(--r-lg);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
   #study-side .card,#ev-dates{padding:6px 10px 10px;gap:0}
   #study-side .card>h2,#ev-dates>h2{min-height:36px;display:flex;align-items:center;margin:0;font:600 var(--fs-2) var(--sans);color:var(--text)}
   body.captions #ev-side>#ev-dates{background:none;box-shadow:none;border:0;padding:0}
@@ -597,7 +595,5 @@ body.captions.her-folded .hero{transition-duration:var(--dur-fold-close)}
   body.captions.side-on #p-ev>#ev-side,body.captions.ev-rest-on #p-ev>#ev-side{bottom:var(--strip-h)}
 }
 
-/* The skills panel's head line: in views so it outranks Today's .fold-line all:unset by specificity (B-515, was !important) */
-.sk-panel .sk-pfold{color:var(--ink);font-weight:var(--fw-semibold);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 /* B-623: in the side chat a quiz card's picked answer shows by its radio alone; the letter keeps no ring over it */
 #evchat .opt input:checked~kbd.opt-n{box-shadow:none}

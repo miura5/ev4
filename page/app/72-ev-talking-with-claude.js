@@ -1074,36 +1074,6 @@
             throw new Error('action must be start, end, break, resume or extend');
           },
         },
-        {
-          name: 'practice_skill',
-          description:
-            'Run a skills validation checklist from his Skills Packet step by step (head-to-toe, vital signs, medication administration, intradermal injection, and the rest). start: find the checklist in his materials and begin; a card shows one step at a time and he marks it done or missed (a miss becomes a skill weak spot). end: stop the run. Returns what happened.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              action: { type: 'string', enum: ['start', 'end'] },
-              skill: { type: 'string', description: 'start: the skill in a few words, e.g. "head to toe assessment"' },
-              page: { type: 'integer', description: 'start: the checklist page, when known from a search' },
-            },
-            required: ['action'],
-          },
-          execute: async i => {
-            const a = str(i.action, 10);
-            if (a === 'start') {
-              const r = await startSkillRun(str(i.skill, 80), Number(i.page) || null);
-              if (r.card) addCard(r.card);
-              return r.text;
-            }
-            if (a === 'end') {
-              const s = activeSkill();
-              if (!s) return 'no skills run is going';
-              await finishSkill(s, 'ended');
-              addCard({ type: 'skill', session: s.id });
-              return 'ended';
-            }
-            throw new Error('action must be start or end');
-          },
-        },
       ];
       // Mark where the current round's text ends whenever a tool runs; later text belongs to a later round.
       for (const t of tools) {

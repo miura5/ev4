@@ -14,7 +14,7 @@ export function makeConversation(core) {
    * ctx: {now, date, dayType, items:[{id,text,tag,done,deferred,minutes,set}], reviewLeft, reviewTotal, push,
    *       nextExams:[{id,title,date,course,kind}], readiness:{examId,pctSolid,need}|null, dueCount,
    *       jobs:[{id,kind,title,brief,status,finishedAt,result}], lastSeenAt, runs:{<pipeline>:{status,startedAt,detail}},
-   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive, skillRun (a Resume chip, B-82),
+   *       tomorrow:{dates:[{title,kind,graded}]}, quizlet:{refresh}|null, checkin:{energy}|null, sessionActive,
    *       prep:{today: prepDay|null, tomorrow: prepDay|null} (D-143), clinicalOffer:{date,title}|null (D-103)}
    */
   const JOB_NOUN = {
@@ -228,7 +228,6 @@ export function makeConversation(core) {
       add = x => {
         if (x && chips.length < room && !chips.includes(x)) chips.push(x);
       };
-    if (c.skillRun) add(c.skillRun); // a skills run waiting for him (B-82): its Resume chip comes first
     if (rl) add('Start review');
     // B-182 (D-196): what waits on him, one chip with its count, inside the three-chip rule.
     if (c.yourTurn > 0) add(`Your turn (${c.yourTurn})`);

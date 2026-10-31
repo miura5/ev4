@@ -6,7 +6,6 @@
       const c = E.greeting({
         ...T.greetCtx,
         sessionActive: !!activeSession(),
-        skillRun: resumeChip(),
         yourTurn: yourTurnCount(),
       }).chips;
       if (c.join('|') !== (T.greet.chips || []).join('|')) {
@@ -97,7 +96,6 @@
           clinicalOffer: E.clinicalPrepOffer({ dates: S.dates, dateedits: [], jobs: S.jobs, date: today }),
           checkin: (M.dayedit && M.dayedit.checkin) || null,
           sessionActive: !!activeSession(),
-          skillRun: resumeChip(),
           prep: { today: E.prepDay(S.dates, [], today), tomorrow: E.prepDay(S.dates, [], E.addDays(today, 1)) },
           // B-129 (D-167): the last six days of answers and sessions, for the situation's momentum.
           recent: {

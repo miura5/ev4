@@ -1487,12 +1487,7 @@ const SPLIT_FILES = [
     ['sessionState', 'closeSession', 'commentPrompt', 'parseComment', 'noteDelta'],
   ],
   ['share', 'makeShare', /function (shareableSet|sharePage)\(/, ['shareableSet', 'sharePage']],
-  [
-    'skills',
-    'makeSkills',
-    /function startSkill|function weakspotCards/,
-    ['skillSteps', 'startSkill', 'endSkill', 'weakspotCards', 'cardsText'],
-  ],
+  ['skills', 'makeSkills', /function weakspotCards/, ['weakspotCards', 'cardsText']],
 ];
 for (const [file, factory, moved, names] of SPLIT_FILES)
   test(`B-155 to B-160: core/${file}.mjs is one factory with no imports, moved out of E.V. core, which still exports its names`, async () => {

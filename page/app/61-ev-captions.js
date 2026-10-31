@@ -114,7 +114,6 @@
     }
     function stageState() {
       if (activeSession()) return 'session';
-      if (skillShown()) return 'skills'; // D-122's skills step while the runner is up (B-82)
       const convs = viewConvs();
       const cur = convs.length ? convs[convs.length - 1].messages : [];
       const last = cur[cur.length - 1];
@@ -124,20 +123,20 @@
     }
     // The stage's height at each step, as the Captions v2 artboards draw it (V2.dc.html, V2Desktop.dc.html: stageH).
     const STAGE_PX = {
-      phone: { idle: 300, conversation: 232, session: 196, list: 150, skills: 128 },
+      phone: { idle: 300, conversation: 232, session: 196, list: 150 },
       desktop: { idle: 370, conversation: 290, surface: 260 },
     };
     // (coreSize maps the phone's list step to the desktop's surface step.)
     // B-85: on a screen under 800 px tall (a laptop's split-screen pane) each step is shorter, so her lines keep the room;
     // the core shrinks with its stage and keeps its ring.
     const STAGE_SHORT = {
-      phone: { idle: 236, conversation: 168, session: 128, list: 120, skills: 108 },
+      phone: { idle: 236, conversation: 168, session: 128, list: 120 },
       desktop: { idle: 290, conversation: 220, surface: 200 },
     };
     // B-112 (D-225): under 560 px tall (the phone with its keyboard open) she steps down again, so the composer and her
     // current line stay on screen; her words scroll under her as before.
     const STAGE_TINY = {
-      phone: { idle: 132, conversation: 104, session: 92, list: 88, skills: 80 },
+      phone: { idle: 132, conversation: 104, session: 92, list: 88 },
       desktop: { idle: 132, conversation: 104, surface: 92 },
     };
     // B-209: when her stage folds or unfolds while he is at now, keep now in view once its height has settled.

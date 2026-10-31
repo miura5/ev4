@@ -209,22 +209,9 @@
       document.body.classList.toggle('core-big', !opening && !activeSession() && !!T.bigCore);
       renderMood();
       // B-452 (Matt): no quick-ask pills under the composer (the five at rest, and a session's Quiz me now, I'm back early
-      // and Back to my note); each is still reachable by typing it, or from the session's own controls. Only a skills run
-      // left going keeps its Resume chip (B-357), its one way back to the runner (B-82).
-      const chips = ((T.greet && T.greet.chips) || []).filter(c => /^Resume .+ · \d+ of \d+$/.test(c));
+      // and Back to my note); each is still reachable by typing it, or from the session's own controls. D-416: the skills
+      // run's Resume chip went with the runner.
       renderSession();
-      renderSkillDock();
-      const qc = $('qchips');
-      if (qc.dataset.k !== chips.join('|')) {
-        qc.dataset.k = chips.join('|');
-        qc.replaceChildren(
-          ...chips.map(c => {
-            const b = btn(c, () => skillPark(false));
-            b.className = 'qchip';
-            return b;
-          })
-        );
-      }
       renderCheckin();
       const sb = $('ev-send');
       const sk = T.busy ? 'stop' : 'send';

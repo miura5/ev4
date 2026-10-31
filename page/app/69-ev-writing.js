@@ -4,9 +4,9 @@
       const date = E.chicagoDate(m.at);
       body.text = String(body.text || '').slice(0, 4000);
       if (error) body.error = error;
-      // B-74 (D-128): a line written while a study session or a skills run is going on carries its session, so the
+      // B-74 (D-128): a line written while a study session is going on carries its session, so the
       // session is its own conversation.
-      const ss = !body.session && !body.jobId && (activeSession() || activeSkill());
+      const ss = !body.session && !body.jobId && activeSession();
       if (ss && ss.status !== 'ended') body.session = ss.id;
       T.local.set(id, { ...m, ...(body.session ? { session: body.session } : {}), pending: false });
       T.scrollTo = id;

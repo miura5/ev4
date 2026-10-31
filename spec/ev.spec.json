@@ -5543,8 +5543,7 @@
     "save_idea",
     "make_practice",
     "quiz_me",
-    "study_session",
-    "practice_skill"
+    "study_session"
    ],
    "cards": [
     "today",
@@ -5840,8 +5839,7 @@
        "idle": 100,
        "conversation": 80,
        "session": 66,
-       "list": 52,
-       "skills": 44
+       "list": 52
       }
      },
      "desktop": {
