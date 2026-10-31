@@ -98,7 +98,7 @@ section.panel > .panel > .cols > .col-side .rec-detail{background:none;border:0;
 #record-sessions .rec-bar .rec-flab,#record-sessions .rec-bar .rec-loglab{display:none}
 }
 /* ---- B-515 lane 4a: moved from carry-notes.css in its order; they no longer outrank the rules above by the carry's raise */
-/* B-212 (D-217): skills runs and workouts follow the session: bar in the pane header, steps in the pane, list right */
+/* B-212 (D-217): skills runs follow the session: bar in the pane header, steps in the pane, list right */
 /* ============================================================ B-213 (D-225, D-276, D-270): Today, Study, Progress and
    Record in C. A view is sections of rows under a quiet heading, not stacked boxes: rows 44 px on the phone and 32 px
    from 600 px wide; the one thing to do now keeps its box (surface, hairline); the switch is the pane header's from

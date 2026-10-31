@@ -40,7 +40,7 @@ const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).
 const dayOf = iso =>
   iso ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date(iso)) : null;
 if (seed.talk) delete seed.talk[today];
-for (const c of ['sessions', 'workouts'])
+for (const c of ['sessions'])
   for (const [id, d] of Object.entries(seed[c] || {})) if ((d.date || dayOf(d.startedAt)) === today) delete seed[c][id];
 const spec = JSON.parse(fs.readFileSync(path.join(root, 'spec/ev.spec.json'), 'utf8'));
 const F = spec.ui.look.dialArc; // her stage sizes and budget (D-213, D-412)

@@ -120,7 +120,7 @@ for (let i = 1; i <= 9; i++) {
     graded: false,
   };
 }
-for (const c of ['sessions', 'workouts'])
+for (const c of ['sessions'])
   for (const [id, d] of Object.entries(seed[c] || {}))
     if ((d.date || (d.startedAt && fmt(new Date(d.startedAt)))) === today) delete seed[c][id];
 const ORIGIN = 'https://ev.local';

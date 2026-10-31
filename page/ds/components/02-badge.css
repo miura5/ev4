@@ -12,7 +12,7 @@
 :is(.k-skills,[data-k='skills']){--x:var(--kind-skills)}:is(.k-note,[data-k='note']){--x:var(--kind-note)}
 :is(.k-class,[data-k='class']){--x:var(--kind-class)}:is(.k-reading,[data-k='reading']){--x:var(--kind-reading)}
 :is(.k-quiz,[data-k='quiz']){--x:var(--kind-quiz)}:is(.k-session,[data-k='session']){--x:var(--kind-session)}
-:is(.k-workout,[data-k='workout']){--x:var(--kind-workout)}:is(.k-flash,[data-k='flash']){--x:var(--kind-flash)}
+:is(.k-flash,[data-k='flash']){--x:var(--kind-flash)}
 :where([data-ui='badge'],.badge){display:inline-flex;align-items:center;gap:var(--sp-1_5);width:var(--badge-w);min-width:0;height:calc(var(--sp-5) + var(--sp-0_5));padding:0;border-radius:0;background:none;box-shadow:none;color:var(--quiet);font:var(--fw-medium) var(--fs-1) var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;box-sizing:border-box}
 :where([data-ui='badge'],.badge)::before{content:"";width:var(--kind-dot);height:var(--kind-dot);border-radius:var(--r-round);background:var(--x,var(--faint));flex:none}
 :where(:is([data-ui='badge'],.badge):is([data-k],.x-green,.x-yellow,.x-red,.x-blue,.x-violet,.proposed,[data-tone]:not([data-tone='neutral']))){color:color-mix(in srgb,var(--x) var(--badge-mix,var(--kind-text-mix)),var(--text))}

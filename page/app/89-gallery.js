@@ -28,7 +28,7 @@
       ['--quiet', '--raise', 4.5, 'Secondary ink, on a raised band'],
       ['--quiet', '--sel', 4.5, 'Secondary ink, on the selected row'],
       // B-540 (D-395): each coded colour with the kinds it marks (tokens.css --kind-*)
-      ['--ok', '--surface', 3, 'Coded: done, right; kind Class, Workout'],
+      ['--ok', '--surface', 3, 'Coded: done, right; kind Class'],
       ['--warn', '--surface', 3, 'Coded: almost, attention; kind Skills prep'],
       ['--bad', '--surface', 3, 'Coded: urgent, wrong; kind Graded'],
       ['--info', '--surface', 3, 'Coded: information; kind Learn, Reading'],

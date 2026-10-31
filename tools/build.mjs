@@ -326,7 +326,6 @@ export const PAGE_SPEC_KEYS = [
   'courses',
   'study',
   'items',
-  'workouts',
   'jobs',
   'actions',
   'persona',
@@ -390,7 +389,6 @@ export function pageSpecFor(spec, schemas, { target, release }) {
     courses: () => spec.courses,
     study: () => spec.study,
     items: () => spec.items || null,
-    workouts: () => spec.workouts || null,
     // A job kind by its label: each kind's guide is the worker's, read in its run (core/steps.mjs), not the page's.
     // B-450: the study plan's built-in instructions too, which his plan settings show, edit and reset to (D-354).
     jobs: () => ({

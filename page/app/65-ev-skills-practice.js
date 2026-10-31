@@ -160,95 +160,6 @@
       const p = $('skpanel') || SK.panel;
       if (p) placePanel(p, document.body.classList.contains('skill-on'));
     });
-    // D-108 on the runner pattern: a running workout keeps its clock, the round's moves and its buttons in the same dock.
-    function renderWorkoutDock(w, q, sheet, panel) {
-      const st = E.workoutState(w, q, now());
-      // From 1200 px the workout's card is the right panel's surface already (its clock and moves): no second copy.
-      placePanel(panel, false);
-      const k = ['wo', w.id, st.done, st.over].join('|');
-      if (sheet.dataset.k === k && panel.dataset.k === k) return;
-      sheet.dataset.k = panel.dataset.k = k;
-      sheet.hidden = panel.hidden = false;
-      sheet.classList.remove('open');
-      const where =
-        q.kind === 'ladder'
-          ? `Round ${Math.min(st.done + 1, st.total)} of ${st.total}`
-          : st.over
-            ? plural(st.done, 'round')
-            : `Round ${st.done + 1}`;
-      const clock = () => {
-        const c = el('span', 'sk-clock', clockText(w, q));
-        c.dataset.woClock = w.id;
-        return c;
-      };
-      const acts = () => {
-        const a = el('div', 'sk-acts');
-        if (st.over) {
-          a.append(
-            btn(
-              'Show the card',
-              () => {
-                const n = [...document.querySelectorAll('#ev-surf .wo-extra')].pop(); // B-78: the card is a surface
-                if (n) n.scrollIntoView({ block: 'center' });
-              },
-              { primary: true }
-            )
-          );
-          a.style.gridTemplateColumns = '1fr';
-          return a;
-        }
-        a.style.gridTemplateColumns = '1fr';
-        a.append(
-          btn(
-            'Round done',
-            ev =>
-              guard(ev.target, async () => {
-                await write(E.workoutRound(w, q, { now: now() }));
-                const w2 = woOf(w.id);
-                if (w2 && q.kind === 'ladder' && E.workoutState(w2, q, now()).over)
-                  await write(E.endWorkout(w2, q, { now: now() }));
-              }),
-            { primary: true }
-          )
-        );
-        return a;
-      };
-      const stop = st.over
-        ? []
-        : [
-            btn(q.kind === 'ladder' ? 'Stop here' : 'Finish', ev =>
-              guard(ev.target, () => write(E.endWorkout(w, q, { now: now(), stopped: true })), 'Workout saved')
-            ),
-          ];
-      if (stop[0]) stop[0].classList.add('end');
-      runBar(q.title + ' · ' + where, stop, 'Workout: ' + q.title);
-      const bc = $('kbar').querySelector('.s-clock');
-      if (bc && !bc.querySelector('[data-wo-clock]')) bc.append(document.createTextNode(' · '), clock());
-      const moves = st.over
-        ? 'Time! Enter the reps into your next round on the card.'
-        : st.moves.map(m => m.reps + ' ' + m.move).join(' · ');
-      const peek = el('div', 'sk-peek');
-      const top = el('div', 'sk-tog sk-static');
-      const line = el('span', 'sk-count');
-      line.append(document.createTextNode(q.title + ' · ' + where + ' · '), clock());
-      top.append(line, el('span', 'sk-now', moves));
-      peek.append(top, acts());
-      sheet.replaceChildren(peek);
-      const ph = el('div', 'sk-head');
-      const t = el('div', 'sk-headtxt');
-      t.append(el('span', 'sk-title', 'Workout · ' + q.title), el('span', 'meta', where));
-      ph.append(t);
-      const big = el('p', 'wo-clock');
-      big.append(clock());
-      const ul = el('ul', 'wo-moves');
-      if (!st.over)
-        for (const m of st.moves) {
-          const li = el('li');
-          li.append(el('b', null, String(m.reps)), document.createTextNode(' ' + m.move));
-          ul.append(li);
-        }
-      panel.replaceChildren(ph, big, ...(st.over ? [el('p', 'meta', moves)] : [ul]), el('p', 'meta', q.source || ''));
-    }
     function renderSkillDock() {
       const s = activeSkill();
       const st = s && s.skill ? E.skillState(s) : null;
@@ -275,13 +186,6 @@
         panel.setAttribute('aria-label', 'Skills checklist');
       }
       if (!live) {
-        const w = activeWorkout();
-        const q = w && SEQ[w.sequence];
-        if (w && q) {
-          document.body.classList.add('skill-on');
-          renderWorkoutDock(w, q, sheet, panel);
-          return;
-        }
         if (!sheet.hidden) {
           sheet.hidden = true;
           sheet.replaceChildren();

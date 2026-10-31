@@ -5,7 +5,9 @@
   "title": "E.V. is views, notes and practice sets: retire flashcards, skill checklists, workouts, mood check-in and unused features",
   "why": "Matt (Oct 31): these never felt like they belong and block polish; Quizlet, Apple Fitness and a mood tracker do them better. Code, UI, jobs, pipeline steps, prompts and tests for them are removed from the repository (D-166). Records are never deleted (B-11): their collections are marked retired in the spec, kept in backups and exports, no longer read or written. Quizlet stays read-only as a source (B-17). Supersedes the flashcards decision (D-368) and any tenet or check that pins the retired features; their checks are retired with them. Removal runs after the current release, as its own release, with an inventory probe and spikes first.",
   "status": "accepted",
-  "supersedes": [],
+  "supersedes": [
+   "D-108"
+  ],
   "amends": [],
   "source": "log"
  },
@@ -3484,7 +3486,7 @@
   "date": "Oct 18",
   "title": "Workouts run as a sequence card on the skills runner and land in workouts/<id>, written by the page: CINDY records rounds in the time cap, the 1,500-rep ladder records total time and where you stopped, and each ends with an energy and mood line. Stored as entered (D-106); the first fitness data",
   "why": "Start fitness data small, with the runner you already use",
-  "status": "accepted",
+  "status": "superseded",
   "supersedes": [],
   "amends": []
  },

@@ -2314,7 +2314,7 @@ const EVCore = (() => {
     survivors,
   });
 
-  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode"); workouts (D-108) · core/skills.mjs (B-158)
+  // ---------------------------------------------------------------- skills practice (Features: "Skills practice mode")· core/skills.mjs (B-158)
   const SKILLS = makeSkills({
     get C() {
       return C;
@@ -2371,7 +2371,7 @@ const EVCore = (() => {
     ...MIRROR, // the Markdown mirror and the backup's restore plan
     ...CANVAS, // Canvas sync's code side
     ...SESSIONS, // Study Watch intake and study sessions in E.V. Home
-    ...SKILLS, // skills practice, Quizlet cards, weak-spot cards and workouts (D-108)
+    ...SKILLS, // skills practice, Quizlet cards, and weak-spot cards
     ...SHARE, // shareable practice pages (D-110)
     ...makeCards({ chicagoDate, addDays, guessCourse: LIB.guessCourse, defaultCourse }), // B-487: decks (core/cards.mjs)
     ...makeStudyPlans({ ...LIB, addDays, liveDates, isActive, examViews, planDrafts, planViews, taskDone, editBase }),

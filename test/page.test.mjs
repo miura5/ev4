@@ -148,10 +148,6 @@ test('B-161 (A-3), D-359: the page gets exactly the spec keys its files read; it
     assert.deepEqual(Object.keys(page[c].$defs || {}), Object.keys(schemas[c].$defs || {}), c + ' definitions');
     assert.deepEqual(page[c].required, schemas[c].required, c + ' required');
   }
-  const v = { full: makeValidator(schemas), page: makeValidator(page) };
-  const run = { id: 'w1', schema: 1, writer: 'page', at: '2026-10-21T08:00:00Z', source: 'E.V. Home', title: 'CINDY' };
-  assert.equal(v.page('workouts', run, { id: 'w1' }).ok, v.full('workouts', run, { id: 'w1' }).ok);
-  assert.ok(page.workouts.properties.title, 'the workouts title field is kept');
   assert.deepEqual(
     JSON.parse(pages.live['spec.json']).jobs.kinds.general,
     { label: spec.jobs.kinds.general.label },

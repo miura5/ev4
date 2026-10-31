@@ -13,7 +13,6 @@
     const sfTitle = {
       yourturn: 'Your turn',
       quizlet: 'Quizlet',
-      workout: 'Workout',
       skill: 'Skills run',
       job: 'Background job',
       newplan: 'A new study plan',

@@ -1075,25 +1075,6 @@
           },
         },
         {
-          name: 'start_workout',
-          description:
-            'Start a workout from his sequences (D-108): ' +
-            Object.values(SEQ)
-              .map(q => q.id + ' (' + q.title + ', ' + seqLine(q) + ')')
-              .join('; ') +
-            '. The page runs it as a card with a clock; he taps Round done, and at the end gives his energy and mood. Returns what started.',
-          inputSchema: {
-            type: 'object',
-            properties: { sequence: { type: 'string', enum: Object.keys(SEQ) } },
-            required: ['sequence'],
-          },
-          execute: async i => {
-            const r = await startWorkoutRun(str(i.sequence, 40));
-            if (r.card) addCard(r.card);
-            return r.text;
-          },
-        },
-        {
           name: 'practice_skill',
           description:
             'Run a skills validation checklist from his Skills Packet step by step (head-to-toe, vital signs, medication administration, intradermal injection, and the rest). start: find the checklist in his materials and begin; a card shows one step at a time and he marks it done or missed (a miss becomes a skill weak spot). end: stop the run. Returns what happened.',

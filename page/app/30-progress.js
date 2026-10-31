@@ -1,7 +1,7 @@
     // ------------------------------------------------------------ Progress
     // B-301 (C-6): the period switch (this week, the month, the semester), its three property rows, the study-time
     // chart from his logged sessions, by course and exam readiness. A bar is the minutes of the study sessions that
-    // fall in it, and the day panel lists exactly those sessions: workouts and notes are other collections and never
+    // fall in it, and the day panel lists exactly those sessions: notes are another collection and never
     // count. Nothing here is stored; the period is this device's (store).
     const PERIODS = { week: 'This week', month: 'Month', sem: 'Semester' };
     const prog = { period: PERIODS[store.get('prog.period')] ? store.get('prog.period') : 'week', pick: null };
@@ -396,7 +396,7 @@
       const b = bs[pick];
       // B-372: This week lists the picked day's; Month and Semester list the four most recent, as the demo
       const list = recEntries()
-        .filter(x => x.kind !== 'workout' && x.result !== 'going now' && (P !== 'week' || inSpan(x.date, b.from, b.to)))
+        .filter(x => x.result !== 'going now' && (P !== 'week' || inSpan(x.date, b.from, b.to)))
         .slice(0, P === 'week' ? 5 : 4);
       const ul = el('ul', 'prog-sessions');
       for (const x of list) {

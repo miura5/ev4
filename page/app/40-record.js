@@ -2,18 +2,17 @@
     const IDEA_KIND = { learning: 'Learning', feature: 'Feature', general: 'General' };
     const MATT_KINDS = ['learning', 'general']; // B-531: the Kind menu's choices; feature is E.V.'s own (save_idea)
     // B-302 (C-1, C-7, C-13): Record's log, the first of its views. Everything he logged, newest first and grouped by
-    // day, one row each (32 px from 600 px, 44 px on the phone): its one badge (Session, Quiz, Note or Workout), its
+    // day, one row each (32 px from 600 px, 44 px on the phone): its one badge (Session, Quiz or Note), its
     // name, its result and its time, all on the row's line. The type switch (Notes, Sessions, Quizzes, Everything;
     // B-570, D-393: it opens on Notes on every load, the type is never restored) and the
-    // filter (course, when, Show workouts) narrow it. The picked row's detail is the right panel from 1200 px and opens
+    // filter (course, when) narrow it. The picked row's detail is the right panel from 1200 px and opens
     // under its row below that. The log creates nothing: New in the header makes a note (C-7). Notes carry no course,
-    // so a course in the filter leaves them out, as it leaves out workouts. The filter is this device's (store).
+    // so a course in the filter leaves them out. The filter is this device's (store).
     const REC_TYPES = { note: 'Notes', session: 'Sessions', quiz: 'Quizzes', all: 'Everything' };
     const REC_BADGE = {
       session: ['Session', ''],
       quiz: ['Quiz', ''],
       note: ['Note', ''],
-      workout: ['Workout', ''],
     };
     const REC_WHEN = { today: 'Today', two: '2 days', all: 'All' };
     const SET_KIND = {
@@ -33,7 +32,6 @@
         type: 'note', // B-570: Record opens on Notes
         course: typeof f.course === 'string' ? f.course : 'any',
         when: REC_WHEN[f.when] ? f.when : 'all',
-        workouts: f.workouts !== false,
       };
     })();
     const rec = { sel: null };
@@ -113,24 +111,12 @@
           courses: i.course ? [i.course] : [], // B-373: the course a note from New carries
           idea: i,
         }));
-      const wos = S.workouts.map(w => ({
-        kind: 'workout',
-        id: w.id,
-        name: w.title || w.sequence,
-        at: w.startedAt || w.date,
-        date: w.date || E.chicagoDate(w.startedAt),
-        result: w.status === 'active' ? 'going now' : E.workoutSummary(w, SEQ[w.sequence]),
-        courses: [],
-        props: [w.energy ? ['Energy', w.energy + ' of 5'] : null],
-        detail: w.mood ? '“' + w.mood + '”' : '',
-      }));
-      return [...ses, ...quizEntries(), ...notes, ...wos]
+      return [...ses, ...quizEntries(), ...notes]
         .filter(x => x.date)
         .sort((a, b) => String(b.at || b.date).localeCompare(String(a.at || a.date)));
     }
     const recPass = x =>
       (recF.course === 'any' || x.courses.includes(recF.course)) &&
-      (recF.workouts || x.kind !== 'workout') &&
       (recF.when === 'all' || x.date >= (recF.when === 'today' ? today : E.addDays(today, -1)));
     const recType = (x, t) => t === 'all' || x.kind === t;
     const recTime = x => (String(x.at || '').length > 10 ? clock12(x.at) : '');
@@ -219,22 +205,11 @@
     function renderFilter() {
       const pop = $('rec-filter');
       const lab = t => el('span', 'lbl', t);
-      const ck = el('label', 'rec-ck'),
-        box = document.createElement('input');
-      box.type = 'checkbox';
-      box.id = 'rec-workouts';
-      box.checked = recF.workouts;
-      box.addEventListener('change', () => {
-        recF.workouts = box.checked;
-        saveRecF();
-        renderLog();
-      });
-      ck.append(box, document.createTextNode('Show workouts'));
       const foot = el('div', 'rec-pop-foot');
       const reset = btn(
         'Reset',
         () => {
-          Object.assign(recF, { course: 'any', when: 'all', workouts: true });
+          Object.assign(recF, { course: 'any', when: 'all' });
           saveRecF();
           renderLog();
         },
@@ -260,7 +235,6 @@
         recSeg('Course', [['any', 'Any'], ...E.activeCourses().map(c => [c, c])], recF.course, v => (recF.course = v)),
         lab('When'),
         recSeg('When', Object.entries(REC_WHEN), recF.when, v => (recF.when = v)),
-        ck,
         foot
       );
       if (fk)
@@ -379,7 +353,7 @@
       if (!$('rec-list')) return;
       const all = recEntries(),
         shown = all.filter(recPass);
-      const nF = (recF.course !== 'any') + (recF.when !== 'all') + !recF.workouts;
+      const nF = (recF.course !== 'any') + (recF.when !== 'all');
       $('rec-filter-btn').querySelector('.rec-flab').textContent = nF ? 'Filter · ' + nF : 'Filter';
       const tf = $('rec-types');
       const tfFocus = tf.contains(document.activeElement) && document.activeElement.dataset.v;
@@ -450,7 +424,7 @@
             'empty',
             all.length
               ? 'Nothing matches this filter.'
-              : 'What you log shows up here: study sessions, quizzes, notes and workouts.'
+              : 'What you log shows up here: study sessions, quizzes and notes.'
           )
         );
       list.replaceChildren(...out);
@@ -466,7 +440,7 @@
     function openInRecord(id) {
       showTab('record');
       if (!recEntries().some(x => x.id === id && recPass(x) && recType(x, recF.type))) {
-        Object.assign(recF, { type: 'all', course: 'any', when: 'all', workouts: true });
+        Object.assign(recF, { type: 'all', course: 'any', when: 'all' });
         saveRecF();
       }
       rec.sel = id;

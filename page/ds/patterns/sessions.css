@@ -11,7 +11,7 @@ body.skill-on .qchips{display:none}
 .sk-tog::after{transition-duration:var(--dur-pop-in)}
 .sk-tog[aria-expanded="true"]::after{transition-duration:var(--dur-pane)}
 
-/* ---- Skills runs and workouts (B-514, D-376, D-380, D-391): moved from page/styles.css. The patterns layer sits under
+/* ---- Skills runs (B-514, D-376, D-380, D-391): moved from page/styles.css. The patterns layer sits under
    legacy (D-373), so every declaration says  until B-515 retires legacy and strips them. Left in legacy for
    B-515: .sk-tog::after and its fold durations (reduced motion), .sk-panel display and #ev-side panel rules, .sbar. */
 .sk-sheet{display:flex;flex-direction:column;gap:0;background:rgba(var(--ground),.96);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--accent-edge);border-radius:var(--r);overflow:hidden}
@@ -37,11 +37,6 @@ body.skill-on .qchips{display:none}
 .sk-step.miss .sk-mark{color:var(--bad)}
 .sk-crit{font:var(--fw-medium) var(--fs-1) var(--sans);color:var(--warn);white-space:nowrap}
 .sk-cur{margin:0;font-size:var(--fs-5);line-height:1.5}
-.wo-clock{margin:0;font:var(--fw-semibold) var(--fs-5) var(--sans);font-variant-numeric:tabular-nums;color:var(--ink)}
-.wo-moves{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--sp-1_5)}
-.wo-moves li{display:flex;gap:10px;align-items:baseline;font-size:var(--fs-5)}
-.wo-moves b{min-width:2.4em;text-align:right;font:var(--fw-semibold) var(--fs-5) var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
-.wo-extra{display:flex;flex-direction:column;gap:10px}
 .sk-headtxt{display:flex;flex-direction:column;gap:var(--sp-0_5);min-width:0}
 .sk-head button{flex:0 0 auto;min-height:36px}
 .sk-static{cursor:default;padding-right:2px}.sk-static::after{display:none}
@@ -59,4 +54,4 @@ body.skill-on .qchips{display:none}
   body.skill-on .sk-sheet .sk-body{display:none}
 }
 /* hidden still hides: the moved display values say , so [hidden] restates its own */
-:is(.sk-acts,.sk-head,.sk-headtxt,.sk-peek,.sk-sheet,.sk-step,.sk-tog,.sk-top,.wo-extra)[hidden]{display:none}
+:is(.sk-acts,.sk-head,.sk-headtxt,.sk-peek,.sk-sheet,.sk-step,.sk-tog,.sk-top)[hidden]{display:none}

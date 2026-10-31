@@ -48,7 +48,6 @@
       ideas: [],
       notes: [],
       journal: [], // D-335: open to the conversation's lookup
-      workouts: [],
       sessions: [],
       announcements: [],
       talk: [],

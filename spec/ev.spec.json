@@ -1907,7 +1907,7 @@
     "page"
    ],
    "key": "wo-<YYYYMMDD-HHMMSS>-<sequence>",
-   "holds": "sequence, title, date, rounds as events, the result (rounds and extra reps in the cap, or total time and the stop point), energy and mood (D-108); status, endedAt, result, energy and mood are marks the page sets",
+   "holds": "sequence, title, date, rounds as events, the result (rounds and extra reps in the cap, or total time and the stop point), energy and mood (D-108); status, endedAt, result, energy and mood are marks the page sets. Retired (D-416, B-644): workouts are no longer read or written; the records are kept (B-11)",
    "fromV3": "new (D-108, the first fitness data)",
    "appends": {
     "events": [
@@ -1931,7 +1931,8 @@
     "mood": [
      "page"
     ]
-   }
+   },
+   "retired": true
   },
   "journal": {
    "class": "Fact",
@@ -5543,7 +5544,6 @@
     "make_practice",
     "quiz_me",
     "study_session",
-    "start_workout",
     "practice_skill"
    ],
    "cards": [
@@ -6012,9 +6012,6 @@
      "collection": "journal"
     },
     {
-     "collection": "workouts"
-    },
-    {
      "collection": "materialedits"
     },
     {
@@ -6100,82 +6097,6 @@
      ".cap-echo"
     ],
     "shotTolerance": 0.002
-   }
-  }
- },
- "workouts": {
-  "_rules": [
-   "A sequence is data the page runs like a skills checklist (D-108); a run is workouts/<id>, written by the page, stored as entered (D-106).",
-   "amrap: as many rounds of the round as fit in capMinutes; the result is rounds plus extra reps. ladder: the rungs in order, each move times its per; the result is total time and where he stopped."
-  ],
-  "sequences": {
-   "cindy": {
-    "title": "CINDY",
-    "kind": "amrap",
-    "capMinutes": 20,
-    "round": [
-     {
-      "move": "pull-ups",
-      "reps": 5
-     },
-     {
-      "move": "push-ups",
-      "reps": 10
-     },
-     {
-      "move": "air squats",
-      "reps": 15
-     }
-    ],
-    "source": "the CINDY benchmark: a 20-minute AMRAP"
-   },
-   "ladder-1500": {
-    "title": "1,500-rep ladder",
-    "kind": "ladder",
-    "rungs": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6,
-     7,
-     8,
-     9,
-     10,
-     9,
-     8,
-     7,
-     6,
-     5,
-     4,
-     3,
-     2,
-     1
-    ],
-    "moves": [
-     {
-      "move": "pull-ups",
-      "per": 1
-     },
-     {
-      "move": "dips",
-      "per": 2
-     },
-     {
-      "move": "push-ups",
-      "per": 3
-     },
-     {
-      "move": "sit-ups",
-      "per": 4
-     },
-     {
-      "move": "air squats",
-      "per": 5
-     }
-    ],
-    "source": "Tom Holland’s bodyweight ladder (Men’s Health): 1 to 10 and back to 1, 1,500 reps"
    }
   }
  }

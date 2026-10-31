@@ -1490,8 +1490,8 @@ const SPLIT_FILES = [
   [
     'skills',
     'makeSkills',
-    /function startSkill|function startWorkout|function weakspotCards/,
-    ['skillSteps', 'startSkill', 'endSkill', 'startWorkout', 'workoutState', 'weakspotCards', 'cardsText'],
+    /function startSkill|function weakspotCards/,
+    ['skillSteps', 'startSkill', 'endSkill', 'weakspotCards', 'cardsText'],
   ],
 ];
 for (const [file, factory, moved, names] of SPLIT_FILES)

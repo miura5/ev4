@@ -230,20 +230,6 @@
           label: 'E.V. · ' + (c.title || s.title || s.id),
         });
       },
-      workout(box, c) {
-        if (c.id) {
-          const w = woOf(c.id);
-          if (w) workoutCard(box, w);
-          else box.append(head2('Workout'), el('p', 'empty', 'Setting it up…'));
-          return;
-        }
-        const cur = activeWorkout();
-        if (cur) {
-          box.append(head2('Start a workout'), el('p', 'meta', `${cur.title} is going: its card is below.`));
-          return;
-        }
-        workoutPicker(box);
-      },
       skill(box, c) {
         const s = sessOf(c.session);
         if (!s || !s.skill) {

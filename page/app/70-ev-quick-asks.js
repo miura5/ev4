@@ -124,12 +124,6 @@
           [{ type: 'go', label: 'Review on Today', to: 'today' }],
         ];
       },
-      'start a workout': () => {
-        const cur = activeWorkout();
-        return cur
-          ? [`${cur.title} is going.`, [{ type: 'workout', id: cur.id }]]
-          : ['Which one? The clock starts when you tap Start.', [{ type: 'workout' }]];
-      },
       'weak spots to quizlet': () => {
         const n = quizletCards().length;
         return n

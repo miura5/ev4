@@ -194,9 +194,9 @@ if (lastReview && lastReview !== 'review-' + today) {
 // The harness opens the page as if nothing has been said today (the greeting at full size, a quick ask making the day's
 // first two messages): an export taken today carries today's conversation, so it is left out.
 if (seed.talk) delete seed.talk[today];
-// The same for today's sessions and workouts: a staging record carries the proofs earlier build chats ran on it (B-51's
-// skills run, B-52's CINDY), which would otherwise read as a run already started today.
-for (const c of ['sessions', 'workouts'])
+// The same for today's sessions: a staging record carries the proofs earlier build chats ran on it (B-51's
+// skills run), which would otherwise read as a run already started today.
+for (const c of ['sessions'])
   for (const [id, d] of Object.entries(seed[c] || {}))
     if ((d.date || E_DATE(d.startedAt)) === today) delete seed[c][id];
 function E_DATE(iso) {
@@ -5091,7 +5091,7 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(100);
     }
     // B-301 (C-6): a planted week. Each bar's day panel lists the sessions that make up that bar and adds up to it; a
-    // workout and a note on the same day never appear there; the bars are 44 px or wider at 390.
+    // retired workout record (D-416) and a note on the same day never appear there; the bars are 44 px or wider at 390.
     {
       const plant = await page.evaluate(async () => {
         const E = window.EVCore,
@@ -5217,7 +5217,7 @@ async function tap(page, locator, name) {
           JSON.stringify(rows.map(r => [r.k, r.bar, r.sum, r.ids.length]))
         );
         ok(
-          `[${w}] Progress: no workout appears in the day panel (its notes do, as the demo's)`,
+          `[${w}] Progress: no retired workout record appears in the day panel (its notes do, as the demo's)`,
           rows.every(r => !/Planted workout/.test(r.text) && !r.kinds.includes('workout')),
           rows.find(r => r.k === plant.d0).text.slice(0, 160)
         );
@@ -5429,7 +5429,7 @@ async function tap(page, locator, name) {
     }
     // B-302 (C-1, C-7, C-13): the log at 1280 and 390, light and dark, its filter open. Rows are 32 px at 1280 and 44
     // px at 390 with the time on the row's line; every switch segment on the view is 44 px or more at 390; nothing on
-    // the view creates; the type tabs and the filter narrow the rows, and Show workouts hides the workouts.
+    // the view creates; the type tabs and the filter narrow the rows; a retired workout record (D-416) is never a row.
     for (const w of [1280, 390]) {
       await page.setViewportSize(w === 390 ? { width: 390, height: 844 } : { width: 1280, height: 860 });
       await page.waitForTimeout(150);
@@ -5467,8 +5467,8 @@ async function tap(page, locator, name) {
       // B-357 (D-316): the demo's Record has Log something, so the old no-create rule (C-7) is retired
       ok(`[${w}] Record: no sideways scroll`, !m.sideways, JSON.stringify(m.creates));
       ok(
-        `[${w}] Record: the log holds sessions, quizzes, notes and workouts`,
-        ['session', 'quiz', 'note', 'workout'].every(k => m.kinds.includes(k)),
+        `[${w}] Record: the log holds sessions, quizzes and notes, and no workouts (D-416)`,
+        ['session', 'quiz', 'note'].every(k => m.kinds.includes(k)) && !m.kinds.includes('workout'),
         m.kinds.join(',')
       );
       await page.click('#rec-filter-btn');
@@ -5494,12 +5494,9 @@ async function tap(page, locator, name) {
         await page.screenshot({ path: `${shots}/record-${w}-${th}.png`, fullPage: false });
       }
       await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
-      // the filter narrows: Show workouts off hides them; Today keeps only today's; Reset brings all back
+      // the filter narrows: Today keeps only today's; Reset brings all back
       const count = k => page.locator(`#rec-list [data-part=row]${k ? `[data-kind="${k}"]` : ''}`).count();
       const all = await count();
-      await page.click('#rec-workouts');
-      await page.waitForTimeout(60);
-      const noWo = await count('workout');
       await page.click('#rec-filter [aria-label="When"] [data-v="today"]');
       await page.waitForTimeout(60);
       const days = await page.locator('#rec-list .rec-day').allTextContents();
@@ -5508,9 +5505,9 @@ async function tap(page, locator, name) {
       await page.waitForTimeout(60);
       const back = await count();
       ok(
-        `[${w}] Record: Show workouts off hides them, Today keeps today's, Reset brings every row back`,
-        noWo === 0 && days.every(d => /^Today\d*$/.test(d)) && /Filter · 2/.test(label) && back === all,
-        JSON.stringify({ all, noWo, days, label, back })
+        `[${w}] Record: Today keeps today's, Reset brings every row back`,
+        days.every(d => /^Today\d*$/.test(d)) && /Filter · 1/.test(label) && back === all,
+        JSON.stringify({ all, days, label, back })
       );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(60);
@@ -6256,180 +6253,6 @@ async function tap(page, locator, name) {
       ok(`[${label}] B-54: no page errors`, sErr.length === 0, sErr.join(' | '));
       await sp.close();
     }
-    // ---- B-52 (D-108): both workout sequences at both widths; every workouts/<id> written validates
-    {
-      const { loadValidator } = await import(path.join(root, 'core/schemas.mjs'));
-      const validate = loadValidator();
-      for (const [label, vp] of [
-        ['phone', { width: 390, height: 844 }],
-        ['desktop', { width: 1280, height: 860 }],
-      ]) {
-        const wp = await browser.newPage({ viewport: vp });
-        const wErr = [];
-        wp.on('pageerror', e => wErr.push(e.message));
-        await wp.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
-        await openPage(wp, 'staging');
-        await wp.waitForTimeout(1500);
-        // B-78: the workout card is the open surface (beside the runner panel on desktop)
-        const last = () => wp.locator('#ev-surf');
-        // The page's wall clock forward: not clock.fastForward, whose real-time sync can rewind it (docs/lessons.md, and jump below).
-        const ahead = async ms => {
-          await wp.clock.setSystemTime((await wp.evaluate(() => Date.now())) + ms);
-          await wp.waitForTimeout(150);
-        };
-        // CINDY from the quick ask: the picker, Start, three rounds, the cap, extra reps, then energy and mood
-        await send(wp, 'Start a workout');
-        await wp.waitForTimeout(400);
-        ok(
-          `[${label}] start a workout offers both sequences`,
-          /CINDY/.test(await last().textContent()) &&
-            /1,500-rep ladder/.test(await last().textContent()) &&
-            (await last().locator('button', { hasText: 'Start' }).count()) === 2
-        );
-        await last().locator('.row', { hasText: 'CINDY' }).locator('button', { hasText: 'Start' }).click();
-        await wp.waitForTimeout(500);
-        ok(
-          `[${label}] CINDY runs as a card with its clock and round`,
-          /Workout · CINDY/.test(await last().textContent()) &&
-            /20:00 left|19:5\d left/.test(await last().textContent()) &&
-            /5 pull-ups/.test(await last().textContent()),
-          (await last().textContent()).slice(0, 160)
-        );
-        for (let i = 0; i < 3; i++) {
-          await ahead(5 * 60e3);
-          await last().locator('button', { hasText: 'Round done' }).click();
-          await wp.waitForTimeout(250);
-        }
-        ok(
-          `[${label}] three rounds counted`,
-          /3 rounds so far \(90 reps\)/.test(await last().textContent()),
-          (await last().textContent()).slice(0, 200)
-        );
-        ok(
-          `[${label}] the running workout follows the session pattern: its line in the pane header with Finish, its round and Round done in the pane, its card the right panel's surface from 1200 px (D-217)`,
-          (await wp.isVisible('#sksheet')) &&
-            /CINDY · Round 4/.test(await wp.textContent('#sksheet')) &&
-            (await wp.locator('#sksheet button', { hasText: 'Round done' }).count()) === 1 &&
-            (await wp.evaluate(() => document.getElementById('kbar').parentNode.id)) === 'mh' &&
-            /^CINDY · Round 4 · \d/.test(await wp.textContent('#kbar .s-clock')) &&
-            (await wp.locator('#kbar button', { hasText: 'Finish' }).count()) === 1 &&
-            (label === 'phone'
-              ? !(await wp.isVisible('#skpanel'))
-              : !(await wp.isVisible('#skpanel')) && (await wp.isVisible('#ev-side #ev-surf[data-type="workout"]'))),
-          await wp.evaluate(() =>
-            [document.getElementById('kbar'), document.getElementById('sksheet')]
-              .map(n => n && n.textContent)
-              .join(' | ')
-          )
-        );
-        // Then the card's condition, not a fixed wait: its clock redraws on the next tick.
-        await ahead(5 * 60e3 + 5000);
-        await wp
-          .waitForFunction(() => /rounds in 20 minutes/.test(document.getElementById('p-ev').textContent), null, {
-            timeout: 8000,
-          })
-          .catch(() => {});
-        ok(
-          `[${label}] at the cap the card asks for the extra reps`,
-          /3 rounds in 20 minutes/.test(await last().textContent()) &&
-            (await last().locator('input[type=number]').count()) === 1,
-          (await last().textContent()).slice(0, 240)
-        );
-        await wp.screenshot({ path: `${shots}/workout-cindy-${label}.png` });
-        await last().locator('input[type=number]').fill('7');
-        await last().locator('form button[type=submit]').click();
-        await wp.waitForTimeout(400);
-        await last().locator('.energy button', { hasText: '4' }).click();
-        await last().locator('input[aria-label=Mood]').fill('strong, arms gone');
-        await last().locator('button', { hasText: 'Save' }).click();
-        await wp.waitForTimeout(400);
-        const cindy = await wp.evaluate(
-          old =>
-            Object.entries(window.__db.workouts || {})
-              .filter(([id, w]) => w.sequence === 'cindy' && !old.includes(id))
-              .map(([id, w]) => ({ id, ...w })),
-          Object.keys(seed.workouts || {})
-        ); // the run this harness made, not one the export holds
-        ok(
-          `[${label}] CINDY lands in workouts/<id>: rounds, extra reps, energy and mood, valid`,
-          cindy.length === 1 &&
-            cindy[0].status === 'done' &&
-            cindy[0].result.rounds === 3 &&
-            cindy[0].result.extraReps === 7 &&
-            cindy[0].energy === 4 &&
-            cindy[0].mood === 'strong, arms gone' &&
-            validate('workouts', (({ id, ...d }) => d)(cindy[0]), { id: cindy[0].id }).ok,
-          JSON.stringify(cindy[0] && cindy[0].result)
-        );
-        ok(
-          `[${label}] the card closes with the summary`,
-          /3 rounds \+ 7 reps in 20 min/.test(await last().textContent()) &&
-            /Energy 4\/5/.test(await last().textContent())
-        );
-        // The ladder from the conversation: five rounds, stopped in round six
-        await wp.evaluate(() => {
-          window.__chatScript = [{ tool: 'start_workout', input: { sequence: 'ladder-1500' } }];
-          window.__chatReply = 'Ladder time.';
-        });
-        await send(wp, 'Let’s do the 1500 rep ladder');
-        await wp.waitForTimeout(600);
-        ok(
-          `[${label}] the ladder runs round by round`,
-          /Round 1 of 19/.test(await last().textContent()) &&
-            /1 pull-ups/.test(await last().textContent()) &&
-            /5 air squats/.test(await last().textContent()),
-          (await last().textContent()).slice(0, 200)
-        );
-        for (let i = 0; i < 5; i++) {
-          await ahead(2 * 60e3);
-          await last().locator('button', { hasText: 'Round done' }).click();
-          await wp.waitForTimeout(250);
-        }
-        ok(
-          `[${label}] round six asks for 6, 12, 18, 24 and 30`,
-          /Round 6 of 19/.test(await last().textContent()) &&
-            /6 pull-ups/.test(await last().textContent()) &&
-            /30 air squats/.test(await last().textContent())
-        );
-        await wp.screenshot({ path: `${shots}/workout-ladder-${label}.png` });
-        await ahead(60e3);
-        await last().locator('button', { hasText: 'Stop here' }).click();
-        await wp.waitForTimeout(400);
-        await last().locator('.energy button', { hasText: '2' }).click();
-        await last().locator('button', { hasText: 'Save' }).click();
-        await wp.waitForTimeout(400);
-        const lad = await wp.evaluate(() =>
-          Object.entries(window.__db.workouts || {})
-            .filter(([, w]) => w.sequence === 'ladder-1500')
-            .map(([id, w]) => ({ id, ...w }))
-        );
-        ok(
-          `[${label}] the ladder keeps total time and where he stopped, valid`,
-          lad.length === 1 &&
-            lad[0].status === 'stopped' &&
-            lad[0].result.stopRound === 6 &&
-            lad[0].result.reps === 225 &&
-            lad[0].result.totalSeconds >= 660 &&
-            lad[0].result.totalSeconds < 690 &&
-            lad[0].energy === 2 &&
-            lad[0].mood === null &&
-            validate('workouts', (({ id, ...d }) => d)(lad[0]), { id: lad[0].id }).ok,
-          JSON.stringify(lad[0] && lad[0].result)
-        );
-        await wp.click('#tab-record');
-        await wp.waitForTimeout(200);
-        await wp.click('#rec-types [data-v="all"]'); // B-570: Record opens on Notes
-        const wl = await wp.textContent('#rec-list'); // B-302: workouts are rows in the log
-        ok(
-          `[${label}] Record lists both workouts with their results`,
-          /CINDY/.test(wl) && /3 rounds \+ 7 reps/.test(wl) && /stopped in round 6/.test(wl),
-          wl.slice(0, 200)
-        );
-        ok(`[${label}] B-52: no page errors`, wErr.length === 0, wErr.join(' | '));
-        await wp.close();
-      }
-    }
-
     // ---- B-290 (D-327): Coming up in E.V.'s right panel lists the dates after today that the sidebar doesn't show.
     // Graded work due tomorrow is on today's list (a heads-up), so it can be in the sidebar; then it is not Coming up.
     {
