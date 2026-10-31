@@ -6695,5 +6695,23 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "21c700a",
+  "time": "2026-10-31T23:41:55.713Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "a029f40",
+  "from": "a029f40",
+  "tasks": [
+   "B-653",
+   "B-655"
+  ],
+  "summary": "Images in notes, Quip-style: insert or paste a picture into a note,…; checks.yml: the playwright install --with-deps step hung about 30 min…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.27"
  }
 ]
