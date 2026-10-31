@@ -459,8 +459,21 @@ async function tickAll(page) {
               l = box(li);
             return t.top >= l.top - 1 && t.bottom <= l.bottom + 1 && t.right <= l.right + 1;
           }),
-          tomorrow: (badge(byText('fluid balance')) || {}).className,
-          in3: (badge(byText('lab report draft')) || {}).className,
+          // B-594: a badge's colour is its kind's (DS.kind, --kind-*), so the check reads the rendered dot and word
+          graded: (() => {
+            const p = document.createElement('span');
+            p.style.color = 'var(--kind-graded)';
+            document.body.append(p);
+            const want = getComputedStyle(p).color;
+            p.remove();
+            const look = b =>
+              b && { dot: getComputedStyle(b, '::before').backgroundColor, word: getComputedStyle(b).color };
+            return {
+              want,
+              tomorrow: look(badge(byText('fluid balance'))),
+              in3: look(badge(byText('lab report draft'))),
+            };
+          })(),
           ticks: rows.map(li => {
             const i = li.querySelector('input.tick'),
               bw = parseFloat(getComputedStyle(i).borderLeftWidth) * 2, // B-564: Line's 44 px tap border is clear
@@ -491,9 +504,14 @@ async function tickAll(page) {
       // B-357 (D-327): the rows are the demo's height (B-354); what stays is that each row's time keeps its line
       ok(`${tag} each row's time stays on its line`, r.heights.length >= 4 && r.timeOnLine, JSON.stringify(r.heights));
       ok(
-        `${tag} graded work is the demo's neutral grey, never red, whenever it is due (B-361)`,
-        [r.tomorrow, r.in3].every(c => /\bx-quiet\b/.test(c || '') && !/\bx-red\b/.test(c || '')),
-        JSON.stringify([r.tomorrow, r.in3])
+        // B-594 (Matt, Oct 30) supersedes B-361's grey: graded work takes the kind map's graded colour, the same as
+        // the sidebar's dot, and the same whenever it is due (no due-date escalation)
+        `${tag} graded work is the kind map's graded colour, the same whenever it is due (B-594)`,
+        !!r.graded.tomorrow &&
+          !!r.graded.in3 &&
+          r.graded.tomorrow.dot === r.graded.want &&
+          JSON.stringify(r.graded.tomorrow) === JSON.stringify(r.graded.in3),
+        JSON.stringify(r.graded)
       );
       ok(
         `${tag} the tick's box is ${w < 600 ? 'clear of the name' : '16 px and clear of the name'}`,
