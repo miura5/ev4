@@ -11482,5 +11482,22 @@
    "outcome": "task",
    "at": "2026-10-30T23:15:33.429Z"
   }
+ },
+ {
+  "id": "B-613",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Encode the build-manager workflow in an ev-build-manager skill, a hook that refuses new .md files outside an allowlist, and a drift test for skills and CLAUDE.md",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "D-410, Oct 30",
+  "words": "Encode the build-manager workflow in an ev-build-manager skill, a hook that refuses new .md files outside an allowlist, and a drift test for skills and CLAUDE.md",
+  "reportedAt": "2026-10-31T00:51:44.842Z",
+  "board": {
+   "row": "v4 B-613: Encode the build-manager workflow in an ev-build-manager skill, a…"
+  }
  }
 ]
