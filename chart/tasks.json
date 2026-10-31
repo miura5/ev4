@@ -4027,14 +4027,19 @@
   "title": "Keys shown where they work (D-231): the command bar groups its rows by what they act on (Ask E.V., Go to, Study, Log) with each row's key on its right, and Tab sends the typed words to her as a message; from 1024 px every key in spec.ui.keys is printed beside what it acts on (answer numbers as now, Space on a Today row, Enter on a fold line, the view switch's numbers on hover and focus); D-231's check joins the look harness",
   "dod": "the harness at 1280 opens the bar by B-202's recorded key and finds four groups with a key on every row; Tab with \"explain the U wave\" sends it to her; every key in spec.ui.keys has a visible key label on the view where it works; a planted key with no label fails the check; nothing changes at 390; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only on Matt's OK",
   "milestone": "v4.5.x ui",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-202"
   ],
   "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "joined",
+   "into": "B-559",
+   "reason": "Backlog audit Oct 31: keys and the command menu are B-559's in the PWA; the claude.ai-era command bar is retired (D-367).",
+   "at": "2026-10-31T00:39:48.663Z"
+  }
  },
  {
   "id": "B-227",
