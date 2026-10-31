@@ -90,6 +90,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-645 | Request (reported Oct 31): D-416: retire skill checklists Done when: Skills runner, practice_skill, skill card and core skill steps gone; old kind-skill sessions still load in Record; clinical-prep skills kept; tests updated; targeted checks pass. | — | Simplify (D-416) | open |  |
 | B-646 | Request (reported Oct 31): D-416: retire the energy and mood check-in Done when: Check-in card, log_checkin, low-energy nudge and weekly energy line gone; dayedits.checkin noted retired and still valid; D-070 superseded; avatar moods untouched. | — | Simplify (D-416) | open |  |
 | B-647 | Request (reported Oct 31): D-416: retire flashcards Done when: Deck UI, core/cards.mjs, flashcards job kind, deck worker branches, smoke round trip and Quizlet-cards quick ask gone; decks marked retired; old flashcards jobs still validate; D-368 superseded; Quizlet Saturday read unchanged. | — | Simplify (D-416) | open |  |
+| B-648 | Request (reported Oct 31): D-416: spec closeout and full check Done when: Spec marks retired collections and fields; capacity and subscribe hold no retired entries; full GitHub check green; delta UX probe shows no dead controls. | — | Simplify (D-416) | open |  |
 
 ## Your turn
 
@@ -711,4 +712,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-563 | task |  |  | plan 9w83U8c79EjxijPXqs9xKi | declined |  |
 | B-588 | request | 2026-10-30T13:22:31.098Z | At 390 the Undo toast covers Today's List/Week/Add toolbar while it shows. | UI review, release card 2 | declined |  |
 | B-610 | request | 2026-10-30T23:06:03.689Z | Next cleanup release: clear the remaining roughly 176 !important declarations left after the 630-rule strip, by moving Study-only rules from the patterns layer into the Study view file, merging the toast placement into its component, and retiring the old side-card rules; base, tokens and the cursor policy keep theirs (spike report, Oct 30). | !important spike Oct 30 | declined |  |
-| B-648 | request | 2026-10-31T13:21:18.173Z | D-416: spec closeout and full check | B-636 inventory spike | inbox |  |

@@ -12241,9 +12241,9 @@
   "id": "B-648",
   "kind": "request",
   "title": "Request (reported Oct 31): D-416: spec closeout and full check",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Spec marks retired collections and fields; capacity and subscribe hold no retired entries; full GitHub check green; delta UX probe shows no dead controls.",
+  "milestone": "Simplify (D-416)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12252,6 +12252,10 @@
   "reportedAt": "2026-10-31T13:21:18.173Z",
   "board": {
    "row": "v4 B-648: D-416: spec closeout and full"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-10-31T13:21:20.613Z"
   }
  }
 ]
