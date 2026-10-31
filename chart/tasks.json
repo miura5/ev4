@@ -4187,14 +4187,18 @@
   "title": "Phone capture: typing \"weak spot: …\" in the composer shows her suggested objective as a chip row above the keyboard before send; a tap swaps it for another seeded objective; send files it committed with that objective",
   "dod": "the harness at 390 × 844 and 390 × 450 (keyboard open): the chip shows within 100 ms of the prefix, above the composer, with the composer in view (D-225); the filed spot carries the chosen objective; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-234"
   ],
   "notes": "D-327 carries D-315 forward (the Notes canvas is now the demo, with the L-frame on desktop): read this task's D-315 as D-327.",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Backlog audit Oct 31: phone capture chip is phone polish, frozen by D-407.",
+   "at": "2026-10-31T00:39:56.454Z"
+  }
  },
  {
   "id": "B-237",
