@@ -6622,5 +6622,24 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.25"
+ },
+ {
+  "target": "staging",
+  "commit": "79c12f0",
+  "time": "2026-10-31T14:13:13.994Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "5273419",
+  "tasks": [
+   "B-644",
+   "B-645",
+   "B-646",
+   "B-647"
+  ],
+  "summary": "D-416: retire workouts (Cindy AMRAP,; D-416: retire skill; D-416: retire the energy and mood; D-416: retire",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
