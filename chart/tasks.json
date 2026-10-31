@@ -11588,5 +11588,22 @@
   "board": {
    "row": "v4 B-618: State-aware style diff: the computed-style and pixel diffs also open…"
   }
+ },
+ {
+  "id": "B-619",
+  "kind": "request",
+  "title": "Request (reported Oct 30): Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "workflow gaps, Matt Oct 30",
+  "words": "Add-a-feature recipe skill: the checklist a small feature follows (vocabulary entry, write path, Worker route, page module, Proprietary block and behaviour, jobs kit if it calls a model, one harness check, the Gallery), kept true by the skills drift test.",
+  "reportedAt": "2026-10-31T01:04:48.761Z",
+  "board": {
+   "row": "v4 B-619: Add-a-feature recipe skill: the checklist a small feature follows…"
+  }
  }
 ]
