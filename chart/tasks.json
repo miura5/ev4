@@ -12194,5 +12194,22 @@
    "outcome": "task",
    "at": "2026-10-31T13:21:05.185Z"
   }
+ },
+ {
+  "id": "B-646",
+  "kind": "request",
+  "title": "Request (reported Oct 31): D-416: retire the energy and mood check-in",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-636 inventory spike",
+  "words": "D-416: retire the energy and mood check-in",
+  "reportedAt": "2026-10-31T13:21:07.612Z",
+  "board": {
+   "row": "v4 B-646: D-416: retire the energy and mood"
+  }
  }
 ]
