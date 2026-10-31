@@ -12335,5 +12335,22 @@
   "board": {
    "row": "v4 B-652: D-416 release review backlog: an old queued flashcards job runs as…"
   }
+ },
+ {
+  "id": "B-653",
+  "kind": "request",
+  "title": "Request (reported Oct 31): Images in notes, Quip-style: insert or paste a picture into a note, select it, drag it between blocks (a blue line shows where it lands), drag it sideways onto a column grid, resize it, and type text in a column beside it. For anatomy and organ notes.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in the build chat, Oct 31",
+  "words": "Images in notes, Quip-style: insert or paste a picture into a note, select it, drag it between blocks (a blue line shows where it lands), drag it sideways onto a column grid, resize it, and type text in a column beside it. For anatomy and organ notes.",
+  "reportedAt": "2026-10-31T22:33:32.341Z",
+  "board": {
+   "row": "v4 B-653: Images in notes, Quip-style: insert or paste a picture into a note,…"
+  }
  }
 ]
