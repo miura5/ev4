@@ -1032,16 +1032,17 @@ test('B-449: a Sonnet ask Claude did not answer gives its claim back; the cap ho
       }),
       { status: 400 }
     );
-  // a 400, a 529 and a dropped connection each give the claim back: the two answered asks still both go
+  // a 400, a 529 and a dropped connection each give the claim back: the two answered asks still both go.
+  // B-624: the 529 and the dropped connection are each retried once, and fail again, so each ask sends twice
   const api = n => {
     if (n === 1) return refused();
-    if (n === 2) return new Response('{"type":"error"}', { status: 529 });
-    if (n === 3) throw new Error('socket hang up');
+    if (n === 2 || n === 3) return new Response('{"type":"error"}', { status: 529 });
+    if (n === 4 || n === 5) throw new Error('socket hang up');
     return ok();
   };
   const r = await viaWorker([plan, plan, plan, plan, plan, plan], {}, undefined, api);
   assert.deepEqual(r.out, [400, 529, 502, 200, 200, 429]);
-  assert.equal(r.sent.length, 5, 'the sixth is refused unsent');
+  assert.equal(r.sent.length, 7, 'the 529 and the drop each retried once; the sixth is refused unsent');
   assert.equal(r.DB.sql.prepare('SELECT n FROM claude_plan_asks WHERE job = ?').get('job-plan').n, 2);
   assert.deepEqual(r.replies[5], { error: 'This plan has had its 2 Sonnet asks', code: 'ceiling', scope: 'plan' });
   // a job dated in the future is refused
