@@ -109,12 +109,9 @@ test('B-613: each pinned rule is stated in its one home and nowhere else among t
 });
 
 const HANDOVER = ['## Running', '## Waiting on Matt', '## Next', '## Last release'];
-test('B-613: docs/handover.md keeps the fixed shape the build manager skill states, its four headings in order', () => {
+// The handover itself is not read here: no test reads docs/ (B-425), so the skill's stated shape is what is pinned.
+test('B-613: the build manager skill states the handover in its fixed shape, four headings in order', () => {
   const skill = fs.readFileSync(path.join(SKILLS, 'ev-build-manager', 'SKILL.md'), 'utf8');
   const stated = [...skill.matchAll(/^- `(## [^`]+)`/gm)].map(m => m[1]);
-  assert.deepEqual(stated, HANDOVER, 'the skill states the shape');
-  const heads = [...fs.readFileSync(path.join(ROOT, 'docs', 'handover.md'), 'utf8').matchAll(/^## .+$/gm)].map(m =>
-    m[0].trim()
-  );
-  assert.deepEqual(heads, HANDOVER, 'the handover has exactly these sections');
+  assert.deepEqual(stated, HANDOVER);
 });
