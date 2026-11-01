@@ -88,3 +88,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-665 | request | 2026-11-01T22:41:49.248Z | Repo skeleton plan from the five-area map: (1) remove/fix: chart/import, docs/lessons.md, retired fixtures/tests, cutover/import commands, frozenPage, check-procedure contradictions, dead docs/cutover.md citations, pwa/README; (2) CLAUDE.md ~100 lines, handover state-only, fold skill references; (3) chart archive of closed tasks; (4) split tools/chart.mjs, build.mjs, hooks.mjs; (5) core layering, shared helpers, split evcore/steps; (6) tests mirror source; (7) page components/tabs/order file | Repo map, Nov 1 | inbox |  |
