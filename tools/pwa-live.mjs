@@ -9,7 +9,7 @@
 //                                                   (D-366 ended R-06: no full check or nightly gates live)
 //   node tools/pwa-live.mjs check <worker url>     in the deploy job, EV_TOKEN set: 401 without the token and with a
 //                                                   wrong one, 200 with it; prints the collections and counts only
-//   node tools/pwa-live.mjs cutover [--apply]      the cutover commit's spec change (docs/cutover.md), printed; with
+//   node tools/pwa-live.mjs cutover [--apply]      the cutover commit's spec change (the Oct 18 cutover), printed; with
 //                                                   --apply written to spec/ev.spec.json
 //   node tools/pwa-live.mjs worker-doc --token-file <f> --out <f>
 //                                                   the live record's system/worker document (D-320) from a token file
@@ -50,7 +50,7 @@ export function gateRefusals({ commit, onMain, spec, deploys, buildCommit }) {
   const app = liveApp(spec || {});
   if (!app || app.ready !== true)
     out.push(
-      `the spec at ${commit.slice(0, 7)} does not turn the live app on (spec.registry.records.live.app.ready; docs/cutover.md)`
+      `the spec at ${commit.slice(0, 7)} does not turn the live app on (spec.registry.records.live.app.ready; the Oct 18 cutover)`
     );
   if (buildCommit(commit) !== commit)
     out.push(
@@ -126,7 +126,7 @@ export function cutoverSpec(spec, { at = 'the cutover' } = {}) {
   if (live.runs) throw new Error('spec.registry.records.live.runs is already set');
   if (!live.app || live.app.ready !== true)
     throw new Error(
-      'the live app is not on (spec.registry.records.live.app.ready): docs/cutover.md step 3 comes first'
+      'the live app is not on (spec.registry.records.live.app.ready): the Oct 18 cutover step 3 comes first'
     );
   live.readOnly = true;
   live.d1 = true;
@@ -220,7 +220,7 @@ async function main(argv) {
     );
     if (argv.includes('--apply')) {
       fs.writeFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), JSON.stringify(after, null, 1));
-      console.log('written to spec/ev.spec.json: commit it as the cutover commit (docs/cutover.md)');
+      console.log('written to spec/ev.spec.json: commit it as the cutover commit (the Oct 18 cutover)');
     } else console.log('a dry run: --apply writes it');
     return 0;
   }

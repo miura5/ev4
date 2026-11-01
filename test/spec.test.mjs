@@ -219,10 +219,6 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
       ['restore-drill', 'trig_018VSRmz8pdNzdVSxpH42PEG', [backups], true],
     ]
   );
-  assert.ok(
-    spec.tasks.retired.some(r => r.was === 'live.evening-mac' && r.trigger === 'trig_01AxnPF3iPyo2BpCQtMdAKP8'),
-    'the old live evening-mac is listed retired'
-  );
 });
 
 test('staging is not a second live: no pushes, Mac writes only under staging/ except the drill reading the backup', () => {
@@ -265,9 +261,7 @@ test('environments: the five surfaces, each capability with a proof', () => {
         assert.ok(key, `${s}: ${p.capability}: ${p.task}`);
         const task = spec.tasks[key[1]][key[2]] || (key[2] === 'diagnostic' && spec.tasks.diagnostic);
         assert.ok(task, `${s}: ${key[1]}.${key[2]} is a task`);
-        // A proof stays with the task it ran as: the current one, or a predecessor re-created since and kept retired.
-        const retired = spec.tasks.retired.some(r => r.trigger === key[3] && r.was === `${key[1]}.${key[2]}`);
-        if (!retired) assert.equal(task.trigger, key[3], `${s}: ${key[1]}.${key[2]}'s trigger`);
+        // A proof stays with the task it ran as: the current one, or a predecessor since deleted (D-419).
       }
     }
     for (const p of env[s].unproven || []) assert.equal(p.proven, false);
@@ -344,31 +338,9 @@ test("B-26 (D-084): the watchdog's slots land inside every scheduled cloud pipel
   );
 });
 
-test('B-28: spec.tasks.retired keeps every old task with its reason, never a task still in use', () => {
-  const inUse = new Set();
-  for (const g of ['live', 'staging'])
-    for (const t of Object.values(spec.tasks[g])) if (t.trigger) inUse.add(t.trigger);
-  for (const t of Object.values(spec.tasks.build)) if (t.trigger) inUse.add(t.trigger);
-  if (spec.tasks.diagnostic && spec.tasks.diagnostic.trigger) inUse.add(spec.tasks.diagnostic.trigger);
-  const seen = new Set();
-  for (const r of spec.tasks.retired) {
-    for (const k of ['trigger', 'was', 'name', 'reason'])
-      assert.ok(typeof r[k] === 'string' && r[k].length, `${r.trigger}: ${k}`);
-    assert.match(r.trigger, /^trig_[A-Za-z0-9]+$/);
-    assert.ok(!seen.has(r.trigger), `${r.trigger} listed twice`);
-    seen.add(r.trigger);
-    assert.ok(!inUse.has(r.trigger), `${r.trigger} is retired and in use`);
-  }
-  // The four v3 live tasks the rollback procedure names, and the two v3 staging tasks left enabled at the cutover.
-  for (const id of [
-    'trig_01R7242YzwUXFyNVcmqT8vob',
-    'trig_0148JgXzDzGX1zghMymdvMmL',
-    'trig_01GHogoFx9Ns7uE1uUmi2i2G',
-    'trig_01PxKp1tsgddna4Kt1FzpNhv',
-    'trig_01VK4WrkLh2361Bc7MgvcDUY',
-    'trig_01VTGsL3VVYKwboByCz8RqZ3',
-  ])
-    assert.ok(seen.has(id), id);
+test('D-419: the old scheduled tasks were deleted; tasks.retired is empty with its note', () => {
+  assert.deepEqual(spec.tasks.retired, []);
+  assert.match(spec.tasks._retired, /D-419/);
 });
 
 test('B-32 (D-089): x-ev.marks in the five schemas match the spec, and the registry check catches a difference', async () => {

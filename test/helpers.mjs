@@ -94,16 +94,15 @@ export const PRE_CUTOVER_MAC_FOLDER = '/Users/peachfritter/Documents/E.V. Study 
 /**
  * B-320: the spec as it stood before the cutover commit, rebuilt from a cut-over spec (the reverse of
  * tools/pwa-live.mjs cutoverSpec): the live page writing, live off D1, the live runs staged back under
- * records.live.cutover with restore-drill (no trigger yet), and the old evening-mac back from tasks.retired with its
+ * records.live.cutover with restore-drill (no trigger yet), and the old evening-mac (its trigger, deleted under D-419) with its
  * Study Watch folder and kept ended words. Lets the pre-cutover behaviour keep its tests after the spec moves on.
  */
 export function preCutoverSpec(spec) {
   const s = JSON.parse(JSON.stringify(spec));
   const live = s.registry.records.live;
   if (!live.runs) throw new Error('the spec is not cut over (no spec.registry.records.live.runs)');
-  const i = s.tasks.retired.findLastIndex(r => r.was === 'live.evening-mac' && /cutover/.test(r.reason || ''));
-  if (i < 0) throw new Error('no retired live.evening-mac to restore');
-  const [old] = s.tasks.retired.splice(i, 1);
+  // The pre-cutover live evening-mac (deleted under D-419 with the other old tasks).
+  const old = { trigger: 'trig_01AxnPF3iPyo2BpCQtMdAKP8' };
   const { 'restore-drill': drill, ...tasks } = s.tasks.live;
   tasks['evening-mac'] = {
     ...tasks['evening-mac'],

@@ -45,7 +45,7 @@ function demoServer() {
     })
     .listen(8713);
 }
-// The built page, booted exactly as built.cjs does it.
+// The built page, booted on the synthetic record.
 function builtSetup() {
   const dbDir = process.env.RECORD_DIR || require(root + '/test/data/synthetic.cjs').recordDir('synthetic'); // RECORD_DIR: a snapshot outside the repo
   const pageDir = path.join(root, 'dist/page/staging');

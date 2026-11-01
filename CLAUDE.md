@@ -85,12 +85,6 @@ Scheduled `ev4-builder` runs follow `docs/builder-runs.md` (moved there, B-611).
 
 See `docs/builder-runs.md`: a session started by the `ev4-builder` task follows it with this file.
 
-## Trimmer runs
-
-A session told "You are a trimmer" follows `docs/trim-brief.md` (D-259): one cut per branch and pull request, nothing
-written to `chart/`, no deploys, and the Every session steps don't apply. A build chat merges a trim only on Matt's OK,
-as the brief says.
-
 ## Scheduled pipeline runs
 
 A session started by one of E.V.'s own scheduled tasks (its prompt begins "E.V. <pipeline> run" and names one record) is

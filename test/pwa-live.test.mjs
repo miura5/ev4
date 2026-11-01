@@ -182,7 +182,7 @@ test('B-320 (D-330): the live app in the spec, on from the cutover sitting; ship
   assert.match(app.url, /^https:\/\/ev-live\.[a-z0-9-]+\.workers\.dev$/);
   assert.equal(app.workflow, 'pwa-live.yml');
   assert.equal(app.environment, 'live');
-  assert.equal(app.ready, true, 'turned on at the sitting (docs/cutover.md step 2.1)');
+  assert.equal(app.ready, true, 'turned on at the sitting (the Oct 18 cutover step 2.1)');
   assert.equal(spec.registry.records.live.copy.worker, 'ev-live', "B-319's copy target");
   // B-320: since the cutover every live pipeline runs on the ev-live Worker; before it, on the claude.ai record
   const runs = spec.registry.records.live.runs;
@@ -274,12 +274,10 @@ test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac 
     assert.deepEqual(spec.tasks.live[k].folders, ['/Users/peachfritter/Documents/E.V. Backups'], k);
     assert.equal(spec.tasks.live[k].macBound, true, k);
   }
-  assert.ok(
-    spec.tasks.retired.some(r => r.trigger === 'trig_01AxnPF3iPyo2BpCQtMdAKP8' && r.was === 'live.evening-mac'),
-    'the old evening-mac is retired'
-  );
   const expected = JSON.parse(JSON.stringify(spec));
   for (const k of ['evening-mac', 'restore-drill']) expected.tasks.live[k].trigger = null;
+  // the old evening-mac it lists retired was deleted on Nov 1 under D-419, so the committed list no longer holds it
+  expected.tasks.retired = after.tasks.retired;
   assert.deepEqual(after, expected, 'cutover --apply on the pre-cutover spec gives the committed spec');
 });
 

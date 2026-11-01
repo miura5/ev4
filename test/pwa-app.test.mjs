@@ -55,7 +55,7 @@ test("B-318: the live app is refused without Matt's OK (R-04), and dispatches on
   const no = appCalls({ target: 'live', commit: C });
   assert.equal(no.ok, false);
   assert.match(no.refusals[0], /R-04/);
-  assert.equal(APPS.live.ready, true, 'B-320: on since the cutover sitting (docs/cutover.md step 2.1)');
+  assert.equal(APPS.live.ready, true, 'B-320: on since the cutover sitting (the Oct 18 cutover step 2.1)');
   const yes = appCalls({ target: 'live', commit: C, mattOk: true });
   assert.equal(yes.ok, true);
   assert.ok(

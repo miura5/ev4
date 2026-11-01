@@ -112,13 +112,6 @@ test('the backup folder is one spec value, every Worker pipeline of staging and 
   assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
   // before the cutover live's evening-mac ran on ArtifactData, and the cutover is what moves it
   assert.equal(RUN.runTarget(preCutoverSpec(spec), 'live', 'evening-mac'), 'artifact');
-  const retired = spec.tasks.retired.map(r => r.trigger);
-  for (const t of ['trig_01EQBnYdtbqUKkh8bjTiTvCA', 'trig_011xnMqTq16qeEw68DPJzXVH', 'trig_01AxnPF3iPyo2BpCQtMdAKP8'])
-    assert.ok(retired.includes(t), t);
-  assert.ok(
-    !Object.values(spec.tasks.live).some(t => retired.includes(t && t.trigger)),
-    'no live task keeps a retired trigger'
-  );
 });
 
 test("manifestSync is pwa/backup.js's manifestOf", async () => {

@@ -27,7 +27,7 @@ export const REPO = 'miura5/ev4';
 /**
  * The app per target. live (B-320, D-330) is the ev-live Worker, deployed by pwa-live.yml in the GitHub environment
  * live; it is on in ship live and verify-deploy live only once spec.registry.records.live.app.ready is true (the
- * cutover sitting turns it on, docs/cutover.md), so no live release before then waits on a Worker that is not there.
+ * cutover sitting turns it on, the Oct 18 cutover), so no live release before then waits on a Worker that is not there.
  */
 export function appsOf(spec) {
   const live = ((spec.registry || {}).records || {}).live || {};
