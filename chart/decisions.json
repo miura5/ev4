@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-419",
+  "date": "Nov 1",
+  "title": "One-time exception to B-11 (Matt, Nov 1): delete 39 old scheduled tasks (38 already disabled plus the unused staging diagnostic)",
+  "why": "Matt chose option 2 in the build chat. The exception covers only these 39 E.V. scheduled tasks; records, files and the 15 tasks in use are untouched; B-11 stands for everything else",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-418",
   "date": "Oct 31",
   "title": "Two-column notes row is a flat-list mark (row id + col 0/1), not a nested block",
