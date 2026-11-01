@@ -12488,5 +12488,22 @@
   "board": {
    "row": "v4 B-659: Repo cleanup: remove the retired Study Watch source (studywatch/, its…"
   }
+ },
+ {
+  "id": "B-660",
+  "kind": "request",
+  "title": "Request (reported Nov 1): Scheduled task cleanup: disable the old scheduled tasks E.V. no longer uses (nothing deleted), keeping the current live, staging and builder tasks",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in the build chat, Nov 1",
+  "words": "Scheduled task cleanup: disable the old scheduled tasks E.V. no longer uses (nothing deleted), keeping the current live, staging and builder tasks",
+  "reportedAt": "2026-11-01T21:17:56.360Z",
+  "board": {
+   "row": "v4 B-660: Scheduled task cleanup: disable the old scheduled tasks E.V. no…"
+  }
  }
 ]
