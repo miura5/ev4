@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-423",
+  "date": "Nov 1",
+  "title": "core/deploy.mjs is exempt from the D-307 lint: it prints the single remaining ArtifactData read (system/worker) until phase 2",
+  "why": "B-473 phase 1 moves system documents to the Worker; only the run token stays in the artifact, read through deploy's printed call",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-422",
   "date": "Nov 1",
   "title": "Workflow fixes (Matt, Nov 1): the build manager makes trivial edits; the full check stays green (known failures fixed first or quarantined up to 3 days); one release-card artifact updated in place",
