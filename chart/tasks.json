@@ -12552,9 +12552,9 @@
   "id": "B-661",
   "kind": "bug",
   "title": "Bug (reported Nov 1): Nightly check: 'lookup notes: a match past character 900 comes back with its passage, cut and placed' (B-412) failed; the harness long-note lookup did not return the passage",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The B-412 long-note lookup check passes in the nightly again",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12563,6 +12563,10 @@
   "reportedAt": "2026-11-01T21:34:43.396Z",
   "board": {
    "row": "v4 B-661: Nightly check: 'lookup notes: a match past character 900 comes back…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T21:36:18.858Z"
   }
  }
 ]
