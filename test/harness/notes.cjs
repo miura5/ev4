@@ -3240,6 +3240,100 @@ const openNoteId = page =>
     await page.context().close();
   }
 
+  // ---- B-658: a paused writing session on note A ends (filed with its writing minutes) when he writes a burst in note
+  // B, and B's session starts and shows in the strip; a running (not paused) session on A is left alone
+  for (const pausedA of [true, false]) {
+    const base = Date.now();
+    const iso = ago => new Date(base - ago * 60e3).toISOString();
+    const k = s => 'page-' + s.replace(/\D/g, '').slice(0, 8) + '-' + s.replace(/\D/g, '').slice(8, 17);
+    const A = 'n-20261029-090000-notea';
+    const B = 'n-20261029-080000-noteb';
+    const SID = 'ss-p-b658-a';
+    const db = JSON.parse(JSON.stringify(seed));
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(new Date());
+    const note = (title, ago) => ({
+      schema: 1,
+      writer: 'page',
+      at: iso(ago),
+      source: 'E.V. Home',
+      createdAt: iso(ago),
+      editedAt: iso(ago),
+      title,
+      course: 'NUR 112',
+      blocks: [
+        { type: 'h1', runs: [{ text: title }] },
+        { type: 'p', runs: [{ text: 'Some lines.' }] },
+      ],
+    });
+    db.notes = { ...(db.notes || {}), [A]: note('Acid base', pausedA ? 30 : 0.2), [B]: note('Shock', 60) };
+    db.sessions = {
+      ...db.sessions,
+      [SID]: {
+        schema: 2,
+        writer: 'page',
+        at: iso(pausedA ? 40 : 0.5),
+        source: 'E.V. Home',
+        kind: 'note',
+        status: 'active',
+        comments: 'some',
+        date: today,
+        startedAt: iso(pausedA ? 40 : 0.5),
+        clock: 'writing',
+        topic: 'Acid base',
+        noteId: A,
+        note: 'notes/' + A,
+        folder: '',
+        driver: { view: '', at: iso(pausedA ? 40 : 0.5) },
+        events: pausedA
+          ? { [k(iso(40))]: { type: 'start' }, [k(iso(28))]: { type: 'pause', from: iso(30), at: iso(28) } }
+          : { [k(iso(0.5))]: { type: 'start' } },
+      },
+    };
+    const { page, errors } = await open(browser, { width: 1280, height: 860 }, db);
+    const tag = pausedA ? '[1280 B-658 paused, other note]' : '[1280 B-658 running, other note]';
+    await page.click('#tab-notes');
+    await openFromList(page, B);
+    await page.waitForTimeout(1500);
+    const afterOpen = await page.evaluate(i => window.__db.sessions[i].status, SID);
+    await page.click('#note-body');
+    await page.keyboard.press('Control+End');
+    await page.keyboard.type(' Cold and clammy skin, low urine output.', { delay: 150 });
+    const onB = () =>
+      page.evaluate(
+        id =>
+          Object.values(window.__db.sessions || {}).filter(x => x.status === 'active' && x.note === 'notes/' + id)
+            .length,
+        B
+      );
+    if (pausedA) {
+      const filed = await until(page, i => !!(window.__db.sessions[i] || {}).filedAt, SID, 30000);
+      const started = await until(
+        page,
+        id => Object.values(window.__db.sessions || {}).some(x => x.status === 'active' && x.note === 'notes/' + id),
+        B,
+        15000
+      );
+      const a = await page.evaluate(i => window.__db.sessions[i], SID);
+      await page.waitForTimeout(800);
+      const left = await page.evaluate(() => (document.querySelector('#ev-sslot .s-left') || {}).textContent || '');
+      ok(
+        `${tag} opening B ends nothing; a burst in B ends A with its 10 writing minutes and starts B's writing session`,
+        afterOpen === 'active' && filed && a.status === 'ended' && a.minutes === 10 && started && (await onB()) === 1,
+        JSON.stringify({ afterOpen, filed, status: a.status, mins: a.minutes, started, left })
+      );
+    } else {
+      await page.waitForTimeout(3000);
+      const a = await page.evaluate(i => window.__db.sessions[i], SID);
+      ok(
+        `${tag} typing in B leaves the running session on A as it is and starts nothing`,
+        afterOpen === 'active' && a.status === 'active' && !a.filedAt && (await onB()) === 0,
+        JSON.stringify({ afterOpen, status: a.status, onB: await onB() })
+      );
+    }
+    ok(`${tag} no page error`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await page.context().close();
+  }
+
   // ---- B-454: a saved note he opens and writes in starts its writing session too, once a few seconds of real edits
   // are in (writingStartSeconds), as a new note's does; opening, reading or scrolling it starts nothing. Reopening the
   // note after End and writing in it again starts another.

@@ -52,8 +52,11 @@
       SS.typedAt = Date.now();
       const s = activeSession();
       if (!s) return writeBurst(id);
-      if (s.status !== 'active' || !isWriting(s) || noteOfSession(s) !== id || SS.resuming) return;
+      if (s.status !== 'active' || !isWriting(s) || SS.resuming) return;
       if (!E.sessionState(s, now()).paused) return;
+      // B-658: writing in another note while this writing session is paused ends it (filed as End does) and starts the
+      // new note's, once his edits there are a burst (B-454); a running session, or a planned one, is left alone
+      if (noteOfSession(s) !== id) return Number(s.planned) > 0 ? undefined : writeBurst(id, s.id);
       SS.resuming = true;
       sessEvent(s, 'write')
         .catch(() => {})
@@ -112,7 +115,7 @@
       READ_ONLY ||
       !SS.net ||
       navigator.onLine === false;
-    function writeBurst(id) {
+    function writeBurst(id, endFirst = null) {
       const t = Date.now(),
         b = SS.burst;
       if (!id || startWaits()) {
@@ -129,7 +132,16 @@
       SS.burst = null;
       SS.starting = true;
       const from = b.first;
-      noteSession(id)
+      const endPaused = async () => {
+        // B-658: the paused session on another note ends the normal way, its writing minutes filed to Record
+        const cur = activeSession();
+        if (!endFirst || !cur || cur.id !== endFirst) return;
+        if (cur.status !== 'active' || !isWriting(cur) || !E.sessionState(cur, now()).paused) return;
+        await endSession('ended');
+        if (activeSession()) throw new Error('not ended');
+      };
+      endPaused()
+        .then(() => noteSession(id))
         .catch(e => {
           // D-361: refused, quietly. Offline, no retry until the connection comes back; refused online (a busy or failing
           // record, a token, a conflict), one more try after a backoff of 60 s, doubling to at most 5 minutes, never for
