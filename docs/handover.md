@@ -11,7 +11,7 @@ the repository is public.
 
 ## Waiting on Matt
 
-Card for B-658 (a note's paused session ends and a new one starts when he writes in another note) at 0cc7c64, v4.5.28+17 on staging: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1). "ship 0cc7c64" sends it live. Work is paused on his word: do nothing else until he says continue.
+nothing. Work is paused on his word: do nothing until he says continue. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
@@ -22,4 +22,4 @@ Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh
 
 ## Last release
 
-Live v4.5.28 at 3675ed6 (GREEN Nov 1, Matt's ship: B-654). Staging v4.5.28+17 at 0cc7c64 (GREEN Nov 1, B-658). Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1).
+Live v4.5.29 at 0cc7c64 (GREEN Nov 1, Matt's ship: B-658). Staging v4.5.29 at 0cc7c64. Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1).
