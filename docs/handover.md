@@ -6,7 +6,8 @@ Current state only. Rewritten and pushed at every state change. No personal data
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| nothing | | | | |
+| B-666 builder | B-666 tooling: release tag at staging, chart friction | .claude/worktrees (agent) | worktree branch | Nov 1 |
+| B-473 builder | B-473 phase 1: Worker bootstrap, ship without ArtifactData | .claude/worktrees (agent) | worktree branch | Nov 1 |
 
 ## Waiting on Matt
 
@@ -16,7 +17,7 @@ Seven questions, none blocking:
 3. Is the Console spend limit still $5 a month (B-310)?
 4. A bigger model for Go deeper, and at what cost (B-323)?
 5. Save exam scores told in chat, including the dateless E1 to E3 (B-266)?
-6. When can he sit at the Mac for B-473?
+6. B-473: Matt is present Nov 1; the Mac re-creation of the 4 Mac-bound tasks comes after phase 1 is live.
 7. Should the build manager list about 70 old build artifacts for him to delete?
 
 ## Next
