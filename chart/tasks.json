@@ -12375,7 +12375,7 @@
   "depends": [
    "B-653"
   ],
-  "notes": "Build manager took it; builder starting",
+  "notes": "Built at 3675ed6e; also fixes B-653 bug where a picture was dropped on the next keystroke; full check next",
   "commit": null,
   "source": "Matt in the build chat, Oct 31",
   "words": "Images in notes part 2: drag a picture sideways onto a column grid so text can sit in a column beside it (a two-column row block in notes), Quip-style.",
