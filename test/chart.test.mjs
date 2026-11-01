@@ -263,17 +263,21 @@ test("B-95: report takes Matt's words from his message, exactly as written", () 
   );
 });
 
-test('B-95: triage comes first, then the entry becomes a task, joins one, or is declined with a reason; nothing is deleted', () => {
+test('B-95, B-666: a claim lands while the inbox waits (with a warning); the entry becomes a task, joins one, or is declined with a reason; nothing is deleted', () => {
   const r = sample();
   C.applyReport(r, {
     _: ['report', 'bug', 'the', 'timer', 'sat', 'at', '0:00'],
     source: 'build chat',
     at: '2026-10-19T23:41:00Z',
   });
-  assert.throws(
-    () => C.applyLog(r, { _: ['log', 'B-02'], status: 'in progress' }),
-    /triage first: B-04 waits in the inbox/
-  );
+  // B-666: the claim lands; the waiting entry is named in a warning.
+  {
+    const r2 = JSON.parse(JSON.stringify(r));
+    const out = C.applyLog(r2, { _: ['log', 'B-02'], status: 'in progress' });
+    assert.equal(out.warn, 'warning: B-04 waits in the inbox: triage soon');
+    assert.equal(r2.tasks.find(x => x.id === 'B-02').status, 'in progress');
+  }
+  assert.throws(() => C.applyLog(r, { _: ['log', 'B-99'], note: 'x' }), /no task B-99 in the record: file it first/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], status: 'in progress' }), /in the inbox: triage it first/);
   assert.throws(() => C.applyLog(r, { _: ['log', 'B-04'], triage: 'task', dod: 'x' }), /needs --dod and --milestone/);
   C.applyLog(r, {
@@ -1960,4 +1964,48 @@ test('B-621: no test asserts the status of a real B-id; tests use planted ids', 
     .filter(f => f.endsWith('.test.mjs'))
     .flatMap(f => realStatusPins(f, fs.readFileSync(path.join(dir, f), 'utf8')));
   assert.deepEqual(found, []);
+});
+
+test('B-666: report ends with "filed <id>"; several --no-commit writes land as one commit; commit refuses with nothing changed', () => {
+  const dir = copyRepo();
+  const cli = (...a) =>
+    execFileSync('node', [path.join(dir, 'tools', 'chart.mjs'), ...a, '--root', dir], { encoding: 'utf8' });
+  const g = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8' }).trim();
+  const before = g('rev-parse', 'HEAD');
+  const out = cli('report', 'bug', 'the timer froze', '--source', 'build chat', '--no-commit');
+  const last = out.trimEnd().split('\n').at(-1);
+  assert.match(last, /^filed B-\d+$/);
+  const id = last.split(' ')[1];
+  const task = openTasks(dir)[0];
+  cli('log', task, '--note', 'a note', '--no-commit');
+  assert.equal(g('rev-parse', 'HEAD'), before, 'nothing committed yet');
+  const done = cli('commit', '--trailer', 'X-Test: yes');
+  assert.match(done, /^commit: chart: \d+ changes?/);
+  assert.equal(g('rev-list', '--count', `${before}..HEAD`), '1');
+  assert.match(g('log', '-1', '--format=%B'), /^chart: \d+ changes?\n\nX-Test: yes/);
+  assert.match(fs.readFileSync(path.join(dir, 'BACKLOG.md'), 'utf8'), new RegExp(`\\| ${id} \\|`));
+  assert.equal(g('status', '--porcelain', '--', 'chart', 'BACKLOG.md'), '');
+  assert.throws(() => cli('commit'), /nothing changed in chart\/: nothing to commit/);
+});
+
+test('B-666 (D-173): live takes the build staging ran under its build name; the release tag is made only when live is recorded', () => {
+  const dir = copyRepo();
+  const head = execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  assert.equal(C.tagAt(dir, head), null);
+  const was = console.log;
+  console.log = () => {};
+  try {
+    C.recordShip(
+      dir,
+      { trailer: [], root: dir, summary: 'x' },
+      { target: 'live', manifest: { commit: head }, newTag: 'v4.9.3' }
+    );
+  } finally {
+    console.log = was;
+  }
+  assert.equal(C.tagAt(dir, head), 'v4.9.3');
+  const deploys = JSON.parse(fs.readFileSync(path.join(dir, 'chart', 'deploys.json'), 'utf8'));
+  assert.deepEqual([deploys.at(-1).target, deploys.at(-1).release], ['live', 'v4.9.3']);
+  // ship live no longer refuses to send staging around again for the tag.
+  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'tools', 'chart.mjs'), 'utf8'), /staging must carry it/);
 });

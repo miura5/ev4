@@ -15,7 +15,9 @@
 //   log rule <R-id> --rule t --decision D-id --command c --fn name [--task B-id]   a rule ship enforces
 //   log decision <D-id> --title t [--status s] [--why w] [--supersedes ids] [--amends ids]
 //            each writes one change to chart/, regenerates BACKLOG.md, commits (--no-commit to skip; --trailer adds a
-//            commit trailer line, repeatable)
+//            commit trailer line, repeatable); report's last line is "filed <id>" (B-666)
+//   commit [--message m] [--trailer t]   B-666: several --no-commit writes as one commit; the views regenerated once,
+//            chart/ and the generated files staged; refused when chart/ has nothing changed
 //   plan --from <doc link> [--apply]   a design doc's hand-off (D-141, B-106): from this session's
 //            read of the doc, its 'Tasks to add' and 'Decisions proposed' tables as the log new and log decision commands
 //            that file them (the next free ids, P-n rewritten to its D-id); --apply runs them; filed rows are skipped
@@ -382,7 +384,8 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     return { rec, what: `new task (${t.milestone})`, id: nid };
   }
   const tasks = findTask(rec, id);
-  if (!tasks.length) throw new Error(`no task ${id} in the record`);
+  if (!tasks.length) throw new Error(`no task ${id} in the record: file it first (report, or log new)`);
+  let warn = null;
   const which = o.which ? Number(o.which) : null;
   if (tasks.length > 1 && !which)
     throw new Error(
@@ -438,12 +441,10 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     if (!TASK_STATUS.includes(o.status) || ['inbox', 'declined'].includes(o.status))
       throw new Error(`status ${o.status}: one of open, in progress, blocked, done`);
     if (t.status === 'inbox') throw new Error(`${id} is in the inbox: triage it first`);
-    // Triage comes first in every session, before taking a task (the design's "Reporting bugs and requests").
+    // B-666 (Matt): a claim lands while the inbox has entries; the waiting entries are named in a one-line warning.
     const waiting = rec.tasks.filter(x => x.status === 'inbox');
     if (o.status === 'in progress' && waiting.length)
-      throw new Error(
-        `triage first: ${waiting.map(x => x.id).join(', ')} wait${waiting.length === 1 ? 's' : ''} in the inbox`
-      );
+      warn = `warning: ${waiting.map(x => x.id).join(', ')} wait${waiting.length === 1 ? 's' : ''} in the inbox: triage soon`;
     // A claim is the lock (CLAUDE.md step 3): a task already in progress is held by another session, so a second claim
     // is refused rather than taken twice (Oct 24, several builders on main). Notes alone still land.
     if (o.status === 'in progress' && t.status === 'in progress')
@@ -537,7 +538,7 @@ export function applyLog(rec, o, { now = new Date().toISOString(), builder = bui
     what.push('where');
   }
   if (!what.length) throw new Error('nothing to log: give --status, --note, --commit, --triage or --name');
-  return { rec, what: what.join(', '), id: t.id };
+  return { rec, what: what.join(', '), id: t.id, warn };
 }
 export function applyReport(rec, o, { now = new Date().toISOString(), jsonl = null } = {}) {
   const [, kind, ...rest] = o._;
@@ -811,7 +812,7 @@ export function formatInbox(plan) {
   else if (!plan.query && (plan.comments.length || plan.triage.length))
     out.push(
       '',
-      'Triage comes first: log refuses to start a task while an entry waits in the inbox. A bug that breaks studying is taken before any other open task.'
+      'Triage these soon: a claim still lands while an entry waits (log warns). A bug that breaks studying is best taken before any other open task.'
     );
   out.push('', ...NIGHTLY_READ);
   return out.join('\n');
@@ -1148,7 +1149,8 @@ async function ship(o) {
   }
   const rec = loadChart(root),
     refusals = [];
-  let shipJobOk = null;
+  let shipJobOk = null,
+    liveTag = null;
   const red = lintChart(rec).filter(f => f.level === 'error');
   if (red.length) refusals.push(`the Chart lints red (${red.length}): node tools/chart.mjs lint`);
   const dist = path.join(root, 'dist'),
@@ -1192,23 +1194,15 @@ async function ship(o) {
     // content. R-06 (a full check or green nightly at the commit) ended with D-366 (B-466): the full check runs
     // nightly only, and a red nightly is a filed bug, never a gate here. R-01, R-03 and R-05 are ended too; all four
     // are kept in chart/rules.json marked ended.
-    // B-149 (D-173): what goes live is a tagged release. With every other gate passed and the commit untagged, ship
-    // tags it here (pushed once live is recorded); the tag renames the build, so staging carries it first.
-    if (!refusals.length) {
-      const spec = readSpec(root);
+    // B-149 (D-173), B-666: what goes live is a tagged release. Live promotes the exact build staging ran GREEN, under
+    // its build name (v4.x.y+n), so no second staging deploy; the tag v4.x.(y+1) is made only once live is recorded
+    // GREEN (recordShip), because a tag made earlier would rename this build away from staging's.
+    if (!tagAt(root, manifest.commit))
       try {
-        const at = tagAt(root, manifest.commit);
-        if (!at) {
-          const tag = nextTag(root, { specVersion: spec.specVersion, minor: !!o.minor });
-          git(root, ['tag', '-a', tag, manifest.commit, '-m', `E.V. ${tag} (ship live, D-173)`]);
-          refusals.push(
-            `B-149 (D-173): tagged ${tag} at ${manifest.commit.slice(0, 7)} here (pushed once live is recorded). The release is now ${tag}, so staging must carry it: ship staging, then ship live again`
-          );
-        }
+        liveTag = nextTag(root, { specVersion: readSpec(root).specVersion, minor: !!o.minor });
       } catch (e) {
         refusals.push(`B-149 (D-173): ${e.message}`);
       }
-    }
   }
   const shipFile = path.join(dist, `ship-${target}.json`),
     last = readJsonIf(shipFile);
@@ -1321,7 +1315,7 @@ async function ship(o) {
     else refusals.push(...a.refusals);
   }
   const step = shipStep({ target, manifest, state, verifyResult, reads, deploy, rec, refusals, skip, stale });
-  const head = `ship ${target}: ${manifest.release} at ${manifest.commit.slice(0, 7)}`;
+  const head = `ship ${target}: ${manifest.release} at ${manifest.commit.slice(0, 7)}${liveTag ? ` (tagged ${liveTag} once live is GREEN)` : ''}`;
   if (step.kind === 'deploy' && appRunning) {
     console.log(
       `${head}: the ${APPS[target].workflow} run ${appSaved.run.id} is still going (another session's, or this deploy's): make the app read again once it ends, then run ship ${target} again:\n  ${app.args.command}`
@@ -1425,7 +1419,7 @@ async function ship(o) {
       ...step.lines.map(l => `  ${l.ok ? 'ok ' : 'NO '} ${l.what}${l.detail ? ': ' + l.detail : ''}`),
     ].join('\n')
   );
-  return recordShip(root, o, { target, manifest, recorded: step.recorded });
+  return recordShip(root, o, { target, manifest, recorded: step.recorded, newTag: liveTag });
 }
 /** B-149: the v4.* tag at a commit, or null. */
 export function tagAt(root, commit) {
@@ -1469,8 +1463,15 @@ export function pushTag(root, tag) {
  * The record half of a green ship: the deploy (once), and with --done B-nn[,B-mm] those tasks done at --commit (the
  * task's own commit; default the deployed one) in the same command (B-147, W-6). Exported for its test.
  */
-export function recordShip(root, o, { target, manifest, recorded = false, release = null, time = undefined }) {
+export function recordShip(
+  root,
+  o,
+  { target, manifest, recorded = false, release = null, time = undefined, newTag = null }
+) {
   const short = manifest.commit.slice(0, 7);
+  // B-666: live went out under staging's build name; the release tag is made now, at the commit, and recorded.
+  if (target === 'live' && newTag && !release && !tagAt(root, manifest.commit))
+    git(root, ['tag', '-a', newTag, manifest.commit, '-m', `E.V. ${newTag} (ship live, D-173)`]);
   // B-641: a past live deploy names its release when no tag is at the commit here; tags.yml makes it on origin.
   const tag = target === 'live' ? release || tagAt(root, manifest.commit) : null;
   // B-175: the deploy records its release, so a refused push is made on origin by tags.yml.
@@ -2680,6 +2681,9 @@ const commands = {
   report(o) {
     return record(o, applyReport);
   },
+  commit(o) {
+    return commitChanges(o);
+  },
   brief(o) {
     if (o.matt) {
       console.log(['# Your turn', '', ...yourTurnLines(loadChart(rootOf(o)))].join('\n'));
@@ -2738,7 +2742,7 @@ function record(o, apply) {
   const root = rootOf(o);
   if (!o['no-commit']) syncRecord(root);
   const rec = loadChart(root);
-  const { what, id, reply } = apply(rec, o, { jsonl: transcriptOf(o) });
+  const { what, id, reply, warn } = apply(rec, o, { jsonl: transcriptOf(o) });
   const errors = lintChart(rec).filter(f => f.level === 'error' && f.id === id);
   if (errors.length) throw new Error('the record would not lint: ' + errors.map(f => f.detail).join('; '));
   saveChart(root, rec);
@@ -2751,6 +2755,27 @@ function record(o, apply) {
   console.log('BACKLOG.md regenerated.');
   if (reply)
     console.log(`Reply in the comment's thread with the id it got: ${reply.tool}\n${JSON.stringify(reply.args)}`);
+  if (warn) console.log(warn);
+  // B-666: report's last line is the new id, so a build manager can capture it (| tail -1 | awk '{print $2}').
+  if (o._[0] === 'report') console.log(`filed ${id}`);
+  return 0;
+}
+
+/** B-666: several --no-commit chart writes land as one commit: the views regenerated once, chart/ and them staged. */
+function commitChanges(o) {
+  const root = rootOf(o);
+  const rec = loadChart(root);
+  const red = lintChart(rec).filter(f => f.level === 'error');
+  if (red.length) throw new Error(`the record lints red (${red.length}): node tools/chart.mjs lint`);
+  writeBacklog(root, rec);
+  git(root, ['add', 'chart', 'BACKLOG.md', 'DECISIONS.md', 'CHANGELOG.md']);
+  const files = git(root, ['diff', '--cached', '--name-only', '--', 'chart']).split('\n').filter(Boolean);
+  if (!files.length) throw new Error('nothing changed in chart/: nothing to commit');
+  const n = files.length;
+  const msg = typeof o.message === 'string' ? o.message : `chart: ${n} change${n === 1 ? '' : 's'}`;
+  git(root, ['commit', '-q', '-m', commitMessage(msg, o.trailer)]);
+  const sha = git(root, ['rev-parse', '--short=7', 'HEAD']).trim();
+  console.log(`commit: ${msg}${pushedText(sha, pushRecord(root))}`);
   return 0;
 }
 
