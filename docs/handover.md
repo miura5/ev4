@@ -20,6 +20,8 @@ nothing. Work is paused on his word: do nothing until he says continue. B-251 an
 
 Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh api -X POST repos/miura5/ev4/actions/workflows/<file>/dispatches -f ref=main -f "inputs[commit]=..."` plus the release inputs ship prints, with release as the full build name (v4.5.25+n) and release_at as the 40-character sha. Save ship's full output to a file: re-running ship after it prints calls asks for the reads again. A live deploy whose record entry was lost: `ship live --record-past` (B-641). Every ship live tags a new release, then needs one ship staging at the same commit before live goes GREEN. The live deploy waits for Matt's Approve on GitHub. The staging app is ev-staging.peppercheese1.workers.dev, signed in through the built-in browser; staging has a test note "B-654 columns test".
 
+Session notes add: Nov 1, B-659 removed studywatch/ from the repo; B-660 deleted 39 old scheduled tasks under D-419 (one-time exception to B-11); 15 tasks remain, all in use.
+
 ## Last release
 
 Live v4.5.29 at 0cc7c64 (GREEN Nov 1, Matt's ship: B-658). Staging v4.5.29 at 0cc7c64. Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1).
