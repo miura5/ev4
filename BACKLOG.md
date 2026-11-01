@@ -71,6 +71,7 @@ Status: `open` · `in progress` · `blocked` · `done`. A task opens when every 
 | B-656 | Request (reported Oct 31): B-653 review backlog: images GET returns 500 on a malformed % key (should be 400); add nosniff to image reads; a picture inserted while typing during the upload lands at the old position; a tampered img block falls back to an empty paragraph; upload reads the whole body before the 8 MB check Done when: Each listed B-653 review item is fixed or declined with a reason | — | Notes images | open |  |
 | B-657 | Request (reported Oct 31): B-654 review backlog: canonical() ignores data-col so a column change may skip a repaint; tidy() indexes cols without a col check; a picture dropped onto a block already in a row goes to the column top, not beside the line; no keyboard way or hint to make or undo a row; deleting a selection across both columns collapses the layout into one column (no text lost) Done when: Each listed B-654 review item is fixed or declined with a reason | — | Notes images | open |  |
 | B-661 | Bug (reported Nov 1): Nightly check: 'lookup notes: a match past character 900 comes back with its passage, cut and placed' (B-412) failed; the harness long-note lookup did not return the passage Done when: The B-412 long-note lookup check passes in the nightly again | — | Ops | open |  |
+| B-662 | Request (reported Nov 1): Repo cleanup: remove leftovers of retired systems (trimmer docs, cutover doc, fidelity sprint tools, one-time design hand-offs, stale spec task lists) Done when: Retired-system leftovers removed with evidence; tests pass | — | Ops | open |  |
 
 ## Your turn
 
@@ -722,4 +723,3 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-633 | request | 2026-10-31T08:56:27.402Z | An exam dated today that is already over reads upcoming until midnight | release review Oct 31 | declined |  |
 | B-634 | request | 2026-10-31T08:56:30.026Z | quizCardFor and the in-chat quiz text say N questions without 'again' wording | release review Oct 31 | declined |  |
 | B-650 | request | 2026-10-31T14:02:53.574Z | B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees | B-647 builder | declined |  |
-| B-662 | request | 2026-11-01T21:36:28.812Z | Repo cleanup: remove leftovers of retired systems (trimmer docs, cutover doc, fidelity sprint tools, one-time design hand-offs, stale spec task lists) | Matt in the build chat, Nov 1 | inbox |  |

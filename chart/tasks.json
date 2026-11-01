@@ -12573,9 +12573,9 @@
   "id": "B-662",
   "kind": "request",
   "title": "Request (reported Nov 1): Repo cleanup: remove leftovers of retired systems (trimmer docs, cutover doc, fidelity sprint tools, one-time design hand-offs, stale spec task lists)",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Retired-system leftovers removed with evidence; tests pass",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12584,6 +12584,10 @@
   "reportedAt": "2026-11-01T21:36:28.812Z",
   "board": {
    "row": "v4 B-662: Repo cleanup: remove leftovers of retired systems (trimmer docs,…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T21:44:37.956Z"
   }
  }
 ]
