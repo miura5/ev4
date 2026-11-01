@@ -82,16 +82,6 @@ const PINNED = [
   { key: 'budget per release', re: /\*\*Budget per release:?\*\*/, home: '.claude/skills/ev-build-manager/SKILL.md' },
   { key: 'proof tiers', re: /^## Proofs by kind/m, home: '.claude/skills/ev-builder/SKILL.md' },
   {
-    key: 'the rubric',
-    re: /\| Linear-level polish \| \d+/,
-    home: '.claude/skills/ev-build-manager/references/release-card.md',
-  },
-  {
-    key: 'click-through cap',
-    re: /for at most \d+ minutes|capped at \d+ minutes/,
-    home: '.claude/skills/ev-build-manager/references/agents.md',
-  },
-  {
     key: 'liveness quiet minutes',
     re: /quiet for \d+ minutes/,
     home: '.claude/skills/ev-build-manager/references/agents.md',

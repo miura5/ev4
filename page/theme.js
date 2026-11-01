@@ -97,7 +97,7 @@
   SHADE.dark = SHADE.light;
   // Her two faces (D-266): the Dial Arc's solid front and halftone back, per theme, at every contrast (r4.css --av1, --av2).
   var HER = { light: ['#b5530f', '#a8402f'], dark: ['#e0743a', '#cf5a45'] };
-  // B-539, B-540 (D-392, D-395): round 4's neutral themes, word for word from docs/design/ui-polish/r4.css, made with
+  // B-539, B-540 (D-392, D-395): round 4's neutral themes, word for word from round 4's r4.css, made with
   // the recipe base {h:270, c:0.6}. They are contrast 60; 30 and 100 step the surfaces and the quiet text from these.
   // --faint is the one value the floors move: r4's #8b8b92 (light) and #7d7d86 (dark) read under D-273's 4.6:1, so it
   // darkens (lightens in dark) from r4's value only as far as the floor needs. Coded colours: r4's --ok, --warn, --bad,

@@ -33,7 +33,6 @@ Then read, in this order:
 1. CLAUDE.md: Roles, "Delivery first (D-366)", Every session, Rules from past failures.
 2. `node tools/chart.mjs brief --task <id>` for each task. Its "Done when" is the bar; its notes can refine it, and its
    "Tenets in scope" are what the code review will hold the diff to.
-3. Before changing a large file, its map in `docs/trim/scan/` (core, harness, page, spec, tools-tests).
 
 ## Rules
 
@@ -63,10 +62,10 @@ Then read, in this order:
 ## Model-path tasks
 
 A task that touches E.V.'s model calls (pwa/claude.js, pwa/jobs.mjs, prompts, tool schemas, streaming, thinking,
-caching, model ids, token limits) reads Anthropic's claude-api skill first: the `claude-api` project skill in
-`.claude/skills/claude-api/` (vendored unchanged from github.com/anthropics/skills under its Apache 2.0 licence). Use it
-for model ids, parameters and pricing; never answer those from memory. The real staging run of that path is the build
-manager's (ev-build-manager, the end-to-end run): your report says what to try and what a good result looks like.
+caching, model ids, token limits) uses Anthropic's claude-api skill from the account or a plugin when one is available,
+else docs.claude.com. Use it for model ids, parameters and pricing; never answer those from memory. The real staging
+run of that path is the build manager's (ev-build-manager, the end-to-end run): your report says what to
+try and what a good result looks like.
 
 ## Proofs by kind (tiered, D-408)
 

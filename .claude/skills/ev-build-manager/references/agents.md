@@ -10,7 +10,7 @@
 
 ## Design agent (big asks)
 
-Give it Matt's words, the record, the demo and the relevant decisions. It returns options and a recommendation; you
+Give it Matt's words, the record, the design system (page/ds and the staging Gallery) and the relevant decisions. It returns options and a recommendation; you
 choose and record each choice with `log decision`. Its hand-off lives under docs/design/ only when it is a doc the
 `plan --from` command reads.
 
@@ -25,13 +25,6 @@ then builds from that report.
 One fresh agent (or 2 to 4 splitting the diff) per release with the review skill, over the whole release diff. Only
 lost or wrong data, unexpected cost, security holes, crashes and controls Matt can't reach are blockers; everything
 else is one line each for the backlog.
-
-## UI reviewer
-
-A fresh agent that hasn't seen the work clicks through the demo and the staging app like a person
-(tools/fidelity/crawl.cjs), on the synthetic record, in desktop Chrome at 1280, only the screens the release changed,
-for at most 20 minutes. It scores the rubric (`references/release-card.md`) at one pinned commit and lists the fixes
-that lift the score most; you file those as tasks. The score is information for the card, never a gate.
 
 ## Liveness watch (D-358)
 

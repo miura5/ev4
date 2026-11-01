@@ -37,7 +37,7 @@ writes to a record. It never blocks anything by itself: the build manager decide
 6. Checks retired or loosened: list every test, harness check or assertion the range removes or weakens (a narrower
    condition, a wider tolerance, a skip). Each is **Matt's call** or the build manager's (a superseding decision in
    the record covers it; never ask for it back) or **unrecorded** (a finding).
-7. Size: lines added and removed in the range, judged against the area's map in `docs/trim/scan/`.
+7. Size: lines added and removed in the range, judged against what the change itself needs.
 8. Edge cases outside step 3 (clock skew, rare network drops, wording, phrasing variants, timing windows) are not
    findings: list each in one line for the backlog. They never start a fix round.
 

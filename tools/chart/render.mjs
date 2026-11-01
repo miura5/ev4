@@ -96,14 +96,13 @@ export function yourTurnLines(rec) {
   return out.slice(0, -1);
 }
 /**
- * BACKLOG.md from the record (B-148, D-4): the open, blocked and in-progress tasks first, then Your turn (what waits on
- * Matt, by place), then the done tasks under one heading, then the inbox (reports untriaged or declined).
+ * BACKLOG.md from the record (B-148, D-4; live work only, B-664): the open, blocked and in-progress tasks first, then
+ * Your turn (what waits on Matt, by place), then the untriaged inbox. Done and declined tasks stay in chart/tasks.json.
  */
 export function renderBacklog(rec) {
   const tasks = rec.tasks.filter(t => !INBOX.has(t.status) && t.status !== 'done'),
-    done = rec.tasks.filter(t => t.status === 'done'),
-    inbox = rec.tasks.filter(t => INBOX.has(t.status));
-  const out = [...BACKLOG_HEADER, '', COLUMNS, ...tasks.map(backlogRow)];
+    inbox = rec.tasks.filter(t => t.status === 'inbox');
+  const out = [...BACKLOG_HEADER, '', CLOSED_TASKS, '', COLUMNS, ...tasks.map(backlogRow)];
   out.push(
     '',
     '## Your turn',
@@ -112,13 +111,12 @@ export function renderBacklog(rec) {
     '',
     ...yourTurnLines(rec)
   );
-  out.push('', '## Done', '', COLUMNS, ...done.map(backlogRow));
   if (inbox.length) {
     out.push(
       '',
       '## Inbox',
       '',
-      "Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined entry stays, with its reason.",
+      "Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.",
       '',
       '| Id | Kind | Reported | Words | Source | Status | Notes |',
       '| --- | --- | --- | --- | --- | --- | --- |',
@@ -132,11 +130,17 @@ export function renderBacklog(rec) {
 }
 // B-143 (D-172): the Decisions tab and the Changelog, generated into the repository beside BACKLOG.md, with the same
 // drift test; the Docs views are retired and nothing prints a Docs call for them.
+const CLOSED_TASKS =
+  'Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs brief --task <id>` or `trace`.';
+// Decisions still in force (B-664): a superseded one stays in chart/decisions.json.
+const IN_FORCE = new Set(['accepted', 'proposed', 'revisit']);
+// CHANGELOG.md keeps the deploys since the 20th newest live release, staging ones between included (B-664).
+const CHANGELOG_RELEASES = 20;
 const GENERATED =
   '**Generated from the Chart by `node tools/chart.mjs`: never edit this file by hand** (D-140, D-172).';
-/** DECISIONS.md: every decision and tenet in the record, newest first, with its reasoning and status. */
+/** DECISIONS.md: the decisions and tenets still in force, newest first, with their reasoning and status. */
 export function renderDecisions(rec) {
-  const ds = [...rec.decisions].sort((a, b) => Number(b.id.slice(2)) - Number(a.id.slice(2)));
+  const ds = rec.decisions.filter(d => IN_FORCE.has(d.status)).sort((a, b) => Number(b.id.slice(2)) - Number(a.id.slice(2)));
   const kind = d =>
     d.kind === 'tenet' ? `Tenet (${(d.scope || []).join(', ')}; checked by ${d.check || 'review'})` : '';
   const links = d =>
@@ -152,6 +156,7 @@ export function renderDecisions(rec) {
     GENERATED,
     'Change one with `log decision`; npm test fails when this file and chart/decisions.json differ. D-001 to D-043 are',
     "in the v2 doc's decision log.",
+    'Superseded decisions are in chart/decisions.json: `node tools/chart.mjs brief` or `trace`.',
     '',
     '| Id | Date | Decision | Why | Status | Links |',
     '| --- | --- | --- | --- | --- | --- |',
@@ -161,14 +166,20 @@ export function renderDecisions(rec) {
     ),
   ].join('\n');
 }
-/** CHANGELOG.md: every deploy in the record, newest first, as the Changelog tab printed it. */
+/** CHANGELOG.md: the deploys of the last 20 live releases, newest first, as the Changelog tab printed it. */
 export function renderChangelog(rec) {
-  const rows = [...rec.deploys].reverse().map(d => changelogLine(d));
+  const lives = rec.deploys.map((d, i) => (d.target === 'live' ? i : -1)).filter(i => i >= 0);
+  const from = lives.length > CHANGELOG_RELEASES ? lives[lives.length - CHANGELOG_RELEASES] : 0;
+  const rows = rec.deploys
+    .slice(from)
+    .reverse()
+    .map(d => changelogLine(d));
   return [
     '# CHANGELOG.md: E.V. v4 deploys',
     '',
     GENERATED,
     'A deploy reaches it through `ship` (or `log deploy`); npm test fails when this file and chart/deploys.json differ.',
+    `The last ${CHANGELOG_RELEASES} live releases only; every deploy is in chart/deploys.json.`,
     '',
     '| Date | Change | Why | Decision |',
     '| --- | --- | --- | --- |',

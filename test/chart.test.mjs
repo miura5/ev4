@@ -148,13 +148,17 @@ test('B-143 (D-172): DECISIONS.md and CHANGELOG.md are generated from chart/ lik
     C.renderDecisions(r)
       .split('\n')
       .filter(l => /^\| D-\d+ \|/.test(l)).length,
-    r.decisions.length
+    r.decisions.filter(d => d.status !== 'superseded').length,
+    'DECISIONS.md carries only the decisions still in force (B-664)'
   );
   assert.equal(
     C.renderChangelog(r)
       .split('\n')
       .filter(l => /^\| \w{3} \d+ \|/.test(l)).length,
-    r.deploys.length
+    (lives => r.deploys.length - (lives.length > 20 ? lives[lives.length - 20] : 0))(
+      r.deploys.map((d, i) => (d.target === 'live' ? i : -1)).filter(i => i >= 0)
+    ),
+    'CHANGELOG.md carries the last 20 live releases (B-664)'
   );
   assert.deepEqual({ by: r.views.retired.by, at: r.views.retired.at }, { by: 'D-172', at: '2026-10-21' });
   assert.ok(r.views.board.node && r.views.decisions.node, 'the doc ids are kept');
@@ -1431,7 +1435,7 @@ test('B-147 (W-6): ship staging --done B-nn --commit <sha> records the task done
   assert.ok(log.some(l => /is in the record|committed/.test(l)));
 });
 
-test('B-148 (D-4, M-1): BACKLOG.md lists open work first, then Your turn by place, then Done; brief --matt prints the same list', () => {
+test('B-148 (D-4, M-1; B-664): BACKLOG.md lists open work first, then Your turn by place, no done tasks; brief --matt prints the same list', () => {
   const r = sample();
   C.applyLog(r, { _: ['log', 'B-02'], status: 'blocked', 'waiting-on': 'Matt', where: 'mac' });
   C.applyLog(r, { _: ['log', 'B-03'], status: 'blocked', 'waiting-on': 'Matt', where: 'github' });
@@ -1441,10 +1445,10 @@ test('B-148 (D-4, M-1): BACKLOG.md lists open work first, then Your turn by plac
   );
   const md = C.renderBacklog(r);
   const at = s => md.indexOf(s);
-  assert.ok(
-    at('| B-02 |') < at('## Your turn') && at('## Your turn') < at('## Done') && at('## Done') < at('| B-01 |')
-  );
-  const turn = md.slice(at('## Your turn'), at('## Done'));
+  assert.ok(at('| B-02 |') < at('## Your turn'));
+  assert.equal(at('## Done'), -1);
+  assert.match(md, /Closed \(done and declined\) tasks are in chart\/tasks\.json/);
+  const turn = md.slice(at('## Your turn'));
   assert.match(turn, /### At the Mac\n\n- B-02 \(blocked\): two/);
   assert.match(turn, /### On GitHub\n\n- B-03 \(blocked\): /);
   assert.doesNotMatch(turn, /B-01/);

@@ -394,7 +394,7 @@ const ok = (name, cond, detail = '') => results.push([cond ? 'PASS' : 'FAIL', na
         );
     }
     // B-357 (D-327): the old look's Today row heights, the view switch in the header, the Plan tab and the 680 px
-    // column are retired; the demo's boards are the UI (the fidelity tools compare them)
+    // column are retired; the Proprietary design system is the UI
     // B-338 (D-327): the readiness card and its objective list left Progress (the exam readiness rows are the run
     // harness's check)
     // B-357 (D-327): the old question view's layout checks (B-116, B-126) are retired; the quiz is the demo's StudyQuiz

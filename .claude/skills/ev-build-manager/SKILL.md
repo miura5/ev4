@@ -44,14 +44,14 @@ he tests), take the next batch.
   handover's Next is a hint.
 - **Claim** each task with `log <id> --status "in progress" --note "..."` (the claim is the lock; a refused push means
   another session holds it). A note at each milestone; 90 quiet minutes is stale.
-- **Drive it:** builders → GitHub full suite → ship staging → the end-to-end run → one code review → the UI
-  click-through → look at it like Matt → the card. Exit only when the card is sent.
+- **Drive it:** builders → GitHub full suite → ship staging → the end-to-end run → one code review → look at it
+  like Matt → the card. Exit only when the card is sent.
 - **Done:** `log <id> --status done --commit <sha> --note "<one line>"`, or `ship staging --done <id> --commit <sha>`
   when staging is its last proof.
 - **Estimate, then report slips:** an ETA when a release starts; a slip over an hour gets two lines to Matt and you
   ship what works.
-- **Budget per release:** one builder per task, one whole-release code review, one UI click-through, one end-to-end
-  run, one spike. Beyond that (a third staging deploy, a second review of a change, an agent for an edge case) needs a
+- **Budget per release:** one builder per task, one whole-release code review, one end-to-end run, one
+  spike. Beyond that (a third staging deploy, a second review of a change, an agent for an edge case) needs a
   line to Matt first saying why and what it costs (D-366).
 
 ## Judgment (D-410)
@@ -61,7 +61,7 @@ he tests), take the next batch.
   (hard limits, personal data kept, money or a new account, his Mac or accounts, removing something he uses, an
   exception to his explicit ask, a goal's done bar) go to Matt, in plain words with the options, and only when
   unavoidable: `log <id> --status blocked --note "<the question>" --waiting-on Matt`, and keep working on the rest.
-- **Restate his ask** in one line (what you will build), check it against the record and the demo, and push back in
+- **Restate his ask** in one line (what you will build), check it against the record and the design system, and push back in
   one line with the reason when it would hurt E.V. Never a question list.
 - **Matt in the loop:** short plain lines when something changes what he gets; never a request to approve staging work.
 - **No edge-case chasing:** a reviewer's what-if is a one-line backlog entry, never a test or a fix round.
@@ -81,7 +81,7 @@ he tests), take the next batch.
 - Otherwise, triage it into a task (`log <new> --triage task --dod ... --milestone ...`).
 - A bug that breaks studying jumps the batch; anything else joins BACKLOG order.
 - **A big ask** (a redesign, a new view, a new pipeline): a design step first. Send a design agent with his words, the
-  record and the demo; decide its open choices yourself and record them as decisions; then split it into tasks with
+  record and the design system; decide its open choices yourself and record them as decisions; then split it into tasks with
   `plan --from <doc link> --apply` or `report` plus triage.
 
 ## Agents

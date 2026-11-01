@@ -57,7 +57,7 @@ drops, wording, routing phrasing, timing windows) are not chased: a reviewer may
 go to the backlog, never into a fix round. A blocker found by Matt or the end-to-end run is fixed and re-shipped
 once; nothing else loops. No per-task review subagents for ordinary changes.
 
-**Guardrails, budget, rubric and the release bar** are in the ev-build-manager skill. For everyone: run a feature
+**Guardrails, budget and the release bar** are in the ev-build-manager skill. For everyone: run a feature
 that calls a model, a job or an outside service for real on staging before anything else is reviewed; no new checks for
 edge cases; the phone is frozen at "it works" (D-407); no exam- or time-gating (D-390).
 
@@ -122,15 +122,13 @@ you, are in `docs/lessons.md`.
   with this repository checked out; Mac-bound tasks only from a chat linked to the Mac, with Matt present, proven by
   one staging firing that writes (a new Mac task writes nothing until he approves its folders in the desktop app). Mac
   tasks are created, never edited (O-5, B-137): never change a task in the desktop app; re-create it from a session
-  with the Mac link and the repository, and list the old one, disabled, in spec.tasks.retired.
+  with the Mac link and the repository; the old one is disabled, then deleted on Matt's OK (D-419).
 - Browser work is start, poll, collect through saved files (`javascript_tool` stops at 45 s; the device bridge cuts
   results above ~250 KB). Never retype a result.
 - `npm run check` takes about 25 minutes and a foreground call is cut at 10: run it in the background
   (`npm run check > /tmp/check.log 2>&1; echo "exit $?" >> /tmp/check.log`) and wait for that exit line. To retry one
   page check, run its harness alone (`node test/harness/<name>.cjs synthetic <shots dir>` after `node tools/build.mjs`).
 - Spec files are JSON with indent 1 and no trailing newline (B-57; a hook rewrites them so).
-- Before changing a large file, read its map in `docs/trim/scan/` (core, harness, page, spec, tools-tests): it names
-  what each part does, what reads it and what is dead (D-264).
 
 ## Rollback (D-145)
 
@@ -143,7 +141,7 @@ restored at main's head and shipped through staging like any change.
 | What | Where |
 | --- | --- |
 | Project record (the Chart) | `chart/` via `tools/chart.mjs`; BACKLOG.md is generated from it (D-140) |
-| The view Matt uses | The app (PWA): the ev-live and ev-staging Workers over D1 (`spec.registry.records.<target>.app`); every proof, click-through and screenshot is taken there (D-367) |
+| The view Matt uses | The app (PWA): the ev-live and ev-staging Workers over D1 (`spec.registry.records.<target>.app`); every proof and screenshot is taken there (D-367) |
 | Live and staging records (artifact pages frozen, D-367) | live https://claude.ai/artifact/Bu8RevP4r1twPdSGc77nfg, staging https://claude.ai/artifact/Pb6jQ6CvEbtxi6Rcshu9uC (`spec/ev.spec.json` `registry`); ship no longer publishes either page; the records hold the system documents until B-473 |
-| Mac folder | Documents/E.V. Study Watch (live since the Oct 18 cutover; staging uses its `staging/` subfolder) |
+| Mac folder | Documents/E.V. Backups (staging uses its `staging/` subfolder) |
 | Code style, page source, CI | prettier at 120 columns (`npm run format`, B-64); the page logic is `page/app/*.js` by tab, joined by the build into the published app.js; GitHub Actions runs the checks as the ev-build-manager skill's Checks say (D-408; B-151; the full one runs per commit as parallel jobs in checks.yml, B-606) |

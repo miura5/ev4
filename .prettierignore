@@ -14,8 +14,3 @@ scripts/canvas/
 # page/app/*.js are parts of one closure, not JavaScript on their own: test/format.test.mjs holds their join to the
 # formatter instead.
 page/app/
-
-tools/fidelity/demo/
-
-# Anthropic's claude-api skill, vendored unchanged from github.com/anthropics/skills (Apache 2.0): kept as published.
-.claude/skills/claude-api/

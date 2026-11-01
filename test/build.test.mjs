@@ -205,7 +205,7 @@ test('B-425: a docs-only commit keeps the build commit; a code commit moves it; 
   const code = commit(['core/a.mjs', 'docs/handover.md'], 'the build');
   const docs = commit(['docs/review-brief.md'], 'a docs edit');
   assert.equal(buildCommitOf(dir, docs), code, 'a docs-only commit keeps the build commit');
-  const both = commit(['docs/trim/scan/core.md', 'chart/deploys.json'], 'docs and the record');
+  const both = commit(['docs/notes/x.md', 'chart/deploys.json'], 'docs and the record');
   assert.equal(buildCommitOf(dir, both), code, 'docs plus bookkeeping keeps it too');
   assert.equal(gitState(dir).commit, code, 'gitState names the same build commit');
   fs.writeFileSync(path.join(dir, 'docs/lessons.md'), 'an uncommitted docs edit');
@@ -226,9 +226,7 @@ test('B-425: no build, run, check or test code reads a file under docs/ (so a do
   // export folders named docs inside a run's own directory: core/cli.mjs and tools/pwa-copy.mjs)
   // B-449: docs/study-plan-brief.md is the study plans' default instructions, built into the spec; its drift test reads
   // it, so an edit of the brief is a build change (the spec copy follows it), never a docs-only one
-  // D-392 to D-395: docs/design/ui-polish/ is copied to staging's /reference by tools/build-pwa.mjs; it stays inert (a
-  // reference-only edit keeps the build commit and reaches staging with the next build), and live never carries it
-  const allowed = /path\.join\((out|dir), 'docs'|docs\/study-plan-brief\.md|docs\/design\/ui-polish/;
+  const allowed = /path\.join\((out|dir), 'docs'|docs\/study-plan-brief\.md/;
   const reads = [
     /(readFileSync|readdirSync|existsSync|statSync|createReadStream)\([^)]*['"`]docs[/'"`]/,
     /['"`]docs\/[^'"`\s]/,

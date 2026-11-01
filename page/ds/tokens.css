@@ -56,7 +56,7 @@
   --elev-2:var(--ring),var(--shadow-2);      /* popover, menu */
   --elev-3:var(--ring),var(--shadow-3);      /* sheet, dialog */
 
-  /* Motion (B-547, D-394, the round-4 motion spec in docs/design/ui-polish/after/motion-*.html): view switches stay
+  /* Motion (B-547, D-394, the round-4 motion spec): view switches stay
      instant; press is a fill change, never a scale; folds by height and opacity; menus, popovers and toasts fade and
      rise. */
   --dur-1:80ms;  /* press in: the fill steps to --sel */

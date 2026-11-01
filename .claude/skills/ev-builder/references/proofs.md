@@ -5,7 +5,7 @@ Read this when you reach the proofs of a task. SKILL.md's D-408 table is the rul
 ## The page
 
 - Run the one harness group you touched, at 1280: `node tools/build.mjs`, then `EV_ONLY=<group>` with that group's
-  harness (`node test/harness/<name>.cjs synthetic <shots dir>`; `docs/trim/scan/harness.md` says which covers what).
+  harness (`node test/harness/<name>.cjs synthetic <shots dir>`, one file per area of the page under test/harness/).
 - Open the screenshots it lists with Read and look at them. A pass count does not show a cramped row or a missing
   control.
 - Type and spacing judged in a browser need the real font: the sandbox blocks Google Fonts, so route Inter locally with
