@@ -12497,9 +12497,9 @@
   "id": "B-660",
   "kind": "request",
   "title": "Request (reported Nov 1): Scheduled task cleanup: disable the old scheduled tasks E.V. no longer uses (nothing deleted), keeping the current live, staging and builder tasks",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "39 unused scheduled tasks deleted under the one-time exception; the 15 in use untouched; spec.tasks.retired updated",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12508,6 +12508,10 @@
   "reportedAt": "2026-11-01T21:17:56.360Z",
   "board": {
    "row": "v4 B-660: Scheduled task cleanup: disable the old scheduled tasks E.V. no…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T21:20:25.144Z"
   }
  }
 ]
