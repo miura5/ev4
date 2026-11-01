@@ -9704,13 +9704,18 @@
   "title": "The UI polish, through Proprietary (D-384): with every view on components, apply the UX map's look and layout fixes and the polish's look decisions in page/ds/tokens.css and page/ds/components.css (softer structure, card radius, the success pulse), inside the approved demo (D-327)",
   "dod": "Release card with side-by-side screenshots at 1280 and 390 and the Gallery's section shots; npm test and smoke GREEN; ship staging GREEN; anything outside the demo goes to Matt first; Matt's testing is the acceptance",
   "milestone": "Consolidation: Proprietary",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-515"
   ],
   "notes": "Its look pass is now the 34 UI polish tasks B-539 to B-572 from the passed design (https://claude.ai/artifact/9w83U8c79EjxijPXqs9xKi): Matt's notes and the desktop feel research, reviewed to UX 4.3 and 1280 about 90. This task closes when they do.",
   "commit": null,
-  "source": "plan Lf1aKShdVK5ojjjgwk5yfv"
+  "source": "plan Lf1aKShdVK5ojjjgwk5yfv",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Matt, Nov 1: the UI polish is complete (B-539 to B-572 done); further polish goes through the Proprietary design system",
+   "at": "2026-11-01T22:21:51.568Z"
+  }
  },
  {
   "id": "B-517",
@@ -10485,11 +10490,16 @@
   "title": "Window-controls-overlay header for a Chrome install (optional, on Matt's choice of browser): the traffic lights inline in E.V.'s header with a drag region",
   "dod": "In a Chrome install the header fills the title bar; Safari and the browser tab look unchanged; Matt checks it once in Chrome",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
-  "source": "plan 9w83U8c79EjxijPXqs9xKi"
+  "source": "plan 9w83U8c79EjxijPXqs9xKi",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Matt, Nov 1: the UI polish is complete; the design system handles the rest",
+   "at": "2026-11-01T22:21:51.272Z"
+  }
  },
  {
   "id": "B-563",
