@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-420",
+  "date": "Nov 1",
+  "title": "The UI click-through review is dropped from the release loop (Matt, Nov 1)",
+  "why": "Each release gets one code review and one real run on staging, then Matt tests; the rubric score and tools/fidelity are retired (B-664)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-419",
   "date": "Nov 1",
   "title": "One-time exception to B-11 (Matt, Nov 1): delete 39 old scheduled tasks (38 already disabled plus the unused staging diagnostic)",
