@@ -271,11 +271,11 @@ test('weekly: the roll-ups, the verify reads, the review as written, weeks/<Sund
     calls.map(c => [c.tool, c.args.action || null, c.args.doc_id || null]),
     [
       ['mcp__claude-code-remote__list_triggers', null, null],
-      ['ArtifactData', 'get', 'manifest'],
-      ['ArtifactData', 'get', 'spec'],
-      ['ArtifactData', 'get', 'environments'],
-      ['ArtifactData', 'get', 'seed'],
-    ] // B-472 (D-367): no page reads
+      ['ArtifactData', 'get', 'worker'],
+      ['Bash', null, null],
+      ['Bash', null, null],
+      ['Bash', null, null],
+    ] // B-472 (D-367): no page reads; B-473: system/worker from the record, the deployed documents from the Worker
   );
   assert.ok(
     v.question.material.saves.every(x => x.save.startsWith(path.join(dir, 'verify', 'staging'))),

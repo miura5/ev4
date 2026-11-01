@@ -29,6 +29,8 @@ const ok = (app = { commit: C.slice(0, 12), worker: EXP.worker.slice(0, 16), fil
   run: { id: 7, status: 'completed', conclusion: 'success' },
   steps: [{ name: 'deploy the ev-staging Worker', conclusion: 'success' }],
   app,
+  // B-473: the same run put the system documents at the Worker's commit
+  system: app && { commit: app.commit, hashes: { manifest: 'a'.repeat(16) } },
 });
 
 test('B-318: ship staging prints the pwa-staging dispatch at the build commit', () => {
@@ -102,7 +104,7 @@ test('B-318: verify reads the Worker build hash and the app files back against t
   assert.ok(green(g));
   assert.deepEqual(
     g.map(l => l.what),
-    ['app staging workflow run', 'app staging Worker build', 'app staging files']
+    ['app staging workflow run', 'app staging Worker build', 'app staging files', 'app staging system documents']
   );
   assert.equal(g[2].detail, `35 files, ${'2'.repeat(16)}`);
   const w = lines(ok({ commit: C.slice(0, 12), worker: '3'.repeat(16), files: EXP.files.slice(0, 16) }));
@@ -118,6 +120,11 @@ test('B-318: verify reads the Worker build hash and the app files back against t
   assert.equal(red[0].ok, false);
   assert.match(red[0].detail, /failure at: x \(served files differ: sw\.js\)/);
   assert.equal(green(lines({ ...ok(), app: null })), false, 'a run with no notice is not a deploy of this build');
+  // B-473: no system notice, or one at another commit, is red (runs would bootstrap from the wrong manifest)
+  const nosys = lines({ ...ok(), system: null });
+  assert.match(nosys.find(l => l.what === 'app staging system documents').detail, /put no system documents/);
+  assert.equal(green(nosys), false);
+  assert.equal(green(lines({ ...ok(), system: { commit: 'c'.repeat(12), hashes: {} } })), false);
   // An older commit carrying the same Worker and files is the same deploy (B-63's content rule).
   const older = lines(ok({ commit: 'b'.repeat(12), worker: EXP.worker.slice(0, 16), files: EXP.files.slice(0, 16) }));
   assert.ok(green(older));

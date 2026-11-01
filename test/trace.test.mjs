@@ -155,7 +155,7 @@ test('B-178 (D-196): system/yourturn is the Chart’s Your turn: each waiting ta
   );
 });
 
-test('B-178 (D-196): ship writes system/yourturn in its system batch, and asks for its version first', async () => {
+test('B-473 (D-367): ship writes no system document to the record; its first reads are system/worker and the Worker', async () => {
   const { build } = await import('../tools/build.mjs');
   const { deployCalls } = await import('../core/deploy.mjs');
   const crypto = await import('node:crypto');
@@ -164,48 +164,29 @@ test('B-178 (D-196): ship writes system/yourturn in its system batch, and asks f
   git(dir, 'tag', 'v4.5.0');
   await build({ root: dir, now: NOW });
   const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'manifest.json'), 'utf8'));
-  const yourturn = {
-    op: 'set',
-    collection: 'system',
-    doc_id: 'yourturn',
-    file_path: '/x/yourturn.json',
-    if_version: 5,
-  };
   const r = deployCalls({
     manifest,
     target: 'staging',
     distDir: path.join(dir, 'dist'),
     build: { pushed: true },
-    versions: { manifest: 1, spec: 1, environments: 1 },
     sha256: s => crypto.createHash('sha256').update(s).digest('hex'),
-    extraWrites: [yourturn],
   });
-  const batch = r.calls.find(c => c.step === 'system documents').args.writes;
-  assert.deepEqual(
-    batch.map(w => w.doc_id),
-    ['manifest', 'spec', 'environments', 'yourturn']
-  );
-  assert.deepEqual(batch.at(-1), yourturn);
-  // ship itself: with no read of system/yourturn in the session, it prints the read and stops before any call.
+  assert.ok(!r.calls.some(c => c.tool === 'ArtifactData'), JSON.stringify(r.calls.map(c => c.step)));
   const { execFileSync } = await import('node:child_process');
   let out = '';
   try {
     out = execFileSync(
       'node',
       [path.join(dir, 'tools', 'chart.mjs'), 'ship', 'staging', '--root', dir, '--transcript', '/dev/null'],
-      {
-        encoding: 'utf8',
-      }
+      { encoding: 'utf8' }
     );
   } catch (e) {
     out = String(e.stdout || '') + String(e.stderr || '');
   }
-  assert.match(out, /read system\/yourturn first|reads to make|versions of/, out.slice(0, 400));
-  const doc = JSON.parse(fs.readFileSync(path.join(dir, 'dist', 'system', 'yourturn.json'), 'utf8'));
-  assert.ok(
-    validate('system', doc, { id: 'yourturn' }).ok,
-    JSON.stringify(validate('system', doc, { id: 'yourturn' }))
-  );
+  assert.match(out, /reads to make/, out.slice(0, 400));
+  assert.match(out, /"doc_id":"worker"/);
+  assert.match(out, /api system --name manifest/);
+  assert.doesNotMatch(out, /"doc_id":"(manifest|yourturn)"/);
 });
 
 // B-183 (D-197): a design job's trace lands the kickoff (built from this session's reads, its theme the job's brief) as

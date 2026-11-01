@@ -218,7 +218,7 @@ test('a staging run end to end through the run API: pinned writes, a refused bat
           cwd: ROOT,
           stdio: 'pipe',
         }),
-      e => /api <pull\|[^>]*\|export> \.\.\. --worker/.test(String(e.stderr))
+      e => /api <pull\|[^>]*\|export\|system> \.\.\. --worker/.test(String(e.stderr))
     );
     const pulled = RUN.pulled({ spec, dir, transcript: '' });
     assert.equal(pulled.done, true);

@@ -27,8 +27,6 @@ export function systemSize(id, doc, budget = {}) {
   const line = `system/${id} is ${bytes} bytes (${kib(bytes)}${limits ? '; ' + limits : ''})${level === 'warn' ? ': WARNING, over the warning line' : ''}${level === 'fail' ? ': over the budget' : ''}`;
   return { bytes, level, line };
 }
-// What verify reads from a record: the deployed system documents, plus staging's seed stamp (written by seed-staging).
-const readIds = target => (target === 'staging' ? [...SYSTEM_IDS, 'seed'] : SYSTEM_IDS);
 const ENVELOPE = ['schema', 'writer', 'at', 'source'];
 
 export const artifactUrl = id => `https://claude.ai/artifact/${id}`;
@@ -85,7 +83,7 @@ function tasksFor(manifest, target) {
 }
 
 /** The reads a build chat makes and where it saves each result, so verify can diff them. */
-export function verifyReads({ manifest, target, stateDir }) {
+export function verifyReads({ manifest, target, stateDir, workerFile = null }) {
   const rec = manifest.records[target];
   const reads = [
     {
@@ -95,21 +93,34 @@ export function verifyReads({ manifest, target, stateDir }) {
       note: `Enabled tasks only: a task absent from it is disabled or spent. Save it with node tools/tool-result.mjs list_triggers ${stateDir}/triggers-1.json (copies the result from this session's transcript; never retype it). When it has a next_cursor, call again with cursor and save triggers-2.json the same way, and so on; remove pages left from an earlier, longer read.`,
     },
   ];
+  // B-473 (D-367): the deployed system documents are read from the target's Worker (its system route, put there by
+  // the deploy workflow), through the Worker's address and token: the record's system/worker, the one system document
+  // left in the claude.ai record. A run passes the file it already saved (workerFile) and makes no record read here.
   if (rec.artifact) {
-    for (const id of readIds(target))
+    const sys = `${stateDir}/record/system`;
+    const wfile = workerFile || `${sys}/worker.json`;
+    if (!workerFile)
       reads.push({
         tool: 'ArtifactData',
         args: {
           action: 'get',
           url: artifactUrl(rec.artifact),
           collection: 'system',
-          doc_id: id,
+          doc_id: 'worker',
           out_dir: `${stateDir}/record`,
         },
-        save: `${stateDir}/record/system/${id}.json`,
-        note: 'Saved by the tool; note the version it prints for deploy --version.',
+        save: wfile,
+        part: null,
+        note: 'the Worker address and token the reads below use; only the commands read that file: never print or quote it',
       });
-    // B-472 (D-367): the claude.ai page is no longer a view, so ship reads neither it nor its files.
+    for (const id of SYSTEM_IDS)
+      reads.push({
+        tool: 'Bash',
+        args: { command: `node core/cli.mjs api system --name ${id} --out ${sys}/${id}.json --worker ${wfile}` },
+        save: `${sys}/${id}.json`,
+        part: null,
+        note: `the deployed system/${id}, from the Worker (an absent one is noted beside it, as ${id}.json.absent)`,
+      });
   }
   return reads;
 }
@@ -165,10 +176,11 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
   );
 
   if (!rec.artifact) add(false, `${target} record exists`, `no ${target} record in spec.registry.records`);
-  else if (!state.record) add(false, `${target} record read`, 'no saved system/* documents; run the reads below');
+  else if (!state.record)
+    add(false, `${target} system documents read`, 'no saved system/* documents; run the reads below');
   else {
     const live = state.record;
-    if (!live.manifest) add(false, 'system/manifest deployed', 'absent from the record');
+    if (!live.manifest) add(false, 'system/manifest deployed', 'absent from the Worker');
     else {
       for (const k of ['release', 'specVersion'])
         add(
@@ -230,7 +242,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
       add(live.manifest.dirty === false, 'system/manifest is clean');
     }
     for (const id of ['spec', 'environments']) {
-      if (!live[id]) add(false, `system/${id} deployed`, 'absent from the record');
+      if (!live[id]) add(false, `system/${id} deployed`, 'absent from the Worker');
       else
         add(
           same(strip(live[id]), strip(dist[id])),
@@ -245,19 +257,7 @@ export function verify({ manifest, target, state, build, dist, sha256, now = new
         const z = systemSize(id, dist[id], budget);
         add(z.level !== 'fail', `system/${id} size`, z.line.replace(/^system\/\S+ is /, ''));
       }
-    if (target === 'staging') {
-      const seed = live.seed;
-      if (!seed || !seed.exportedAt) add(false, 'staging seed', 'no system/seed: run seed-staging');
-      else {
-        const days = Math.max(0, Math.floor((Date.parse(now) - Date.parse(seed.exportedAt)) / 864e5));
-        const docs = Object.values(seed.counts || {}).reduce((n, c) => n + c, 0);
-        add(
-          true,
-          'staging seed',
-          `${docs} documents from a ${seed.from || 'live export'} taken ${seed.exportedAt.slice(0, 10)}, ${days} day${days === 1 ? '' : 's'} old`
-        );
-      }
-    }
+    // B-473: no staging seed line: the staging D1 is seeded by its deploy workflow (pwa-staging.yml), which checks it.
   }
 
   // B-472 (D-367): no page lines (stamp, published files, capability declaration): ship no longer publishes the page.
@@ -377,14 +377,12 @@ export function deployCalls({
   target,
   distDir,
   build,
-  versions = {},
   mattOk = false,
   state = null,
   sha256,
   stagingVerify = null,
   duringSession = false,
   builder = false,
-  extraWrites = [],
   now = Date.now(),
   stateDir = null,
 }) {
@@ -426,19 +424,7 @@ export function deployCalls({
 
   const calls = [];
   const skipped = [];
-  const writes = SYSTEM_IDS.map(id => {
-    const w = { op: 'set', collection: 'system', doc_id: id, file_path: `${distDir}/system/${id}.json` };
-    if (versions[id]) w.if_version = versions[id];
-    return w;
-  });
-  // B-178 (D-196): ship (either target) also writes system/yourturn, the Chart's Your turn as of this ship.
-  writes.push(...extraWrites);
-  calls.push({
-    step: 'system documents',
-    tool: 'ArtifactData',
-    args: { action: 'batch', url: artifactUrl(rec.artifact), writes },
-  });
-
+  // B-473 (D-367): no system documents are written to the record: the deploy workflow puts them on the Worker.
   // B-472 (D-367): the claude.ai page is frozen; ship no longer publishes it.
 
   for (const [key, t] of tasksFor(manifest, target)) {
@@ -500,9 +486,28 @@ export function deployCalls({
     // task's too, but changing a Mac-bound task at all needs Matt's explicit OK in a build chat.
     const rename = live && live.name !== t.name ? { name: t.name } : {};
     if (t.macBound) {
-      if (!promptSame)
-        skipped.push(`${key}: Mac-bound; its prompt changes only from a chat linked to the Mac, with Matt present`);
-      if (rename.name)
+      // B-473 (O-5): a Mac-bound task is never edited: a new prompt is a new task, created from a chat linked to the
+      // Mac with Matt present, and the old one disabled and listed retired (never deleted).
+      if (!promptSame && live)
+        calls.push({
+          step: `re-create ${key} (Mac-bound: only from a chat linked to the Mac, with Matt present; then Matt approves its folder access in the Claude desktop app, or its runs are refused every write there)`,
+          tool: 'mcp__claude-code-remote__create_trigger',
+          args: {
+            name: t.name,
+            prompt: `<the contents of ${promptFile}>`,
+            initiation: 'human_request',
+            ...(t.schedule ? { cron_expression: t.schedule } : {}),
+            notifications: { push: Boolean(t.push), email: false },
+            requires_local_device: true,
+            folders: t.folders,
+          },
+          then: `record the returned id as spec.tasks.${key}.trigger; disable the old task (mcp__claude-code-remote__update_trigger {"trigger_id": "${t.trigger}", "enabled": false}) and list it in spec.tasks.retired, never deleted; commit, push and build again; a staging firing that writes proves it`,
+        });
+      else if (!promptSame)
+        skipped.push(
+          `${key}: Mac-bound; not in the saved task list, so nothing to re-create from here (read the tasks first)`
+        );
+      if (rename.name && promptSame)
         calls.push({
           step: `rename ${key} (Mac-bound: the name alone, without the prompt, and only on Matt's explicit OK)`,
           tool: 'mcp__claude-code-remote__update_trigger',

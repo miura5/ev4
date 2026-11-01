@@ -1006,7 +1006,8 @@ test("B-60: rollback live dry-runs going back to the previous live build at main
     )
   );
   assert.match(dry.out, new RegExp(`the restore build equals ${A.slice(0, 7)}'s build`));
-  assert.match(dry.out, /1\. system documents: ArtifactData[\s\S]*"doc_id": "manifest"/);
+  // B-473 (D-367): the system documents reach the Worker through its deploy workflow, never a record write
+  assert.doesNotMatch(dry.out, /system documents: ArtifactData/);
   assert.doesNotMatch(dry.out, /\d\. page[^\n]*: Artifact/, 'B-472 (D-367): no page publish');
   assert.match(dry.out, /rollback live --matt-ok --apply[\s\S]*ship staging[\s\S]*ship live --matt-ok/);
   // A dry run writes nothing: same head, clean tree, no worktree left, no live gate file.

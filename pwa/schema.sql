@@ -35,3 +35,11 @@ CREATE TABLE IF NOT EXISTS claude_plan_asks (
   n INTEGER NOT NULL,
   at INTEGER NOT NULL
 );
+
+-- B-473 (D-367): the system documents runs bootstrap from (manifest, spec, environments, yourturn), put by the deploy
+-- workflow after each deploy (pwa/system.js); apart from docs, so no sync, backup or run API batch touches them.
+CREATE TABLE IF NOT EXISTS system_docs (
+  name TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  at INTEGER NOT NULL
+);

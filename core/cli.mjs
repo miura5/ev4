@@ -616,7 +616,27 @@ const commands = {
       );
       return r.ok ? 0 : 1;
     }
-    throw new Error('api <pull|dump|batch|set|restore-check|export> ... --worker <file>');
+    if (what === 'system') {
+      // B-473 (D-367): a run's bootstrap: one system document from the Worker (system/manifest before the gate), saved
+      // where ArtifactData's out_dir used to save it. Prints the release and commit, never the document.
+      const name = o.name || 'manifest';
+      const out = path.resolve(o.out || `/tmp/ev/system/${name}.json`);
+      const r = API.systemDoc(worker, name, out);
+      // a document the Worker does not hold (404) is noted beside the file, so ship knows it was read (B-473)
+      if (r.ok) fs.rmSync(out + '.absent', { force: true });
+      else if (r.status === 404) {
+        fs.rmSync(out, { force: true });
+        fs.mkdirSync(path.dirname(out), { recursive: true });
+        fs.writeFileSync(out + '.absent', JSON.stringify({ at: new Date().toISOString(), error: r.error }));
+      }
+      console.log(
+        r.ok
+          ? `api system ${name}: saved to ${out}${r.doc.release ? ` (release ${r.doc.release}, commit ${String(r.doc.commit || '').slice(0, 12)})` : ''}`
+          : `api system ${name}: REFUSED (${r.status}): ${JSON.stringify(r.error)}`
+      );
+      return r.ok ? 0 : 1;
+    }
+    throw new Error('api <pull|dump|batch|set|restore-check|export|system> ... --worker <file>');
   },
   'canvas-script'(o) {
     // One read-only Canvas script for the run in --dir, its parameters filled in from the spec and the run's pull
@@ -727,7 +747,6 @@ const commands = {
       target,
       distDir: dist,
       build,
-      versions: o.version,
       mattOk: Boolean(o.mattOk),
       duringSession: Boolean(o.duringSession),
       builder: Boolean(builderRun()), // B-184 (D-200)

@@ -16,8 +16,6 @@
   "page/app/73-ev-greeting.js": 1,
   "page/app/91-forms.js": 1
  },
- "tools": {
-  "tools/prompts.mjs": 1
- },
+ "tools": {},
  "_note_notes": "B-409: page/app/25-notes.js's four note saves go through the bridge's own versioned path (if_version, the outbox), which act() does not model; the build manager records that as a decision."
 }

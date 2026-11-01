@@ -97,6 +97,7 @@ async function deployedStaging() {
     run: { id: 1, status: 'completed', conclusion: 'success', headSha: manifest.commit },
     steps: [],
     app: { commit: manifest.commit.slice(0, 12), worker: app.worker.slice(0, 16), files: app.files.slice(0, 16) },
+    system: { commit: manifest.commit.slice(0, 12), hashes: { manifest: 'a'.repeat(16) } }, // B-473
   });
   return { dir, dist, state, manifest };
 }
@@ -108,11 +109,17 @@ test('from a build chat with nothing deployed, verify-deploy staging is red and 
   assert.equal(r.code, 1);
   assert.match(r.out, /^verify-deploy staging: RED/);
   assert.match(r.out, /NO  build commit is pushed/);
-  assert.match(r.out, /NO  staging record read: no saved system\/\* documents/);
+  assert.match(r.out, /NO  staging system documents read: no saved system\/\* documents/);
+  // B-473 (D-367): only system/worker from the record; the deployed documents from the Worker's system route
   assert.match(
     r.out,
-    /ArtifactData \{"action":"get","url":"https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+","collection":"system","doc_id":"seed"/
+    /ArtifactData \{"action":"get","url":"https:\/\/claude\.ai\/artifact\/[A-Za-z0-9]+","collection":"system","doc_id":"worker"/
   );
+  assert.match(
+    r.out,
+    /Bash \{"command":"node core\/cli\.mjs api system --name manifest --out [^"]+manifest\.json --worker /
+  );
+  assert.doesNotMatch(r.out, /"doc_id":"(manifest|seed)"/);
   assert.match(r.out, /NO  scheduled tasks read/);
   assert.match(r.out, /mcp__claude-code-remote__list_triggers \{"limit":100,"enabled":true\}/);
   const saved = JSON.parse(fs.readFileSync(path.join(dir, 'dist/verify-staging.json'), 'utf8'));
@@ -125,7 +132,6 @@ test('verify-deploy is green when the saved state matches the manifest', async (
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /^verify-deploy staging: GREEN/);
   assert.doesNotMatch(r.out, /NO  /);
-  assert.match(r.out, /ok  staging seed: 3 documents from a live export taken 2026-10-18, \d+ days? old/);
   // B-150: the size of each system document the deploy writes, with its budget.
   assert.match(r.out, /ok  system\/spec size: \d+ bytes \(\d+ KiB; warns at 192 KiB, fails at 240 KiB\)/);
   assert.match(r.out, /ok  system\/environments size: /);
@@ -246,22 +252,12 @@ test('verify reads a task with no notification setting as the server default, pu
   assert.match(line('task staging.evening-cloud').detail, /push false, expected true/);
 });
 
-test('deploy prints the system batch with expected versions, refuses dirty, unpushed and live without OK', async () => {
+test('deploy writes no system documents to the record (B-473), refuses dirty, unpushed and live without OK', async () => {
   const { dir, dist } = await deployedStaging();
-  const r = cli(dir, 'deploy', 'staging', '--version', 'manifest=7', '--version', 'spec=3');
+  const r = cli(dir, 'deploy', 'staging');
   assert.equal(r.code, 0, r.out);
   const plan = JSON.parse(fs.readFileSync(path.join(dist, 'deploy-staging.json'), 'utf8'));
-  const batch = plan.calls[0];
-  assert.equal(batch.tool, 'ArtifactData');
-  assert.equal(batch.args.url, `https://claude.ai/artifact/${RECORD}`);
-  assert.deepEqual(
-    batch.args.writes.map(w => [w.doc_id, w.if_version, path.relative(dist, w.file_path)]),
-    [
-      ['manifest', 7, 'system/manifest.json'],
-      ['spec', 3, 'system/spec.json'],
-      ['environments', undefined, 'system/environments.json'],
-    ]
-  );
+  assert.ok(!plan.calls.some(c => c.tool === 'ArtifactData'), 'the deploy workflow puts them on the Worker');
   assert.ok(!plan.calls.some(c => c.tool.endsWith('update_trigger')), 'prompts already match: no task updates');
   assert.ok(
     !plan.skipped.some(s => /staging\.evening-mac: Mac-bound/.test(s)),
@@ -521,12 +517,12 @@ test('usage: an unknown command or target exits 2', () => {
   assert.equal(r.code, 2);
 });
 
-test('verify-deploy staging is red without a seed stamp', async () => {
+test('verify-deploy staging reads no seed stamp (B-473: the staging D1 is seeded and checked by its workflow)', async () => {
   const { dir, state } = await deployedStaging();
   fs.rmSync(path.join(state, 'record/system/seed.json'));
   const r = cli(dir, 'verify-deploy', 'staging');
-  assert.equal(r.code, 1);
-  assert.match(r.out, /NO  staging seed: no system\/seed: run seed-staging/);
+  assert.equal(r.code, 0, r.out);
+  assert.doesNotMatch(r.out, /staging seed/);
 });
 
 test('verify-deploy: a task whose pipeline has no steps in the build is pending, not a difference', async () => {

@@ -12,6 +12,7 @@
 //     one now; GET /api/backup/newest names the newest export. Exports are never overwritten or deleted.
 //   - B-398: every write (a page save here, a run API batch) stores the document in one canonical JSON form
 //     (runapi.js canonicalJson), so a Mac backup and the R2 export of the same D1 hash the same.
+//   - B-473: /api/run/system/<name> holds the system documents a run bootstraps from (system.js), put by the deploy.
 //   - B-459: POST /api/jobs/<id>/run starts a study plan job's run in the Worker (planjob.js: a Durable Object per job,
 //     whose alarm runs it to its end whatever the page does) and answers 202 at once.
 import { handleRun, validCollection, validDocId, canonicalJson } from './runapi.js';
@@ -21,6 +22,7 @@ import { writeProblem } from './notes.js';
 import { handleImages } from './images.js';
 import { handleClaude } from './claude.js';
 import { startPlanJob, PlanJob } from './planjob.js';
+import { handleSystem } from './system.js';
 
 export { PlanJob };
 
@@ -43,6 +45,9 @@ export default {
     if (!(await tokenOk(request.headers.get('authorization'), env.EV_TOKEN)))
       return json({ error: 'wrong token' }, 401);
 
+    // B-473 (D-367): the system documents runs bootstrap from (system.js), before the run API's own routes
+    const sys = await handleSystem(request, env, url);
+    if (sys) return sys;
     if (url.pathname.startsWith('/api/run/')) return handleRun(request, env, url);
 
     // B-653: pictures in notes, stored in the env's R2 bucket and served to the owner only (pwa/images.js).

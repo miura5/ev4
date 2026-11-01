@@ -200,29 +200,25 @@ const pageManifest = () => {
     },
   };
 };
-test('B-472: deploy prints no page publish, verify reads no page and has no page lines; the system documents stay', () => {
+test('B-472: deploy prints no page publish, verify reads no page and has no page lines; the system documents come from the Worker', () => {
   const manifest = pageManifest();
   const r = deployCalls({
     manifest,
     target: 'staging',
     distDir: '/d',
     build: { dirty: false, pushed: true },
-    versions: { manifest: 1, spec: 1, environments: 1 },
   });
   assert.equal(r.calls.filter(c => c.tool === 'Artifact').length, 0, 'no page publish');
-  const batch = r.calls.find(c => c.tool === 'ArtifactData');
-  assert.equal(batch.args.action, 'batch');
-  assert.deepEqual(
-    batch.args.writes.map(w => w.doc_id),
-    ['manifest', 'spec', 'environments']
-  );
+  // B-473 (D-367): no system batch either: the deploy workflow puts the system documents on the Worker
+  assert.equal(r.calls.filter(c => c.tool === 'ArtifactData').length, 0);
   const reads = verifyReads({ manifest, target: 'staging', stateDir: '/s' });
   assert.equal(reads.filter(x => x.tool === 'Artifact').length, 0, 'no page read');
   assert.ok(reads.some(x => x.tool === 'mcp__claude-code-remote__list_triggers'));
   assert.deepEqual(
     reads.filter(x => x.tool === 'ArtifactData').map(x => x.args.doc_id),
-    ['manifest', 'spec', 'environments', 'seed']
+    ['worker']
   );
+  assert.equal(reads.filter(x => x.tool === 'Bash' && /api system --name/.test(x.args.command)).length, 3);
   const v = verify({
     manifest,
     target: 'staging',

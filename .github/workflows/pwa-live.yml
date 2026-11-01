@@ -163,6 +163,10 @@ jobs:
           exit 1
       - name: the Worker's build hash and its page files, read back
         run: node tools/pwa-app.mjs deployed live "${{ steps.deploy.outputs.url }}"
+      - name: the system documents runs bootstrap from, put on the Worker and read back (B-473)
+        env:
+          EV_TOKEN: ${{ secrets.EV_LIVE_TOKEN }}
+        run: node tools/pwa-system.mjs put live "${{ steps.deploy.outputs.url }}"
       - name: the ev-live-scratch Worker over the ev-live-scratch D1 (the live restore drill's target)
         working-directory: pwa
         run: |

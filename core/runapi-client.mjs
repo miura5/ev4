@@ -208,3 +208,13 @@ export function newestExport(worker, out) {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
+
+/** B-473 (D-367): one system document the deploy put on the Worker (pwa/system.js), saved to `out` as the run's
+ *  bootstrap (system/manifest before the gate). {ok, doc} or {ok: false, status, error}. */
+export function systemDoc(worker, name, out) {
+  const r = request(worker, { route: 'system/' + encodeURIComponent(name) });
+  if (r.status !== 200 || !r.body || r.body.error)
+    return { ok: false, status: r.status, error: r.body && r.body.error };
+  writeJson(out, r.body);
+  return { ok: true, doc: r.body };
+}

@@ -829,7 +829,8 @@ export const AGENT_MATERIAL = {
         { stdio: 'pipe' }
       );
     const manifest = JSON.parse(fs.readFileSync(path.join(v.build, 'manifest.json'), 'utf8'));
-    const reads = verifyReads({ manifest, target: ctx.record, stateDir: v.state });
+    // B-473: the deployed system documents from the Worker, through the run's own saved system/worker
+    const reads = verifyReads({ manifest, target: ctx.record, stateDir: v.state, workerFile: ctx.worker || null });
     return {
       target: ctx.record,
       rules: [

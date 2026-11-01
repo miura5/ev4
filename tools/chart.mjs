@@ -936,8 +936,11 @@ const PARTS = [
   ['tasks', /trigger/, /^(task |scheduled tasks read|retired tasks)/],
   ['app', /^Bash$/, /^app /], // B-318: the Worker and its page files, through the target's workflow
 ];
+// B-473: a read may name its part itself (part: null for the system documents every ship reads first)
 const partOf = x =>
-  (PARTS.find(([, tool, what]) => (x.tool !== undefined ? tool : what).test(x.tool ?? x.what)) || [])[0];
+  'part' in x
+    ? x.part || undefined
+    : (PARTS.find(([, tool, what]) => (x.tool !== undefined ? tool : what).test(x.tool ?? x.what)) || [])[0];
 /**
  * The deploy checklist as one pure step: the refusals; else the reads still to make; else, when verify is green, the
  * deploy to record; else deploy's calls (minus the task calls the skips make needless).
@@ -1211,7 +1214,11 @@ async function ship(o) {
     deployed && last && last.skip && deployed.commit === manifest.commit && last.commit === manifest.commit
       ? last.skip
       : skips({ manifest, target, deployed, rec });
-  const have = p => (p.endsWith('/') ? fs.existsSync(p) && fs.readdirSync(p).length > 0 : fs.existsSync(p));
+  // B-473: a system document the Worker does not hold yet is read all the same (api system notes it as <file>.absent)
+  const have = p =>
+    p.endsWith('/')
+      ? fs.existsSync(p) && fs.readdirSync(p).length > 0
+      : fs.existsSync(p) || fs.existsSync(p + '.absent');
   const savedAt = f => (fs.existsSync(f) ? fs.statSync(f).mtimeMs : 0);
   // B-318: the app's read, made again after a dispatch ship printed (its file older than that print).
   const app = APPS[target].ready ? appRead({ target, stateDir }) : null;
@@ -1223,7 +1230,8 @@ async function ship(o) {
   const stale =
     last &&
     last.commit === manifest.commit &&
-    savedAt(path.join(stateDir, 'record', 'system', 'manifest.json')) < last.at
+    Math.max(...['', '.absent'].map(x => savedAt(path.join(stateDir, 'record', 'system', 'manifest.json' + x)))) <
+      last.at
       ? {
           tasks: last.touched ? last.touched.tasks : true,
           app: last.touched ? Boolean(last.touched.app) : true,
@@ -1248,45 +1256,15 @@ async function ship(o) {
     verifyResult.lines.push(...lines);
     verifyResult.green = verifyResult.lines.every(l => l.ok);
   }
-  const file = o.transcript || newestTranscript(),
-    jsonl = file && fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const recordUrl = artifactUrl(manifest.records[target].artifact);
-  const versions = {
-    ...versionsFrom(jsonl, recordUrl),
-    ...(o.version
-      ? Object.fromEntries(
-          list(o.version)
-            .map(kv => kv.split('='))
-            .map(([k, v]) => [k, Number(v)])
-        )
-      : {}),
-  };
   const stagingVerify = readJsonIf(path.join(dist, 'verify-staging.json'));
-  // B-178 (D-196): the Chart's Your turn as of this ship, written beside the system documents.
-  const yourturnFile = path.join(dist, 'system', 'yourturn.json');
-  fs.mkdirSync(path.dirname(yourturnFile), { recursive: true });
-  fs.writeFileSync(
-    yourturnFile,
-    JSON.stringify(
-      yourTurnDoc(loadChart(root), {
-        at: new Date().toISOString(),
-        commit: manifest.commit.slice(0, 7),
-        source: `ship ${target}`,
-      }),
-      null,
-      1
-    )
-  );
-  const yourturnWrite = { op: 'set', collection: 'system', doc_id: 'yourturn', file_path: yourturnFile };
-  if (versions.yourturn) yourturnWrite.if_version = versions.yourturn;
+  // B-473 (D-367): no system documents (system/yourturn included) are written to the record: the deploy workflow puts
+  // them on the Worker, and the reads above read them back from there.
   const deploy = deployCalls({
     builder: Boolean(builderRun()), // B-184 (D-200)
-    extraWrites: [yourturnWrite],
     manifest,
     target,
     distDir: dist,
     build: buildInfo,
-    versions,
     mattOk: Boolean(o['matt-ok'] || shipJobOk),
     duringSession: Boolean(o['during-session']),
     state,
@@ -1342,19 +1320,6 @@ async function ship(o) {
     return 1;
   }
   if (step.kind === 'deploy') {
-    if (!('yourturn' in versions)) {
-      console.log(
-        `${head}: read system/yourturn first, so its write carries its version (or creates it):\n  ArtifactData ${JSON.stringify({ action: 'get', url: recordUrl, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}\n  then run ship ${target} again (or pass --version yourturn=<n>, 0 when it does not exist yet).`
-      );
-      return 1;
-    }
-    const missingV = SYSTEM_IDS.filter(id => state.record && state.record[id] && !versions[id]);
-    if (missingV.length) {
-      console.log(
-        `${head}: the versions of ${missingV.join(', ')} are not in this session's ArtifactData replies: pass --version ${missingV.map(id => id + '=<n>').join(',')}`
-      );
-      return 1;
-    }
     const touched = {
       tasks: step.calls.some(c => partOf(c) === 'tasks'),
       app: step.calls.some(c => partOf(c) === 'app'),
@@ -1390,8 +1355,6 @@ async function ship(o) {
         '',
         'Reads after the calls (only what they change):',
         ...again.map(r => `  ${r.tool} ${JSON.stringify(r.args)}`),
-        // B-178: system/yourturn's new version, for the next ship's write and the builder's trace
-        `  ArtifactData ${JSON.stringify({ action: 'get', url: recordUrl, collection: 'system', doc_id: 'yourturn', out_dir: path.join(stateDir, 'record') })}`,
       ].join('\n')
     );
     return 0;
@@ -2537,17 +2500,12 @@ async function rollback(o) {
     // session's last get; the file paths are where ship builds, dist/).
     const stateDir = path.join(root, 'dist', 'state', 'live'),
       state = readState(stateDir);
-    const versions = versionsFrom(
-      transcriptOf(o),
-      `https://claude.ai/artifact/${restored.manifest.records.live.artifact}`
-    );
     const calls = deployCalls({
       builder: Boolean(builderRun()), // B-184 (D-200)
       manifest: { ...restored.manifest, dirty: false },
       target: 'live',
       distDir: path.join(root, 'dist'),
       build: { pushed: true, contentHash: restored.hash },
-      versions,
       mattOk: true,
       duringSession: true,
       state,

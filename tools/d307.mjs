@@ -22,9 +22,11 @@ export const EXEMPT = {
   'core/run.mjs':
     'the one run engine: each run of a record and pipeline uses one store (runTarget), and rule 1 holds every task of a D1 record to the Worker',
   'tools/prompts.mjs':
-    "the prompts' text: ArtifactData names the deploy's system documents and system/worker (the Worker's address and token, D-320), not the record; a D1 record's runs write only the Worker (rule 1)",
+    "the prompts' text: ArtifactData names only system/worker (the Worker's address and token, D-320; B-473 moved the manifest to the Worker), not the record; a D1 record's runs write only the Worker (rule 1)",
   'core/cli.mjs':
     'one store per command: migrate plans ArtifactData batches for an artifact record, api talks to a Worker record',
+  'core/deploy.mjs':
+    "B-473: verify reads only system/worker (the Worker's address and token, D-320) from the record and every deployed system document from the Worker (core/cli.mjs api system); it writes neither",
   'tools/d307.mjs': 'the rule itself names both stores to find them',
 };
 /** Where modules are read: the code that runs (tests and the page's own record calls are not modules of either). */

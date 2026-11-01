@@ -19,6 +19,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { parseSystemMessage } from './pwa-system.mjs'; // B-473: the system documents' notice
 import { BUILD_RELEASE, COMMIT } from './release-tag.mjs'; // B-420: the inputs the runner's release-tag step takes, whole
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -207,6 +208,17 @@ export function appLines({ target, commit, expected, saved }) {
       ? `${expected.n} files, ${got.files}`
       : `the Worker serves ${got.files}, the build is ${expected.files.slice(0, 16)}`
   );
+  // B-473 (D-367): the run also put the system documents a scheduled run bootstraps from, at the Worker's commit
+  const sys = saved.system;
+  add(
+    Boolean(sys && sys.commit === got.commit),
+    `app ${target} system documents`,
+    sys
+      ? sys.commit === got.commit
+        ? `${Object.keys(sys.hashes).join(', ')} on the Worker at ${sys.commit.slice(0, 7)}`
+        : `the Worker holds the system documents of ${sys.commit.slice(0, 7)}, its build is ${got.commit.slice(0, 7)}`
+      : `run ${run.id} put no system documents (no system notice)`
+  );
   if (same && !atCommit)
     lines.push({
       ok: true,
@@ -246,6 +258,9 @@ export function readRun(target, api = gh) {
   const mine = notes.filter(a => a.title === `app ${target}`);
   const note = mine.filter(a => a.annotation_level === 'notice').at(-1);
   out.app = note ? parseAppMessage(note.message) : null;
+  // B-473 (D-367): the system documents the same run put on the Worker for runs to bootstrap from (tools/pwa-system.mjs)
+  const sys = notes.filter(a => a.title === `system ${target}` && a.annotation_level === 'notice').at(-1);
+  out.system = sys ? parseSystemMessage(sys.message) : null;
   out.errors = mine.filter(a => a.annotation_level === 'failure').map(a => String(a.message).slice(0, 300));
   return out;
 }
