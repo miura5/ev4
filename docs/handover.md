@@ -7,20 +7,20 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| review agent | B-654 release review | none (read-only) | main | Nov 1 |
-| click-through agent | B-654 staging run at 1280 | none (browser) | main | Nov 1 |
+| nothing | | | | |
 
 ## Waiting on Matt
 
-nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
+Card for B-654 (two-column pictures in notes, plus a fix: typing could remove a picture from a note) at 3675ed6, v4.5.27+11 on staging: https://claude.ai/artifact/8VTjRYwhuP5jFvv3GspbtS (Nov 1). He tests; "ship 3675ed6" sends it live. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
-1. B-654 built at 3675ed6e (D-418: row/col flat-list mark; also fixes a B-653 bug where a picture was dropped on the next keystroke). Full check green, staging GREEN at 3675ed6. Now: review and click-through, then card. Was: B-654, pictures in notes part 2, the FULL columns version (Matt chose it Oct 31 over the cheaper text-wrap option): a two-column row block; drag a picture sideways onto a column grid; text types in the column beside it; headings, lists, On this page, copy and save work inside columns. Builds on B-653 (core/note-images.mjs, page/app/25-notes.js, notes schema img block). Estimate given to Matt: 1.5 to 2.5 h total, builder 45 to 90 min, likely one fix round. Then full check (watch it step by step, skill Checks), staging, a real run in a note at 1280, one review, card.
-2. Bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643, B-650, B-652. B-649 needs the live token (unused-collection counts); low priority.
+1. On Matt's ship: ship live 3675ed6 (references/ship.md, Live), then mark B-654 done.
+2. Board comments not read this session (inbox prints the Claude_Docs query); read them before the next release.
+3. B-655 (checks.yml install timeout/retry), B-656 and B-657 (B-653/B-654 review follow-ups), then bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643, B-650, B-652. B-649 needs the live token; low priority.
 
-Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh api -X POST repos/miura5/ev4/actions/workflows/<file>/dispatches -f ref=main -f "inputs[commit]=..."` plus the release inputs ship prints, with release as the full build name (v4.5.25+n) and release_at as the 40-character sha. A live deploy whose record entry was lost: `ship live --record-past` (B-641). Every ship live tags a new release, then needs one ship staging at the same commit before live goes GREEN. The live deploy waits for Matt's Approve on GitHub. The staging app is ev-staging.peppercheese1.workers.dev, signed in through the built-in browser.
+Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh api -X POST repos/miura5/ev4/actions/workflows/<file>/dispatches -f ref=main -f "inputs[commit]=..."` plus the release inputs ship prints, with release as the full build name (v4.5.25+n) and release_at as the 40-character sha. Save ship's full output to a file: re-running ship after it prints calls asks for the reads again. A live deploy whose record entry was lost: `ship live --record-past` (B-641). Every ship live tags a new release, then needs one ship staging at the same commit before live goes GREEN. The live deploy waits for Matt's Approve on GitHub. The staging app is ev-staging.peppercheese1.workers.dev, signed in through the built-in browser; staging has a test note "B-654 columns test".
 
 ## Last release
 
-Live v4.5.27 at 21c700a (GREEN Oct 31, Matt's ship: B-653 pictures in notes part 1). Staging v4.5.27+11 at 3675ed6 (B-654, GREEN Nov 1). Card: https://claude.ai/artifact/Qd7dfkhJaU51kWCqMT3Rh1 (Oct 31).
+Live v4.5.27 at 21c700a (GREEN Oct 31, B-653). Staging v4.5.27+11 at 3675ed6 (GREEN Nov 1, B-654). Card: https://claude.ai/artifact/8VTjRYwhuP5jFvv3GspbtS (Nov 1).
