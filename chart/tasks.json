@@ -12650,7 +12650,7 @@
   "milestone": "Ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Steps 1-3 tonight, two builders",
+  "notes": "Steps 1-3 done (1820c5e, 9883b42); full check green except the known B-661; steps 4-7 stay open for later releases",
   "commit": null,
   "source": "Repo map, Nov 1",
   "words": "Repo skeleton plan from the five-area map: (1) remove/fix: chart/import, docs/lessons.md, retired fixtures/tests, cutover/import commands, frozenPage, check-procedure contradictions, dead docs/cutover.md citations, pwa/README; (2) CLAUDE.md ~100 lines, handover state-only, fold skill references; (3) chart archive of closed tasks; (4) split tools/chart.mjs, build.mjs, hooks.mjs; (5) core layering, shared helpers, split evcore/steps; (6) tests mirror source; (7) page components/tabs/order file",
