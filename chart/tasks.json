@@ -12451,9 +12451,9 @@
   "id": "B-658",
   "kind": "bug",
   "title": "Bug (reported Oct 31): A note's writing session stays tied to its note: after it pauses and he switches to another note and writes there, the new note's writing is not counted and the session strip keeps showing the first note until he goes back (noteTyped returns when the active session belongs to a different note; the paused session wraps only after 60 min)",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Writing in a different note while a note's session is paused ends that session (minutes filed to Record) and starts a writing session for the new note; the strip shows the new note; going back and writing starts a new one again",
+  "milestone": "Notes images",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12462,6 +12462,10 @@
   "reportedAt": "2026-11-01T00:31:11.198Z",
   "board": {
    "row": "v4 B-658: A note's writing session stays tied to its note: after it pauses and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T00:31:47.470Z"
   }
  }
 ]
