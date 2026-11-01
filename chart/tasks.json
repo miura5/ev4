@@ -871,7 +871,7 @@
   "title": "BIO 201 objectives and practice (pick 2, D-101): the seed-objectives job kind proposing objectives/<exam>-<n> with sourceRef and course from the unit slides (schema bump), the proposal card with strike-outs and the page write on Matt's OK, and the morning's review and new checks for BIO 201's next exam under the day budget",
   "dod": "a core test that a planted BIO 201 unit's slides seed objectives/<exam>-<n> each with sourceRef and course and nothing invented; the objectives 1 to 2 migration with its legacy copies, idempotent; the harness strikes one line on the proposal card and the page writes the rest; a staging seed-objectives worker firing read back; the morning's next BIO 201 review drawn from them inside the day budget; npm test green; npm run check green; ship staging green; live only on Matt's OK",
   "milestone": "M8",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-42",
    "B-43",
@@ -881,7 +881,11 @@
   "notes": "parked for the freeze week",
   "commit": null,
   "source": "BACKLOG.md",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "Written for the retired claude.ai page (D-367) and the per-task gates D-366 ended; refile against the app when BIO practice is asked for",
+   "at": "2026-11-01T21:36:05.987Z"
+  }
  },
  {
   "id": "B-45",
@@ -4210,7 +4214,7 @@
   "title": "How E.V. talks to you (D-229): talk/guidance, a document only the page writes, holds his guidance in his words (at most 1,500 characters), edited in System's Preferences; every prompt that carries her voice reads it after spec.persona.voice and never over spec.boundaries; when he corrects her tone she offers one line with Save, and nothing is saved without his tap; its write is an actions row, tap only",
   "dod": "the talk schema's documents gain guidance; a prompt test shows the guidance after the voice with the boundaries unchanged; the harness edits it at 735 and finds it after a reload; a planted correction shows the Save line and saves only on the tap; npm test green; npm run smoke green; npm run check green; screenshots at 390 × 844, 735 × 830, 1706 × 1240 and 2560 × 1240 looked at; ship staging green; live only with B-238",
   "milestone": "v4.6 triage",
-  "status": "blocked",
+  "status": "declined",
   "depends": [
    "B-224",
    "B-233"
@@ -4218,7 +4222,11 @@
   "notes": "parked for the freeze week",
   "commit": null,
   "source": "plan SyfKhhZHXubJo4RN8CEw7Z",
-  "waitingOn": "Matt"
+  "triage": {
+   "outcome": "declined",
+   "reason": "D-405 rewrote the persona; the done bar is from the page era",
+   "at": "2026-11-01T21:36:06.251Z"
+  }
  },
  {
   "id": "B-238",
@@ -4531,7 +4539,7 @@
   "title": "Request (reported Oct 23): For B-250 I'd remove the pause but I'd still implement the placeholder lines at some point; we don't know where the wait is present but you are right that the conversation history write isn't an issue. So \"removing the pause\" gets added to the batch?",
   "dod": "Matt's words: placeholder lines while something loads, like the mock-up's",
   "milestone": "v4.6 triage",
-  "status": "blocked",
+  "status": "declined",
   "depends": [],
   "notes": "parked for the freeze week: adds an element; B-250 removes the pause instead",
   "commit": null,
@@ -4544,10 +4552,11 @@
    "notes": "Reported Oct 23 from build chat"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-23T18:10:46.770Z"
-  },
-  "waitingOn": "Matt"
+   "outcome": "joined",
+   "into": "B-616",
+   "reason": "joins B-616",
+   "at": "2026-11-01T21:36:09.007Z"
+  }
  },
  {
   "id": "B-252",
@@ -5496,13 +5505,18 @@
   "title": "Study time by topic: each logged session maps to an objective's topic, so Progress can show time per topic",
   "dod": "Sessions carry their topic from the Study Watch note or the set; Progress shows time per topic at 390 and 1280 in both themes; a staging session's run read back carries the topic; npm test green",
   "milestone": "Later",
-  "status": "open",
+  "status": "declined",
   "depends": [
    "B-301"
   ],
   "notes": "",
   "commit": null,
-  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG (parked)"
+  "source": "plan Xgb1Kq2RxdE4uRL4VQZLyG (parked)",
+  "triage": {
+   "outcome": "declined",
+   "reason": "Depends on Study Watch session notes, retired (B-408, B-659)",
+   "at": "2026-11-01T21:36:06.468Z"
+  }
  },
  {
   "id": "B-306",
@@ -7080,7 +7094,7 @@
   "title": "Cleanup after the redesign release: remove the dead functions and the ~50 unused style rules the page review listed; Study's saved view reopens a set only through the current open set; a quiet way to bring back his own snoozed items",
   "dod": "npm test, smoke and the full check green; the rubric score holds; a fresh review finds no gap.",
   "milestone": "v4.9 cleanup",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "From B-401: the pwa-staging check goes red when the app's seed gains a collection the staging D1 was seeded before (notes); the builder planted the seed's notes by hand. Make the check (or the workflow's seed step) add a new seed collection's documents to an existing D1 once, append-only.",
   "commit": null,
@@ -7091,8 +7105,10 @@
    "row": "v4 B-391: Dead code and styles for removed screens remain; a stale saved Study…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-25T18:08:01.741Z"
+   "outcome": "joined",
+   "into": "B-515",
+   "reason": "joins B-515",
+   "at": "2026-11-01T21:36:09.302Z"
   }
  },
  {
@@ -7652,7 +7668,7 @@
   "title": "Upkeep section on every release card",
   "dod": "tools that write the release card add an upkeep block measured at the release commit: lines of code by area, runtimes E.V. runs in, steps per staging and live deploy, full check minutes, test count, open edge cases named by reviews, and each against the last release; a number that got worse needs one line of why; the seven-area scores re-rated (D-337).",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -7663,8 +7679,9 @@
    "row": "v4 B-416: Upkeep section on every release"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-26T08:59:54.442Z"
+   "outcome": "declined",
+   "reason": "The release card lives in the ev-build-manager skill (D-410); more process is against D-366",
+   "at": "2026-11-01T21:36:06.704Z"
   }
  },
  {
@@ -8543,7 +8560,7 @@
   "title": "Bug (reported Oct 28): The staging deploy check still lets a client pass a document by stamping the app's source with a scheduled pipeline's writer (for example morning or watchdog); the app's runner only writes as worker or page, so other writers with that source should be flagged.",
   "dod": "tools/pwa-staging.mjs's 'E.V. app' rule also requires data.writer to be worker or page; a seed document stamped 'E.V. app' with a pipeline writer (morning, watchdog, builder) is flagged, tested; the local staging recordDiffs stays clean; npm test green.",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8555,8 +8572,9 @@
    "row": "v4 B-458: The staging deploy check still lets a client pass a document by…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-28T11:47:01.886Z"
+   "outcome": "declined",
+   "reason": "Edge case in a staging check (D-366)",
+   "at": "2026-11-01T21:36:06.927Z"
   }
  },
  {
@@ -8587,7 +8605,7 @@
   "title": "Bug (reported Oct 28): After a release with the plan-job Durable Object is live, rolling back to the previous build restores a Worker without that class or its migration, so Cloudflare refuses the Worker deploy; the rollback must keep the class and migration, or its dry run must say how.",
   "dod": "rollback live's dry run names the plan-job Durable Object class and its migration as kept, and the restore commit keeps the Worker config's class binding and migrations so Cloudflare accepts the Worker deploy; a test covers the dry-run text. Only when cheap (Matt).",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8599,8 +8617,10 @@
    "row": "v4 B-460: After a release with the plan-job Durable Object is live, rolling…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-28T21:11:00.362Z"
+   "outcome": "joined",
+   "into": "B-268",
+   "reason": "joins B-268",
+   "at": "2026-11-01T21:36:09.549Z"
   }
  },
  {
@@ -8825,7 +8845,7 @@
   "title": "Bug (reported Oct 28): While working with the exam plan, the page showed the notice 'Background jobs need the Claude Code Remote connector, which this view can't reach. Open the page in claude.ai'; in a view without the connector the page should route the job through the Worker (as the app does) or say plainly where the job can be started.",
   "dod": "In a view without the Claude Code Remote connector, starting a background job routes it through the Worker as the app does, or the notice names the one place to start it; no dead end. Lower priority: the claude.ai page view is to be retired (Matt, Oct 28); fix only if cheap or in the path of B-470.",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8836,8 +8856,9 @@
    "row": "v4 B-471: While working with the exam plan, the page showed the notice…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-28T22:05:57.584Z"
+   "outcome": "declined",
+   "reason": "The claude.ai page is retired (D-367)",
+   "at": "2026-11-01T21:36:07.175Z"
   }
  },
  {
@@ -8912,7 +8933,7 @@
   "title": "Bug (reported Oct 28): Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by the first B-465 build before date edits were read; it is to be retired by marking on staging (nothing deleted), and nothing like it reaches live (the live dry-run at f39d054 writes no exams).",
   "dod": "The staging exam BIO201.20261102 is marked retired (an exam retire mark the page and runs honor), Study on staging shows BIO 201's real next exams only; staging only.",
   "milestone": "After Notes",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -8923,8 +8944,9 @@
    "row": "v4 B-475: Staging carries a duplicate BIO 201 exam (BIO201.20261102) made by…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-29T01:34:17.546Z"
+   "outcome": "declined",
+   "reason": "Staging-only data that never reaches Matt; edge case (D-366)",
+   "at": "2026-11-01T21:36:07.394Z"
   }
  },
  {
@@ -10964,7 +10986,7 @@
   "title": "Request (reported Oct 30): Today's Cards row has no checkbox and its Start chip sits apart, so its left edge doesn't line up with the other rows.",
   "dod": "Matches the reference at 1280 and 390 on staging.",
   "milestone": "UI polish",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -10975,8 +10997,9 @@
    "row": "v4 B-589: Today's Cards row has no checkbox and its Start chip sits apart, so…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-30T13:22:46.610Z"
+   "outcome": "declined",
+   "reason": "Flashcards are retired (D-416)",
+   "at": "2026-11-01T21:36:07.593Z"
   }
  },
  {
@@ -11803,7 +11826,7 @@
   "title": "Request (reported Oct 31): derive.mjs producers at 371 and 478 call exam views with no date, so past exams are not read as done there",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11814,8 +11837,10 @@
    "row": "v4 B-627: derive.mjs producers at 371 and 478 call exam views with no date, so…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:39.322Z"
+   "outcome": "joined",
+   "into": "B-628",
+   "reason": "joins B-628",
+   "at": "2026-11-01T21:36:09.775Z"
   }
  },
  {
@@ -11845,7 +11870,7 @@
   "title": "Request (reported Oct 31): claimsQuestions misses wordings like 'I'll put together a quiz'",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11856,8 +11881,9 @@
    "row": "v4 B-629: claimsQuestions misses wordings like 'I'll put together a"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:44.647Z"
+   "outcome": "declined",
+   "reason": "Routing phrasing (D-366)",
+   "at": "2026-11-01T21:36:07.850Z"
   }
  },
  {
@@ -11866,7 +11892,7 @@
   "title": "Request (reported Oct 31): The note chat matches the Quiz me chip only on exact text; typed variants go to a model turn",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11877,8 +11903,9 @@
    "row": "v4 B-630: The note chat matches the Quiz me chip only on exact text; typed…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:47.301Z"
+   "outcome": "declined",
+   "reason": "Routing phrasing (D-366)",
+   "at": "2026-11-01T21:36:08.075Z"
   }
  },
  {
@@ -11887,7 +11914,7 @@
   "title": "Request (reported Oct 31): The .fold-line selector change may shift other fold-line rows; needs a visual check",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11898,8 +11925,10 @@
    "row": "v4 B-631: The .fold-line selector change may shift other fold-line rows; needs…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:49.857Z"
+   "outcome": "joined",
+   "into": "B-516",
+   "reason": "joins B-516",
+   "at": "2026-11-01T21:36:09.990Z"
   }
  },
  {
@@ -11908,7 +11937,7 @@
   "title": "Request (reported Oct 31): Off day vs a separate Study day label for Tue/Thu/Fri",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11919,8 +11948,9 @@
    "row": "v4 B-632: Off day vs a separate Study day label for"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:52.445Z"
+   "outcome": "declined",
+   "reason": "Wording (D-366)",
+   "at": "2026-11-01T21:36:08.288Z"
   }
  },
  {
@@ -11929,7 +11959,7 @@
   "title": "Request (reported Oct 31): An exam dated today that is already over reads upcoming until midnight",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11940,8 +11970,9 @@
    "row": "v4 B-633: An exam dated today that is already over reads upcoming until"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:55.060Z"
+   "outcome": "declined",
+   "reason": "Timing window (D-366)",
+   "at": "2026-11-01T21:36:08.523Z"
   }
  },
  {
@@ -11950,7 +11981,7 @@
   "title": "Request (reported Oct 31): quizCardFor and the in-chat quiz text say N questions without 'again' wording",
   "dod": "The issue in the report is fixed or found harmless; one test or a look on staging says which.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -11961,8 +11992,9 @@
    "row": "v4 B-634: quizCardFor and the in-chat quiz text say N questions without 'again'…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T09:56:57.592Z"
+   "outcome": "declined",
+   "reason": "Wording (D-366)",
+   "at": "2026-11-01T21:36:08.777Z"
   }
  },
  {
@@ -12287,7 +12319,7 @@
   "title": "Request (reported Oct 31): B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees",
   "dod": "The session wrap-up no longer asks the model for cards; the old queued flashcards job case is covered by B-651.",
   "milestone": "Release review follow-ups",
-  "status": "open",
+  "status": "declined",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12298,8 +12330,10 @@
    "row": "v4 B-650: B-647 review: a flashcards job queued before the removal no longer…"
   },
   "triage": {
-   "outcome": "task",
-   "at": "2026-10-31T22:35:53.511Z"
+   "outcome": "joined",
+   "into": "B-652",
+   "reason": "joins B-652",
+   "at": "2026-11-01T21:36:10.230Z"
   }
  },
  {
