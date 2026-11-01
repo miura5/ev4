@@ -12589,5 +12589,22 @@
    "outcome": "task",
    "at": "2026-11-01T21:44:37.956Z"
   }
+ },
+ {
+  "id": "B-663",
+  "kind": "request",
+  "title": "Request (reported Nov 1): The diagnostic pipeline (core/steps-diagnostic.mjs, run/cli --probe, spec tasks.diagnostic) has no scheduled task since D-419; remove it, and the pre-cutover test machinery (preCutoverSpec, cutoverSpec) now that the cutover is done",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-662 cleanup",
+  "words": "The diagnostic pipeline (core/steps-diagnostic.mjs, run/cli --probe, spec tasks.diagnostic) has no scheduled task since D-419; remove it, and the pre-cutover test machinery (preCutoverSpec, cutoverSpec) now that the cutover is done",
+  "reportedAt": "2026-11-01T21:44:42.764Z",
+  "board": {
+   "row": "v4 B-663: The diagnostic pipeline (core/steps-diagnostic.mjs, run/cli --probe,…"
+  }
  }
 ]
