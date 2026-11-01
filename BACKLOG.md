@@ -722,3 +722,4 @@ Reports in Matt's words, untriaged or declined. Nothing is deleted: a declined e
 | B-633 | request | 2026-10-31T08:56:27.402Z | An exam dated today that is already over reads upcoming until midnight | release review Oct 31 | declined |  |
 | B-634 | request | 2026-10-31T08:56:30.026Z | quizCardFor and the in-chat quiz text say N questions without 'again' wording | release review Oct 31 | declined |  |
 | B-650 | request | 2026-10-31T14:02:53.574Z | B-647 review: a flashcards job queued before the removal no longer matches a job kind (check the runner marks it failed, not crashes); the session wrap-up still asks the model for cards nobody sees | B-647 builder | declined |  |
+| B-662 | request | 2026-11-01T21:36:28.812Z | Repo cleanup: remove leftovers of retired systems (trimmer docs, cutover doc, fidelity sprint tools, one-time design hand-offs, stale spec task lists) | Matt in the build chat, Nov 1 | inbox |  |
