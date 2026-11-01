@@ -6746,5 +6746,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.28"
+ },
+ {
+  "target": "staging",
+  "commit": "0cc7c64",
+  "time": "2026-11-01T00:51:21.908Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "3675ed6",
+  "tasks": [
+   "B-658"
+  ],
+  "summary": "A note's writing session stays tied to its note: after it pauses and…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
