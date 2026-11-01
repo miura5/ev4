@@ -7,7 +7,7 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| nothing | | | | |
+| B-658 builder | B-658 note session follows note switch | .claude/worktrees/agent-aac7fdc7d94c1e5cf | worktree-agent-aac7fdc7d94c1e5cf | Nov 1 |
 
 ## Waiting on Matt
 
@@ -15,6 +15,7 @@ nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
 
 ## Next
 
+0. Matt: fix B-658 only, then stop (staging, card, wait for his ship).
 1. Board comments not read this session (inbox prints the Claude_Docs query); read them before the next release.
 2. B-655 (checks.yml install timeout/retry), B-656 and B-657 (B-653/B-654 review follow-ups), then bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643, B-650, B-652. B-649 needs the live token; low priority.
 
