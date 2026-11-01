@@ -150,7 +150,7 @@ jobs:
           if npx wrangler secret list --env live | grep -q '"ANTHROPIC_API_KEY"'; then
             echo "ANTHROPIC_API_KEY is set on ev-live"
           else
-            echo "::warning title=pwa-live::ANTHROPIC_API_KEY is not set on ev-live: Matt sets it in the Cloudflare dashboard (docs/cutover.md); until then the app's Claude asks fail"
+            echo "::warning title=pwa-live::ANTHROPIC_API_KEY is not set on ev-live: Matt sets it in the Cloudflare dashboard; until then the app's Claude asks fail"
           fi
       - name: check (401 without the token and with a wrong one, 200 with it; collection counts only)
         env:

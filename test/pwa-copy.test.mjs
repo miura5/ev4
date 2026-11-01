@@ -1,8 +1,7 @@
 // B-319: the one-time copy of a record into a D1 (tools/pwa-copy.mjs). Proved here against a stand-in Worker
 // (test/fake-worker.mjs, the run API's own checkWrites and planBatch over memory) with the made-up record
 // (test/data/record): the export directory is refused inside the repository, system is left out, the export's calls
-// cover every other collection and page on, each file's id is one a result named, ids keep their spaces, the writes go
-// in chunks of 50 or fewer, creates only, an import into a D1 that is not empty writes nothing, a cut-off import resumes,
+// cover every other collection and page on, each file's id is one a result named, ids keep their spaces,
 // verify reads the whole D1 (GREEN on a whole copy, RED on a changed or an extra document), the target is the
 // registry's copy Worker over https only, and live has no target.
 import test from 'node:test';
@@ -14,6 +13,18 @@ import { spawn, execFileSync } from 'node:child_process';
 import { ROOT } from './helpers.mjs';
 import { manifestOf } from '../pwa/backup.js';
 import * as COPY from '../tools/pwa-copy.mjs';
+import { batch } from '../core/runapi-client.mjs';
+
+// The copy's import is gone (B-665, its job done): a test fills the stand-in through the run API itself.
+function seed(worker, rows) {
+  for (let i = 0; i < rows.length; i += 50) {
+    const writes = rows
+      .slice(i, i + 50)
+      .map(r => ({ op: 'set', collection: r.c, doc_id: r.id, data: JSON.parse(r.data) }));
+    const r = batch(worker, writes);
+    if (!r.ok) throw new Error(`seed: ${r.status} ${r.error}`);
+  }
+}
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 const TOKEN = 'planted-copy-token-' + 'k3W8'.repeat(6);
@@ -197,41 +208,14 @@ test("export-done follows each collection's next_cursor from the session's own r
   );
 });
 
-test('the writes go in chunks of 50 or fewer and under the body limit, creates only', () => {
-  const rows = Array.from({ length: 123 }, (_, i) => ({ c: 'talk', id: 'd-' + i, data: JSON.stringify({ i }) }));
-  const parts = COPY.chunks(rows);
-  assert.deepEqual(
-    parts.map(p => p.length),
-    [50, 50, 23]
-  );
-  for (const p of parts)
-    for (const w of p) {
-      assert.equal(w.op, 'set');
-      assert.equal('if_version' in w, false);
-    }
-  const big = rows.map(r => ({ ...r, data: JSON.stringify({ t: 'x'.repeat(100) }) }));
-  for (const p of COPY.chunks(big, { bytes: 1000 })) assert.ok(JSON.stringify(p).length <= 1000 + p.length);
-  assert.throws(
-    () => COPY.chunks([{ c: 'x', id: 'y', data: JSON.stringify({ t: 'x'.repeat(2000) }) }], { bytes: 1000 }),
-    /over one batch/
-  );
-});
-
-test('import into an empty D1 through the run API, then verify the whole D1: counts and hashes match', async t => {
+test('verify reads the whole D1 back: counts and hashes match a whole copy', async t => {
   const fw = await fakeWorker();
   t.after(() => fw.child.kill());
   const rows = exportRows();
   assert.ok(rows.length > 20);
   const manifest = await manifestOf(rows);
-  const logged = [];
-  const r = COPY.importExport(fw.worker, rows, { max: 7, log: s => logged.push(s) });
-  assert.equal(r.written, rows.length);
-  assert.equal(r.batches, Math.ceil(rows.length / 7));
-  for (const l of logged) assert.ok(!l.includes(TOKEN));
-  const held = fw.dump();
-  assert.equal(Object.keys(held).length, rows.length);
-  assert.ok('libindex/NUR 112' in held, 'B-319: the id with a space, stored as it is');
-  for (const v of Object.values(held)) assert.equal(v.v, 1);
+  seed(fw.worker, rows);
+  assert.ok('libindex/NUR 112' in fw.dump(), 'B-319: the id with a space, stored as it is');
   const lines = await COPY.verifyCopy(fw.worker, manifest);
   assert.ok(
     lines.every(l => l.ok),
@@ -240,60 +224,11 @@ test('import into an empty D1 through the run API, then verify the whole D1: cou
   assert.equal(lines.length, Object.keys(manifest).length + 1);
 });
 
-test('an id with a slash is refused before any write; one with a space is not', async t => {
-  const fw = await fakeWorker();
-  t.after(() => fw.child.kill());
-  const slash = [...exportRows(), { c: 'talk', id: 'a/b', data: '{}' }];
-  assert.throws(
-    () => COPY.importExport(fw.worker, slash),
-    /1 ids the run API does not take.*"a\/b".*nothing was written/
-  );
-  assert.deepEqual(fw.dump(), {});
-  const space = [{ c: 'talk', id: 'a b é', data: '{"x":1}' }];
-  assert.equal(COPY.importExport(fw.worker, space).written, 1);
-  assert.ok((await COPY.verifyCopy(fw.worker, await manifestOf(space))).every(l => l.ok));
-});
-
-test('a D1 that is not empty is refused, and nothing is written: the same ids, or any other document', async t => {
-  const fw = await fakeWorker(RECORD);
-  t.after(() => fw.child.kill());
-  const before = fw.dump();
-  const rows = exportRows();
-  assert.throws(() => COPY.importExport(fw.worker, rows), /the D1 is not empty.*nothing was written/);
-  assert.deepEqual(fw.dump(), before);
-  // the stand-in holds system documents the export leaves out: even --resume refuses a D1 holding them
-  assert.throws(
-    () => COPY.importExport(fw.worker, rows, { resume: true }),
-    /the D1 is not empty: it holds \d+ documents.*system\//
-  );
-  // a D1 holding one unrelated document only, export ids none
-  const other = await fakeWorker();
-  t.after(() => other.child.kill());
-  COPY.importExport(other.worker, [{ c: 'zz-other', id: 'one', data: '{}' }]);
-  assert.throws(() => COPY.importExport(other.worker, rows, { resume: true }), /holds 1 documents.*zz-other\/one/);
-  assert.equal(Object.keys(other.dump()).length, 1);
-});
-
-test('an import cut off part way resumes, skipping only what it already wrote; other data there is refused', async t => {
-  const fw = await fakeWorker();
-  t.after(() => fw.child.kill());
-  const rows = exportRows();
-  COPY.importExport(fw.worker, rows.slice(0, 10));
-  assert.throws(() => COPY.importExport(fw.worker, rows), /holds 10 documents/);
-  const changed = rows.map((r, i) => (i === 0 ? { ...r, data: JSON.stringify({ changed: true }) } : r));
-  assert.throws(() => COPY.importExport(fw.worker, changed, { resume: true }), /holds 1 documents/);
-  const r = COPY.importExport(fw.worker, rows, { resume: true });
-  assert.equal(r.skipped, 10);
-  assert.equal(r.written, rows.length - 10);
-  const lines = await COPY.verifyCopy(fw.worker, await manifestOf(rows));
-  assert.ok(lines.every(l => l.ok));
-});
-
 test('verify is RED when a collection differs from the export, or the D1 holds anything the export does not', async t => {
   const fw = await fakeWorker();
   t.after(() => fw.child.kill());
   const rows = exportRows();
-  COPY.importExport(fw.worker, rows);
+  seed(fw.worker, rows);
   const one = rows.find(r => r.c === 'talk') || rows[0];
   const changed = await manifestOf(rows.map(r => (r === one ? { ...r, data: JSON.stringify({ other: 1 }) } : r)));
   let lines = await COPY.verifyCopy(fw.worker, changed);
@@ -302,7 +237,7 @@ test('verify is RED when a collection differs from the export, or the D1 holds a
   // an extra document in a collection of its own: the whole D1 is read, so it is a difference
   const fw2 = await fakeWorker();
   t.after(() => fw2.child.kill());
-  COPY.importExport(fw2.worker, [...rows, { c: 'zz-extra', id: 'x', data: '{}' }]);
+  seed(fw2.worker, [...rows, { c: 'zz-extra', id: 'x', data: '{}' }]);
   lines = await COPY.verifyCopy(fw2.worker, await manifestOf(rows));
   assert.equal(lines.at(-1).ok, false);
   assert.ok(

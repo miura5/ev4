@@ -1,5 +1,5 @@
 // The Chart (M12): chart/ is the project record; BACKLOG.md, DECISIONS.md and CHANGELOG.md are generated from it by
-// tools/chart.mjs. chart/import keeps what the one-time import from v3 read (B-92); its code is gone (B-262).
+// tools/chart.mjs. The one-time import from v3 (B-92) and its code (B-262) are gone.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

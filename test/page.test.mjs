@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { buildPages, frozenPage, loadSchemas, PAGE_SPEC_KEYS, releaseOf } from '../tools/build.mjs';
+import { buildPages, loadSchemas, PAGE_SPEC_KEYS, releaseOf } from '../tools/build.mjs';
 import { deployCalls, verify, verifyReads } from '../core/deploy.mjs';
 import { makeValidator } from '../core/validate.mjs';
 
@@ -236,20 +236,6 @@ test('B-472: deploy prints no page publish, verify reads no page and has no page
     0,
     v.lines.map(l => l.what).join(', ')
   );
-});
-
-test('B-472: the frozen page says once that E.V. lives in the app, with the app address the registry names', () => {
-  const live = frozenPage(spec, 'live', release),
-    staging = frozenPage(spec, 'staging', release);
-  for (const html of [live, staging]) {
-    assert.match(html, /^<!doctype html>/);
-    assert.match(html, /E\.V\. now lives in the app\. This page is no longer updated\./);
-    assert.doesNotMatch(html, /<script/, 'it runs nothing');
-  }
-  const url = (spec.registry.records.live.app || {}).url;
-  if (url) assert.ok(live.includes(`href="${url}"`), 'the live app address');
-  const sUrl = (spec.registry.records.staging.app || {}).url;
-  if (!sUrl) assert.doesNotMatch(staging, /href=/, 'no address is invented');
 });
 
 test('B-28: the stored capability declaration is read from a page read result', async () => {

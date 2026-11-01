@@ -12,13 +12,6 @@
 //       follows each collection's next_cursor, printing the next page's call (a page can be short of the limit and
 //       still name one); a collection is whole when its last result names none and its files are exactly the ids its
 //       results named. Then it writes <dir>/manifest.json: per collection the count and the SHA-256 of pwa/backup.js.
-//   node tools/pwa-copy.mjs import <dir> [--url <the copy target>] [--resume]
-//       creates every exported document in the copy target's D1 through POST /api/run/batch, 50 writes or fewer and
-//       under the 1 MiB body a batch, creates only (no if_version, so the Worker refuses a document that exists). The
-//       target is spec.registry.records.<record>.copy.worker on the account of the record's own Worker; --url, https
-//       only, must name that same Worker. Before any write it reads every collection the D1 holds and refuses unless
-//       the D1 is empty; --resume (after an import cut off part way) allows only documents the export holds with the
-//       same data at version 1, and skips them.
 //   node tools/pwa-copy.mjs verify <dir> [--url <the copy target>]
 //       reads the whole D1 back (every collection it holds, GET /api/run/collections and /list) and checks counts and
 //       SHA-256 per collection against the export's manifest (tools/pwa-backup.mjs verify): GREEN, or RED on any
@@ -26,7 +19,7 @@
 //   node tools/pwa-copy.mjs manifest <dir>
 //       the manifest as one line of JSON ({collection: [count, sha256]}, no document) for the pwa-staging workflow's
 //       copy_manifest input, which checks the D1's own rows against it.
-// Live (B-319): export-calls, export-done and import against the live record refuse unless dist/live-ok, written by an
+// Live (B-319): export-calls and export-done against the live record refuse unless dist/live-ok, written by an
 // OK bound to this checkout's commit or its build commit (ship live --matt-ok, deploy live --matt-ok), is under
 // LIVE_OK_HOURS old; live's copy target is the ev-live Worker (B-320, D-330), the live D1 itself. A limit, said in what it prints: ArtifactData has no way to list a
 // record's collections, so a collection the spec does not name is not exported.
@@ -39,18 +32,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readExport } from '../core/schemas.mjs';
 import { newestTranscript, toolResults } from '../core/transcript.mjs';
-import { readWorker, request, batch } from '../core/runapi-client.mjs';
+import { readWorker, request } from '../core/runapi-client.mjs';
 import { manifestOf, manifestDiffs } from '../pwa/backup.js';
-import { validCollection, validDocId } from '../pwa/runapi.js';
 import { verify as verifyLines } from './pwa-backup.mjs';
 import { LIVE_OK_HOURS } from './hooks.mjs';
 import { gitState } from './build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const PAGE = 1000;
-export const CHUNK = 50;
-/** Under the Worker's 1 MiB batch body (pwa/runapi.js MAX_BODY), with room for the envelope. */
-export const CHUNK_BYTES = 900 * 1024;
 
 const realish = p => {
   // the nearest existing ancestor's real path, plus the rest: a symlink into the repository is still inside it
@@ -257,27 +246,6 @@ export function exportRows(docs) {
     .map(({ collection, id, doc }) => ({ c: collection, id, data: JSON.stringify(doc) }));
 }
 
-/** The writes, in chunks of at most CHUNK entries and CHUNK_BYTES of body: creates only (no if_version). */
-export function chunks(rows, { max = CHUNK, bytes = CHUNK_BYTES } = {}) {
-  const out = [];
-  let cur = [];
-  let size = 0;
-  for (const r of rows) {
-    const w = { op: 'set', collection: r.c, doc_id: r.id, data: JSON.parse(r.data) };
-    const s = JSON.stringify(w).length + 1;
-    if (s > bytes) throw new Error(`${r.c}/${r.id} is ${s} bytes: over one batch's body on its own`);
-    if (cur.length && (cur.length >= max || size + s > bytes)) {
-      out.push(cur);
-      cur = [];
-      size = 0;
-    }
-    cur.push(w);
-    size += s;
-  }
-  if (cur.length) out.push(cur);
-  return out;
-}
-
 /** Every document of a collection in the Worker's D1: [{id, version, data}], paged by cursor. */
 export function listAll(worker, collection) {
   const out = [];
@@ -293,19 +261,6 @@ export function listAll(worker, collection) {
   return out;
 }
 
-/** What the D1 already holds of the export: {clash: [c/id], same: Set(c\nid)}. With resume, a same document is skipped. */
-export function overlap(rows, held) {
-  const clash = [];
-  const same = new Set();
-  for (const r of rows) {
-    const h = held.get(r.c + '\n' + r.id);
-    if (!h) continue;
-    if (h.version === 1 && JSON.stringify(h.data) === r.data) same.add(r.c + '\n' + r.id);
-    else clash.push(`${r.c}/${r.id}`);
-  }
-  return { clash, same };
-}
-
 /** Every collection the D1 holds, with its count (GET /api/run/collections). */
 export function d1Collections(worker) {
   const r = request(worker, { route: 'collections' });
@@ -319,41 +274,6 @@ function heldOf(worker) {
   for (const { collection: c } of d1Collections(worker))
     for (const d of listAll(worker, c)) held.set(c + '\n' + d.id, { ...d, c });
   return held;
-}
-
-/** The import. Returns {written, skipped, batches}; throws, having written nothing, when the D1 is not empty. */
-export function importExport(worker, rows, { resume = false, log = () => {}, max = CHUNK, bytes = CHUNK_BYTES } = {}) {
-  const bad = rows.filter(r => !validCollection(r.c) || !validDocId(r.id)).map(r => `${r.c}/${JSON.stringify(r.id)}`);
-  if (bad.length)
-    throw new Error(`${bad.length} ids the run API does not take (${bad.slice(0, 5).join(', ')}): nothing was written`);
-  const held = heldOf(worker);
-  const { clash, same } = overlap(rows, held);
-  // B-319: the target is empty, but for what --resume matches: anything else there (an export id with other data, or
-  // a document the export does not hold) refuses the import before any write
-  const exportKeys = new Set(rows.map(r => r.c + '\n' + r.id));
-  const foreign = [...held.keys()].filter(k => !exportKeys.has(k)).map(k => k.replace('\n', '/'));
-  const refused = [...clash, ...foreign, ...(resume ? [] : [...same].map(k => k.replace('\n', '/')))];
-  if (refused.length)
-    throw new Error(
-      `the D1 is not empty: it holds ${refused.length} documents the copy may not write over or beside (${refused.slice(0, 5).join(', ')}${refused.length > 5 ? ', ...' : ''}): nothing was written; the copy goes into an empty D1${resume ? '' : " (--resume allows only ids it holds with the export's data at version 1)"}`
-    );
-  const todo = rows.filter(r => !same.has(r.c + '\n' + r.id));
-  const parts = chunks(todo, { max, bytes });
-  let written = 0;
-  for (let i = 0; i < parts.length; i++) {
-    const r = batch(worker, parts[i]);
-    if (!r.ok && r.unknown)
-      throw new Error(
-        `batch ${i + 1} of ${parts.length}: ${r.error}; ${written} documents written before it: run verify, then import again with --resume`
-      );
-    if (!r.ok)
-      throw new Error(
-        `batch ${i + 1} of ${parts.length} refused (${r.status} ${r.error}${r.entry != null ? `, entry ${r.entry}` : ''}): ${written} documents written before it; run again with --resume`
-      );
-    written += parts[i].length;
-    log(`batch ${i + 1}/${parts.length}: ${parts[i].length} created (${written} of ${todo.length})`);
-  }
-  return { written, skipped: same.size, batches: parts.length };
 }
 
 /** The check: the whole D1, every collection it holds, read back against the export's manifest; a collection or a
@@ -386,8 +306,6 @@ const readJson = f => JSON.parse(fs.readFileSync(f, 'utf8'));
 async function main(argv) {
   const args = argv.slice();
   const cmd = args.shift();
-  const resume = args.includes('--resume');
-  if (resume) args.splice(args.indexOf('--resume'), 1);
   const spec = readJson(path.join(ROOT, 'spec/ev.spec.json'));
   if (cmd === 'export-calls') {
     const record = opt(args, '--record');
@@ -440,16 +358,6 @@ async function main(argv) {
     console.log(compactManifest(manifest));
     return 0;
   }
-  if (cmd === 'import') {
-    needLive(ledger.record);
-    const worker = workerOf(args, ledger, spec);
-    console.log(`import of ${rows.length} documents into ${worker.url}`);
-    const r = importExport(worker, rows, { resume, log: s => console.log(s) });
-    console.log(
-      `imported: ${r.written} created in ${r.batches} batches${r.skipped ? `, ${r.skipped} already there (--resume)` : ''}`
-    );
-    return 0;
-  }
   if (cmd === 'verify') {
     const worker = workerOf(args, ledger, spec);
     const lines = await verifyCopy(worker, manifest);
@@ -458,9 +366,7 @@ async function main(argv) {
     console.log(`pwa-copy verify (${ledger.record} into ${worker.url}): ${green ? 'GREEN' : 'RED'}`);
     return green ? 0 : 1;
   }
-  console.error(
-    'usage: node tools/pwa-copy.mjs export-calls|export-done|import|verify|manifest <dir> ... (see the header)'
-  );
+  console.error('usage: node tools/pwa-copy.mjs export-calls|export-done|verify|manifest <dir> ... (see the header)');
   return 2;
 }
 

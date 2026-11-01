@@ -24,7 +24,6 @@
 //            the record (B-96); --done records those tasks done in the same command (B-147)
 //   ship live --record-past --commit sha --run <pwa-live run id> [--release v4.x.y]   B-641: records a live deploy that
 //            went out (a successful pwa-live run of that commit, read with gh api) but was never recorded; deploys nothing
-//   ship <staging|live> --freeze-page [--matt-ok]   B-472 (D-367): prints the one-time publish of the frozen claude.ai page
 //   rollback live [--to sha] [--matt-ok --apply] [--no-test]   the way back (B-60): the previous live build's content at main's
 //            head, as a restore commit, then ship staging and ship live; without --apply a dry run that prints it all
 //   brief --task <id>        one page for a new session: the inbox, the task, its dependencies, decisions, limits
@@ -1133,46 +1132,6 @@ export function shipJobRefusals({ id, job, result, commit, now = Date.now() }) {
   return why;
 }
 
-/**
- * B-472 (D-367): the one-time publish that freezes the claude.ai page: the build's dist/frozen/<target>/index.html in
- * place of the page, with no capabilities (it reads nothing). Printed once for the build manager to make; ship itself
- * never publishes the page again. Live takes Matt's explicit OK (--matt-ok writes dist/live-ok, B-58); a builder run
- * prints nothing (D-200).
- */
-function freezePage({ root, dist, manifest, target, mattOk }) {
-  const head = `ship ${target} --freeze-page`;
-  const page = manifest.pages[target] || {};
-  const why = [];
-  if (builderRun()) why.push('a builder run publishes no page (D-200): a build chat makes it');
-  if (!page.artifact) why.push(`no ${target} page in spec.registry.records`);
-  if (target === 'live' && !mattOk)
-    why.push("publishing the live page needs Matt's explicit OK in the chat (then pass --matt-ok)");
-  if (why.length) {
-    console.log([`${head}: REFUSED`, ...why.map(w => '  ' + w)].join('\n'));
-    return 1;
-  }
-  const file = path.join(dist, 'frozen', target, 'index.html');
-  if (target === 'live')
-    fs.writeFileSync(
-      path.join(dist, 'live-ok'),
-      JSON.stringify({ at: Date.now(), commit: manifest.commit, by: 'ship live --matt-ok' })
-    );
-  console.log(
-    [
-      `${head}: 1 call, once. It replaces the claude.ai page with one line that E.V. now lives in the app (D-367); ship never publishes the page again.`,
-      '',
-      `1. frozen page: Artifact`,
-      JSON.stringify(
-        { action: 'publish', url: artifactUrl(page.artifact), file_path: file, capabilities: {} },
-        null,
-        1
-      ),
-      '',
-      `Then look at it once (Artifact open ${artifactUrl(page.artifact)}). ${path.relative(root, file)} is the page as published.`,
-    ].join('\n')
-  );
-  return 0;
-}
 async function ship(o) {
   const root = rootOf(o),
     target = o._[1];
@@ -1200,7 +1159,6 @@ async function ship(o) {
     refusals.push(
       `B-640: the build is ${manifest.release}: git describe --tags found no v4 tag, even after fetching origin's tags. Run git fetch --tags --unshallow origin, then ship again`
     );
-  if (o['freeze-page']) return freezePage({ root, dist, manifest, target, mattOk: Boolean(o['matt-ok']) });
   const read = f => readJson(path.join(dist, 'system', f + '.json'));
   const distDocs = { spec: read('spec'), environments: read('environments') };
   let pushed = false;

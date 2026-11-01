@@ -439,8 +439,7 @@ export function deployCalls({
     args: { action: 'batch', url: artifactUrl(rec.artifact), writes },
   });
 
-  // B-472 (D-367): the claude.ai page is frozen; ship no longer publishes it (ship <target> --freeze-page prints the
-  // one-time frozen publish).
+  // B-472 (D-367): the claude.ai page is frozen; ship no longer publishes it.
 
   for (const [key, t] of tasksFor(manifest, target)) {
     const promptFile = `${distDir}/prompts/${key}.txt`;

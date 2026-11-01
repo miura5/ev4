@@ -101,7 +101,7 @@ export function traceAllows(a, traceOk, { liveId, now = Date.now() }) {
  *   - it writes to an API (gh api, curl or wget with a method or a body) with a $ or backtick in it;
  *   - it hides what it runs: a base64 decode, eval, or a pipe into a shell.
  * (A plain "pwa" and "live" with no GitHub call is not one: the runbook's own node tools/pwa-live.mjs and pwa-copy.mjs
- * --record live commands must run; docs/cutover.md, Known limits.)
+ * --record live commands must run, as the live runbook gives them.)
  * Plain mentions (node tools/pwa-live.mjs, git add, cat .github/workflows/pwa-live.yml) and gh reads pass. One that may
  * dispatch passes only (dispatchAllowed) when why is empty and its commit is the one dist/live-ok names: exactly one
  * literal commit=<40 hex>, and no $, backtick, base64, eval, pipe into a shell or input from a file or stdin, so the

@@ -208,7 +208,7 @@ test('B-425: a docs-only commit keeps the build commit; a code commit moves it; 
   const both = commit(['docs/notes/x.md', 'chart/deploys.json'], 'docs and the record');
   assert.equal(buildCommitOf(dir, both), code, 'docs plus bookkeeping keeps it too');
   assert.equal(gitState(dir).commit, code, 'gitState names the same build commit');
-  fs.writeFileSync(path.join(dir, 'docs/lessons.md'), 'an uncommitted docs edit');
+  fs.writeFileSync(path.join(dir, 'docs/notes.md'), 'an uncommitted docs edit');
   assert.equal(gitState(dir).dirty, false, 'an uncommitted docs edit is not dirt');
   const moved = commit(['core/a.mjs'], 'a code change');
   assert.equal(buildCommitOf(dir, moved), moved, 'a code commit moves it');

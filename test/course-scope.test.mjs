@@ -5,7 +5,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import EV from '../core/evcore.mjs';
 import { spec, at, key, ws, assertValid } from './core-fixtures.mjs';
-import { mixedCourses, report } from '../tools/mixed-courses.mjs';
 
 const env = { schema: 1, writer: 'test', at: at('2026-10-20'), source: 'test' };
 const EXAMS = [
@@ -179,50 +178,4 @@ test('B-498: a study session’s missed check files under its objective’s cour
   const spot = r.writes.find(w => w.collection === 'weakspots' && w.op === 'set');
   assert.equal(spot.data.course, 'BIO 201');
   assert.equal(spot.data.proposed, true);
-});
-
-test('B-498: the listing names a plan’s other-course task and a misfiled spot, and changes nothing', () => {
-  const db = {
-    exams: EXAMS,
-    objectives: OBJECTIVES,
-    dates: DATES,
-    dateedits: [],
-    materials: [],
-    notes: [],
-    planedits: [{ id: 'BX3', ...env, schema: 2, ticks: {}, plan: 'BX3' }], // approved: the plan in force
-    plans: [
-      {
-        id: 'BX3',
-        ...env,
-        exam: 'BX3',
-        section,
-        days: [
-          {
-            date: '2026-10-30',
-            tasks: [
-              { id: 'a', text: 'Bone remodeling flashcards' },
-              { id: 'b', text: 'Quiz 6', ref: 'dates/nur-quiz-6' },
-            ],
-          },
-        ],
-      },
-    ],
-    weakspots: [
-      ws('ws-bones', { objective: 'BX3-2', exam: 'BX3', course: 'NUR 112' }),
-      ws('ws-fluids', { objective: 'E5-1', exam: 'E5' }),
-    ],
-  };
-  const before = JSON.stringify(db);
-  const m = mixedCourses(db);
-  assert.deepEqual(
-    m.tasks.map(t => [t.plan, t.task, t.theirs]),
-    [['BX3', 'b', 'NUR 112']]
-  );
-  assert.deepEqual(
-    m.spots.map(w => [w.id, w.filed, w.own]),
-    [['ws-bones', 'NUR 112', 'BIO 201']]
-  );
-  assert.match(report(m).join('\n'), /plans\/BX3 \(BIO 201 BX3, in force\) 2026-10-30 b: NUR 112: Quiz 6/);
-  assert.equal(JSON.stringify(db), before, 'read only');
-  void spec;
 });
