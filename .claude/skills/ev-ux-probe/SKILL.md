@@ -6,7 +6,7 @@ description: Run E.V.'s UX probe (D-369) - cold testers walk the staging app in 
 # E.V. UX probe and delta probe (D-369)
 
 This skill is for the **build manager** (to brief and run a probe) and the **synthesis agent**. Testers never see it:
-they get only `tester-brief.md` (and `motion.md`), filled in and pasted or pointed to, because a tester who has read how
+they get only `tester-brief.md`, filled in and pasted or pointed to, because a tester who has read how
 E.V. is built is no longer cold.
 
 The probe's output is the **UX map**, a Claude Doc outside the repository:
@@ -31,8 +31,8 @@ journey (J8 and on) written into the filled tester brief in the same shape as th
 
 | Who | What | Gets |
 | --- | --- | --- |
-| Tester A | laptop, 1280x800, one course | the filled tester brief + motion.md |
-| Tester B | full probe only: phone, `isMobile`/`hasTouch`, the other course; a "loads and ticks" pass (D-407: it loads, a tick works, nothing overflows), no polish findings | the filled tester brief |
+| Tester A | laptop, 1280x800, one course | the filled tester brief |
+| Tester B | full probe only: one phone loads-and-ticks check (D-407: it loads, a tick works, nothing overflows), the other course; no journeys or polish findings | the filled tester brief |
 | Synthesis agent | turns findings into the UX map | `synthesis.md` + the tester folders |
 | Matt | his own pass: agree, disagree or a note per signal, in the doc | a short plain line with the doc link |
 | Build manager | budget line, briefing, filing the Tasks to add | this skill |
@@ -56,14 +56,14 @@ motion; synthesis about 45 minutes).
    scratchpad, e.g. `<scratchpad>/stg/system/worker.json`). It holds the staging Worker's `url` and `token`, under
    `.data` or at the top level. It stays in the scratchpad: never copy it, its token or a URL carrying it into the
    repository, a brief's text or a report.
-2. **Tester folders.** One per tester in the scratchpad. Into each, copy `tester-brief.md`, `motion.md` and
+2. **Tester folders.** One per tester in the scratchpad. Into each, copy `tester-brief.md` and
    `fonts/inter-route.cjs`, and fill the brief's `<...>` lines: folder, viewport, course, sign-in file path, journeys.
    On a full probe, give the two testers **different courses** (NUR 112, BIO 201).
 3. **Gallery (delta, Proprietary).** If the change touched a Proprietary component (page/ds/components,
    page/app/01-ui-*), add to the brief's journeys line: "Open the app's /gallery, find <component>, look at each state
    at 1280; same row protocol, Where = Gallery › <component>."
-4. **Start the testers** in parallel, in the background: "Read <folder>/tester-brief.md and <folder>/motion.md and
-   follow them. Your final message is your report." Keep them alive (D-358).
+4. **Start the testers** in parallel, in the background: "Read <folder>/tester-brief.md and
+   follow it. Your final message is your report." Keep them alive (D-358).
 5. **Synthesis.** A fresh agent: "Load the ev-ux-probe skill and follow synthesis.md in <full | delta> mode; tester
    folders: <A>[, <B>]; change: <...>; build: <sha>."
 6. **Matt's pass.** One plain line with the doc link: what was probed and the top frictions.

@@ -1,10 +1,10 @@
 # E.V. UX probe: tester brief (cold, first-time user)
 
 <!-- For the build manager: fill every <...> below before handing this to a tester, or paste it with the values
-written in. A tester gets this file (and motion.md) only, never the skill around it. -->
+written in. A tester gets this file only, never the skill around it. -->
 
 - Your folder: `<TESTER FOLDER>` (write everything here)
-- Your viewport: `<1280x800 laptop | 390x844 phone, one-handed>`
+- Your viewport: `<1280x800 laptop | phone loads-and-ticks only>`
 - Your course: `<NUR 112 | BIO 201>`. Another tester is using the other course on the same account at the same time.
 - Sign-in file: `<WORKER JSON PATH>`
 - Font route: `<TESTER FOLDER>/inter-route.cjs`
@@ -40,8 +40,8 @@ words, so say them plainly.
 
   Use a persistent context (`chromium.launchPersistentContext(<your folder>/profile, {viewport})`) or keep one browser
   open across steps through a small REPL-style script, so state carries over. Find controls by their visible text or
-  role, never by digging through the DOM for hidden structure. On the phone, use `isMobile: true`, `hasTouch: true` and
-  tap.
+  role, never by digging through the DOM for hidden structure. On the phone (loads-and-ticks only: it loads, a tick works, nothing
+  overflows; no polish findings), use `isMobile: true`, `hasTouch: true` and tap.
 - Stay in your own course. The conversation, Today and a running study session may show the other tester's activity:
   note it once and judge only what Matt would see on his own. End any study session you start before you finish.
 - Model-backed actions (making a plan, quizzes, asking E.V.) take from 30 seconds to a few minutes. Wait for them the
@@ -122,6 +122,57 @@ New journeys (flashcards, for example) are added here by the build manager as J8
 3. **What you liked.** Keep it short, and keep these: they must not be lost in polish.
 4. **Ideas.** List the intuitive touches and shortcuts you reached for or wished for (a tap, gesture, cross-view link,
    default or keyboard shortcut), with where you reached for each.
+
+## Motion and fine detail (laptop)
+
+Screenshots only show still frames. Matt wants you to actually see motion and the small details, so do this as well.
+
+### Seeing motion
+For each key interaction below, record what happens in the first 1.5–2 seconds after you tap and turn it into one image you can look at.
+- Record with Playwright: `browser.newContext({ recordVideo: { dir, size: viewport } })`. Close the page so the .webm is written.
+- Or take quick screenshots every ~100 ms right after the tap.
+- Turn either into a contact sheet: `ffmpeg -i clip.webm -vf "fps=8,scale=iw/2:-1,tile=4x3" -frames:v 1 sheet.png` (ffmpeg and PIL are installed).
+- Look at the sheet with Read.
+
+Key interactions to film:
+- switching views
+- opening and closing the E.V. window
+- a tick on Today
+- revealing a flashcard and rating it
+- answering a quiz question
+- submitting a chat message, through to E.V.'s reply starting
+- a long job's waiting state (plan or deck)
+- opening a sheet or dialog, and a page loading cold
+
+For each, note:
+- **Response time:** how long after the tap something visibly changes. Under 100 ms feels instant; 300 ms or more feels laggy.
+- **Transitions:** smooth, abrupt, or missing.
+- **Layout shift and flicker:** content jumping as it loads.
+- **Loading and waiting:** is there a sign that work is happening? Does it reassure you or feel stuck?
+- **The avatar's animation:** does it say anything about E.V.'s state?
+
+### Seeing fine detail
+On a few screens per view, zoom in. Either screenshot with `deviceScaleFactor: 2` and crop regions with PIL, or use `page.screenshot({ clip })`, then look closely.
+- Alignment and spacing rhythm.
+- Icon sizes and weights against the text.
+- Type hierarchy.
+- Truncation and overflow of long titles.
+- Contrast of quiet text.
+- Hover, pressed and focus states (hover and focus with the keyboard at 1280).
+- Disabled states.
+- Empty states.
+- Anything that looks unfinished or inconsistent between views.
+
+### Record it
+In findings.md, write a **Motion and detail** section with one row per observation:
+
+| # | Where | Interaction / detail | What I saw (frames) | Felt like | Kind | Sheet/crop |
+
+Kinds: `UI-motion`, `UI-detail`, `UX-feedback`. Severity uses the same gaps as before.
+
+Add the worst 3 to your Top 10 if they qualify.
+
+Keep the extra time sensible: about 30–40 minutes more on a full probe; on a delta probe, film only the interactions in the journeys you were given.
 
 ## Output
 

@@ -77,21 +77,19 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     assert.doesNotMatch(p['staging.' + n], /Mac|Canvas|device_|browser/, n);
   assert.equal(
     p['build.ev4-builder'],
-    "You are an E.V. v4 build session. Your first step is node tools/guard.mjs --mark (this session is the builder, B-179). Then follow CLAUDE.md and BACKLOG.md in this repository exactly, including the Unattended runs and Builder runs sections. This run was fired with a message that says what it is for: 'Job <id>', words to file (starting bug:, idea: or request:), or 'continue'. It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
+    "You are an E.V. v4 build session. Your first step is node tools/guard.mjs --mark (this session is the builder, B-179). Then follow CLAUDE.md, the ev-builder skill's Runs section (.claude/skills/ev-builder/SKILL.md) and BACKLOG.md in this repository exactly. This run was fired with a message that says what it is for: 'Job <id>' or words to file (starting bug:, idea: or request:). It arrives as the message after this one; if it is not in front of you yet, end this turn with exactly: Waiting for the message."
   );
-  // B-611 moved the Builder runs section to docs/builder-runs.md; B-425 keeps tests off docs/, so only the prompt
-  // and CLAUDE.md's pointer to it are pinned here.
+  // B-665: the builder-run procedure is the ev-builder skill's Runs section; the self-refire 'continue' is retired (D-421).
   // B-179 lint: the rendered builder prompt writes the marker first, and CLAUDE.md has the section it names.
   assert.match(
     p['build.ev4-builder'],
     /^You are an E\.V\. v4 build session\. Your first step is node tools\/guard\.mjs --mark /
   );
-  assert.match(p['build.ev4-builder'], /the Unattended runs and Builder runs sections/);
-  const raw = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+  const skill = fs.readFileSync(path.join(ROOT, '.claude', 'skills', 'ev-builder', 'SKILL.md'), 'utf8');
   assert.match(
-    raw,
-    /\n## Builder runs\n[^#]*docs\/builder-runs\.md/,
-    'CLAUDE.md points the section at docs/builder-runs.md'
+    skill,
+    /\n## Runs started by a Job tap\n[^#]*node tools\/guard\.mjs --mark/,
+    'the skill has the section'
   );
 });
 

@@ -11,8 +11,8 @@ are in:
 ## Inputs (the build manager gives the paths)
 
 - Each tester's folder: `findings.md`, `shots/`, and for motion `sheets/` or `frames/`. Tester A is the laptop at
-  1280; tester B is the phone at 390, one-handed.
-- `tester-brief.md` and `motion.md` in this skill folder: the method they followed. Carry it into the doc.
+  1280; tester B is one phone loads-and-ticks check (it loads, a tick works, nothing overflows).
+- `tester-brief.md` in this skill folder: the method they followed. Carry it into the doc.
 - The build each tester saw (the top of their findings.md), and for a delta probe the change and the journeys re-walked.
 
 Read every findings file in full. Look at the screenshots and contact sheets they cite for every finding you rank.
@@ -31,7 +31,7 @@ Never blend them.
 ## Weigh the evidence
 
 - **Both:** both testers hit the same thing. This is a strong signal; mark it.
-- **Laptop only** or **phone only:** say which.
+- **Phone:** only whether the loads-and-ticks check passed; no phone polish findings.
 - **Shared-account noise:** the testers share one account, so the conversation, Today and a running session can show
   the other's activity. Drop a finding that only exists because of that; Matt is alone in his record.
 - **Ideas:** shortcuts and touches the testers reached for are a separate kind of signal. Keep them distinct from
@@ -45,7 +45,7 @@ Never blend them.
    friction points on the nodes and edges where intuition broke, coloured by severity, so Matt sees at a glance where
    the flow fights him. Use the Docs connector's diagram support (load its guide on diagrams).
 3. **Journeys, expected vs. what happened.** One subsection per journey (J0–J7, and any added journey). Each has a
-   table: step, where, expected, happened, after-thought, gap, kind, both/laptop/phone, build, and a **Matt** column
+   table: step, where, expected, happened, after-thought, gap, kind, build, and a **Matt** column
    left empty for his agree, disagree or note.
 4. **Per view.** For each of Today, Study, Notes, Progress and Conversation: the first glance (what the testers thought
    the view was for), what reads well, what's cramped or noisy (UI), and what's hard to find or out of order (UX).
@@ -62,7 +62,7 @@ Never blend them.
    - Continuity across views: features that should know about each other do.
    - Feedback and state.
    - Effort: taps and steps.
-   - Density and comfort, at 1280 and 390.
+   - Density and comfort, at desktop 1280.
    - Motion and responsiveness.
    - E.V. window fit.
    - First-time grace vs. day-thirty efficiency.

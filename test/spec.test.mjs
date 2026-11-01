@@ -369,7 +369,7 @@ test('B-37 (D-093): the budgets rest on read cost and the measured ceiling, each
 
 test('lint, D-175 (B-134): CLAUDE.md names every boundary id, and every prompt phrasing names known lanes', () => {
   const md = fs.readFileSync(new URL('../CLAUDE.md', import.meta.url), 'utf8');
-  for (const b of spec.boundaries.rules) assert.match(md, new RegExp(`\\b${b.id}\\b`), `CLAUDE.md names ${b.id}`);
+  assert.match(md, /The full list is `spec\.boundaries`/, 'CLAUDE.md points at the boundaries (B-665: no B-xx list)');
   const lanes = ['cloud', 'mac', 'canvas', 'mac-writes', 'mac-reads'];
   for (const b of spec.boundaries.rules.filter(r => r.prompt)) {
     assert.ok(b.prompt.lanes.length && b.prompt.lanes.every(l => lanes.includes(l)), b.id);

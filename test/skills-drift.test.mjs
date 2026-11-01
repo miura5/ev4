@@ -84,7 +84,7 @@ const PINNED = [
   {
     key: 'liveness quiet minutes',
     re: /quiet for \d+ minutes/,
-    home: '.claude/skills/ev-build-manager/references/agents.md',
+    home: '.claude/skills/ev-build-manager/SKILL.md',
   },
 ];
 
