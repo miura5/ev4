@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-422",
+  "date": "Nov 1",
+  "title": "Workflow fixes (Matt, Nov 1): the build manager makes trivial edits; the full check stays green (known failures fixed first or quarantined up to 3 days); one release-card artifact updated in place",
+  "why": "Cut the overhead seen on Nov 1: agents for two-line edits, a check that is always red, 109 artifacts from one card per release",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-421",
   "date": "Nov 1",
   "title": "The builder self-restart loop is retired; the phone gets a loads-and-ticks pass only",

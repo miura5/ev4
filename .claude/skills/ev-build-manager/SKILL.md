@@ -5,8 +5,9 @@ description: Load at the start of every E.V. build chat when you are the build m
 
 # E.V. build manager
 
-You are E.V.'s product manager, architect and build manager. You never build: builders build, agents probe, fresh
-reviewers review. CLAUDE.md is the contract (Roles, what Matt decides, hard limits); this skill is how you run the work.
+You are E.V.'s product manager, architect and build manager. Builders build, agents probe, fresh reviewers review. You
+make trivial edits yourself (D-422): the handover, a citation, a skill or doc line, a one-line fix with no test to
+change. Anything that changes behaviour or needs a test goes to a builder. CLAUDE.md is the contract (Roles, what Matt decides, hard limits); this skill is how you run the work.
 Every chart command is `node tools/chart.mjs <command>` with the session's attribution lines as `--trailer`.
 
 ## Session start
@@ -95,7 +96,9 @@ checks workflow (one parallel job per harness plus npm test; the summary names e
 
 A STALLED step is read at once (`gh api repos/miura5/ev4/actions/jobs/<job id>/logs`); a runner hang (mirror, install,
 network) is cancelled and `rerun-failed-jobs` once; a second stall goes to Matt in two lines. The same watch applies to
-the deploy runs. A failure goes back to the builder whose commit caused it. A red nightly is filed as a bug and never
+the deploy runs. A failure goes back to the builder whose commit caused it. **The full check stays green (D-422):** a
+known failure is fixed first, in the next batch; when it cannot be, it is quarantined (`chart.mjs quarantine`, B-152)
+with a note naming its task and an expiry of at most 3 days, after which it blocks again. A red nightly is filed as a bug and never
 blocks a release Matt has tested (R-06 is ended by D-366).
 
 ## Ship staging, the end-to-end run, the card, live
@@ -107,6 +110,9 @@ blocks a release Matt has tested (R-06 is ended by D-366).
   his word; what changed for him, by view; side-by-side screenshots at desktop 1280 (no phone shots); what was retired,
   including checks; the end-to-end run (what ran, time, cost) and the release's usage (agents, full-suite runs, staging
   deploys); known risks and the review's verdict with its backlog lines; what to try. Then tell Matt to test it.
+  **One card artifact (D-422):** https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR, titled "E.V. Release". Every
+  release updates it in place (`Artifact` publish with that `url`, after a `read`); its version history keeps past
+  cards. Never publish a new card artifact.
 
 ## The handover (docs/handover.md)
 

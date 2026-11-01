@@ -7,6 +7,7 @@ Superseded decisions are in chart/decisions.json: `node tools/chart.mjs brief` o
 
 | Id | Date | Decision | Why | Status | Links |
 | --- | --- | --- | --- | --- | --- |
+| D-422 | Nov 1 | Workflow fixes (Matt, Nov 1): the build manager makes trivial edits; the full check stays green (known failures fixed first or quarantined up to 3 days); one release-card artifact updated in place | Cut the overhead seen on Nov 1: agents for two-line edits, a check that is always red, 109 artifacts from one card per release | accepted |  |
 | D-421 | Nov 1 | The builder self-restart loop is retired; the phone gets a loads-and-ticks pass only | Build manager, Nov 1 (Matt gave no objection): the unattended continue loop is unused; Ship it and Job taps still fire ev4-builder. Phone testing matches D-407 | accepted |  |
 | D-420 | Nov 1 | The UI click-through review is dropped from the release loop (Matt, Nov 1) | Each release gets one code review and one real run on staging, then Matt tests; the rubric score and tools/fidelity are retired (B-664) | accepted |  |
 | D-419 | Nov 1 | One-time exception to B-11 (Matt, Nov 1): delete 39 old scheduled tasks (38 already disabled plus the unused staging diagnostic) | Matt chose option 2 in the build chat. The exception covers only these 39 E.V. scheduled tasks; records, files and the 15 tasks in use are untouched; B-11 stands for everything else | accepted |  |
