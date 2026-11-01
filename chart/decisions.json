@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-418",
+  "date": "Oct 31",
+  "title": "Two-column notes row is a flat-list mark (row id + col 0/1), not a nested block",
+  "why": "Positions, outline, copy, undo and save stay on one flat list; a one-column row reverts to full width with no text lost; old notes load unchanged (B-654)",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-417",
   "date": "Oct 31",
   "title": "Pictures in notes live in the env's R2 bucket under note-images/, served by the Worker to the owner",
