@@ -5,6 +5,7 @@ A deploy reaches it through `ship` (or `log deploy`); npm test fails when this f
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Oct 31 | v4 staging deployed at 3675ed6 (19:11 CT), from 21c700a: Images in notes part 2: drag a picture sideways onto a column grid so… (B-654). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 31 | v4 live deployed at 21c700a (18:41 CT), from a029f40: Images in notes, Quip-style: insert or paste a picture into a note,…; checks.yml: the playwright install --with-deps step hung about 30 min… (B-653, B-655). verify-deploy live GREEN. Rollback is a redeploy of a029f40 | Matt's OK | D-049 |
 | Oct 31 | v4 staging deployed at 21c700a (18:33 CT), from a029f40: Images in notes, Quip-style: insert or paste a picture into a note,…; checks.yml: the playwright install --with-deps step hung about 30 min… (B-653, B-655). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 31 | v4 live deployed at a029f40 (09:51 CT), from 5273419: D-416: retire workouts (Cindy AMRAP,; D-416: retire skill; D-416: retire the energy and mood; D-416: retire; Staging run of D-416: asking E.V. for flashcards still starts a… (B-644, B-645, B-646, B-647, B-651). verify-deploy live GREEN. Rollback is a redeploy of 5273419 | Matt's OK | D-049 |

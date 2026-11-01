@@ -6713,5 +6713,21 @@
   "decisions": [],
   "source": "log",
   "release": "v4.5.27"
+ },
+ {
+  "target": "staging",
+  "commit": "3675ed6",
+  "time": "2026-11-01T00:11:15.576Z",
+  "okFrom": null,
+  "verify": "green",
+  "rollback": null,
+  "from": "21c700a",
+  "tasks": [
+   "B-654"
+  ],
+  "summary": "Images in notes part 2: drag a picture sideways onto a column grid so…",
+  "why": null,
+  "decisions": [],
+  "source": "log"
  }
 ]
