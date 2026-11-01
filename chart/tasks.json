@@ -12476,9 +12476,9 @@
   "id": "B-659",
   "kind": "request",
   "title": "Request (reported Nov 1): Repo cleanup: remove the retired Study Watch source (studywatch/, its reader test and spec entries) and other dead code tied only to it",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "studywatch/ and its test and spec entries removed; tests pass",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12487,6 +12487,10 @@
   "reportedAt": "2026-11-01T21:17:53.260Z",
   "board": {
    "row": "v4 B-659: Repo cleanup: remove the retired Study Watch source (studywatch/, its…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T21:19:04.845Z"
   }
  },
  {
