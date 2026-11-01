@@ -89,3 +89,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-666 | request | 2026-11-01T23:17:45.813Z | Workflow fixes: (1) a release gets its final tag at staging so ship live needs no second staging deploy; (2) a known failure is fixed first or quarantined with an expiry so the full check stays green; (3) one release-card artifact updated each release; (4) the build manager makes trivial edits itself; (5) chart friction: batch chart writes, claims allowed with inbox items waiting, ids reserved before a builder is briefed | Matt in the build chat, Nov 1 | inbox |  |
