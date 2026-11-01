@@ -40,7 +40,8 @@ His "ship <sha>" in the chat, or his Ship it tap (a builder run's `ship live --f
    same commit), R-03 (no running study session), R-04 (Matt's OK).
 2. R-03, the running-sessions read: empty `dist/state/live/running` first, make the query it prints, then
    `node tools/tool-result.mjs ArtifactData dist/state/live/running.txt`.
-3. Every ship live tags a new release, which then needs one ship staging at the same commit; then ship live again.
+3. Live deploys the same build staging ran (its name v4.x.y+n); no second staging deploy (B-666). The tag v4.x.(y+1)
+   is made and recorded when live is GREEN (`--minor` for a minor release).
 4. Make the live record calls it prints (the live-guard hook passes them only while `dist/live-ok` is fresh).
 5. Dispatch pwa-live.yml as above. The deploy waits at the GitHub `live` environment for Matt's Approve; tell him in
    one line.
