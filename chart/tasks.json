@@ -12620,5 +12620,22 @@
    "outcome": "task",
    "at": "2026-11-01T21:47:40.903Z"
   }
+ },
+ {
+  "id": "B-664",
+  "kind": "request",
+  "title": "Request (reported Nov 1): Cleanup bundle: generated BACKLOG/DECISIONS show only open work and decisions in force; retire docs/design/ui-polish and /reference; remove docs/trim/scan and its pointers; point the UI reviewer at the current reference and remove tools/fidelity/demo; remove the vendored claude-api skill; fix CLAUDE.md's stale lines",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in the build chat, Nov 1",
+  "words": "Cleanup bundle: generated BACKLOG/DECISIONS show only open work and decisions in force; retire docs/design/ui-polish and /reference; remove docs/trim/scan and its pointers; point the UI reviewer at the current reference and remove tools/fidelity/demo; remove the vendored claude-api skill; fix CLAUDE.md's stale lines",
+  "reportedAt": "2026-11-01T22:21:54.262Z",
+  "board": {
+   "row": "v4 B-664: Cleanup bundle: generated BACKLOG/DECISIONS show only open work and…"
+  }
  }
 ]
