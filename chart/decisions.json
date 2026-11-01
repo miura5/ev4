@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-421",
+  "date": "Nov 1",
+  "title": "The builder self-restart loop is retired; the phone gets a loads-and-ticks pass only",
+  "why": "Build manager, Nov 1 (Matt gave no objection): the unattended continue loop is unused; Ship it and Job taps still fire ev4-builder. Phone testing matches D-407",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-420",
   "date": "Nov 1",
   "title": "The UI click-through review is dropped from the release loop (Matt, Nov 1)",

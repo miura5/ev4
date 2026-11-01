@@ -7,6 +7,7 @@ Superseded decisions are in chart/decisions.json: `node tools/chart.mjs brief` o
 
 | Id | Date | Decision | Why | Status | Links |
 | --- | --- | --- | --- | --- | --- |
+| D-421 | Nov 1 | The builder self-restart loop is retired; the phone gets a loads-and-ticks pass only | Build manager, Nov 1 (Matt gave no objection): the unattended continue loop is unused; Ship it and Job taps still fire ev4-builder. Phone testing matches D-407 | accepted |  |
 | D-420 | Nov 1 | The UI click-through review is dropped from the release loop (Matt, Nov 1) | Each release gets one code review and one real run on staging, then Matt tests; the rubric score and tools/fidelity are retired (B-664) | accepted |  |
 | D-419 | Nov 1 | One-time exception to B-11 (Matt, Nov 1): delete 39 old scheduled tasks (38 already disabled plus the unused staging diagnostic) | Matt chose option 2 in the build chat. The exception covers only these 39 E.V. scheduled tasks; records, files and the 15 tasks in use are untouched; B-11 stands for everything else | accepted |  |
 | D-418 | Oct 31 | Two-column notes row is a flat-list mark (row id + col 0/1), not a nested block | Positions, outline, copy, undo and save stay on one flat list; a one-column row reverts to full width with no text lost; old notes load unchanged (B-654) | accepted |  |
