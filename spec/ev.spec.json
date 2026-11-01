@@ -1368,11 +1368,10 @@
    "v3": "miura5/ev-core"
   },
   "studyWatch": {
-   "retired": "B-408 (D-325): the page no longer reads Study Watch. Notes holds his notes and study sessions on a computer; the phone keeps a session that reads no note. The Mac app, the reader extension, studywatch/ and the .mcpb are kept as they are (nothing deleted); session files Study Watch leaves on the Mac are no longer filed from the page. Study Watch stays in use on the claude.ai live page until that page takes this build at the cutover (D-325).",
+   "retired": "B-408 (D-325): the page no longer reads Study Watch. Notes holds his notes and study sessions on a computer; the phone keeps a session that reads no note. Their source (studywatch/ and its .mcpb packing) was removed from the repository in B-659; the Mac app and the reader extension Matt installed on his Mac are untouched; session files Study Watch leaves on the Mac are no longer filed from the page. Study Watch stays in use on the claude.ai live page until that page takes this build at the cutover (D-325).",
    "app": {
     "version": "0.4",
     "path": "~/Applications/E.V. Study Watch.app",
-    "source": "studywatch/app (build on the Mac with build.sh)",
     "modes": {
      "reader": "default: saves the school note being written to <mac folder>/live/latest.json about every 30 s when its text changed; no Claude calls",
      "classic": "0.3 behavior: its own sessions, questions and session files (filed by the evening run or File it)"
@@ -1388,7 +1387,6 @@
      "list_sessions",
      "read_session"
     ],
-    "source": "studywatch/reader (packed with mcpb into dist/ev-study-watch-reader.mcpb; Matt installs it in the Claude desktop app)",
     "reads": [
      "context.json",
      "live/latest.json"

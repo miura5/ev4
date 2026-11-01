@@ -7,19 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const DIRS = [
-  'spec',
-  'spec/schemas',
-  'core',
-  'scripts/canvas',
-  'page',
-  'studywatch/reader',
-  'studywatch/app',
-  'tools',
-  'test',
-  'test/harness',
-  'test/data',
-];
+const DIRS = ['spec', 'spec/schemas', 'core', 'scripts/canvas', 'page', 'tools', 'test', 'test/harness', 'test/data'];
 
 test('every layout directory exists', () => {
   for (const d of DIRS) assert.ok(fs.statSync(path.join(ROOT, d)).isDirectory(), `${d}/ missing`);

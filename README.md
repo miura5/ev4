@@ -4,7 +4,7 @@ The engine of E.V., Matt's study partner, rebuilt from its v3 lessons. Start wit
 
 ## Layout
 
-Anything that executes is under `core/`, `scripts/` or `page/` (build tools in `tools/`); anything that describes is under `spec/`; anything that proves is under `test/`. `studywatch/` holds the Mac reader extension and app. `fixtures/` and `dist/` are gitignored.
+Anything that executes is under `core/`, `scripts/` or `page/` (build tools in `tools/`); anything that describes is under `spec/`; anything that proves is under `test/`. `fixtures/` and `dist/` are gitignored.
 
 ## Tests
 
