@@ -13,7 +13,13 @@ import * as RUN from '../core/run.mjs';
 import os from 'node:os';
 import { rebuildOne } from '../core/derive.mjs';
 import { loadValidator } from '../core/schemas.mjs';
-import { ROOT, preCutoverSpec } from './helpers.mjs';
+import { ROOT } from './helpers.mjs';
+// A record off the Worker (as live was before the cutover): the ArtifactData path runTarget still serves.
+const offWorker = s => {
+  const c = JSON.parse(JSON.stringify(s));
+  delete c.registry.records.live.runs;
+  return c;
+};
 
 const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(base);
@@ -194,7 +200,7 @@ test('the pull prints the list_triggers read; pulled saves its pages and asks fo
   });
   fs.rmSync(wdir, { recursive: true, force: true });
   // the paging itself, on a record still on ArtifactData (live before the cutover)
-  const pre = preCutoverSpec(spec);
+  const pre = offWorker(spec);
   RUN.start({ spec: pre, pipeline: 'watchdog', record: 'live', at, dir, release: 'v4.0.0' });
   const calls = RUN.pull({ spec: pre, dir, at });
   assert.deepEqual(calls[calls.length - 1], {

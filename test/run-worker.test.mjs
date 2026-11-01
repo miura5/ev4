@@ -13,7 +13,13 @@ import EV from '../core/evcore.mjs';
 import { loadValidator } from '../core/schemas.mjs';
 import * as RUN from '../core/run.mjs';
 import { renderPrompt } from '../tools/prompts.mjs';
-import { ROOT, preCutoverSpec } from './helpers.mjs';
+import { ROOT } from './helpers.mjs';
+// A record off the Worker (as live was before the cutover): the ArtifactData path runTarget still serves.
+const offWorker = s => {
+  const c = JSON.parse(JSON.stringify(s));
+  delete c.registry.records.live.runs;
+  return c;
+};
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(spec);
@@ -83,8 +89,8 @@ const filesUnder = d =>
     .readdirSync(d, { withFileTypes: true })
     .flatMap(e => (e.isDirectory() ? filesUnder(path.join(d, e.name)) : [path.join(d, e.name)]));
 
-test("the target is per record: staging's and (since the cutover) live's Worker pipelines go to the Worker; the diagnostic keeps ArtifactData", () => {
-  const pre = preCutoverSpec(spec);
+test("the target is per record: staging's and (since the cutover) live's Worker pipelines go to the Worker", () => {
+  const pre = offWorker(spec);
   for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog', 'evening-mac', 'restore-drill']) {
     assert.equal(RUN.runTarget(spec, 'staging', p), 'worker', p);
     // B-320: the cutover moved every live pipeline to the ev-live Worker
@@ -95,9 +101,6 @@ test("the target is per record: staging's and (since the cutover) live's Worker 
   for (const p of ['morning', 'evening-cloud', 'weekly', 'worker', 'watchdog', 'evening-mac'])
     assert.equal(RUN.runTarget(pre, 'live', p), 'artifact', p);
   assert.equal(pre.registry.records.live.runs, undefined);
-  // the diagnostic keeps ArtifactData (its probes test that store).
-  assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
-  assert.equal(RUN.runTarget(spec, 'live', 'diagnostic'), 'artifact');
 });
 
 test('a record off the Worker (live before the cutover) still prints ArtifactData at every move; live now needs its Worker file', () => {
@@ -115,7 +118,7 @@ test('a record off the Worker (live before the cutover) still prints ArtifactDat
       }),
     /no Worker file at \/nonexistent.*get system\/worker/
   );
-  const pre = preCutoverSpec(spec);
+  const pre = offWorker(spec);
   const dir = tmp('ev4-live-');
   const s = RUN.start({
     spec: pre,

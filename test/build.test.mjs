@@ -50,10 +50,7 @@ test('a clean tree builds a manifest that validates, with every file hash, task 
     'only deployed files are hashed'
   );
   const expected =
-    Object.keys(spec.tasks.live).length +
-    Object.keys(spec.tasks.staging).length +
-    1 +
-    Object.keys(spec.tasks.build).length;
+    Object.keys(spec.tasks.live).length + Object.keys(spec.tasks.staging).length + Object.keys(spec.tasks.build).length;
   assert.equal(Object.keys(manifest.tasks).length, expected);
   assert.equal(manifest.tasks['live.morning'].name, 'E.V. morning', 'D-192: no version in a task name');
   assert.equal(manifest.tasks['staging.worker'].name, 'E.V. staging · worker');

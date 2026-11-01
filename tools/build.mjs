@@ -292,7 +292,6 @@ export function taskEntries(spec, release) {
   };
   for (const target of ['live', 'staging'])
     for (const [id, t] of Object.entries(spec.tasks[target])) entry(`${target}.${id}`, t, name(target, id), null);
-  entry('staging.diagnostic', spec.tasks.diagnostic, name('staging', 'diagnostic'), null);
   for (const [id, t] of Object.entries(spec.tasks.build)) entry(`build.${id}`, t, id, null);
   return out;
 }

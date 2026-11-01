@@ -26,7 +26,6 @@ import { loadValidator, loadSchemas, PAGE_ONLY } from './schemas.mjs';
 import { describeErrors } from './validate.mjs';
 import { models, ITEM_FIELDS, pick, library, passages } from './steps-shared.mjs';
 import * as WORKER from './steps-worker.mjs';
-import * as DIAGNOSTIC from './steps-diagnostic.mjs';
 import * as D1B from './d1backup.mjs';
 
 /**
@@ -683,7 +682,6 @@ CODE_STEPS['mac-files'] = function macFiles(db, ctx, spec) {
 };
 
 export const AGENT_MATERIAL = {
-  ...DIAGNOSTIC.AGENT_MATERIAL, // probe-brief: core/steps-diagnostic.mjs
   ...WORKER.AGENT_MATERIAL, // job-brief
   'practice-brief'(db, ctx) {
     const b = ctx.brief;
@@ -932,7 +930,6 @@ export const AGENT_FOLDS = {
       ],
     };
   },
-  ...DIAGNOSTIC.AGENT_FOLDS, // probe-result
   ...WORKER.AGENT_FOLDS, // job-result
   /** {review: [items], drills: {setId: [items]}}: today's review set and each drill, keeping only valid items. */
   'practice-sets'(answer, db, ctx) {

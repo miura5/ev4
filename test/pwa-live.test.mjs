@@ -4,8 +4,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT, preCutoverSpec } from './helpers.mjs';
-import { stagingGreen, gateRefusals, check, cutoverSpec, workerDoc, liveApp } from '../tools/pwa-live.mjs';
+import { ROOT } from './helpers.mjs';
+import { stagingGreen, gateRefusals, check, workerDoc, liveApp } from '../tools/pwa-live.mjs';
 import { buildPages, loadSchemas, appSource, buildCommitOf } from '../tools/build.mjs';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -26,9 +26,6 @@ const off = () => {
   s.registry.records.live.app.ready = false;
   return s;
 };
-// B-320: the spec as it stood before the cutover commit (the cutover reversed), with the live app on or off.
-const preOn = () => preCutoverSpec(on());
-const preOff = () => preCutoverSpec(off());
 const jobOf = name => {
   const i = wf.indexOf(`\n  ${name}:\n`);
   assert.ok(i > 0, name + ' job');
@@ -190,15 +187,6 @@ test('B-320 (D-330): the live app in the spec, on from the cutover sitting; ship
   assert.deepEqual(runs.worker, { collection: 'system', doc_id: 'worker' });
   assert.deepEqual(Object.keys(spec.tasks.live).sort(), [...runs.pipelines].sort(), 'every live task is on the Worker');
   for (const p of runs.pipelines) assert.equal(runTarget(spec, 'live', p), 'worker', p);
-  assert.equal(runTarget(spec, 'live', 'diagnostic'), 'artifact', 'a pipeline not listed keeps ArtifactData');
-  const pre = preOn();
-  assert.equal(
-    pre.registry.records.live.runs,
-    undefined,
-    'live pipelines stayed on the claude.ai record until the cutover'
-  );
-  for (const p of ['morning', 'evening-cloud', 'evening-mac', 'weekly', 'worker', 'watchdog'])
-    assert.equal(runTarget(pre, 'live', p), 'artifact', p);
   const apps = appsOf(on());
   assert.deepEqual(apps.live, { worker: 'ev-live', workflow: 'pwa-live.yml', ready: true });
   assert.equal(appsOf(off()).live.ready, false);
@@ -226,43 +214,7 @@ test('B-320: the live check: 401 without the token and with a wrong one, 200 wit
   assert.equal(red.at(-1).ok, false);
 });
 
-test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac tasks; the old evening-mac is retired', () => {
-  assert.throws(() => cutoverSpec(preOff()), /live app is not on/);
-  assert.throws(() => cutoverSpec(spec), /no staged cutover/, 'the spec is cut over: it refuses a second time');
-  const before = preOn();
-  const after = cutoverSpec(before);
-  const live = after.registry.records.live;
-  assert.equal(live.readOnly, true);
-  assert.equal(live.d1, true);
-  assert.deepEqual(live.runs, before.registry.records.live.cutover.runs);
-  assert.deepEqual(Object.keys(live.cutover), ['_why']);
-  for (const [k, t] of Object.entries(after.tasks.live))
-    assert.equal(runTarget(after, 'live', t.pipeline), 'worker', k);
-  assert.equal(after.tasks.live['evening-mac'].keepEnded, undefined, "D-344: the new Mac task renders today's limits");
-  const folder = live.runs.backup.folder;
-  assert.equal(folder, '/Users/peachfritter/Documents/E.V. Backups');
-  for (const k of ['evening-mac', 'restore-drill']) {
-    assert.deepEqual(after.tasks.live[k].folders, [folder], k);
-    assert.equal(after.tasks.live[k].trigger, null, k + ': created at the Mac');
-    assert.equal(after.tasks.live[k].macBound, true);
-  }
-  const old = before.tasks.live['evening-mac'].trigger;
-  assert.deepEqual(
-    after.tasks.retired.slice(before.tasks.retired.length).map(r => [r.trigger, r.was]),
-    [[old, 'live.evening-mac']]
-  );
-  assert.deepEqual(before, preOn(), 'the input is left as it is');
-  assert.throws(() => cutoverSpec(after), /no staged cutover/);
-  // the staged runs mirror staging's, on their own scratch and folder
-  const st = spec.registry.records.staging.runs;
-  assert.deepEqual(live.runs.pipelines, st.pipelines);
-  assert.deepEqual(live.runs.worker, st.worker);
-  assert.equal(live.runs.scratch.host, 'ev-live-scratch');
-  // the cutover page is read-only on live only
-  const pages = buildPages({ root: ROOT, spec: after, schemas: loadSchemas(ROOT), release: 'v' + spec.specVersion });
-  assert.equal(JSON.parse(pages.live['spec.json']).readOnly, true);
-  assert.equal(JSON.parse(pages.staging['spec.json']).readOnly, false);
-  // the committed spec is that cutover, with the two live Mac tasks' trigger ids filled in at the Mac (D-322)
+test("B-320: the committed spec is cut over, with the two live Mac tasks' trigger ids filled in at the Mac (D-322)", () => {
   const now = spec.registry.records.live;
   assert.equal(now.readOnly, true);
   assert.equal(now.d1, true);
@@ -274,11 +226,6 @@ test('B-320: the cutover spec turns on read-only, D1, the live runs and the Mac 
     assert.deepEqual(spec.tasks.live[k].folders, ['/Users/peachfritter/Documents/E.V. Backups'], k);
     assert.equal(spec.tasks.live[k].macBound, true, k);
   }
-  const expected = JSON.parse(JSON.stringify(spec));
-  for (const k of ['evening-mac', 'restore-drill']) expected.tasks.live[k].trigger = null;
-  // the old evening-mac it lists retired was deleted on Nov 1 under D-419, so the committed list no longer holds it
-  expected.tasks.retired = after.tasks.retired;
-  assert.deepEqual(after, expected, 'cutover --apply on the pre-cutover spec gives the committed spec');
 });
 
 test('B-320: the live record system/worker carries the address from the spec and the token from its file only', () => {
@@ -302,9 +249,6 @@ test('B-320 (D-306): the read-only flag: on for the live page since the cutover,
   const pages = buildPages({ root: ROOT, spec, schemas, release: 'v' + spec.specVersion });
   assert.equal(JSON.parse(pages.live['spec.json']).readOnly, true, 'live');
   assert.equal(JSON.parse(pages.staging['spec.json']).readOnly, false, 'staging');
-  const prePages = buildPages({ root: ROOT, spec: preOn(), schemas, release: 'v' + spec.specVersion });
-  for (const t of ['live', 'staging'])
-    assert.equal(JSON.parse(prePages[t]['spec.json']).readOnly, false, t + ' before the cutover');
   const app = appSource(ROOT);
   // the flag, evaluated as the page does: the flag on and not the app's host
   const m =

@@ -9,8 +9,6 @@
 //                                                   (D-366 ended R-06: no full check or nightly gates live)
 //   node tools/pwa-live.mjs check <worker url>     in the deploy job, EV_TOKEN set: 401 without the token and with a
 //                                                   wrong one, 200 with it; prints the collections and counts only
-//   node tools/pwa-live.mjs cutover [--apply]      the cutover commit's spec change (the Oct 18 cutover), printed; with
-//                                                   --apply written to spec/ev.spec.json
 //   node tools/pwa-live.mjs worker-doc --token-file <f> --out <f>
 //                                                   the live record's system/worker document (D-320) from a token file
 //                                                   outside the repository, written to the record by file_path on
@@ -113,43 +111,6 @@ export async function check(base, token, { f = fetch } = {}) {
   return lines;
 }
 
-/**
- * The cutover commit's spec (D-306, D-307, D-331): a copy of spec with the live page read-only, live on D1, the staged
- * runs moved to records.live.runs, live evening-mac re-pointed at the backup folder with no trigger (re-created at the
- * Mac) and its old trigger listed retired, and the staged live tasks added. Refuses a spec already cut over.
- */
-export function cutoverSpec(spec, { at = 'the cutover' } = {}) {
-  const s = JSON.parse(JSON.stringify(spec));
-  const live = s.registry.records.live;
-  const c = live.cutover;
-  if (!c || !c.runs) throw new Error('no staged cutover in spec.registry.records.live.cutover (already cut over?)');
-  if (live.runs) throw new Error('spec.registry.records.live.runs is already set');
-  if (!live.app || live.app.ready !== true)
-    throw new Error(
-      'the live app is not on (spec.registry.records.live.app.ready): the Oct 18 cutover step 3 comes first'
-    );
-  live.readOnly = true;
-  live.d1 = true;
-  live.runs = c.runs;
-  const folder = c.runs.backup.folder;
-  const em = s.tasks.live['evening-mac'];
-  if (em.trigger)
-    s.tasks.retired.push({
-      trigger: em.trigger,
-      was: 'live.evening-mac',
-      name: 'E.V. evening-mac',
-      reason: `B-320 (D-303, D-322): replaced at ${at} by the live evening-mac on the ev-live Worker, writing E.V. Backups; disabled (update_trigger enabled false) once its replacement exists, from the chat linked to the Mac with Matt present. Kept, never deleted.`,
-    });
-  // D-344: the replacement is created fresh, so it carries none of the old task's kept ended words
-  const { keepEnded, _keepEndedWhy, ...rest } = em;
-  s.tasks.live['evening-mac'] = { ...rest, folders: [folder], trigger: null };
-  for (const [k, t] of Object.entries(c.tasks || {})) s.tasks.live[k] = t;
-  live.cutover = {
-    _why: `B-320: applied at ${at} (tools/pwa-live.mjs cutover --apply): readOnly, d1, runs and the live Mac tasks above.`,
-  };
-  return s;
-}
-
 /** reach's line: the Worker and its collections with their counts (no document, no token). */
 export const runLine = (url, cols) =>
   `${url}: ${cols.length} collections${cols.length ? ': ' + cols.map(c => `${c.collection} ${c.count}`).join(', ') : ' (an empty D1)'}`;
@@ -200,29 +161,6 @@ async function main(argv) {
     const green = lines.every(l => l.ok);
     console.log(`pwa-live check: ${green ? 'GREEN' : 'RED'}`);
     return green ? 0 : 1;
-  }
-  if (cmd === 'cutover') {
-    const before = readSpec();
-    const after = cutoverSpec(before, { at: opt('--at') || 'the cutover' });
-    const live = after.registry.records.live;
-    console.log(
-      [
-        'the cutover spec:',
-        '  registry.records.live.readOnly true (the claude.ai live page refuses writes, D-306)',
-        '  registry.records.live.d1 true (D-307 lint on for live)',
-        `  registry.records.live.runs: ${live.runs.pipelines.join(', ')} on the Worker`,
-        `  tasks.live: ${Object.entries(after.tasks.live)
-          .filter(([, t]) => t.macBound)
-          .map(([k, t]) => `${k} -> ${t.folders.join(', ')} (trigger ${t.trigger || 'to create at the Mac'})`)
-          .join('; ')}`,
-        `  tasks.retired: +${after.tasks.retired.length - before.tasks.retired.length}`,
-      ].join('\n')
-    );
-    if (argv.includes('--apply')) {
-      fs.writeFileSync(path.join(ROOT, 'spec', 'ev.spec.json'), JSON.stringify(after, null, 1));
-      console.log('written to spec/ev.spec.json: commit it as the cutover commit (the Oct 18 cutover)');
-    } else console.log('a dry run: --apply writes it');
-    return 0;
   }
   if (cmd === 'worker-doc') {
     const tf = opt('--token-file'),

@@ -12,7 +12,7 @@ import { renderPrompt, RUN_MARKER, limitLanes } from '../tools/prompts.mjs';
 import { renderGate } from '../tools/gate.mjs';
 import * as H from '../tools/hooks.mjs';
 import { build } from '../tools/build.mjs';
-import { ROOT, copyRepo, git, preCutoverSpec } from './helpers.mjs';
+import { ROOT, copyRepo, git } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 const release = 'v' + spec.specVersion;
@@ -47,11 +47,6 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     );
     assert.doesNotMatch(p[k], /Canvas|Quizlet|device_commit_files/, k);
   }
-  const diag = renderPrompt({ key: 'staging.diagnostic', task: spec.tasks.diagnostic, spec, release });
-  assert.match(diag, /end this turn with exactly: Waiting for the probe\. When it arrives, add --probe/);
-  assert.doesNotMatch(diag, /journal|add_repo|git clone/i);
-  assert.match(diag, /, except the one made-up page a page-publish probe prints\./); // B-54
-  assert.doesNotMatch(p['staging.worker'] + p['staging.morning'], /page-publish probe/);
   for (const n of Object.keys(spec.tasks.staging).filter(n => !ready.includes(n)))
     assert.equal(p[`staging.${n}`], null, n);
   assert.match(
@@ -72,15 +67,10 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
       `E\\.V\\.'s folder for this record there is "${spec.registry.records.staging.runs.backup.folder.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}"`
     )
   );
-  // B-320 (D-322): since the cutover live's evening-mac writes E.V. Backups, its one backup folder; before it, Study Watch
+  // B-320 (D-322): since the cutover live's evening-mac writes E.V. Backups, its one backup folder
   assert.match(p['live.evening-mac'], /there is "\/Users\/peachfritter\/Documents\/E\.V\. Backups"\./);
   assert.equal(spec.registry.records.live.runs.backup.folder, '/Users/peachfritter/Documents/E.V. Backups');
   assert.doesNotMatch(p['live.evening-mac'], /Study Watch/);
-  const pre = preCutoverSpec(spec);
-  assert.match(
-    renderPrompt({ key: 'live.evening-mac', task: pre.tasks.live['evening-mac'], spec: pre, release }),
-    /there is "\/Users\/peachfritter\/Documents\/E\.V\. Study Watch"\./
-  );
   assert.match(p['staging.evening-mac'], /Canvas is read-only: only the GET requests the printed scripts make/);
   assert.match(p['staging.evening-mac'], /never enter a password/);
   for (const n of ['morning', 'evening-cloud', 'weekly', 'worker'])

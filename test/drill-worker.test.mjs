@@ -16,7 +16,7 @@ import { CODE_STEPS } from '../core/steps.mjs';
 import * as D1B from '../core/d1backup.mjs';
 import { manifestOf } from '../pwa/backup.js';
 import { renderPrompt } from '../tools/prompts.mjs';
-import { ROOT, preCutoverSpec } from './helpers.mjs';
+import { ROOT } from './helpers.mjs';
 
 const spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8'));
 EV.configure(spec);
@@ -109,9 +109,6 @@ test('the backup folder is one spec value, every Worker pipeline of staging and 
       );
     }
   }
-  assert.equal(RUN.runTarget(spec, 'staging', 'diagnostic'), 'artifact');
-  // before the cutover live's evening-mac ran on ArtifactData, and the cutover is what moves it
-  assert.equal(RUN.runTarget(preCutoverSpec(spec), 'live', 'evening-mac'), 'artifact');
 });
 
 test("manifestSync is pwa/backup.js's manifestOf", async () => {

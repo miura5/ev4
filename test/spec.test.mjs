@@ -12,16 +12,7 @@ const RAW = fs.readFileSync(path.join(ROOT, 'spec/ev.spec.json'), 'utf8');
 const spec = JSON.parse(RAW);
 
 const CLASSES = ['Fact', 'Edit', 'Derived', 'Log', 'Config'];
-const PIPELINES = [
-  'morning',
-  'evening-cloud',
-  'evening-mac',
-  'weekly',
-  'worker',
-  'watchdog',
-  'restore-drill',
-  'diagnostic',
-];
+const PIPELINES = ['morning', 'evening-cloud', 'evening-mac', 'weekly', 'worker', 'watchdog', 'restore-drill'];
 const SURFACES = ['cloud-run', 'mac-run', 'browser-tab', 'page', 'build-chat'];
 // Every collection in the Data architecture tab's collection map.
 const COLLECTIONS = [
@@ -195,7 +186,6 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
   ]);
   for (const [id, t] of Object.entries(live)) checkTask(`live.${id}`, t, 'live');
   for (const [id, t] of Object.entries(staging)) checkTask(`staging.${id}`, t, 'staging');
-  checkTask('diagnostic', spec.tasks.diagnostic, 'staging');
   const at = id => live[id].schedule;
   assert.equal(at('morning'), 'CRON_TZ=America/Chicago 25 4 * * *');
   assert.equal(at('evening-cloud'), 'CRON_TZ=America/Chicago 15 20 * * *');
@@ -259,7 +249,7 @@ test('environments: the five surfaces, each capability with a proof', () => {
       const key = /^(live|staging|build)\.([\w-]+) \((trig_\w+), created /.exec(p.task);
       if (!/^(v3 |no task: )/.test(p.task)) {
         assert.ok(key, `${s}: ${p.capability}: ${p.task}`);
-        const task = spec.tasks[key[1]][key[2]] || (key[2] === 'diagnostic' && spec.tasks.diagnostic);
+        const task = spec.tasks[key[1]][key[2]] || key[2] === 'diagnostic'; // the diagnostic, retired (B-663)
         assert.ok(task, `${s}: ${key[1]}.${key[2]} is a task`);
         // A proof stays with the task it ran as: the current one, or a predecessor since deleted (D-419).
       }

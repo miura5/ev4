@@ -467,7 +467,6 @@ test('B-320 (D-331): the dispatch guard fails closed on the review probes, whate
   for (const c of named) assert.equal(hook(dir, 'live-guard', bash(c)).code, 2, 'no OK: ' + c);
   // ... and an ordinary command that only names the workflow, or reads it, passes: the runbook's own commands
   for (const c of [
-    'node tools/pwa-live.mjs cutover --apply',
     'node tools/pwa-copy.mjs export-calls $D --record live',
     'gh run list --repo miura5/ev4 --workflow pwa-live.yml --limit 1',
     'cat .github/workflows/pwa-live.yml',

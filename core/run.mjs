@@ -61,7 +61,7 @@ export const WORKER_FILE = '/tmp/ev/system/worker.json';
  * Where a run of this pipeline on this record reads and writes: 'worker' (the Worker's run API) when the record's
  * spec.registry entry names the pipeline among its Worker runs, else 'artifact' (ArtifactData). Live stays on
  * ArtifactData until the cutover (B-320); staging's five cloud pipelines go to the staging Worker; the Mac lane waits
- * on B-317, and the diagnostic keeps ArtifactData (its probes test that store).
+ * on B-317.
  */
 export function runTarget(spec, record, pipeline) {
   const w = ((spec.registry.records || {})[record] || {}).runs;
