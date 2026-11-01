@@ -12371,12 +12371,12 @@
   "title": "Request (reported Oct 31): Images in notes part 2: drag a picture sideways onto a column grid so text can sit in a column beside it (a two-column row block in notes), Quip-style.",
   "dod": "A picture can be dragged beside a block into a two-column row; text types in the column beside it; headings, On this page and copy-paste work inside; seen on staging at 1280.",
   "milestone": "Notes images",
-  "status": "in progress",
+  "status": "done",
   "depends": [
    "B-653"
   ],
-  "notes": "Built at 3675ed6e; also fixes B-653 bug where a picture was dropped on the next keystroke; full check next",
-  "commit": null,
+  "notes": "Live v4.5.28 on Matt's ship",
+  "commit": "3675ed6",
   "source": "Matt in the build chat, Oct 31",
   "words": "Images in notes part 2: drag a picture sideways onto a column grid so text can sit in a column beside it (a two-column row block in notes), Quip-style.",
   "reportedAt": "2026-10-31T22:35:44.139Z",
