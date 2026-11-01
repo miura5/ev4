@@ -12446,5 +12446,22 @@
   "board": {
    "row": "v4 B-657: B-654 review backlog: canonical() ignores data-col so a column change…"
   }
+ },
+ {
+  "id": "B-658",
+  "kind": "bug",
+  "title": "Bug (reported Oct 31): A note's writing session stays tied to its note: after it pauses and he switches to another note and writes there, the new note's writing is not counted and the session strip keeps showing the first note until he goes back (noteTyped returns when the active session belongs to a different note; the paused session wraps only after 60 min)",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt in the build chat, Oct 31",
+  "words": "A note's writing session stays tied to its note: after it pauses and he switches to another note and writes there, the new note's writing is not counted and the session strip keeps showing the first note until he goes back (noteTyped returns when the active session belongs to a different note; the paused session wraps only after 60 min)",
+  "reportedAt": "2026-11-01T00:31:11.198Z",
+  "board": {
+   "row": "v4 B-658: A note's writing session stays tied to its note: after it pauses and…"
+  }
  }
 ]
