@@ -7,15 +7,14 @@ the repository is public.
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| B-658 builder | B-658 note session follows note switch | .claude/worktrees/agent-aac7fdc7d94c1e5cf | worktree-agent-aac7fdc7d94c1e5cf | Nov 1 |
+| nothing | | | | |
 
 ## Waiting on Matt
 
-nothing. B-251 and B-307 (keep or drop) are raised only if he asks.
+Card for B-658 (a note's paused session ends and a new one starts when he writes in another note) at 0cc7c64, v4.5.28+17 on staging: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1). "ship 0cc7c64" sends it live. Work is paused on his word: do nothing else until he says continue.
 
 ## Next
 
-0. Matt: fix B-658 only, then stop (staging, card, wait for his ship).
 1. Board comments not read this session (inbox prints the Claude_Docs query); read them before the next release.
 2. B-655 (checks.yml install timeout/retry), B-656 and B-657 (B-653/B-654 review follow-ups), then bugs and the six workflow gaps B-614 to B-619 (blocked, paused by Matt; unblock on his go), then BACKLOG order. Follow-ups B-627 to B-635, B-637, B-642, B-643, B-650, B-652. B-649 needs the live token; low priority.
 
@@ -23,4 +22,4 @@ Session notes: `gh workflow run` fails here (GraphQL blocked); dispatch with `gh
 
 ## Last release
 
-Live v4.5.28 at 3675ed6 (GREEN Nov 1, Matt's ship: B-654). Staging v4.5.28 at 3675ed6. Card: https://claude.ai/artifact/8VTjRYwhuP5jFvv3GspbtS (Nov 1).
+Live v4.5.28 at 3675ed6 (GREEN Nov 1, Matt's ship: B-654). Staging v4.5.28+17 at 0cc7c64 (GREEN Nov 1, B-658). Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1).
