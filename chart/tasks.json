@@ -12667,9 +12667,9 @@
   "id": "B-666",
   "kind": "request",
   "title": "Request (reported Nov 1): Workflow fixes: (1) a release gets its final tag at staging so ship live needs no second staging deploy; (2) a known failure is fixed first or quarantined with an expiry so the full check stays green; (3) one release-card artifact updated each release; (4) the build manager makes trivial edits itself; (5) chart friction: batch chart writes, claims allowed with inbox items waiting, ids reserved before a builder is briefed",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Release tagged at staging, no second staging deploy for live; known failures fixed or quarantined with expiry; one release-card artifact; build manager makes trivial edits; chart: batch writes, claims with inbox waiting, ids reserved before briefing",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12678,6 +12678,10 @@
   "reportedAt": "2026-11-01T23:17:45.813Z",
   "board": {
    "row": "v4 B-666: Workflow fixes: (1) a release gets its final tag at staging so ship…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T23:18:10.411Z"
   }
  }
 ]
