@@ -12625,9 +12625,9 @@
   "id": "B-664",
   "kind": "request",
   "title": "Request (reported Nov 1): Cleanup bundle: generated BACKLOG/DECISIONS show only open work and decisions in force; retire docs/design/ui-polish and /reference; remove docs/trim/scan and its pointers; point the UI reviewer at the current reference and remove tools/fidelity/demo; remove the vendored claude-api skill; fix CLAUDE.md's stale lines",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Generated views show open work and decisions in force only; ui-polish, trim/scan, fidelity demo, claude-api skill removed with pointers fixed; CLAUDE.md current; tests pass",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12636,6 +12636,10 @@
   "reportedAt": "2026-11-01T22:21:54.262Z",
   "board": {
    "row": "v4 B-664: Cleanup bundle: generated BACKLOG/DECISIONS show only open work and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-01T22:22:02.786Z"
   }
  }
 ]
