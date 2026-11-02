@@ -12565,7 +12565,7 @@
   "milestone": "Ops",
   "status": "in progress",
   "depends": [],
-  "notes": "Builder started Nov 1 with B-669; owns the lookup tool and the harness lookup group.",
+  "notes": "Built at bbd74f01: cause was the harness long note's fixed Oct 20 date falling out of the newest four notes on Nov 1 as synthetic dates move with today; now dated two days back. EV_ONLY=lookup group added. npm test and smoke green; done at ship staging.",
   "commit": null,
   "source": "nightly 41321177265",
   "words": "Nightly check: 'lookup notes: a match past character 900 comes back with its passage, cut and placed' (B-412) failed; the harness long-note lookup did not return the passage",
