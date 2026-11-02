@@ -12687,9 +12687,9 @@
   "id": "B-667",
   "kind": "request",
   "title": "Request (reported Nov 1): Re-running ship live on a commit already recorded live shows a release-name mismatch in live verify (build name vs tag); harmless, the record shows the deploy",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Re-running ship live on a commit already recorded live verifies without a release-name mismatch, or prints that the commit is already live and stops; a test in test/chart.test.mjs covers it.",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12698,6 +12698,10 @@
   "reportedAt": "2026-11-01T23:28:03.372Z",
   "board": {
    "row": "v4 B-667: Re-running ship live on a commit already recorded live shows a…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T00:34:49.239Z"
   }
  },
  {
