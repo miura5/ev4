@@ -23,7 +23,8 @@ Seven questions, none blocking:
 
 Check first: the live evening-mac run at 8:20 pm Nov 1 and evening-cloud at 8:15 pm are the first scheduled runs on the new start-up (B-473); read their runs/ entries (or brief's health) and file a bug if either failed. If evening-mac was refused writes on the Mac, Matt must approve its folder in the desktop app.
 
-Take the batch from BACKLOG.md order. B-661 first: the nightly B-412 long-note lookup check is red. Then Matt's bugs
+Take the batch from BACKLOG.md order. B-661 first: the nightly B-412 long-note lookup check is red. Then B-669 (a chapter mock exam came back as one
+question; it blocks exam prep, so it leads his bugs). Then Matt's other bugs
 (B-583, B-584, B-590, B-587, B-266). The rest of B-665 (repo layout steps 4 to 7: chart archive, split tools/chart.mjs,
 core layering, tests and page folders) goes one step per release, between bug fixes. B-668 is B-473 phase 2 (the last ArtifactData uses); B-667 is a small ship-live edge case.
 
