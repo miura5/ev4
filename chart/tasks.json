@@ -12909,5 +12909,22 @@
    "outcome": "task",
    "at": "2026-11-02T01:44:31.252Z"
   }
+ },
+ {
+  "id": "B-678",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot, live v4.5.31, Nov 1",
+  "words": "On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain.",
+  "reportedAt": "2026-11-02T01:48:25.776Z",
+  "board": {
+   "row": "v4 B-678: On a select-all question in the mock exam card, each checked option's…"
+  }
  }
 ]

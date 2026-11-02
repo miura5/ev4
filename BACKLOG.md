@@ -103,3 +103,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-676 | bug | 2026-11-02T01:34:20.472Z | The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out. | pwa-staging run 41372735777, Nov 1 | inbox |  |
+| B-678 | bug | 2026-11-02T01:48:25.776Z | On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain. | Matt's screenshot, live v4.5.31, Nov 1 | inbox |  |
