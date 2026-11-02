@@ -16,7 +16,7 @@ Seven questions, none blocking:
 3. Is the Console spend limit still $5 a month (B-310)?
 4. A bigger model for Go deeper, and at what cost (B-323)?
 5. Save exam scores told in chat, including the dateless E1 to E3 (B-266)?
-6. B-473 live: deployed bbd6d09 (v4.5.29+55) with Matt's Approve Nov 1. Live Mac tasks re-created: evening-mac trig_014osVRsNqvH86QDf9YLRxi1, restore-drill trig_01GERMdUZV6KLrrZnVQ4zPdS (old trig_01Ma8woo..., trig_018VSRmz... disabled). Staging Mac: evening-mac trig_01Ptg5qxrigzWxUvbGBGqptu, restore-drill trig_01SxjJRr1w91NtwVbLguHupa. Live cloud prompts updated by an agent. Still to do: put the live ids in spec.tasks.live (next release), finish ship live so the deploy is recorded (or ship live --record-past), Matt approves the 2 live Mac tasks' folders in the desktop app if asked.
+6. Approve folder access for the new live evening-mac and restore-drill tasks in the desktop app if it asks.
 7. Should the build manager list about 70 old build artifacts for him to delete?
 
 ## Next
@@ -27,6 +27,4 @@ core layering, tests and page folders) goes one step per release, between bug fi
 
 ## Last release
 
-Live v4.5.29 at 0cc7c64 (GREEN Nov 1, Matt's ship: B-658). Staging v4.5.29 at 0cc7c64. Card:
-https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (Nov 1). Main has moved on with repo cleanup only (B-659 to B-665;
-no app change, but the spec and build changed), so the next release carries it.
+Live v4.5.30 at bbd6d09 (GREEN Nov 1, Matt's ship: B-473 server start-up plus cleanup B-659 to B-666). Staging v4.5.29+55 at bbd6d09. Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (updated in place). All 14 pipeline tasks run the new start-up; live Mac task ids are in the spec on main, carried by the next release.
