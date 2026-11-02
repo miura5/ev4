@@ -12733,7 +12733,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Built at 7c00d99d: quiz_me takes topic and count (15 for a mock exam, max 20), writes a full set when the record is short, never refuses over failed jobs; practice-set range capped at 20 (likely cause of earlier cut-short jobs). npm test and smoke green.",
+  "notes": "Staging e2e at 7c00d99 failed: mock exam request answered correctly but writing the set returned empty_completion; reply also said the Ch 9 exam is due tonight (it starts Monday). Fix round builder started 7:08 pm in /Users/peachfritter/ev4-wt/b669fix.",
   "commit": null,
   "source": "build chat Nov 1, screenshot of Conversation",
   "words": "Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V. served a one-question quiz card (0 of 1) because only one matching question was in the record, and declined to write a fuller set, citing that earlier chapter 9 practice jobs had failed, instead of starting new questions.",
