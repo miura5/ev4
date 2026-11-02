@@ -1764,52 +1764,64 @@
           for (const [id, s] of Object.entries(st))
             if (s.n >= 2 && (!weakest || s.right / s.n < weakest.r / weakest.n)) weakest = { id, r: s.right, n: s.n };
         const formats = M.models.filter(w => w.kind === 'format' && w.derived.status === 'open').map(w => w.topic);
-        const prompt = [
-          // B-601: NCLEX framing only for a nursing course; another course's questions follow its own exams
-          'You write ' +
-            E.examFrame(opt.course || E.defaultCourse()).style +
-            ' practice questions for Matt, a first-semester ADN nursing student (' +
-            (opt.course || E.defaultCourse()) +
-            '). Return JSON only.',
-          ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
-          objectivesLine(cands),
-          !cands.length
-            ? 'No objectives are in his record for this course yet, so leave "objective" out and write from what follows.'
-            : '',
-          planTasks.length ? 'His study plan for the exam: ' + JSON.stringify(planTasks.slice(0, 20)) : '',
-          mats.length ? 'His course materials (ground every question in these):\n' + mats.join('\n') : '',
-          onTopic.length
-            ? `His materials on ${String(opt.topic).slice(0, 60)} (ground every question in one of these passages and give its ref as sourceRef): ` +
-              JSON.stringify(onTopic)
-            : '',
-          'Weak spots to target first, one question each (copy weakspotId, topic and objective exactly): ' +
-            JSON.stringify(targets),
-          weakest
-            ? `Weakest objective so far: ${weakest.id} (${weakest.r} of ${weakest.n} right). Use any remaining questions on it, as new checks.`
-            : '',
-          formats.length
-            ? 'He misses these formats, so make about half select-all or matrix: ' + formats.join('; ')
-            : '',
-          opt.topic
-            ? 'He asked to focus on: ' +
-              String(opt.topic).slice(0, 200) +
-              '. Keep every question on that topic; use a matching weak spot id only when it truly matches.'
-            : '',
-          'Rules: ' + E.frameText((EV_SPEC.items.writingGuide || []).join(' '), opt.course || E.defaultCourse()),
-          EV_SPEC.items.calcGuide || '', // B-481
-          `Write exactly ${n} questions.`,
-          n > 5
-            ? 'This is a mock exam: spread the questions across the whole topic (no two on the same point), mix single, select-all and matrix as his exam would, and keep each rationale to one short sentence so every question fits one answer.'
-            : '',
-          '"single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
-            JSON.stringify(E.CJ_STEPS) +
-            '. Set verify true when the point relies on general knowledge rather than his chapters.',
-          'sourceRef is optional: leave it out, or give the ref of the passage the question rests on, which always starts with materials/ or note/ (B-624).',
-          'Shape: {"items":[{"weakspotId":"<id or omit>","objective":"E4-3","topic":"<short>","type":"single"|"sata","stem":"...","options":["..."],"correct":[0],"rationales":["..."],"cjStep":"analyze-cues","verify":false} or {"type":"matrix","objective":"...","topic":"...","stem":"...","matrix":{"columns":["Expected","Unexpected"],"rows":[{"text":"...","correct":0,"rationale":"..."}]},"cjStep":"recognize-cues","verify":false}]}',
-        ]
-          .filter(Boolean)
-          .join('\n');
-        const res = await askItems(prompt);
+        // B-669 fix: a set is written five questions an ask (core quizTopic.batches), the asks side by side, each on
+        // its own share of the passages; one ask of 15 spent the Worker's whole answer before any text (empty_completion)
+        const promptFor = bt =>
+          [
+            // B-601: NCLEX framing only for a nursing course; another course's questions follow its own exams
+            'You write ' +
+              E.examFrame(opt.course || E.defaultCourse()).style +
+              ' practice questions for Matt, a first-semester ADN nursing student (' +
+              (opt.course || E.defaultCourse()) +
+              '). Return JSON only.',
+            ex ? `Exam: ${ex.title} on ${ex.date}.` : '',
+            objectivesLine(cands),
+            !cands.length
+              ? 'No objectives are in his record for this course yet, so leave "objective" out and write from what follows.'
+              : '',
+            planTasks.length ? 'His study plan for the exam: ' + JSON.stringify(planTasks.slice(0, 20)) : '',
+            mats.length ? 'His course materials (ground every question in these):\n' + mats.join('\n') : '',
+            bt.passages.length
+              ? `His materials on ${String(opt.topic).slice(0, 60)} (ground every question in one of these passages and give its ref as sourceRef): ` +
+                JSON.stringify(bt.passages)
+              : '',
+            'Weak spots to target first, one question each (copy weakspotId, topic and objective exactly): ' +
+              JSON.stringify(targets),
+            weakest
+              ? `Weakest objective so far: ${weakest.id} (${weakest.r} of ${weakest.n} right). Use any remaining questions on it, as new checks.`
+              : '',
+            formats.length
+              ? 'He misses these formats, so make about half select-all or matrix: ' + formats.join('; ')
+              : '',
+            opt.topic
+              ? 'He asked to focus on: ' +
+                String(opt.topic).slice(0, 200) +
+                '. Keep every question on that topic; use a matching weak spot id only when it truly matches.'
+              : '',
+            'Rules: ' + E.frameText((EV_SPEC.items.writingGuide || []).join(' '), opt.course || E.defaultCourse()),
+            EV_SPEC.items.calcGuide || '', // B-481
+            `Write exactly ${bt.count} questions.`,
+            bt.of > 1
+              ? `This is part ${bt.part} of ${bt.of} of a ${n}-question mock exam; the other parts are written from the other passages, so keep to yours. Spread your questions across them (no two on the same point), mix single, select-all and matrix as his exam would, and keep each rationale to one short sentence.`
+              : '',
+            '"single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
+              JSON.stringify(E.CJ_STEPS) +
+              '. Set verify true when the point relies on general knowledge rather than his chapters.',
+            'sourceRef is optional: leave it out, or give the ref of the passage the question rests on, which always starts with materials/ or note/ (B-624).',
+            'Shape: {"items":[{"weakspotId":"<id or omit>","objective":"E4-3","topic":"<short>","type":"single"|"sata","stem":"...","options":["..."],"correct":[0],"rationales":["..."],"cjStep":"analyze-cues","verify":false} or {"type":"matrix","objective":"...","topic":"...","stem":"...","matrix":{"columns":["Expected","Unexpected"],"rows":[{"text":"...","correct":0,"rationale":"..."}]},"cjStep":"recognize-cues","verify":false}]}',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        const asks = E.quizTopic.batches(n, onTopic).map(bt => askItems(promptFor(bt)));
+        const got = await Promise.allSettled(asks);
+        const ok = got.filter(g => g.status === 'fulfilled').map(g => g.value);
+        if (!ok.length) throw got[0].reason; // every ask failed: the first one's reason, as one ask's was
+        // the parts' questions as one reply; a part that failed or came back unparsed keeps its reason for the console
+        const res = Object.defineProperty({ items: ok.flatMap(r => E.practiceReply.replyItems(r)) }, 'why', {
+          value: (ok.find(r => r && r.why) || {}).why,
+        });
+        if (ok.length < got.length)
+          console.warn('[EV practice] ' + (got.length - ok.length) + ' of ' + got.length + ' asks failed');
         const k = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
         const id = `more-${today}-${k}`;
         // B-446: mended; a weak spot id not in his record left off, never the question with it. B-455: a review item

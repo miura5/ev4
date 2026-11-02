@@ -66,6 +66,53 @@ test('B-669: quiz_me takes a chapter or topic and a count, and a short record is
     study.indexOf('async function morePractice'),
     study.indexOf("$('more-btn').addEventListener")
   );
-  assert.match(more, /`Write exactly \$\{n\} questions\.`/);
+  assert.match(more, /`Write exactly \$\{bt\.count\} questions\.`/); // B-669 fix: per batch of five
   assert.match(more, /topicPassages\(opt\.topic/);
+});
+
+test('B-669 fix: a 15-question mock exam is written as three asks of five, each on its own passages', () => {
+  const { batches, ASK_BATCH } = EV.quizTopic;
+  assert.equal(ASK_BATCH, 5, 'five a question ask: the size that fits the Worker answer with thinking on');
+  const ps = Array.from({ length: 8 }, (_, i) => ({ ref: 'materials/m' + i }));
+  const b = batches(15, ps);
+  assert.deepEqual(
+    b.map(x => [x.count, x.part, x.of]),
+    [
+      [5, 1, 3],
+      [5, 2, 3],
+      [5, 3, 3],
+    ]
+  );
+  assert.deepEqual(b.flatMap(x => x.passages.map(p => p.ref)).sort(), ps.map(p => p.ref).sort(), 'every passage once');
+  assert.deepEqual(
+    batches(20, []).map(x => x.count),
+    [5, 5, 5, 5]
+  );
+  assert.deepEqual(
+    batches(7, ps.slice(0, 1)).map(x => [x.count, x.passages.length]),
+    [
+      [5, 1],
+      [2, 1],
+    ],
+    'too few passages to share: each part reads them all'
+  );
+  assert.deepEqual(
+    batches(5, ps).map(x => [x.count, x.of, x.passages.length]),
+    [[5, 1, 8]],
+    'a five-question quiz stays one ask'
+  );
+});
+
+test('B-669 fix: morePractice asks once per batch and no ask asks for more than its batch', () => {
+  const src = app('20-study.js');
+  const body = src.slice(src.indexOf('async function morePractice('), src.indexOf("$('more-btn').addEventListener"));
+  assert.match(body, /E\.quizTopic\.batches\(n, onTopic\)\.map\(bt => askItems\(promptFor\(bt\)\)\)/);
+  assert.match(body, /`Write exactly \$\{bt\.count\} questions\.`/);
+  assert.doesNotMatch(body, /Write exactly \$\{n\}/, 'never one ask for the whole set');
+  assert.equal((body.match(/askItems\(/g) || []).length, 1, 'the batched call is the only ask');
+  assert.match(
+    src,
+    /sample\.json\(prompt, \{ modelTier: 'default', cache: false, stream: true \}\)/,
+    'each ask streams'
+  );
 });

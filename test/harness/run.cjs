@@ -2639,7 +2639,9 @@ async function quizTopicChecks(browser) {
     ({ items, script }) => {
       window.__jsonCalls = [];
       window.__toolResults = [];
-      window.__sampleReply = { items };
+      // B-669 fix: a mock exam is written five an ask, so each ask answers its own five
+      let k = 0;
+      window.__sampleFn = () => ({ items: items.slice(5 * k, 5 * ++k) });
       window.__chatScript = script;
       window.__chatReply = 'Writing your chapter 9 mock exam.';
     },
@@ -2658,7 +2660,7 @@ async function quizTopicChecks(browser) {
     return {
       tool: String((window.__toolResults || [])[0] || ''),
       asks: (window.__jsonCalls || []).length,
-      prompt: prompt.slice(0, 4000),
+      prompt: prompt.slice(0, 40000),
       set: set ? { id: set[0], title: set[1].title, n: (set[1].items || []).length, focus: set[1].focus } : null,
       surf: (document.getElementById('ev-surf') || document.body).textContent.slice(0, 600), // the card's panel
     };
@@ -2667,9 +2669,10 @@ async function quizTopicChecks(browser) {
     'B-669: one leftover chapter 9 question is no quiz: a mock exam is written fresh (15, on chapter 9, for BIO 201), never a short card',
     /^Only one question on chapter 9 in your BIO 201 record, so I’m writing 15 new ones/.test(first.tool) &&
       !/^One question/.test(first.tool) &&
-      first.asks === 1 &&
-      /Write exactly 15 questions/.test(first.prompt) &&
-      /mock exam/.test(first.prompt) &&
+      first.asks === 3 &&
+      (first.prompt.match(/Write exactly 5 questions/g) || []).length === 3 &&
+      !/Write exactly 15 questions/.test(first.prompt) &&
+      /part 1 of 3 of a 15-question mock exam/.test(first.prompt) &&
       /chapter 9/.test(first.prompt) &&
       /You write BIO 201 exam-style/.test(first.prompt),
     JSON.stringify({ tool: first.tool, asks: first.asks, prompt: first.prompt.slice(0, 300) })
@@ -2684,6 +2687,7 @@ async function quizTopicChecks(browser) {
     JSON.stringify(first.set)
   );
   await page.screenshot({ path: `${shots}/quiz-mock-written.png` });
+  await page.evaluate(() => (window.__sampleFn = null));
   // asked again, the record holds 15 on chapter 9 now: they are served in place, with no new ask
   await page.evaluate(script => {
     window.__jsonCalls = [];
