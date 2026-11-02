@@ -12792,9 +12792,9 @@
   "id": "B-672",
   "kind": "request",
   "title": "Request (reported Nov 1): A plain quiz me with only one or two questions left in the course still serves that short card instead of writing more.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A plain quiz me on a course with fewer than five questions left writes a full set instead of serving a short card; the B-517 in-place check is updated to match.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12803,6 +12803,10 @@
   "reportedAt": "2026-11-02T00:51:48.761Z",
   "board": {
    "row": "v4 B-672: A plain quiz me with only one or two questions left in the course…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T00:52:18.757Z"
   }
  },
  {
