@@ -13086,9 +13086,9 @@
   "id": "B-686",
   "kind": "request",
   "title": "Request (reported Nov 1): A way to delete things, like Linear: a right-click menu with Delete on list items (the main way), a three-dot menu where a row or page has no natural right click, a confirm dialog, and a Recently deleted view that keeps items for 30 days; one consistent rule for where each menu appears.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A design pass decides where the right-click menu and the three-dot menu appear (right click on list rows by default); both are Proprietary components with Delete, a confirm dialog and a Recently deleted view with Restore; deleted items leave every view and count; the purge rule follows Matt's answer on the hard limit; screenshots at 1280.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13097,6 +13097,10 @@
   "reportedAt": "2026-11-02T03:05:16.049Z",
   "board": {
    "row": "v4 B-686: A way to delete things, like Linear: a right-click menu with Delete…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T03:05:24.569Z"
   }
  }
 ]
