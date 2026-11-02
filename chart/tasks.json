@@ -12829,5 +12829,22 @@
    "outcome": "task",
    "at": "2026-11-02T00:52:21.100Z"
   }
+ },
+ {
+  "id": "B-674",
+  "kind": "request",
+  "title": "Request (reported Nov 1): A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-669 release review, Nov 1",
+  "words": "A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch.",
+  "reportedAt": "2026-11-02T01:02:20.847Z",
+  "board": {
+   "row": "v4 B-674: A 20-question practice set (mostly matrix or select-all) may not fit…"
+  }
  }
 ]
