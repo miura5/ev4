@@ -101,3 +101,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-684 | request | 2026-11-02T02:44:35.367Z | The weekly review is a wall of text in Today's side panel; it should be structured (what moved, still weak nearest exam first, what to do next) and shown with the same row component the weak spots list uses, both in what the weekly run writes and in how the page shows it. | Matt's screenshot and words, live v4.5.32, Nov 1 | inbox |  |

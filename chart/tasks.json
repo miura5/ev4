@@ -13039,5 +13039,22 @@
    "outcome": "task",
    "at": "2026-11-02T02:40:18.300Z"
   }
+ },
+ {
+  "id": "B-684",
+  "kind": "request",
+  "title": "Request (reported Nov 1): The weekly review is a wall of text in Today's side panel; it should be structured (what moved, still weak nearest exam first, what to do next) and shown with the same row component the weak spots list uses, both in what the weekly run writes and in how the page shows it.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot and words, live v4.5.32, Nov 1",
+  "words": "The weekly review is a wall of text in Today's side panel; it should be structured (what moved, still weak nearest exam first, what to do next) and shown with the same row component the weak spots list uses, both in what the weekly run writes and in how the page shows it.",
+  "reportedAt": "2026-11-02T02:44:35.367Z",
+  "board": {
+   "row": "v4 B-684: The weekly review is a wall of text in Today's side panel; it should…"
+  }
  }
 ]
