@@ -103,3 +103,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-686 | request | 2026-11-02T03:05:16.049Z | A way to delete things, like Linear: a right-click menu with Delete on list items (the main way), a three-dot menu where a row or page has no natural right click, a confirm dialog, and a Recently deleted view that keeps items for 30 days; one consistent rule for where each menu appears. | Matt's screenshots and words, Nov 1 | inbox |  |

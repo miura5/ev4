@@ -13081,5 +13081,22 @@
    "outcome": "task",
    "at": "2026-11-02T02:44:50.051Z"
   }
+ },
+ {
+  "id": "B-686",
+  "kind": "request",
+  "title": "Request (reported Nov 1): A way to delete things, like Linear: a right-click menu with Delete on list items (the main way), a three-dot menu where a row or page has no natural right click, a confirm dialog, and a Recently deleted view that keeps items for 30 days; one consistent rule for where each menu appears.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshots and words, Nov 1",
+  "words": "A way to delete things, like Linear: a right-click menu with Delete on list items (the main way), a three-dot menu where a row or page has no natural right click, a confirm dialog, and a Recently deleted view that keeps items for 30 days; one consistent rule for where each menu appears.",
+  "reportedAt": "2026-11-02T03:05:16.049Z",
+  "board": {
+   "row": "v4 B-686: A way to delete things, like Linear: a right-click menu with Delete…"
+  }
  }
 ]
