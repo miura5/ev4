@@ -12934,5 +12934,22 @@
    "outcome": "task",
    "at": "2026-11-02T01:48:45.151Z"
   }
+ },
+ {
+  "id": "B-679",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): The BIO 201 chapter 9 mock exam tags its questions and misses with nursing clinical judgment steps (Analyze cues, Prioritize hypotheses, Recognize cues), which do not belong on a biology course.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot, live v4.5.32, Nov 1",
+  "words": "The BIO 201 chapter 9 mock exam tags its questions and misses with nursing clinical judgment steps (Analyze cues, Prioritize hypotheses, Recognize cues), which do not belong on a biology course.",
+  "reportedAt": "2026-11-02T02:22:31.906Z",
+  "board": {
+   "row": "v4 B-679: The BIO 201 chapter 9 mock exam tags its questions and misses with…"
+  }
  }
 ]
