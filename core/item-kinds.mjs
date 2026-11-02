@@ -336,26 +336,6 @@ export function makeItemKinds(core) {
       return words.filter(w => hay.has(w)).length >= Math.ceil(words.length / 2);
     };
   }
-  /** B-669 fix: a practice ask writes at most ASK_BATCH questions. The Worker's ask runs Haiku with its default
-   *  thinking on and an 8,192-token answer, and a 15-question set spent it all before any text (empty_completion on
-   *  staging); five per ask is the size that comes back. A set of n is written as ceil(n / 5) asks, each with its own
-   *  share of the passages (every k-th one), or all of them when there are too few to share.
-   *  [{count, part, of, passages}]. */
-  const ASK_BATCH = 5;
-  function quizBatches(n, passages = []) {
-    const total = Math.max(1, Math.round(Number(n)) || ASK_BATCH);
-    const of = Math.ceil(total / ASK_BATCH);
-    const list = Array.isArray(passages) ? passages : [];
-    return Array.from({ length: of }, (_, i) => {
-      const mine = list.filter((_, j) => j % of === i);
-      return {
-        count: Math.min(ASK_BATCH, total - i * ASK_BATCH),
-        part: i + 1,
-        of,
-        passages: mine.length ? mine : list,
-      };
-    });
-  }
   /**
    * B-192: the display order of a set's items: {[itemId]: {options: [option index, in the order shown]} or {rows: [row
    * index, in the order shown]}}; numeric and open items have none. items in the set's order.
@@ -851,7 +831,7 @@ export function makeItemKinds(core) {
     }, // B-446, B-455
     displayOrder,
     miniOrder,
-    quizTopic: { chapterOf, chapterNums, matcher: topicMatcher, batches: quizBatches, ASK_BATCH }, // B-669
+    quizTopic: { chapterOf, chapterNums, matcher: topicMatcher }, // B-669
     gradeOpenLocal,
     gradePrompt,
     isDosageMaterial,

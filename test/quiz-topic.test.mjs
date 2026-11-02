@@ -66,53 +66,30 @@ test('B-669: quiz_me takes a chapter or topic and a count, and a short record is
     study.indexOf('async function morePractice'),
     study.indexOf("$('more-btn').addEventListener")
   );
-  assert.match(more, /`Write exactly \$\{bt\.count\} questions\.`/); // B-669 fix: per batch of five
+  assert.match(more, /`Write exactly \$\{n\} questions\.`/);
   assert.match(more, /topicPassages\(opt\.topic/);
 });
 
-test('B-669 fix: a 15-question mock exam is written as three asks of five, each on its own passages', () => {
-  const { batches, ASK_BATCH } = EV.quizTopic;
-  assert.equal(ASK_BATCH, 5, 'five a question ask: the size that fits the Worker answer with thinking on');
-  const ps = Array.from({ length: 8 }, (_, i) => ({ ref: 'materials/m' + i }));
-  const b = batches(15, ps);
-  assert.deepEqual(
-    b.map(x => [x.count, x.part, x.of]),
-    [
-      [5, 1, 3],
-      [5, 2, 3],
-      [5, 3, 3],
-    ]
-  );
-  assert.deepEqual(b.flatMap(x => x.passages.map(p => p.ref)).sort(), ps.map(p => p.ref).sort(), 'every passage once');
-  assert.deepEqual(
-    batches(20, []).map(x => x.count),
-    [5, 5, 5, 5]
-  );
-  assert.deepEqual(
-    batches(7, ps.slice(0, 1)).map(x => [x.count, x.passages.length]),
-    [
-      [5, 1],
-      [2, 1],
-    ],
-    'too few passages to share: each part reads them all'
-  );
-  assert.deepEqual(
-    batches(5, ps).map(x => [x.count, x.of, x.passages.length]),
-    [[5, 1, 8]],
-    'a five-question quiz stays one ask'
-  );
-});
-
-test('B-669 fix: morePractice asks once per batch and no ask asks for more than its batch', () => {
-  const src = app('20-study.js');
-  const body = src.slice(src.indexOf('async function morePractice('), src.indexOf("$('more-btn').addEventListener"));
-  assert.match(body, /E\.quizTopic\.batches\(n, onTopic\)\.map\(bt => askItems\(promptFor\(bt\)\)\)/);
-  assert.match(body, /`Write exactly \$\{bt\.count\} questions\.`/);
-  assert.doesNotMatch(body, /Write exactly \$\{n\}/, 'never one ask for the whole set');
-  assert.equal((body.match(/askItems\(/g) || []).length, 1, 'the batched call is the only ask');
-  assert.match(
-    src,
-    /sample\.json\(prompt, \{ modelTier: 'default', cache: false, stream: true \}\)/,
-    'each ask streams'
-  );
+test('B-669: a practice ask names the practice purpose, which the Worker gives Haiku and room for a mock exam', async () => {
+  const study = app('20-study.js');
+  const ask = study.slice(study.indexOf('async function askItems'), study.indexOf('function practiceFailed'));
+  assert.match(ask, /stream: true, purpose: 'practice'/);
+  const bridge = fs.readFileSync(new URL('../pwa/bridge.js', import.meta.url), 'utf8');
+  assert.match(bridge, /typeof opts\.purpose === 'string' \? \{ purpose: opts\.purpose \}/);
+  const { purposeOf, ASK_TOKENS } = await import('../pwa/claude.js');
+  const p = purposeOf({ purpose: 'practice' });
+  assert.equal(p.model, 'claude-haiku-5-5');
+  assert.equal(p.maxTokens, 32000);
+  assert.equal(p.scale, 1);
+  assert.equal(p.purpose, 'practice');
+  assert.equal(p.job, null, 'a practice ask is bound to no job');
+  assert.equal(purposeOf({ purpose: 'practice', max_tokens: 32000 }).maxTokens, 32000);
+  assert.equal(typeof purposeOf({ purpose: 'practice', max_tokens: 32001 }), 'string');
+  // every other ask keeps its budget
+  assert.equal(ASK_TOKENS, 8192);
+  assert.deepEqual(purposeOf({}), { model: 'claude-haiku-5-5', maxTokens: 8192, scale: 1, purpose: null });
+  assert.equal(purposeOf({ purpose: 'plan-edit' }).maxTokens, 8192);
+  assert.equal(purposeOf({ purpose: 'plan-edit', max_tokens: 16000 }).maxTokens, 16000);
+  assert.equal(purposeOf({ purpose: 'exam-plan', job: 'j' }).maxTokens, 8192);
+  assert.equal(purposeOf({ purpose: 'exam-plan', job: 'j' }).model, 'claude-sonnet-5-5');
 });

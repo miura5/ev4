@@ -94,5 +94,8 @@ test('B-624: a practice ask streams: the shim forwards stream: true and the page
   await sample.json('q');
   assert.equal(bodies[1].stream, undefined);
   const page = fs.readFileSync(path.join(ROOT, 'page/app/20-study.js'), 'utf8');
-  assert.match(page, /sample\.json\(prompt, \{ modelTier: 'default', cache: false, stream: true \}\)/);
+  assert.match(
+    page,
+    /sample\.json\(prompt, \{ modelTier: 'default', cache: false, stream: true, purpose: 'practice' \}\)/
+  );
 });

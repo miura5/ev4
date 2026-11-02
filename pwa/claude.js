@@ -134,6 +134,11 @@ export const PURPOSES = {
   },
   // D-356: a change to a plan draft is a patch, on Haiku; B-470: up to 40 ops of whole tasks ran past the usual length
   'plan-edit': { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: 16000, scale: 1 },
+  // B-669: a practice set (up to a 20-question mock exam), on Haiku. Haiku 5.5 thinks adaptively by default and its
+  // thinking counts against max_tokens; at 8,192 a 15-question set spent it all before any text (empty_completion).
+  // 32,000 leaves room for thinking plus a 20-question set, well under Haiku 5.5's 128K output cap; asked with no
+  // max_tokens it gets the whole 32,000 (`ask`).
+  practice: { model: env => env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: 32000, ask: 32000, scale: 1 },
 };
 /** {model, maxTokens, scale} for an ask's purpose and max_tokens, or an error string. */
 export function purposeOf(body, env = {}) {
@@ -144,7 +149,7 @@ export function purposeOf(body, env = {}) {
     return { model: env.CLAUDE_MODEL || 'claude-haiku-5-5', maxTokens: ASK_TOKENS, scale: 1, purpose: null };
   const p = Object.prototype.hasOwnProperty.call(PURPOSES, purpose) ? PURPOSES[purpose] : null;
   if (!p) return 'purpose: no such purpose';
-  let maxTokens = ASK_TOKENS;
+  let maxTokens = p.ask || ASK_TOKENS;
   if (asked != null) {
     if (!Number.isInteger(asked) || asked < 1 || asked > p.maxTokens)
       return 'max_tokens: a whole number from 1 to ' + p.maxTokens;
