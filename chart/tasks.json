@@ -12708,9 +12708,9 @@
   "id": "B-668",
   "kind": "request",
   "title": "Request (reported Nov 1): B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "No ArtifactData use is left in live ship's running-sessions read, the builder trace's yourturn write, core/run.mjs or page/app/03-connect.js, and the run token is read from the Worker, not the claude.ai record; tests pin each path and one staging run proves the trace.",
+  "milestone": "workflow (ops)",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12719,6 +12719,10 @@
   "reportedAt": "2026-11-02T00:24:36.846Z",
   "board": {
    "row": "v4 B-668: B-473 phase 2: the last ArtifactData uses: live ship's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T00:34:52.162Z"
   }
  },
  {

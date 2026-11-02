@@ -72,6 +72,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-661 | Bug (reported Nov 1): Nightly check: 'lookup notes: a match past character 900 comes back with its passage, cut and placed' (B-412) failed; the harness long-note lookup did not return the passage Done when: The B-412 long-note lookup check passes in the nightly again | — | Ops | open |  |
 | B-665 | Request (reported Nov 1): Repo skeleton plan from the five-area map: (1) remove/fix: chart/import, docs/lessons.md, retired fixtures/tests, cutover/import commands, frozenPage, check-procedure contradictions, dead docs/cutover.md citations, pwa/README; (2) CLAUDE.md ~100 lines, handover state-only, fold skill references; (3) chart archive of closed tasks; (4) split tools/chart.mjs, build.mjs, hooks.mjs; (5) core layering, shared helpers, split evcore/steps; (6) tests mirror source; (7) page components/tabs/order file Done when: Steps 1-3 done tonight (fixes, dead weight, markdown slim-down); steps 4-7 stay as later tasks | — | Ops | in progress | Steps 1-3 done (1820c5e, 9883b42); full check green except the known B-661; steps 4-7 stay open for later releases |
 | B-667 | Request (reported Nov 1): Re-running ship live on a commit already recorded live shows a release-name mismatch in live verify (build name vs tag); harmless, the record shows the deploy Done when: Re-running ship live on a commit already recorded live verifies without a release-name mismatch, or prints that the commit is already live and stops; a test in test/chart.test.mjs covers it. | — | Ops | open |  |
+| B-668 | Request (reported Nov 1): B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record Done when: No ArtifactData use is left in live ship's running-sessions read, the builder trace's yourturn write, core/run.mjs or page/app/03-connect.js, and the run token is read from the Worker, not the claude.ai record; tests pin each path and one staging run proves the trace. | — | workflow (ops) | open |  |
 | B-669 | Bug (reported Nov 1): Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V. served a one-question quiz card (0 of 1) because only one matching question was in the record, and declined to write a fuller set, citing that earlier chapter 9 practice jobs had failed, instead of starting new questions. Done when: Asking for a mock exam or quiz on a chapter or topic gets a full set on that chapter (not one leftover question): quiz_me can target a chapter or topic, and when the record holds too few matching questions it writes more instead of serving a short card; an earlier failed practice job is never a reason to refuse. Seen on staging with BIO 201 chapter 9. | — | After Notes | open |  |
 
 ## Your turn
@@ -89,11 +90,3 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
-
-## Inbox
-
-Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
-
-| Id | Kind | Reported | Words | Source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| B-668 | request | 2026-11-02T00:24:36.846Z | B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record | B-473 phase 1, Nov 1 | inbox |  |
