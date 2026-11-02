@@ -109,3 +109,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-684 | request | 2026-11-02T02:44:35.367Z | The weekly review is a wall of text in Today's side panel; it should be structured (what moved, still weak nearest exam first, what to do next) and shown with the same row component the weak spots list uses, both in what the weekly run writes and in how the page shows it. | Matt's screenshot and words, live v4.5.32, Nov 1 | inbox |  |
+| B-685 | bug | 2026-11-02T02:44:38.015Z | Record's Notes list is full of E.V.'s own study-session questions and comments (saved as Learning notes, about 20 a day), so his own logged notes are buried and the list is hard to read. | Matt's screenshot and words, live v4.5.32, Nov 1 | inbox |  |

@@ -13056,5 +13056,22 @@
   "board": {
    "row": "v4 B-684: The weekly review is a wall of text in Today's side panel; it should…"
   }
+ },
+ {
+  "id": "B-685",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): Record's Notes list is full of E.V.'s own study-session questions and comments (saved as Learning notes, about 20 a day), so his own logged notes are buried and the list is hard to read.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot and words, live v4.5.32, Nov 1",
+  "words": "Record's Notes list is full of E.V.'s own study-session questions and comments (saved as Learning notes, about 20 a day), so his own logged notes are buried and the list is hard to read.",
+  "reportedAt": "2026-11-02T02:44:38.015Z",
+  "board": {
+   "row": "v4 B-685: Record's Notes list is full of E.V.'s own study-session questions and…"
+  }
  }
 ]
