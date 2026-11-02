@@ -12855,9 +12855,9 @@
   "id": "B-675",
   "kind": "request",
   "title": "Request (reported Nov 1): Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Chapter and topic matching has tests for 'ch 9' inside stems and for look-alike word stems, and neither matches falsely.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12866,6 +12866,10 @@
   "reportedAt": "2026-11-02T01:02:23.725Z",
   "board": {
    "row": "v4 B-675: Topic matching for quizzes can match falsely: the chapter pattern can…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T01:02:36.317Z"
   }
  }
 ]
