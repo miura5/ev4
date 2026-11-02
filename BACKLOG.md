@@ -96,3 +96,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-676 | bug | 2026-11-02T01:34:20.472Z | The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out. | pwa-staging run 41372735777, Nov 1 | inbox |  |

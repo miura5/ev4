@@ -12871,5 +12871,22 @@
    "outcome": "task",
    "at": "2026-11-02T01:02:36.317Z"
   }
+ },
+ {
+  "id": "B-676",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "pwa-staging run 41372735777, Nov 1",
+  "words": "The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out.",
+  "reportedAt": "2026-11-02T01:34:20.472Z",
+  "board": {
+   "row": "v4 B-676: The staging deploy's run API check (pwa/run-api.test.mjs, '25…"
+  }
  }
 ]
