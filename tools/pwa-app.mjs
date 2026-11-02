@@ -210,11 +210,13 @@ export function appLines({ target, commit, expected, saved }) {
   );
   // B-473 (D-367): the run also put the system documents a scheduled run bootstraps from, at the Worker's commit
   const sys = saved.system;
+  // the Worker's build names a short commit, the system notice the full one
+  const sysAt = Boolean(sys && got.commit && String(sys.commit).startsWith(String(got.commit)));
   add(
-    Boolean(sys && sys.commit === got.commit),
+    sysAt,
     `app ${target} system documents`,
     sys
-      ? sys.commit === got.commit
+      ? sysAt
         ? `${Object.keys(sys.hashes).join(', ')} on the Worker at ${sys.commit.slice(0, 7)}`
         : `the Worker holds the system documents of ${sys.commit.slice(0, 7)}, its build is ${got.commit.slice(0, 7)}`
       : `run ${run.id} put no system documents (no system notice)`
