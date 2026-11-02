@@ -102,3 +102,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-674 | request | 2026-11-02T01:02:20.847Z | A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch. | B-669 release review, Nov 1 | inbox |  |
+| B-675 | request | 2026-11-02T01:02:23.725Z | Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten. | B-669 release review, Nov 1 | inbox |  |

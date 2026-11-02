@@ -12846,5 +12846,22 @@
   "board": {
    "row": "v4 B-674: A 20-question practice set (mostly matrix or select-all) may not fit…"
   }
+ },
+ {
+  "id": "B-675",
+  "kind": "request",
+  "title": "Request (reported Nov 1): Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-669 release review, Nov 1",
+  "words": "Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten.",
+  "reportedAt": "2026-11-02T01:02:23.725Z",
+  "board": {
+   "row": "v4 B-675: Topic matching for quizzes can match falsely: the chapter pattern can…"
+  }
  }
 ]
