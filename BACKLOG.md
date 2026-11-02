@@ -78,6 +78,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-671 | Request (reported Nov 1): A practice-set job files its set under the soonest exam of any course, so a BIO 201 set can sit under a NUR exam, be dropped by the cross-course check and be missed by BIO quizzes; use the course the brief names. Done when: A practice-set job files its set under the course its brief names; a BIO 201 set lands under a BIO exam and a BIO quiz serves it; a unit test covers it. | — | After Notes | open |  |
 | B-672 | Request (reported Nov 1): A plain quiz me with only one or two questions left in the course still serves that short card instead of writing more. Done when: A plain quiz me on a course with fewer than five questions left writes a full set instead of serving a short card; the B-517 in-place check is updated to match. | — | After Notes | open |  |
 | B-673 | Request (reported Nov 1): generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run. Done when: generalTagCheck and popChatChecks run in the full harness run on CI, and pass. | — | Ops | open |  |
+| B-674 | Request (reported Nov 1): A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch. Done when: A mock-exam request never comes back cut short: the set is capped or written in batches that each fit one Worker answer; a short batch is topped up rather than rewritten; a unit test proves the request sizes. | — | After Notes | open |  |
 
 ## Your turn
 
@@ -101,5 +102,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| B-674 | request | 2026-11-02T01:02:20.847Z | A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch. | B-669 release review, Nov 1 | inbox |  |
 | B-675 | request | 2026-11-02T01:02:23.725Z | Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten. | B-669 release review, Nov 1 | inbox |  |

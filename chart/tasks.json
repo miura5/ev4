@@ -12834,9 +12834,9 @@
   "id": "B-674",
   "kind": "request",
   "title": "Request (reported Nov 1): A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A mock-exam request never comes back cut short: the set is capped or written in batches that each fit one Worker answer; a short batch is topped up rather than rewritten; a unit test proves the request sizes.",
+  "milestone": "After Notes",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12845,6 +12845,10 @@
   "reportedAt": "2026-11-02T01:02:20.847Z",
   "board": {
    "row": "v4 B-674: A 20-question practice set (mostly matrix or select-all) may not fit…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T01:02:31.835Z"
   }
  },
  {
