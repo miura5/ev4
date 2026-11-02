@@ -13120,5 +13120,22 @@
   "board": {
    "row": "v4 B-687: In Conversation, his own message bubble wraps a short two-line…"
   }
+ },
+ {
+  "id": "B-688",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): Asked 'is the mock exam ready yet', E.V. said she can't see its status and offered to write another, though the practice job's state (writing, posted, failed) is in the record; she should answer from it.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt's screenshot, live v4.5.32, Nov 1 (noticed by the build manager)",
+  "words": "Asked 'is the mock exam ready yet', E.V. said she can't see its status and offered to write another, though the practice job's state (writing, posted, failed) is in the record; she should answer from it.",
+  "reportedAt": "2026-11-02T03:13:56.332Z",
+  "board": {
+   "row": "v4 B-688: Asked 'is the mock exam ready yet', E.V. said she can't see its…"
+  }
  }
 ]

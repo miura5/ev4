@@ -113,3 +113,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-687 | bug | 2026-11-02T03:13:53.595Z | In Conversation, his own message bubble wraps a short two-line message early and right-aligns the text inside it, so a line ends ragged on the left with a wide box; his bubbles should size to their text and read left-aligned. | Matt's screenshot, live v4.5.32, Nov 1 | inbox |  |
+| B-688 | bug | 2026-11-02T03:13:56.332Z | Asked 'is the mock exam ready yet', E.V. said she can't see its status and offered to write another, though the practice job's state (writing, posted, failed) is in the record; she should answer from it. | Matt's screenshot, live v4.5.32, Nov 1 (noticed by the build manager) | inbox |  |
