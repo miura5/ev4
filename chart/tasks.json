@@ -12922,7 +12922,7 @@
   "milestone": "UI polish",
   "status": "in progress",
   "depends": [],
-  "notes": "Builder started Nov 1; cause: page/ds/patterns/runner.css:110 inset ring on checked letters, overridden only in .qz-card and #evchat.",
+  "notes": "Built at 56c8acb5: ring removed at runner.css:110, the qz-card and #evchat overrides and Study's radius dropped. Pixdiff 0 on the synthetic record (no checked options there); by-hand injected rows show no ring in all four card kinds, light and dark.",
   "commit": null,
   "source": "Matt's screenshot, live v4.5.31, Nov 1",
   "words": "On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain.",
