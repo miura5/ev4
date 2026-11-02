@@ -104,3 +104,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-679 | bug | 2026-11-02T02:22:31.906Z | The BIO 201 chapter 9 mock exam tags its questions and misses with nursing clinical judgment steps (Analyze cues, Prioritize hypotheses, Recognize cues), which do not belong on a biology course. | Matt's screenshot, live v4.5.32, Nov 1 | inbox |  |
+| B-680 | bug | 2026-11-02T02:22:34.684Z | The quiz result summary in a question card is unstyled: each miss's topic and its tag run together with no gap, the '1 more' and '9 right' links run together, and in the narrow right side panel a long row overflows the card; the card should read well at every width it appears in, side panel included. | Matt's screenshots, live v4.5.32, Nov 1 | inbox |  |
