@@ -13065,9 +13065,9 @@
   "id": "B-685",
   "kind": "bug",
   "title": "Bug (reported Nov 1): Record's Notes list is full of E.V.'s own study-session questions and comments (saved as Learning notes, about 20 a day), so his own logged notes are buried and the list is hard to read.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V.'s study-session questions and comments are kept with their session, not saved as his notes: Record's Notes shows only what he logged, and each session row opens to its E.V. comments; existing session-written notes are marked to their session (nothing deleted); screenshot at 1280 of both.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13076,6 +13076,10 @@
   "reportedAt": "2026-11-02T02:44:38.015Z",
   "board": {
    "row": "v4 B-685: Record's Notes list is full of E.V.'s own study-session questions and…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:44:50.051Z"
   }
  }
 ]
