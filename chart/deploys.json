@@ -6801,5 +6801,28 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "bbd6d09",
+  "time": "2026-11-02T00:17:11Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "0cc7c64",
+  "from": "0cc7c64",
+  "tasks": [
+   "B-659",
+   "B-661",
+   "B-663",
+   "B-664",
+   "B-665",
+   "B-666",
+   "B-473"
+  ],
+  "summary": "Repo cleanup: remove the retired Study Watch source (studywatch/, its…; Nightly check: 'lookup notes: a match past character 900 comes back…; The diagnostic pipeline (core/steps-diagnostic.mjs, run/cli --probe,…; Cleanup bundle: generated BACKLOG/DECISIONS show only open work and…; Repo skeleton plan from the five-area map: (1) remove/fix:…; Workflow fixes: (1) a release gets its final tag at staging so ship…; Retire the claude.ai page, step 2 (D-367): the scheduled runs read…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.30"
  }
 ]
