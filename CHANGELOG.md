@@ -6,6 +6,7 @@ The last 20 live releases only; every deploy is in chart/deploys.json.
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Nov 1 | v4 staging deployed at 56c8acb (20:03 CT), from 8397e37: On a select-all question in the mock exam card, each checked option's… (B-678). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Nov 1 | v4 live deployed at 8397e37 (19:44 CT), from bbd6d09: Retire the claude.ai page, step 2 (D-367): the scheduled runs read…; Nightly check: 'lookup notes: a match past character 900 comes back…; Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V.… (B-473, B-661, B-669). verify-deploy live GREEN. Rollback is a redeploy of bbd6d09 | Matt's OK | D-049 |
 | Nov 1 | v4 staging deployed at 8397e37 (19:34 CT), from 7c00d99: Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V.… (B-669). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Nov 1 | v4 staging deployed at 7c00d99 (19:04 CT), from bbd6d09: Retire the claude.ai page, step 2 (D-367): the scheduled runs read…; Nightly check: 'lookup notes: a match past character 900 comes back…; Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V.… (B-473, B-661, B-669). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
