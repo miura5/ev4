@@ -13069,7 +13069,7 @@
   "milestone": "UI polish",
   "status": "open",
   "depends": [],
-  "notes": "",
+  "notes": "Matt, Nov 1: either delete her items from the Notes list or move them to their related study session. Moving is the plan (D-424); nothing is deleted under the hard limits.",
   "commit": null,
   "source": "Matt's screenshot and words, live v4.5.32, Nov 1",
   "words": "Record's Notes list is full of E.V.'s own study-session questions and comments (saved as Learning notes, about 20 a day), so his own logged notes are buried and the list is hard to read.",
