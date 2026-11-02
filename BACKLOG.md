@@ -102,3 +102,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-676 | bug | 2026-11-02T01:34:20.472Z | The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out. | pwa-staging run 41372735777, Nov 1 | inbox |  |
+| B-677 | bug | 2026-11-02T01:44:21.437Z | ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place. | ship live v4.5.31, Nov 1 | inbox |  |

@@ -12888,5 +12888,22 @@
   "board": {
    "row": "v4 B-676: The staging deploy's run API check (pwa/run-api.test.mjs, '25…"
   }
+ },
+ {
+  "id": "B-677",
+  "kind": "bug",
+  "title": "Bug (reported Nov 1): ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "ship live v4.5.31, Nov 1",
+  "words": "ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place.",
+  "reportedAt": "2026-11-02T01:44:21.437Z",
+  "board": {
+   "row": "v4 B-677: ship live asks for list_triggers, which this desktop build chat…"
+  }
  }
 ]
