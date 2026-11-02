@@ -2565,6 +2565,147 @@ async function popChatChecks(browser) {
   ok('B-623/B-626: no page errors in the side chat', errs.length === 0, errs.join(' | '));
   await page.close();
 }
+// B-669: "Make a mock exam for chapter 9" gets a full set on chapter 9: quiz_me with a topic and a count writes what the
+// record lacks (never a short card), and asked again it serves those questions from the record (EV_ONLY=quiz)
+async function quizTopicChecks(browser) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+  const errs = [];
+  page.on('pageerror', e => errs.push(e.message));
+  await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+  await openPage(page);
+  await page.waitForTimeout(900);
+  const opts = ['Calcium', 'Sodium', 'Potassium', 'Chloride'];
+  const items0 = () => ({
+    type: 'single',
+    topic: 'muscle tissue',
+    stem: 'Made-up leftover question: which muscle tissue is striated and voluntary?',
+    options: ['Skeletal', 'Cardiac', 'Smooth', 'Visceral'],
+    correct: [0],
+    rationales: ['Why: skeletal', 'Why: cardiac', 'Why: smooth', 'Why: visceral'],
+    cjStep: 'recognize-cues',
+    verify: true,
+  });
+  const items = Array.from({ length: 15 }, (_, i) => ({
+    type: 'single',
+    topic: 'muscle contraction',
+    stem: `Made-up mock question ${i + 1}: which ion binds troponin to start contraction?`,
+    options: opts,
+    correct: [0],
+    rationales: opts.map(o => 'Why: ' + o),
+    cjStep: 'recognize-cues',
+    verify: true,
+  }));
+  const script = [{ tool: 'quiz_me', input: { course: 'BIO 201', topic: 'chapter 9', count: 15 } }];
+  // a plain quiz (no topic) still serves the course's questions in the record (three here), with no ask
+  await page.evaluate(() => {
+    window.__jsonCalls = [];
+    window.__toolResults = [];
+    window.__chatScript = [{ tool: 'quiz_me', input: { course: 'NUR 112' } }];
+    window.__chatReply = 'Here you go.';
+  });
+  await send(page, 'Quiz me on NUR 112');
+  await page.waitForTimeout(800);
+  const plain = await page.evaluate(() => ({
+    tool: String((window.__toolResults || [])[0] || ''),
+    asks: (window.__jsonCalls || []).length,
+  }));
+  ok(
+    'B-669: a plain quiz (no chapter, topic or count) serves what the course has, as before, with no ask',
+    /^Three questions from NUR 112, right here/.test(plain.tool) && plain.asks === 0,
+    JSON.stringify(plain)
+  );
+  // Matt's case (Nov 1): one leftover chapter 9 question in the record
+  await page.evaluate(async q => {
+    const db = await window.claude.use('db');
+    const at = new Date().toISOString();
+    await db
+      .collection('sets')
+      .doc('more-harness-ch9')
+      .set({
+        schema: 3,
+        writer: 'page',
+        at,
+        source: 'E.V. Home',
+        kind: 'more',
+        date: at.slice(0, 10),
+        focus: 'BIO 201',
+        title: 'Quiz · BIO 201 · chapter 9',
+        createdAt: at,
+        items: [{ ...q, id: 'm1', kind: 'check' }],
+      });
+  }, items0());
+  await page.waitForTimeout(300);
+  await page.evaluate(
+    ({ items, script }) => {
+      window.__jsonCalls = [];
+      window.__toolResults = [];
+      window.__sampleReply = { items };
+      window.__chatScript = script;
+      window.__chatReply = 'Writing your chapter 9 mock exam.';
+    },
+    { items, script }
+  );
+  await send(page, 'Make a mock exam for chapter 9');
+  await page
+    .waitForFunction(() => Object.values(window.__db.sets || {}).some(s => /^Mock exam/.test(s.title || '')), null, {
+      timeout: 8000,
+    })
+    .catch(() => {});
+  await page.waitForTimeout(600);
+  const first = await page.evaluate(() => {
+    const set = Object.entries(window.__db.sets || {}).find(([, s]) => /^Mock exam/.test(s.title || ''));
+    const prompt = (window.__jsonCalls || []).map(c => String(c.prompt)).join('\n---\n');
+    return {
+      tool: String((window.__toolResults || [])[0] || ''),
+      asks: (window.__jsonCalls || []).length,
+      prompt: prompt.slice(0, 4000),
+      set: set ? { id: set[0], title: set[1].title, n: (set[1].items || []).length, focus: set[1].focus } : null,
+      surf: (document.getElementById('ev-surf') || document.body).textContent.slice(0, 600), // the card's panel
+    };
+  });
+  ok(
+    'B-669: one leftover chapter 9 question is no quiz: a mock exam is written fresh (15, on chapter 9, for BIO 201), never a short card',
+    /^Only one question on chapter 9 in your BIO 201 record, so I’m writing 15 new ones/.test(first.tool) &&
+      !/^One question/.test(first.tool) &&
+      first.asks === 1 &&
+      /Write exactly 15 questions/.test(first.prompt) &&
+      /mock exam/.test(first.prompt) &&
+      /chapter 9/.test(first.prompt) &&
+      /You write BIO 201 exam-style/.test(first.prompt),
+    JSON.stringify({ tool: first.tool, asks: first.asks, prompt: first.prompt.slice(0, 300) })
+  );
+  ok(
+    'B-669: the written mock exam is saved as one set titled for its course and chapter, and posted as a card',
+    !!first.set &&
+      first.set.title === 'Mock exam · BIO 201 · chapter 9' &&
+      first.set.n === 15 &&
+      first.set.focus === 'BIO 201' &&
+      /Mock exam · BIO 201 · chapter 9/.test(first.surf),
+    JSON.stringify(first.set)
+  );
+  await page.screenshot({ path: `${shots}/quiz-mock-written.png` });
+  // asked again, the record holds 15 on chapter 9 now: they are served in place, with no new ask
+  await page.evaluate(script => {
+    window.__jsonCalls = [];
+    window.__toolResults = [];
+    window.__chatScript = script;
+    window.__chatReply = 'Here is your mock exam.';
+  }, script);
+  await send(page, 'Give me that chapter 9 mock exam again');
+  await page.waitForTimeout(1200);
+  const again = await page.evaluate(() => ({
+    tool: String((window.__toolResults || [])[0] || ''),
+    asks: (window.__jsonCalls || []).length,
+  }));
+  ok(
+    'B-669: with 15 on chapter 9 in the record, quiz_me serves them as a card and writes nothing new',
+    /^15 questions on chapter 9 from BIO 201, right here/.test(again.tool) && again.asks === 0,
+    JSON.stringify(again)
+  );
+  await page.screenshot({ path: `${shots}/quiz-mock-served.png` });
+  ok('B-669: no page errors', errs.length === 0, errs.join(' | '));
+  await page.close();
+}
 async function staleStateChecks(browser) {
   // B-577 (Matt, live): state kept on his device (ev3-* keys) that a clean browser lacks: a retired or unknown view, a
   // reopen straight onto Study, a quiz left open (real or gone), a course no longer listed, and garbage. With each
@@ -2720,6 +2861,13 @@ async function tap(page, locator, name) {
       await page.screenshot({ path: path.join(shots, 'b661-lookup-1280.png') });
       await page.close();
     });
+    await browser.close();
+    for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+    return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
+  if (process.env.EV_ONLY === 'quiz') {
+    // B-669: only the quiz-on-a-topic checks (EV_ONLY=quiz)
+    await group('quizTopicChecks', () => quizTopicChecks(browser));
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
@@ -6470,6 +6618,7 @@ async function tap(page, locator, name) {
   delete seed.idchecks;
   delete seed.system.yourturn;
   await group('staleStateChecks', () => staleStateChecks(browser));
+  await group('quizTopicChecks', () => quizTopicChecks(browser)); // B-669
   // B-215 (D-216): a job that finishes while he is on another tab: her small dial turns to face him, closed, with one
   // segment lit at twelve (B-272), her status says something's ready, no badge anywhere; opening E.V. ends it.
   for (const [tag, vp, arc] of [

@@ -216,7 +216,12 @@
             '.'
         );
       const js = [...S.jobs].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 5);
-      if (js.length) L.push('Recent jobs: ' + js.map(j => `${j.id} "${j.title}" ${j.status}`).join('; '));
+      // B-669: a job that failed is history, never a reason to refuse or shrink what he asks for now
+      if (js.length)
+        L.push(
+          'Recent jobs (one that failed is no reason to refuse or shrink a new ask; quiz_me and make_practice write fresh questions): ' +
+            js.map(j => `${j.id} "${j.title}" ${j.status}`).join('; ')
+        );
       const sa = activeSession();
       if (sa) {
         const st = E.sessionState(sa, now());
@@ -392,7 +397,7 @@
         {
           name: 'start_job',
           description:
-            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 30 questions saved as a set (put the number and topic in the brief). exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Never a job for flashcards or decks (D-416): Matt keeps flashcards in Quizlet; say so and offer a practice-set job instead. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
+            'Start a background job for work bigger than one reply. study-guide: a one-page guide saved as a Claude Doc. practice-set: 10 to 20 questions saved as a set for later (put the number, the course and the topic in the brief; more than 20 do not fit one answer); a quiz or mock exam to take now is quiz_me. exam-plan: a change to his study plan for a course (name the course and any exam id, and keep his words in the brief): it is always an edit of the plan he has; a whole new plan starts only from his own tap, so when his words ask for one you are told the chip was offered. exam-retro: the post-exam retro for a named exam (put its id, like E4, in the brief); record_score starts one on its own after he tells you a score. clinical-prep: a short prep brief for the next clinical day (put its date first in the brief): the skills with their Skills Packet pages, his skill weak spots and instructor notes. share-set: a page of a calendar practice set for classmates (put the set id first in the brief); only drill or sim sets over a chapter range qualify. general: research or other long work. Never a job for flashcards or decks (D-416): Matt keeps flashcards in Quizlet; say so and offer a practice-set job instead. Runs in the cloud and posts back here in a few minutes; a job card is attached automatically. Returns the job id.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -964,7 +969,7 @@
         {
           name: 'make_practice',
           description:
-            'Write 5 new practice questions now, aimed at his most due weak spots or the topic given. Takes about a minute and posts as its own message. For more than 5, use start_job with practice-set.',
+            'Write 5 new practice questions now, aimed at his most due weak spots or the topic given. Takes about a minute and posts as its own message. To quiz him or give him a mock exam on a chapter or topic, use quiz_me (it writes what his record lacks). For a set of more than 5 to keep for later, use start_job with practice-set.',
           inputSchema: {
             type: 'object',
             properties: { topic: { type: 'string' }, course: { type: 'string', enum: E.courses() } },
@@ -982,12 +987,23 @@
           // B-517 (F-56, F-62): "quiz me" is a quiz where he is: a card under her reply, never a session or a note
           name: 'quiz_me',
           description:
-            'Quiz him right here: up to five questions from his record on a course (or one objective), shown as a card under your reply that he answers in place; misses are proposed as weak spots. Use it whenever he asks to be quizzed or tested. It never starts a study session, never opens a note and never changes his view. With no questions for that course yet, five are written and posted here in about a minute. Returns what was shown.',
+            'Quiz him right here: questions from his record on a course, a chapter or topic, or one objective, shown as a card under your reply that he answers in place; misses are proposed as weak spots. Use it whenever he asks to be quizzed or tested, or for a mock exam or practice test. Pass the chapter or topic he named, and count for more than five. When his record holds fewer questions on it than asked, it writes new ones on it and posts them here (about a minute for five, two for a mock exam) instead of a short card; a practice job that failed earlier is never a reason not to call it. It never starts a study session, never opens a note and never changes his view. Returns what was shown or started.',
           inputSchema: {
             type: 'object',
             properties: {
               course: { type: 'string', enum: E.activeCourses() },
               objective: { type: 'string', description: 'an objective id, to quiz on it' },
+              topic: {
+                type: 'string',
+                description: 'the chapter or topic he named, in his words ("chapter 9", "muscle contraction")',
+              },
+              count: {
+                type: 'integer',
+                minimum: 1,
+                maximum: 20,
+                description:
+                  'how many questions: 5 for a quiz (the default), 15 for a mock exam, up to 20 when he asks',
+              },
             },
           },
           execute: i => {
@@ -996,6 +1012,8 @@
             pend.quizzed = true; // B-623
             const [text, cards] = quizInChat(str(i.course, 40) || (ex ? E.courseOf(ex) : ''), {
               objective: o ? o.id : null,
+              topic: str(i.topic, 60), // B-669: a chapter or topic, and how many (a mock exam's 15)
+              count: Number(i.count) || 5,
               thread: pend.thread,
             });
             cards.forEach(c => addCard(c, true));

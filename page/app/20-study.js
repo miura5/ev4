@@ -11,12 +11,13 @@
     // (D-095), so each shows fresh; every answer is written as always.
     const oneAnswer = s => E.validItems(s).filter(q => E.itemType(q) === 'single');
     let miniN = 0;
-    function miniPick(set, lead, only = null) {
-      // B-527: unseen first, then the least recently answered, so a retake rotates (core miniOrder)
+    function miniPick(set, lead, only = null, { n = 5 } = {}) {
+      // B-527: unseen first, then the least recently answered, so a retake rotates (core miniOrder). B-669: a mock exam
+      // (more than five) takes every kind of question, as his exam does; a quick quiz answers on a tap
       const { pick } = E.miniOrder(
-        oneAnswer(set).filter(q => !only || only(q)), // B-498: a course's mini quiz holds its course's only
+        (n > 5 ? E.validItems(set) : oneAnswer(set)).filter(q => !only || only(q)), // B-498: its course's only
         answersOf(set),
-        { lead }
+        { lead, n }
       );
       if (pick.some(q => answersOf(set)[q.id])) retakes[set.id] = now();
       return pick;
@@ -755,20 +756,50 @@
      * ({type: 'set', id, ids, title}) that the conversation or an opened task shows and he answers in place. An
      * objective's own questions lead (its sets first). Null when the course has none in the record yet.
      */
-    function quizCardFor(course, { objective = null } = {}) {
+    function quizCardFor(course, { objective = null, topic = '', count = 5 } = {}) {
+      const n = quizSize(count);
       const lead = objective ? q => q.objective === objective : null;
       const left = s => oneAnswer(s).filter(q => (!lead || lead(q)) && !answersOf(s)[q.id]).length;
-      const own = objective
+      // B-669: a chapter or topic he named takes only its own questions in the course, from the set holding most
+      const on = E.quizTopic.matcher(topic, { objectives: S.objectives, materials: LIB.mats || [] });
+      const pool = s => (n > 5 ? E.validItems(s) : oneAnswer(s));
+      const onTopic = s => q => on(q, s) && itemCourse(q, s) === course;
+      const topical = on
         ? practiceSets()
-            .filter(s => oneAnswer(s).some(lead))
-            .sort((a, b) => left(b) - left(a))[0]
+            .map(s => ({ s, qs: pool(s).filter(onTopic(s)) }))
+            .filter(x => x.qs.length)
+            .sort(
+              (a, b) =>
+                b.qs.filter(q => !answersOf(b.s)[q.id]).length - a.qs.filter(q => !answersOf(a.s)[q.id]).length ||
+                b.qs.length - a.qs.length
+            )[0]
         : null;
+      const own =
+        objective && !on
+          ? practiceSets()
+              .filter(s => oneAnswer(s).some(lead))
+              .sort((a, b) => left(b) - left(a))[0]
+          : null;
       const cur = studyExams().find(x => x.course === course) || { course, exam: null };
-      const c = own ? { set: own } : courseSet(cur);
-      const ids = c ? miniPick(c.set, lead, c.only).map(q => q.id) : [];
+      const c = on ? topical && { set: topical.s, only: onTopic(topical.s) } : own ? { set: own } : courseSet(cur);
+      const ids = c ? miniPick(c.set, lead, c.only, { n }).map(q => q.id) : [];
       if (!ids.length) return null;
-      return { type: 'set', id: c.set.id, ids, title: 'Quiz · ' + (course || setCourse(c.set)) };
+      return { type: 'set', id: c.set.id, ids, title: quizTitle(course || setCourse(c.set), topic, n) };
     }
+    /** B-669: how many questions a quiz holds: 5 unless he asked for another number, at most 20 (a mock exam's 15 or 20
+     *  fits one answer of the Worker's 8,192 tokens). */
+    function quizSize(count) {
+      const n = Math.round(Number(count));
+      return n >= 1 ? Math.min(20, n) : 5;
+    }
+    const quizTopicWords = topic =>
+      String(topic || '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 60);
+    /** B-669: a quiz card's or set's title: "Quiz · BIO 201", "Mock exam · BIO 201 · chapter 9". */
+    const quizTitle = (course, topic, n) =>
+      [n > 5 ? 'Mock exam' : 'Quiz', course, quizTopicWords(topic)].filter(Boolean).join(' · ');
     /** B-517: the course a quiz asked for where he is takes: the one named (when it is his), else Study's, else the
      *  next exam's. */
     function quizCourse(named) {
@@ -781,19 +812,44 @@
     }
     /** B-517: the conversation's quiz: its card under her line, or five written for the course and posted when ready.
      *  [text, cards], as a quick ask answers. Never a study session, a note or another view. */
-    function quizInChat(named, { objective = null, thread = null } = {}) {
+    function quizInChat(named, { objective = null, topic = '', count = 5, thread = null } = {}) {
       const course = quizCourse(named);
-      const card = quizCardFor(course, { objective });
-      if (card)
+      const n = quizSize(count);
+      const words = quizTopicWords(topic);
+      const on = words ? ' on ' + words : '';
+      const card = quizCardFor(course, { objective, topic: words, count: n });
+      const have = card ? card.ids.length : 0;
+      const qs = k => (k === 1 ? 'one question' : numWord(k).toLowerCase() + ' questions');
+      const served = () => [
+        `${numWord(have)} question${have === 1 ? '' : 's'}${on} from ${course}, right here. Misses are proposed as weak spots at the end.`,
+        [card],
+      ];
+      // B-669: a chapter, topic or mock exam he asked for is served only when the record holds all of it; a plain quiz
+      // serves what the course has (B-517), and is written only when it has none
+      if (have >= n || (have && !words && n <= 5)) return served();
+      // too few in his record for what he asked: new ones are written on it, never a short card in their place
+      if (sample && !T.sampleOff && !morePending) {
+        const o = objective && S.objectives.find(x => x.id === objective);
+        morePractice({
+          announce: true,
+          course,
+          thread, // B-623: they post in the chat that asked
+          count: n,
+          topic: words || (o && o.text) || undefined,
+          title: words || n > 5 ? quizTitle(course, words, n) : undefined,
+        });
         return [
-          `${numWord(card.ids.length)} question${card.ids.length === 1 ? '' : 's'} from ${course}, right here. Misses are proposed as weak spots at the end.`,
-          [card],
+          (have
+            ? `Only ${qs(have)}${on} in your ${course} record, so I’m writing ${numWord(n).toLowerCase()} new ones`
+            : `No ${course} questions${on} yet, so I’m writing ${numWord(n).toLowerCase()}`) +
+            `. They post here in about ${n > 5 ? 'two minutes' : 'a minute'}.`,
+          [],
         ];
+      }
+      if (card) return served();
       if (!sample || T.sampleOff)
-        return ['There are no questions for ' + course + ' yet, and writing them needs permission to ask Claude.', []];
-      if (morePending) return ['Already writing a batch. It posts here when it’s ready.', []];
-      morePractice({ announce: true, course, thread }); // B-623: they post in the chat that asked
-      return [`No ${course} questions yet, so I’m writing five. They post here in about a minute.`, []];
+        return [`There are no ${course} questions${on} yet, and writing them needs permission to ask Claude.`, []];
+      return ['Already writing a batch. It posts here when it’s ready.', []];
     }
     /** B-351 (D-313): the mini quiz card beside Coming up: a question from the course's next set as its teaser. */
     function renderMiniQuiz(cur) {
@@ -1604,14 +1660,39 @@
       });
       return res && res.why ? (res.why.stop ? 'stop ' + res.why.stop : 'unparsed') : items.length + ' failed checks';
     }
+    /** B-669: up to eight passages of his materials on a topic, in a course: a chapter he named reads from the materials
+     *  whose titles name it, spread across them so a mock exam covers the chapter; other words read the library's best
+     *  matches. [{ref, page, title, text}], none when the library has nothing on it (or can't load). */
+    async function topicPassages(topic, course) {
+      const L = await library().catch(() => null);
+      const mats = ((L && L.mats) || []).filter(m => m.text && (!course || E.normCourse(m.course) === course));
+      const ch = E.quizTopic.chapterOf(topic);
+      const pass = h => ({
+        ref: 'materials/' + h.id,
+        page: h.page || null,
+        title: h.title,
+        text: String(h.text).slice(0, 700),
+      });
+      const inCh = ch == null ? [] : mats.filter(m => E.quizTopic.chapterOf(m.title || m.id) === ch);
+      if (inCh.length) {
+        const chunks = E.libraryChunks(inCh);
+        const step = Math.max(1, chunks.length / 8);
+        return Array.from({ length: Math.min(8, chunks.length) }, (_, i) => pass(chunks[Math.floor(i * step)]));
+      }
+      return mats.length && L.idx
+        ? E.searchLibrary(L.idx, topic, { k: 8, ...(course ? { course } : {}) }).map(pass)
+        : [];
+    }
     async function morePractice(opt = {}) {
-      // opt: {announce: post the result in E.V.'s conversation, topic: a focus he named}
+      // opt: {announce: post the result in E.V.'s conversation, topic: a focus he named, count: how many (B-669: 5
+      // unless a quiz asks for more, up to a mock exam's 20), title: the set's, course, thread}
       if (morePending || !sample) return false;
       morePending = true;
+      const n = quizSize(opt.count);
       const b = $('more-btn'),
         out = $('more-status');
       b.disabled = true;
-      out.textContent = 'Writing 5 questions…';
+      out.textContent = `Writing ${n} questions…`;
       const say = (text, cards) =>
         opt.announce
           ? evSay(text, cards || [], { tier: 'default', ...(opt.thread ? { thread: opt.thread } : {}) })
@@ -1630,15 +1711,21 @@
         const objs = S.objectives
           .filter(o => (exId ? o.exam === exId : !opt.course || inCourse(o)))
           .map(o => ({ id: o.id, text: o.text, chapters: o.chapters }));
-        // B-455: the objectives an item may carry: the exam's, else the course's (so a miss can be accepted)
-        const cands = candidateObjectives(ex, opt.course || (ex ? E.courseOf(ex) : null));
+        // B-455: the objectives an item may carry: the exam's, else the course's (so a miss can be accepted). B-669: a
+        // chapter he named narrows them to that chapter's, when any objective says its chapters
+        const all = candidateObjectives(ex, opt.course || (ex ? E.courseOf(ex) : null));
+        const ch = opt.topic ? E.quizTopic.chapterOf(opt.topic) : null;
+        const onCh = ch == null ? [] : all.filter(o => E.quizTopic.chapterNums(o.chapters).has(ch));
+        const cands = onCh.length ? onCh : all;
         const ids = cands.map(o => o.id);
+        // B-669: a topic or chapter he named is written from his materials on it, never from whatever comes first
+        const onTopic = opt.topic ? await topicPassages(opt.topic, opt.course || (ex ? E.courseOf(ex) : null)) : [];
         const plan = opt.course && !objs.length && ex ? examPlan(ex) : null;
         const planTasks = plan
           ? (plan.days || []).flatMap(d => (d.tasks || []).map(t => t.text || '')).filter(Boolean)
           : [];
         const mats =
-          opt.course && !objs.length
+          opt.course && !objs.length && !onTopic.length
             ? (LIB.mats || [])
                 .filter(m => m.course === opt.course && m.text)
                 .slice(0, 4)
@@ -1691,6 +1778,10 @@
             : '',
           planTasks.length ? 'His study plan for the exam: ' + JSON.stringify(planTasks.slice(0, 20)) : '',
           mats.length ? 'His course materials (ground every question in these):\n' + mats.join('\n') : '',
+          onTopic.length
+            ? `His materials on ${String(opt.topic).slice(0, 60)} (ground every question in one of these passages and give its ref as sourceRef): ` +
+              JSON.stringify(onTopic)
+            : '',
           'Weak spots to target first, one question each (copy weakspotId, topic and objective exactly): ' +
             JSON.stringify(targets),
           weakest
@@ -1706,7 +1797,11 @@
             : '',
           'Rules: ' + E.frameText((EV_SPEC.items.writingGuide || []).join(' '), opt.course || E.defaultCourse()),
           EV_SPEC.items.calcGuide || '', // B-481
-          'Write exactly 5 questions. "single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
+          `Write exactly ${n} questions.`,
+          n > 5
+            ? 'This is a mock exam: spread the questions across the whole topic (no two on the same point), mix single, select-all and matrix as his exam would, and keep each rationale to one short sentence so every question fits one answer.'
+            : '',
+          '"single": 4 to 6 options, exactly one correct. "sata": 5 or 6 options, 2 or more correct, never "select N". "matrix": 2 to 3 columns and 3 to 5 rows, one correct column per row. A rationale for every option or row. Tag each with one cjStep from ' +
             JSON.stringify(E.CJ_STEPS) +
             '. Set verify true when the point relies on general knowledge rather than his chapters.',
           'sourceRef is optional: leave it out, or give the ref of the passage the question rests on, which always starts with materials/ or note/ (B-624).',
@@ -1715,8 +1810,8 @@
           .filter(Boolean)
           .join('\n');
         const res = await askItems(prompt);
-        const n = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
-        const id = `more-${today}-${n}`;
+        const k = S.sets.filter(s => s.kind === 'more' && s.date === today).length + 1;
+        const id = `more-${today}-${k}`;
         // B-446: mended; a weak spot id not in his record left off, never the question with it. B-455: a review item
         // carries its spot's objective when it has one, else (and a check) one of the candidates, else none
         const tagged = E.practiceReply.tagItems(res, { ids, spots: M.models });
@@ -1748,7 +1843,7 @@
             date: today,
             ...(exId ? { exam: exId } : {}),
             ...(opt.course ? { focus: opt.course } : {}), // B-375: the course it was written for
-            title: 'More practice · ' + short(today) + (n > 1 ? ' · ' + n : ''),
+            title: opt.title || 'More practice · ' + short(today) + (k > 1 ? ' · ' + k : ''), // B-669: a quiz's own
             createdAt: now(),
             items: fresh,
           },

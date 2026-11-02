@@ -382,6 +382,7 @@ const EVCore = (() => {
     unitOf,
     displayOrder,
     miniOrder,
+    quizTopic,
     crossCourse,
     practiceReply,
   } = makeItemKinds({
@@ -2387,6 +2388,7 @@ const EVCore = (() => {
     scoreAnswer,
     displayOrder, // B-192
     miniOrder,
+    quizTopic, // B-669
     crossCourse, // B-193
     gradeOpenLocal,
     gradePrompt,
