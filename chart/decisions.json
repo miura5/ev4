@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-425",
+  "date": "Nov 1",
+  "title": "Items Matt deletes himself are purged after 30 days in Recently deleted",
+  "why": "Matt, Nov 1 (B-686): delete like Linear, with a 30-day Recently deleted view, then permanent deletion. An exception to the hard limit 'nothing is deleted anywhere' for items he deletes himself through Delete; everything else is still retired by marking.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-424",
   "date": "Nov 1",
   "title": "E.V.'s study-session comments belong to the session, not to his notes",
