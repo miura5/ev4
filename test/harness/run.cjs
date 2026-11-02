@@ -51,13 +51,16 @@ seed.journal = {
 const filler = k =>
   Array.from({ length: k }, (_, n) => ({ type: 'p', runs: [{ text: `Made-up filler line ${n} about nothing.` }] }));
 seed.notes = seed.notes || {};
+// B-661: edited two days back from today, as the synthetic notes are dated, so it stays among the newest four a query
+// returns (a fixed Oct 20 fell behind the archived synthetic note, today less 12 days, on Nov 1)
+const longEdited = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10) + 'T17:00:00Z';
 seed.notes['n-20261020-120000-harnesslong'] = {
   schema: 1,
   writer: 'page',
-  at: '2026-10-20T17:00:00Z',
+  at: longEdited,
   source: 'E.V. Home',
   createdAt: '2026-10-20T17:00:00Z',
-  editedAt: '2026-10-20T17:00:00Z',
+  editedAt: longEdited,
   title: 'A long made-up note',
   course: 'BIO 201',
   blocks: [
@@ -2375,6 +2378,67 @@ async function studyPlanChecks(page) {
   await page.waitForTimeout(250);
 }
 
+// D-335, B-412: the conversation's notes and journal lookup, from the main pass and alone (EV_ONLY=lookup)
+async function lookupNotesChecks(page) {
+  // D-335: his notes and journal are open to the conversation's lookup
+  await page.evaluate(() => {
+    window.__toolResults = [];
+    window.__chatScript = [
+      { tool: 'lookup', input: { what: 'notes', query: 'potassium' } },
+      { tool: 'lookup', input: { what: 'journal', query: 'harness week' } },
+    ];
+    window.__chatReply = 'Here is what I see.';
+  });
+  await send(page, 'What did I write about potassium?');
+  await page.waitForTimeout(300);
+  const [lkNotes, lkJournal] = await page.evaluate(() => window.__toolResults.slice(-2));
+  ok(
+    'lookup notes and journal read his notes (with their text) and his journal (D-335)',
+    /"title":"Fluid and electrolytes: potassium and sodium"/.test(lkNotes || '') &&
+      /3\.5 to 5\.0 mEq\/L/.test(lkNotes || '') &&
+      /A made-up journal line about harness week/.test(lkJournal || ''),
+    String(lkNotes).slice(0, 160) + ' | ' + String(lkJournal).slice(0, 160)
+  );
+  // B-412 review: a match far past the note's start comes back as its passage, marked cut; a query that matches every
+  // note shares the 4,000 characters and still parses; one note by id reads up to the cap
+  await page.evaluate(() => {
+    window.__toolResults = [];
+    window.__chatScript = [
+      { tool: 'lookup', input: { what: 'notes', query: 'zygote ladder' } },
+      { tool: 'lookup', input: { what: 'notes', query: 'a' } },
+      { tool: 'lookup', input: { what: 'notes', id: 'n-20261020-120000-harnesslong' } },
+    ];
+    window.__chatReply = 'Here is what I see.';
+  });
+  await send(page, 'Find the zygote ladder in my notes');
+  await page.waitForTimeout(300);
+  const lkLong = await page.evaluate(() => window.__toolResults.slice(-3));
+  const parsed = lkLong.map(t => {
+    try {
+      return JSON.parse(t);
+    } catch {
+      return null;
+    }
+  });
+  const [far, many, whole] = parsed;
+  const farNote = (far || []).find(n => n.id === 'n-20261020-120000-harnesslong') || {};
+  ok(
+    'lookup notes: a match past character 900 comes back with its passage, cut and placed; every reply parses (B-412)',
+    parsed.every(Boolean) &&
+      lkLong.every(t => t.length <= 4000) &&
+      farNote.cut === true &&
+      farNote.from > 900 &&
+      farNote.chars > farNote.text.length &&
+      /zygote ladder "quoted"/.test(farNote.text) &&
+      Array.isArray(many) &&
+      many.length > 1 &&
+      many.some(n => n.cut) &&
+      whole.length === 1 &&
+      whole[0].cut === true &&
+      whole[0].text.length > 3000,
+    lkLong.map(t => String(t).length + ':' + String(t).slice(0, 120)).join(' | ')
+  );
+}
 // B-626 (D-415): a reply from general knowledge ends "[general]"; the mark becomes one quiet tag, never text (EV_ONLY=general)
 async function generalTagCheck(browser) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
@@ -2641,6 +2705,21 @@ async function tap(page, locator, name) {
   if (process.env.EV_ONLY === 'general') {
     await group('generalTagCheck', () => generalTagCheck(browser));
     await group('popChatChecks', () => popChatChecks(browser));
+    await browser.close();
+    for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
+    return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
+  }
+  if (process.env.EV_ONLY === 'lookup') {
+    // B-661: only the notes and journal lookup checks, for a quick run while working on them
+    await group('lookupNotesChecks', async () => {
+      const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: 'dark' });
+      await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '' }));
+      await openPage(page);
+      await page.waitForTimeout(900);
+      await lookupNotesChecks(page);
+      await page.screenshot({ path: path.join(shots, 'b661-lookup-1280.png') });
+      await page.close();
+    });
     await browser.close();
     for (const r of results) console.log(r[0], r[1], r[2] ? '· ' + r[2] : '');
     return process.exit(results.some(r => r[0] === 'FAIL') ? 1 : 0);
@@ -3935,64 +4014,7 @@ async function tap(page, locator, name) {
       /"id":"canvas-h-graded"/.test(lk) && /"id":"canvas-h-hall"[^}]*"off":true/.test(lk),
       lk.slice(0, 200)
     );
-    // D-335: his notes and journal are open to the conversation's lookup
-    await page.evaluate(() => {
-      window.__toolResults = [];
-      window.__chatScript = [
-        { tool: 'lookup', input: { what: 'notes', query: 'potassium' } },
-        { tool: 'lookup', input: { what: 'journal', query: 'harness week' } },
-      ];
-      window.__chatReply = 'Here is what I see.';
-    });
-    await send(page, 'What did I write about potassium?');
-    await page.waitForTimeout(300);
-    const [lkNotes, lkJournal] = await page.evaluate(() => window.__toolResults.slice(-2));
-    ok(
-      'lookup notes and journal read his notes (with their text) and his journal (D-335)',
-      /"title":"Fluid and electrolytes: potassium and sodium"/.test(lkNotes || '') &&
-        /3\.5 to 5\.0 mEq\/L/.test(lkNotes || '') &&
-        /A made-up journal line about harness week/.test(lkJournal || ''),
-      String(lkNotes).slice(0, 160) + ' | ' + String(lkJournal).slice(0, 160)
-    );
-    // B-412 review: a match far past the note's start comes back as its passage, marked cut; a query that matches every
-    // note shares the 4,000 characters and still parses; one note by id reads up to the cap
-    await page.evaluate(() => {
-      window.__toolResults = [];
-      window.__chatScript = [
-        { tool: 'lookup', input: { what: 'notes', query: 'zygote ladder' } },
-        { tool: 'lookup', input: { what: 'notes', query: 'a' } },
-        { tool: 'lookup', input: { what: 'notes', id: 'n-20261020-120000-harnesslong' } },
-      ];
-      window.__chatReply = 'Here is what I see.';
-    });
-    await send(page, 'Find the zygote ladder in my notes');
-    await page.waitForTimeout(300);
-    const lkLong = await page.evaluate(() => window.__toolResults.slice(-3));
-    const parsed = lkLong.map(t => {
-      try {
-        return JSON.parse(t);
-      } catch {
-        return null;
-      }
-    });
-    const [far, many, whole] = parsed;
-    const farNote = (far || []).find(n => n.id === 'n-20261020-120000-harnesslong') || {};
-    ok(
-      'lookup notes: a match past character 900 comes back with its passage, cut and placed; every reply parses (B-412)',
-      parsed.every(Boolean) &&
-        lkLong.every(t => t.length <= 4000) &&
-        farNote.cut === true &&
-        farNote.from > 900 &&
-        farNote.chars > farNote.text.length &&
-        /zygote ladder "quoted"/.test(farNote.text) &&
-        Array.isArray(many) &&
-        many.length > 1 &&
-        many.some(n => n.cut) &&
-        whole.length === 1 &&
-        whole[0].cut === true &&
-        whole[0].text.length > 3000,
-      lkLong.map(t => String(t).length + ':' + String(t).slice(0, 120)).join(' | ')
-    );
+    await lookupNotesChecks(page); // D-335, B-412 (EV_ONLY=lookup)
     await page.click('#tab-today');
     await page.waitForTimeout(150);
     // B-359 (D-316): the dates live in Today's week; Record's Dates screen left the page (taking a date off and bringing
