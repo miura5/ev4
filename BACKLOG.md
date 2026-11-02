@@ -100,3 +100,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | --- | --- | --- | --- | --- | --- | --- |
 | B-671 | request | 2026-11-02T00:51:46.168Z | A practice-set job files its set under the soonest exam of any course, so a BIO 201 set can sit under a NUR exam, be dropped by the cross-course check and be missed by BIO quizzes; use the course the brief names. | B-669 builder, Nov 1 | inbox |  |
 | B-672 | request | 2026-11-02T00:51:48.761Z | A plain quiz me with only one or two questions left in the course still serves that short card instead of writing more. | B-669 builder, Nov 1 | inbox |  |
+| B-673 | request | 2026-11-02T00:51:51.492Z | generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run. | B-669 builder, Nov 1 | inbox |  |

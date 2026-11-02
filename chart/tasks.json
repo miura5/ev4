@@ -12800,5 +12800,22 @@
   "board": {
    "row": "v4 B-672: A plain quiz me with only one or two questions left in the course…"
   }
+ },
+ {
+  "id": "B-673",
+  "kind": "request",
+  "title": "Request (reported Nov 1): generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-669 builder, Nov 1",
+  "words": "generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run.",
+  "reportedAt": "2026-11-02T00:51:51.492Z",
+  "board": {
+   "row": "v4 B-673: generalTagCheck and popChatChecks in test/harness/run.cjs run only…"
+  }
  }
 ]
