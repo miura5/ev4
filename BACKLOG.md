@@ -99,3 +99,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-682 | bug | 2026-11-02T02:37:11.511Z | The study-session check card in Notes needs polish: its answer box shows a heavy dark outline offset from the box while typing, the Check answer button sits too close under the box, and the card's spacing (labels, questions, input, button) needs the same pass as the result summary. | Matt's screenshot, live v4.5.32, Nov 1 | inbox |  |
