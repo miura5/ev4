@@ -6,6 +6,7 @@ The last 20 live releases only; every deploy is in chart/deploys.json.
 
 | Date | Change | Why | Decision |
 | --- | --- | --- | --- |
+| Nov 1 | v4 staging deployed at bbd6d09 (18:13 CT), from 0cc7c64: Repo cleanup: remove the retired Study Watch source (studywatch/, its…; Nightly check: 'lookup notes: a match past character 900 comes back…; The diagnostic pipeline (core/steps-diagnostic.mjs, run/cli --probe,…; Cleanup bundle: generated BACKLOG/DECISIONS show only open work and…; Repo skeleton plan from the five-area map: (1) remove/fix:…; Workflow fixes: (1) a release gets its final tag at staging so ship…; Retire the claude.ai page, step 2 (D-367): the scheduled runs read… (B-659, B-661, B-663, B-664, B-665, B-666, B-473). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 31 | v4 live deployed at 0cc7c64 (19:56 CT), from 3675ed6: A note's writing session stays tied to its note: after it pauses and… (B-658). verify-deploy live GREEN. Rollback is a redeploy of 3675ed6 | Matt's OK | D-049 |
 | Oct 31 | v4 staging deployed at 0cc7c64 (19:51 CT), from 3675ed6: A note's writing session stays tied to its note: after it pauses and… (B-658). verify-deploy staging GREEN. Live stays where it is | The B-35 gate: staging first | D-049 |
 | Oct 31 | v4 live deployed at 3675ed6 (19:22 CT), from 21c700a: Images in notes part 2: drag a picture sideways onto a column grid so… (B-654). verify-deploy live GREEN. Rollback is a redeploy of 21c700a | Matt's OK | D-049 |
