@@ -12733,7 +12733,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Fix round 2 at 8397e370: a practice purpose on the Worker with max_tokens 32,000 on Haiku (streams); one ask again, batching reverted. Worst case about $0.02 a mock exam. Full suite run 41372036705.",
+  "notes": "Staging e2e at 8397e37 passed: mock exam for chapter 9 wrote 15 BIO 201 chapter 9 questions in about 2 minutes; quiz me on chapter 9 served 5 at once. Card sent Nov 1 (v4.5.30+42).",
   "commit": null,
   "source": "build chat Nov 1, screenshot of Conversation",
   "words": "Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V. served a one-question quiz card (0 of 1) because only one matching question was in the record, and declined to write a fuller set, citing that earlier chapter 9 practice jobs had failed, instead of starting new questions.",
