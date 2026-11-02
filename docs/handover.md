@@ -6,7 +6,7 @@ Current state only. Rewritten and pushed at every state change. No personal data
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| builder | B-669 | /Users/peachfritter/ev4-wt/b669 | b669 | Nov 1 6:36 pm CT |
+| nothing | | | | |
 
 ## Waiting on Matt
 
@@ -23,7 +23,7 @@ Seven questions, none blocking:
 
 Check first: the live evening-mac run at 8:20 pm Nov 1 and evening-cloud at 8:15 pm are the first scheduled runs on the new start-up (B-473); read their runs/ entries (or brief's health) and file a bug if either failed. If evening-mac was refused writes on the Mac, Matt must approve its folder in the desktop app.
 
-Batch in progress: B-661 built at bbd74f01 (CI green, done at ship staging); B-669 building (above). B-670 (other fixed seed dates) is triaged. Then Matt's other bugs
+Batch in progress: B-661 built at bbd74f01 (CI green, done at ship staging); B-669 built at 7c00d99d (CI green). Full suite (checks run 41369438570 on 0a81e26) running; then ship staging, the chapter 9 mock exam end-to-end, review, card. B-671 to B-673 (B-669 follow-ups) triaged. B-670 (other fixed seed dates) is triaged. Then Matt's other bugs
 (B-583, B-584, B-590, B-587, B-266). The rest of B-665 (repo layout steps 4 to 7: chart archive, split tools/chart.mjs,
 core layering, tests and page folders) goes one step per release, between bug fixes. B-668 (B-473 phase 2, the last ArtifactData uses) and B-667 (ship-live edge case) are triaged.
 
