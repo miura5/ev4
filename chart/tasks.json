@@ -12733,7 +12733,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Fix round at 7bd7e89c: mock exams written as asks of five (Haiku's default thinking spent the 8,192-token budget on a 15-question ask, leaving no text). Due tonight was the model's own guess, left. Full suite rerun because the harness check changed.",
+  "notes": "Matt, Nov 1: raise the token budget instead of batching (cost is fine on Haiku). Second fix round started 7:25 pm in /Users/peachfritter/ev4-wt/b669tok: a practice purpose with a larger max_tokens, one ask again.",
   "commit": null,
   "source": "build chat Nov 1, screenshot of Conversation",
   "words": "Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V. served a one-question quiz card (0 of 1) because only one matching question was in the record, and declined to write a fuller set, citing that earlier chapter 9 practice jobs had failed, instead of starting new questions.",
