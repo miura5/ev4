@@ -1,5 +1,15 @@
 [
  {
+  "id": "D-424",
+  "date": "Nov 1",
+  "title": "E.V.'s study-session comments belong to the session, not to his notes",
+  "why": "Matt, Nov 1: Record's Notes list is buried under her session questions (about 20 a day). His notes are what he logs; her comments are part of the session that made them, so they live under that session in Record.",
+  "status": "accepted",
+  "supersedes": [],
+  "amends": [],
+  "source": "log"
+ },
+ {
   "id": "D-423",
   "date": "Nov 1",
   "title": "core/deploy.mjs is exempt from the D-307 lint: it prints the single remaining ArtifactData read (system/worker) until phase 2",
