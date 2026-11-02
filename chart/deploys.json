@@ -6858,5 +6858,24 @@
   "why": null,
   "decisions": [],
   "source": "log"
+ },
+ {
+  "target": "live",
+  "commit": "8397e37",
+  "time": "2026-11-02T01:44:11.085Z",
+  "okFrom": "Matt",
+  "verify": "green",
+  "rollback": "bbd6d09",
+  "from": "bbd6d09",
+  "tasks": [
+   "B-473",
+   "B-661",
+   "B-669"
+  ],
+  "summary": "Retire the claude.ai page, step 2 (D-367): the scheduled runs read…; Nightly check: 'lookup notes: a match past character 900 comes back…; Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V.…",
+  "why": null,
+  "decisions": [],
+  "source": "log",
+  "release": "v4.5.31"
  }
 ]
