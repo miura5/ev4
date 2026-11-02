@@ -12939,9 +12939,9 @@
   "id": "B-679",
   "kind": "bug",
   "title": "Bug (reported Nov 1): The BIO 201 chapter 9 mock exam tags its questions and misses with nursing clinical judgment steps (Analyze cues, Prioritize hypotheses, Recognize cues), which do not belong on a biology course.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Questions written for a non-nursing course (BIO 201) carry no clinical judgment step, in the card's subtitle or its result summary; NUR questions keep theirs; a unit test pins both, and existing BIO items stop showing them.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12950,6 +12950,10 @@
   "reportedAt": "2026-11-02T02:22:31.906Z",
   "board": {
    "row": "v4 B-679: The BIO 201 chapter 9 mock exam tags its questions and misses with…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:22:42.563Z"
   }
  },
  {
