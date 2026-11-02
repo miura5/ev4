@@ -12960,9 +12960,9 @@
   "id": "B-680",
   "kind": "bug",
   "title": "Bug (reported Nov 1): The quiz result summary in a question card is unstyled: each miss's topic and its tag run together with no gap, the '1 more' and '9 right' links run together, and in the narrow right side panel a long row overflows the card; the card should read well at every width it appears in, side panel included.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The question card's result summary (score, misses with their tag, the more and right folds) is a Proprietary component with proper spacing and wrapping, and reads well at 1280 in the chat, in the right side panel and in Study; screenshots at each, pixdiff limited to the summary.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12971,6 +12971,10 @@
   "reportedAt": "2026-11-02T02:22:34.684Z",
   "board": {
    "row": "v4 B-680: The quiz result summary in a question card is unstyled: each miss's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:22:45.063Z"
   }
  }
 ]
