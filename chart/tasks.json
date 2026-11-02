@@ -13166,5 +13166,22 @@
    "outcome": "task",
    "at": "2026-11-02T09:21:35.077Z"
   }
+ },
+ {
+  "id": "B-690",
+  "kind": "request",
+  "title": "Request (reported Nov 2): An E.V. 5 designer skill to run tonight: a one-time agent probe that maps the ev4 codebase into a severity-ranked Diagnosis, then revision sessions on the v5 UI canvas (diagnosis, skeleton, layers, layout, UI) with a carry-over ledger, principles weighed rather than enforced, a contradiction protocol, and handovers that let each session start in a fresh chat.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, build chat Nov 2",
+  "words": "An E.V. 5 designer skill to run tonight: a one-time agent probe that maps the ev4 codebase into a severity-ranked Diagnosis, then revision sessions on the v5 UI canvas (diagnosis, skeleton, layers, layout, UI) with a carry-over ledger, principles weighed rather than enforced, a contradiction protocol, and handovers that let each session start in a fresh chat.",
+  "reportedAt": "2026-11-02T12:29:50.679Z",
+  "board": {
+   "row": "v4 B-690: An E.V. 5 designer skill to run tonight: a one-time agent probe that…"
+  }
  }
 ]
