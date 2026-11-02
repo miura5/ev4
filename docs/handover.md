@@ -10,6 +10,8 @@ Current state only. Rewritten and pushed at every state change. No personal data
 
 ## Waiting on Matt
 
+The v4.5.30+42 card (ship 8397e37): https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR, sent Nov 1.
+
 Seven questions, none blocking:
 1. Restart the paused consolidation kits B-614 to B-619?
 2. His plan after Nov 23: Max or Pro (B-423)?
@@ -23,7 +25,7 @@ Seven questions, none blocking:
 
 Check first: the live evening-mac run at 8:20 pm Nov 1 and evening-cloud at 8:15 pm are the first scheduled runs on the new start-up (B-473); read their runs/ entries (or brief's health) and file a bug if either failed. If evening-mac was refused writes on the Mac, Matt must approve its folder in the desktop app.
 
-Batch in progress: B-661 built at bbd74f01 (CI green, done at ship staging); B-669 built at 7c00d99d (CI green). Staging GREEN at v4.5.30+22 (7c00d99), review PASS (B-674, B-675 filed). The chapter 9 e2e failed (empty_completion); B-669 fix round 2 built at 8397e370 (practice asks get 32,000 tokens on Haiku, Matt's call); full suite run 41372036705, then re-ship staging once and rerun the e2e. B-670 (other fixed seed dates) is triaged. Then Matt's other bugs
+Batch shipped to staging (B-661, B-669 done; card sent). Next batch: Matt's other bugs
 (B-583, B-584, B-590, B-587, B-266). The rest of B-665 (repo layout steps 4 to 7: chart archive, split tools/chart.mjs,
 core layering, tests and page folders) goes one step per release, between bug fixes. B-668 (B-473 phase 2, the last ArtifactData uses) and B-667 (ship-live edge case) are triaged.
 
@@ -31,4 +33,4 @@ Tip: update_trigger and create_trigger echo the whole prompt twice; give cloud p
 
 ## Last release
 
-Live v4.5.30 at bbd6d09 (GREEN Nov 1, Matt's ship: B-473 server start-up plus cleanup B-659 to B-666). Staging v4.5.29+55 at bbd6d09. Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (updated in place). All 14 pipeline tasks run the new start-up; live Mac task ids are in the spec on main, carried by the next release.
+Live v4.5.30 at bbd6d09 (GREEN Nov 1, Matt's ship: B-473 server start-up plus cleanup B-659 to B-666). Staging v4.5.30+42 at 8397e37 (card Nov 1). Card: https://claude.ai/artifact/55THeTxgcMWpWwLj4BinhR (updated in place). All 14 pipeline tasks run the new start-up; live Mac task ids are in the spec on main, carried by the next release.
