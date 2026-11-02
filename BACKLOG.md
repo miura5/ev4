@@ -78,6 +78,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-673 | Request (reported Nov 1): generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run. Done when: generalTagCheck and popChatChecks run in the full harness run on CI, and pass. | — | Ops | open |  |
 | B-674 | Request (reported Nov 1): A 20-question practice set (mostly matrix or select-all) may not fit one 8,192-token Worker answer and come back cut short; cap mock exams at 15 or write them in two batches. A short topic batch also makes the next ask write a whole new batch. Done when: A mock-exam request never comes back cut short: the set is capped or written in batches that each fit one Worker answer; a short batch is topped up rather than rewritten; a unit test proves the request sizes. | — | After Notes | open |  |
 | B-675 | Request (reported Nov 1): Topic matching for quizzes can match falsely: the chapter pattern can hit a 'ch 9' inside a stem or title, and four-letter word stems let unrelated words match (cardiac and cardinal); add tests and tighten. Done when: Chapter and topic matching has tests for 'ch 9' inside stems and for look-alike word stems, and neither matches falsely. | — | After Notes | open |  |
+| B-676 | Bug (reported Nov 1): The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out. Done when: The staging deploy's run API suite waits for the new Worker to answer before its first test and retries a dropped connection once, so a rollout blip doesn't fail the deploy; a test covers the retry. | — | Ops | open |  |
 | B-677 | Bug (reported Nov 1): ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place. Done when: ship live reads every enabled task in a desktop build chat (paging through RemoteTrigger or get per spec task id) and prints no update for a prompt already in place; a test in test/chart.test.mjs covers a two-page list. | — | Ops | open |  |
 | B-678 | Bug (reported Nov 1): On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain. Done when: A checked option's letter shows no ring in every question card (mock exam side panel, chat card, quiz card, Study runner), only a darker letter; pixdiff shows the change only on checked letters. | — | UI polish | in progress | Builder started Nov 1; cause: page/ds/patterns/runner.css:110 inset ring on checked letters, overridden only in .qz-card and #evchat. |
 
@@ -96,11 +97,3 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
-
-## Inbox
-
-Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
-
-| Id | Kind | Reported | Words | Source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| B-676 | bug | 2026-11-02T01:34:20.472Z | The staging deploy's run API check (pwa/run-api.test.mjs, '25 documents at version 1 ... then 25 pinned updates at version 2') failed once with fetch failed in listAll after about 26 seconds, then passed on a rerun; likely the request landing while the new Worker rolled out. | pwa-staging run 41372735777, Nov 1 | inbox |  |
