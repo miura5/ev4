@@ -12981,9 +12981,9 @@
   "id": "B-681",
   "kind": "bug",
   "title": "Bug (reported Nov 1): E.V. often opens a reply by correcting her previous answer when nothing was wrong with it, e.g. saying she should have tagged general knowledge when the general knowledge tag was already shown; it happens about every other message.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V. never retracts or corrects an earlier answer unless he says it was wrong or a tool result contradicts it; the general-knowledge mark she wrote stays visible to her in the conversation history she is sent; a test pins the history shape, and a staging thread of 6 replies mixing cited and general answers has no false correction.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12992,6 +12992,10 @@
   "reportedAt": "2026-11-02T02:25:20.843Z",
   "board": {
    "row": "v4 B-681: E.V. often opens a reply by correcting her previous answer when…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:25:27.338Z"
   }
  }
 ]

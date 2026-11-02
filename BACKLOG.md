@@ -82,6 +82,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-677 | Bug (reported Nov 1): ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place. Done when: ship live reads every enabled task in a desktop build chat (paging through RemoteTrigger or get per spec task id) and prints no update for a prompt already in place; a test in test/chart.test.mjs covers a two-page list. | — | Ops | open |  |
 | B-679 | Bug (reported Nov 1): The BIO 201 chapter 9 mock exam tags its questions and misses with nursing clinical judgment steps (Analyze cues, Prioritize hypotheses, Recognize cues), which do not belong on a biology course. Done when: Questions written for a non-nursing course (BIO 201) carry no clinical judgment step, in the card's subtitle or its result summary; NUR questions keep theirs; a unit test pins both, and existing BIO items stop showing them. | — | UI polish | open |  |
 | B-680 | Bug (reported Nov 1): The quiz result summary in a question card is unstyled: each miss's topic and its tag run together with no gap, the '1 more' and '9 right' links run together, and in the narrow right side panel a long row overflows the card; the card should read well at every width it appears in, side panel included. Done when: The question card's result summary (score, misses with their tag, the more and right folds) is a Proprietary component with proper spacing and wrapping, and reads well at 1280 in the chat, in the right side panel and in Study; screenshots at each, pixdiff limited to the summary. | — | UI polish | open |  |
+| B-681 | Bug (reported Nov 1): E.V. often opens a reply by correcting her previous answer when nothing was wrong with it, e.g. saying she should have tagged general knowledge when the general knowledge tag was already shown; it happens about every other message. Done when: E.V. never retracts or corrects an earlier answer unless he says it was wrong or a tool result contradicts it; the general-knowledge mark she wrote stays visible to her in the conversation history she is sent; a test pins the history shape, and a staging thread of 6 replies mixing cited and general answers has no false correction. | — | UI polish | open |  |
 
 ## Your turn
 
@@ -98,11 +99,3 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
-
-## Inbox
-
-Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
-
-| Id | Kind | Reported | Words | Source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| B-681 | bug | 2026-11-02T02:25:20.843Z | E.V. often opens a reply by correcting her previous answer when nothing was wrong with it, e.g. saying she should have tagged general knowledge when the general knowledge tag was already shown; it happens about every other message. | Matt's screenshot and words, live v4.5.32, Nov 1 | inbox |  |
