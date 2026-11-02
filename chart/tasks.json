@@ -12893,9 +12893,9 @@
   "id": "B-677",
   "kind": "bug",
   "title": "Bug (reported Nov 1): ship live asks for list_triggers, which this desktop build chat lacks; RemoteTrigger list ignores its cursor, so the live cloud tasks past the first page of 20 had to be read one by one with get and saved as a second page; ship then printed 5 prompt updates that were already in place.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "ship live reads every enabled task in a desktop build chat (paging through RemoteTrigger or get per spec task id) and prints no update for a prompt already in place; a test in test/chart.test.mjs covers a two-page list.",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12904,6 +12904,10 @@
   "reportedAt": "2026-11-02T01:44:21.437Z",
   "board": {
    "row": "v4 B-677: ship live asks for list_triggers, which this desktop build chat…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T01:44:31.252Z"
   }
  }
 ]
