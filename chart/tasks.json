@@ -12733,7 +12733,7 @@
   "milestone": "After Notes",
   "status": "in progress",
   "depends": [],
-  "notes": "Staging e2e at 7c00d99 failed: mock exam request answered correctly but writing the set returned empty_completion; reply also said the Ch 9 exam is due tonight (it starts Monday). Fix round builder started 7:08 pm in /Users/peachfritter/ev4-wt/b669fix.",
+  "notes": "Fix round at 7bd7e89c: mock exams written as asks of five (Haiku's default thinking spent the 8,192-token budget on a 15-question ask, leaving no text). Due tonight was the model's own guess, left. Full suite rerun because the harness check changed.",
   "commit": null,
   "source": "build chat Nov 1, screenshot of Conversation",
   "words": "Asked for a mock exam for BIO 201 chapter 9 in Conversation; E.V. served a one-question quiz card (0 of 1) because only one matching question was in the record, and declined to write a fuller set, citing that earlier chapter 9 practice jobs had failed, instead of starting new questions.",
