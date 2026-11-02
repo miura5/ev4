@@ -12914,9 +12914,9 @@
   "id": "B-678",
   "kind": "bug",
   "title": "Bug (reported Nov 1): On a select-all question in the mock exam card, each checked option's letter (A, B, D) is drawn inside a stray outlined pill; unchecked letters (C, E) are plain.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "A checked option's letter shows no ring in every question card (mock exam side panel, chat card, quiz card, Study runner), only a darker letter; pixdiff shows the change only on checked letters.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12925,6 +12925,10 @@
   "reportedAt": "2026-11-02T01:48:25.776Z",
   "board": {
    "row": "v4 B-678: On a select-all question in the mock exam card, each checked option's…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T01:48:45.151Z"
   }
  }
 ]
