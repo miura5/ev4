@@ -12766,5 +12766,22 @@
    "outcome": "task",
    "at": "2026-11-02T00:41:31.172Z"
   }
+ },
+ {
+  "id": "B-671",
+  "kind": "request",
+  "title": "Request (reported Nov 1): A practice-set job files its set under the soonest exam of any course, so a BIO 201 set can sit under a NUR exam, be dropped by the cross-course check and be missed by BIO quizzes; use the course the brief names.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-669 builder, Nov 1",
+  "words": "A practice-set job files its set under the soonest exam of any course, so a BIO 201 set can sit under a NUR exam, be dropped by the cross-course check and be missed by BIO quizzes; use the course the brief names.",
+  "reportedAt": "2026-11-02T00:51:46.168Z",
+  "board": {
+   "row": "v4 B-671: A practice-set job files its set under the soonest exam of any…"
+  }
  }
 ]
