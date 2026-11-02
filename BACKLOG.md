@@ -107,3 +107,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
 - B-686 (open): A way to delete things, like Linear: a right-click menu with Delete…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-689 | request | 2026-11-02T09:21:28.817Z | A keyboard shortcut that opens the E.V. agent window from any view and hides it again. | Matt, build chat Nov 2 | inbox |  |

@@ -13145,5 +13145,22 @@
    "outcome": "task",
    "at": "2026-11-02T03:14:06.185Z"
   }
+ },
+ {
+  "id": "B-689",
+  "kind": "request",
+  "title": "Request (reported Nov 2): A keyboard shortcut that opens the E.V. agent window from any view and hides it again.",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "Matt, build chat Nov 2",
+  "words": "A keyboard shortcut that opens the E.V. agent window from any view and hides it again.",
+  "reportedAt": "2026-11-02T09:21:28.817Z",
+  "board": {
+   "row": "v4 B-689: A keyboard shortcut that opens the E.V. agent window from any view…"
+  }
  }
 ]
