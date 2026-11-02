@@ -12699,5 +12699,22 @@
   "board": {
    "row": "v4 B-667: Re-running ship live on a commit already recorded live shows a…"
   }
+ },
+ {
+  "id": "B-668",
+  "kind": "request",
+  "title": "Request (reported Nov 1): B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record",
+  "dod": null,
+  "milestone": "Inbox",
+  "status": "inbox",
+  "depends": [],
+  "notes": "",
+  "commit": null,
+  "source": "B-473 phase 1, Nov 1",
+  "words": "B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record",
+  "reportedAt": "2026-11-02T00:24:36.846Z",
+  "board": {
+   "row": "v4 B-668: B-473 phase 2: the last ArtifactData uses: live ship's…"
+  }
  }
 ]

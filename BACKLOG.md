@@ -95,3 +95,4 @@ Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, w
 | Id | Kind | Reported | Words | Source | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | B-667 | request | 2026-11-01T23:28:03.372Z | Re-running ship live on a commit already recorded live shows a release-name mismatch in live verify (build name vs tag); harmless, the record shows the deploy | B-666 builder | inbox |  |
+| B-668 | request | 2026-11-02T00:24:36.846Z | B-473 phase 2: the last ArtifactData uses: live ship's running-sessions read, the builder trace's yourturn write (D-201 allowance), the artifact path in core/run.mjs, page/app/03-connect.js; and the run token (system/worker) still lives in the claude.ai record | B-473 phase 1, Nov 1 | inbox |  |
