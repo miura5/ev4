@@ -13002,9 +13002,9 @@
   "id": "B-682",
   "kind": "bug",
   "title": "Bug (reported Nov 1): The study-session check card in Notes needs polish: its answer box shows a heavy dark outline offset from the box while typing, the Check answer button sits too close under the box, and the card's spacing (labels, questions, input, button) needs the same pass as the result summary.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "The Notes check card's answer box has one clean focus ring (the design system's, no offset dark outline), the button has proper space above it, and the card's spacing matches the result summary's pass (B-680); screenshots at 1280 in Notes and the side panel, hover, focus and dark checked by hand.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13013,6 +13013,10 @@
   "reportedAt": "2026-11-02T02:37:11.511Z",
   "board": {
    "row": "v4 B-682: The study-session check card in Notes needs polish: its answer box…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:37:18.673Z"
   }
  }
 ]
