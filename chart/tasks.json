@@ -13129,9 +13129,9 @@
   "id": "B-688",
   "kind": "bug",
   "title": "Bug (reported Nov 1): Asked 'is the mock exam ready yet', E.V. said she can't see its status and offered to write another, though the practice job's state (writing, posted, failed) is in the record; she should answer from it.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "E.V. can read the state of practice jobs she started in this thread (writing, posted with its card, failed with why) and answers 'is it ready' from it, never offering a duplicate while one is writing; a unit test pins the tool result; seen once on staging.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13140,6 +13140,10 @@
   "reportedAt": "2026-11-02T03:13:56.332Z",
   "board": {
    "row": "v4 B-688: Asked 'is the mock exam ready yet', E.V. said she can't see its…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T03:14:06.185Z"
   }
  }
 ]
