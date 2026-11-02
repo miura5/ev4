@@ -105,3 +105,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
 - B-686 (open): A way to delete things, like Linear: a right-click menu with Delete…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-687 | bug | 2026-11-02T03:13:53.595Z | In Conversation, his own message bubble wraps a short two-line message early and right-aligns the text inside it, so a line ends ragged on the left with a wide box; his bubbles should size to their text and read left-aligned. | Matt's screenshot, live v4.5.32, Nov 1 | inbox |  |
