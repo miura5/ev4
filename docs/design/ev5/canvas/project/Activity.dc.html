@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Activity</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev shell" data-theme="{{theme}}" style="width:1280px;height:860px">
+<aside class="sidebar" aria-label="Primary">
+<div class="ws"><span class="mark"></span>E.V.</div>
+<div class="search"><span>Search or ask</span><span class="kbd">⌘K</span></div>
+<a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>Today<span class="n">3</span></a>
+<a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg>Ask E.V.</a>
+<a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h3v11H3zM7.5 2.5h3v11h-3z"/><path d="m11.5 3 2.5.6-2 10-2.5-.6"/></svg>Library</a>
+<a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5h6l2.5 2.5v8.5H4z"/><path d="M6 8h4.5M6 10.5h3"/></svg>Notes</a>
+<a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13V8M8 13V3M13 13v-6"/></svg>Progress</a>
+<a class="nav on" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h3l2-4 2 8 2-4h3"/></svg>Activity<span class="n">1 needs you</span></a>
+<div class="navgrp">Courses</div>
+<a class="nav" href="#"><i class="dot d-ok"></i>BIO 201<span class="n">exam today</span></a>
+<a class="nav" href="#"><i class="dot d-violet"></i>NUR 112</a>
+<div class="line g2 c-quiet" style="margin-top:auto;padding:8px;font-size:12.5px"><i class="spin"></i>Writing mock exam · ch 9</div>
+</aside>
+<main class="area">
+<section class="col">
+<div class="line g3" style="align-items:baseline"><h1 class="t-title">Activity</h1><span class="t-meta">what E.V. and the schedule are doing</span></div>
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:6px">Needs you</h2>
+<div class="row sel"><i class="dot d-her"></i><div class="t"><div>Weekly review is ready</div><span class="sub">3 weak spots to confirm before they're added</span></div><button class="btn secondary">Review</button></div>
+</div>
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:6px">Running</h2>
+<div class="row"><i class="spin"></i><div class="t"><div>Mock exam · Chapter 9</div><span class="sub">writing 15 questions · started 1 min ago · you asked in Ask E.V.</span></div><span class="t-meta">~1 min</span></div>
+</div>
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:6px">Done today</h2>
+<div class="row"><i class="dot d-ok"></i><div class="t"><div>Plan for today</div><span class="sub">morning run · 3 items, 1 suggestion</span></div><span class="t-meta">4:25 am</span></div>
+<div class="row"><i class="dot d-ok"></i><div class="t"><div>Practice set · Dosages by weight</div><span class="sub">10 problems → Library</span></div><span class="t-meta">yest.</span></div>
+<div class="row"><i class="dot d-bad"></i><div class="t"><div>Mock exam · Chapter 9 study guide</div><span class="sub">failed: the answer ran out of room · retried, done</span></div><span class="t-meta">yest.</span></div>
+</div>
+</section>
+<aside class="detail" aria-label="Weekly review job">
+<div class="stack g2">
+<div class="line g2"><span class="t-meta">Job · weekly review</span><span class="grow"></span><button class="btn text" aria-label="Close">×</button></div>
+<h2 class="t-strong" style="font-size:17px">Weekly review is ready</h2>
+<span class="t-meta">Sunday 5:57 pm · scheduled · 21 s · under 1¢</span>
+</div>
+<div class="steps">
+<div class="st"><i class="dot d-ok"></i><div>Gathered the week<div class="t-meta">30 sessions, 16 answers</div></div></div>
+<div class="st"><i class="dot d-ok"></i><div>Wrote the summary<div class="t-meta">saved to Progress</div></div></div>
+<div class="st"><i class="dot d-her"></i><div>3 new weak spots<div class="t-meta">crossbridge cycle · oral liquid doses · E4-7</div></div></div>
+</div>
+<div class="line g2"><button class="btn primary">Add all 3</button><button class="btn secondary">Pick</button><button class="btn text">Dismiss</button></div>
+<div><div class="kv"><span>Started by</span><b>Schedule · weekly</b></div><div class="kv"><span>Output</span><b>Progress · weekly review</b></div></div>
+</aside>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

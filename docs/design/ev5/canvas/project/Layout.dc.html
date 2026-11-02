@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layout equals the skeleton</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:900px;gap:28px">
+<header><h1 class="t-title">Layout = the skeleton</h1><p class="lead">Five regions, each fed by one folder. Add an area folder and a sidebar item appears; add a job and it shows in ⌘K, in E.V.'s tools and in Activity. No screen is hand-wired.</p></header>
+<div class="line g12" style="align-items:flex-start">
+<div class="wire" style="flex:0 0 660px;height:520px" aria-label="App shell with five regions">
+<div class="rg" style="left:12px;top:12px;width:176px;height:496px"><div class="line g2"><span class="num solid">1</span><b>Sidebar</b></div><div class="stack" style="margin-top:14px;gap:1px"><span class="nav">Today</span><span class="nav">Ask E.V.</span><span class="nav">Library</span><span class="nav">Notes</span><span class="nav">Progress</span><span class="nav on"><i class="dot d-her"></i>Activity<span class="n">1</span></span><span class="navgrp">Courses</span><span class="nav"><i class="dot d-ok"></i>BIO 201</span><span class="nav"><i class="dot d-violet"></i>NUR 112</span></div></div>
+<div class="rg" style="left:196px;top:12px;width:300px;height:496px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)"><div class="line g2"><span class="num solid">2</span><b>Area</b></div><span style="margin-top:6px">one view, one column, at most 720</span></div>
+<div class="rg" style="left:504px;top:12px;width:144px;height:496px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)"><div class="line g2"><span class="num solid">3</span><b>Detail</b></div><span style="margin-top:6px">any item, from any list</span></div>
+<div class="rg pop" style="left:236px;top:150px;width:240px;height:150px;background:var(--surface)"><div class="line g2"><span class="num solid">4</span><b>⌘K</b></div><span style="margin-top:6px">every command, from anywhere; Tab hands it to E.V.</span></div>
+<div class="rg" style="left:12px;top:458px;width:176px;height:50px;flex-direction:row;align-items:center;gap:8px;box-shadow:inset 0 0 0 1px var(--her)"><span class="num solid">5</span><b>Job in flight</b></div>
+</div>
+<div class="stack grow">
+<div class="item-r"><span class="num solid">1</span><div class="stack g1"><b>Sidebar</b><p class="c-quiet" style="font-size:13px">Generated from every areas/*/area.ts; Courses from domain/course. Counts, never badges.</p><span class="mono c-faint">areas/*/area.ts → nav</span></div></div>
+<div class="item-r"><span class="num solid">2</span><div class="stack g1"><b>Area</b><p class="c-quiet" style="font-size:13px">One view per folder, built only from kit parts. Restructuring a screen means moving parts.</p><span class="mono c-faint">areas/today/Today.view.tsx + parts/</span></div></div>
+<div class="item-r"><span class="num solid">3</span><div class="stack g1"><b>Detail</b><p class="c-quiet" style="font-size:13px">One panel for any item: set, weak spot, exam, note, job. Each domain type says how it's shown.</p><span class="mono c-faint">domain/*/detail.ts → kit/patterns/Detail</span></div></div>
+<div class="item-r"><span class="num solid">4</span><div class="stack g1"><b>⌘K</b><p class="c-quiet" style="font-size:13px">The command registry, filtered by place. The same list is E.V.'s tools, so they never drift.</p><span class="mono c-faint">commands = areas + jobs + domain</span></div></div>
+<div class="item-r"><span class="num solid">5</span><div class="stack g1"><b>Activity</b><p class="c-quiet" style="font-size:13px">Every job by state. A running job is one quiet line at the sidebar's foot.</p><span class="mono c-faint">jobs/runtime → areas/activity</span></div></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

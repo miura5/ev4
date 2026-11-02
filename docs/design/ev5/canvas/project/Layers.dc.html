@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layers and the job layer</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:900px;padding:0">
+<header style="position:absolute;left:64px;top:56px;width:760px"><h1 class="t-title">Layers, and one job layer</h1><p class="lead">You, E.V. and the schedule act through the same list of commands. A command changes data now, or starts a job: an object with a life you can see.</p></header>
+<div class="dg-box" style="left:64px;top:170px;width:200px"><b>You</b><span>buttons, keys, ⌘K</span></div>
+<div class="dg-box" style="left:296px;top:170px;width:200px"><b>E.V.</b><span>her tools, in chat</span></div>
+<div class="dg-box" style="left:528px;top:170px;width:200px"><b>Schedule</b><span>morning, evening, weekly</span></div>
+<div class="dg-ln" style="left:164px;top:236px;width:1px;height:28px"></div><div class="dg-ln" style="left:396px;top:236px;width:1px;height:28px"></div><div class="dg-ln" style="left:628px;top:236px;width:1px;height:28px"></div>
+<div class="dg-ln" style="left:164px;top:264px;width:465px;height:1px"></div>
+<div class="dg-ln" style="left:396px;top:264px;width:1px;height:22px"></div><div class="dg-ar" style="left:391px;top:284px"></div>
+<div class="dg-box key" style="left:64px;top:296px;width:664px;text-align:center"><b>Commands</b><span>one registry: "make a mock exam", "tick", "drill weak spots"… each says who may call it</span></div>
+<div class="dg-ln" style="left:230px;top:362px;width:1px;height:46px"></div><div class="dg-ar" style="left:225px;top:404px"></div>
+<div class="dg-ln" style="left:560px;top:362px;width:1px;height:46px"></div><div class="dg-ar" style="left:555px;top:404px"></div>
+<div class="dg-lab" style="left:240px;top:374px">instant</div><div class="dg-lab" style="left:570px;top:374px">takes time or a model</div>
+<div class="dg-box" style="left:64px;top:414px;width:330px"><b>Domain</b><span>pure rules: what a weak spot is, when it closes</span></div>
+<div class="dg-box" style="left:416px;top:414px;width:312px"><b>Jobs</b><span>queued → running → needs you → done / failed</span></div>
+<div class="dg-ln" style="left:394px;top:447px;width:22px;height:1px"></div>
+<div class="dg-lab" style="left:574px;top:488px">jobs write through the domain</div>
+<div class="dg-ln" style="left:230px;top:480px;width:1px;height:46px"></div><div class="dg-ar" style="left:225px;top:522px"></div>
+<div class="dg-box" style="left:64px;top:532px;width:664px"><b>Data</b><span>D1 tables per entity, backup, export. The only code that does IO.</span></div>
+<div style="position:absolute;left:64px;top:640px;width:664px" class="stack g3">
+<span class="t-meta">A job's states, the same wherever it shows</span>
+<div class="line g6 wrap t-meta c-quiet"><span class="line g2"><i class="dot d-faint"></i>Queued</span><span class="line g2"><i class="spin"></i>Running</span><span class="line g2"><i class="dot d-her"></i>Needs you</span><span class="line g2"><i class="dot d-ok"></i>Done</span><span class="line g2"><i class="dot d-bad"></i>Failed, with why</span></div>
+<p class="c-quiet" style="font-size:13px">One runtime, run by the Worker. Scheduled runs are commands the schedule calls. A job never asks in chat; if it needs you, it says so in Activity.</p>
+</div>
+<div class="code" style="position:absolute;right:64px;top:296px;width:380px"><i>// jobs/mock-exam/job.ts</i>
+<b>export default job({</b>
+  kind: <b>'mock-exam'</b>,
+  title: i =&gt; <b>`Mock exam · ${i.topic}`</b>,
+  input: { course, topic, count: <b>15</b> },
+  output: <b>Set</b>,          <i>// lands in Library</i>
+  model: <b>'haiku'</b>, maxTokens: <b>32000</b>,
+  costCap: <b>'$0.05'</b>,
+  steps: [gather, write, check, save],
+  command: <b>'Make a mock exam for…'</b>,
+  who: [<b>'you'</b>, <b>'ev'</b>],
+<b>})</b></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

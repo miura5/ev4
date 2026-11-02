@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Closing the chain</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:900px;gap:32px">
+<header><h1 class="t-title">Closing the chain: card sets, end to end</h1><p class="lead">The test of the skeleton is the next feature. Card sets, your Quizlet replacement, touch every layer and need new files only. No existing screen, chat file or harness is edited.</p></header>
+<div style="display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:56px">
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:8px">What gets written</h2>
+<div class="item-r"><span class="num">1</span><div class="stack g1"><b>Domain</b><p class="c-quiet" style="font-size:13px">What a card is and when it's learned; the ladder rules shared with procedures.</p><span class="mono c-faint">domain/card/schema.ts · rules.ts · rules.test.ts</span></div></div>
+<div class="item-r"><span class="num">2</span><div class="stack g1"><b>Job</b><p class="c-quiet" style="font-size:13px">"Make cards from this note": input, output, model, cost cap, steps, command wording.</p><span class="mono c-faint">jobs/card-set/job.ts · prompt.md · job.test.ts</span></div></div>
+<div class="item-r"><span class="num">3</span><div class="stack g1"><b>Kit</b><p class="c-quiet" style="font-size:13px">Flip card, moved from the study kit, with its story and test.</p><span class="mono c-faint">kit/components/FlipCard/</span></div></div>
+<div class="item-r"><span class="num">4</span><div class="stack g1"><b>A mode</b><p class="c-quiet" style="font-size:13px">"Flashcards" as a practice mode a set can offer.</p><span class="mono c-faint">areas/library/modes/flashcards.tsx</span></div></div>
+<h2 class="t-label" style="margin:20px 0 8px">What appears without being wired</h2>
+<div class="stack g2 c-quiet" style="font-size:13px">
+<span class="line g3"><i class="dot d-ok"></i>"Make cards from…" in ⌘K and in E.V.'s tools</span>
+<span class="line g3"><i class="dot d-ok"></i>The job, its states and its cost in Activity</span>
+<span class="line g3"><i class="dot d-ok"></i>The new set in Library, opening in the Detail panel</span>
+<span class="line g3"><i class="dot d-ok"></i>Missed cards becoming weak spots, through the domain</span>
+</div>
+</div>
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:8px">Why it can't drift</h2>
+<div class="item-r"><b style="flex:0 0 132px">300-line cap</b><span class="c-quiet" style="font-size:13px">no file grows into the next evcore</span></div>
+<div class="item-r"><b style="flex:0 0 132px">Import direction</b><span class="c-quiet" style="font-size:13px">a view can't reach data; a job can't touch the UI</span></div>
+<div class="item-r"><b style="flex:0 0 132px">Registries</b><span class="c-quiet" style="font-size:13px">sidebar, ⌘K, tools, Activity are generated</span></div>
+<div class="item-r"><b style="flex:0 0 132px">Shape check</b><span class="c-quiet" style="font-size:13px">no story, no test, no cost cap: the build fails</span></div>
+<div class="item-r"><b style="flex:0 0 132px">Tokens only</b><span class="c-quiet" style="font-size:13px">raw colours and sizes fail; views compose</span></div>
+<div class="item-r"><b style="flex:0 0 132px">One rules file</b><span class="c-quiet" style="font-size:13px">CONTRACT.md; the rest is generated</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

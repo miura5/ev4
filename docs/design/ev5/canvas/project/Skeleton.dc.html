@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The repo skeleton</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:900px;flex-direction:row;gap:56px">
+<div class="tree" style="flex:0 0 560px"><b>ev5/</b>
+├─ <b class="c-her">areas/</b>          <i>one folder per sidebar item</i>
+│  ├─ today/  ask/  library/  notes/  progress/  activity/
+│  │  └─ <b>today/</b>
+│  │     ├─ area.ts       <i>route, nav entry, commands</i>
+│  │     ├─ Today.view.tsx
+│  │     ├─ parts/        <i>one part per file</i>
+│  │     └─ today.test.ts
+├─ <b>kit/</b>            <i>Proprietary: tokens, components, patterns</i>
+│  ├─ tokens/            <i>color, type, space, motion</i>
+│  ├─ components/Row/    <i>Row.tsx · .css · .story · .test</i>
+│  └─ patterns/          <i>QuestionCard, JobCard, Brief…</i>
+├─ <b>jobs/</b>           <i>the one agentic layer</i>
+│  ├─ mock-exam/         <i>job.ts · prompt.md · job.test.ts</i>
+│  ├─ practice-set/  weekly-review/  plan-day/  card-set/
+│  └─ runtime/           <i>queue, states, budgets, retries</i>
+├─ <b>domain/</b>         <i>pure rules, no IO</i>
+│  └─ exam/ objective/ weakspot/ set/ item/ session/ note/
+├─ <b>data/</b>           <i>IO only: D1, migrations, backup</i>
+├─ <b>server/</b>         <i>Worker: routes → commands</i>
+├─ <b>ops/</b>            <i>release, the record, schedules</i>
+├─ <b>e2e/</b>            <i>one journey per file</i>
+└─ <b>CONTRACT.md</b>     <i>the only hand-written rules</i></div>
+<div class="stack g6 grow">
+<header><h1 class="t-title">The repo skeleton</h1><p class="lead">The folder you open is the thing you're changing. Five kinds of folder, each with one shape, decided up front.</p></header>
+<div class="stack">
+<h2 class="t-label" style="margin-bottom:8px">Rules the build enforces</h2>
+<div class="item-r"><b style="flex:0 0 140px">Size</b><span class="c-quiet">Over 300 lines fails. A folder grows by adding a part.</span></div>
+<div class="item-r"><b style="flex:0 0 140px">Direction</b><span class="c-quiet">areas → kit, domain, commands. jobs → domain, data. domain → nothing.</span></div>
+<div class="item-r"><b style="flex:0 0 140px">Registration</b><span class="c-quiet">Sidebar, ⌘K, E.V.'s tools and Activity are generated from area.ts and job.ts.</span></div>
+<div class="item-r"><b style="flex:0 0 140px">Shape</b><span class="c-quiet">A component without a story and test, or a job without a cost cap, fails.</span></div>
+<div class="item-r"><b style="flex:0 0 140px">Tokens</b><span class="c-quiet">No raw colour or size outside kit/tokens. Views compose, never style.</span></div>
+<div class="item-r"><b style="flex:0 0 140px">One rules file</b><span class="c-quiet">CONTRACT.md. Decisions, backlog and changelog are generated.</span></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

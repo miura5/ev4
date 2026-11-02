@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Proprietary revision gallery</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:1700px;gap:48px">
+<header><h1 class="t-title">Proprietary · revision for v5</h1><p class="lead">The one source for every board on this canvas. Each piece below renders from kit/kit.css; the boards use nothing else. Switch Dark and Light with the canvas pages.</p></header>
+
+<section class="stack g4">
+<h2 class="t-label">Colour tokens</h2>
+<div class="grid4" style="grid-template-columns:repeat(8,minmax(0,1fr));gap:16px">
+<div class="spec"><div class="swatch" style="background:var(--side)"></div><span class="t-meta">--side</span></div>
+<div class="spec"><div class="swatch" style="background:var(--bg)"></div><span class="t-meta">--bg</span></div>
+<div class="spec"><div class="swatch" style="background:var(--surface)"></div><span class="t-meta">--surface</span></div>
+<div class="spec"><div class="swatch" style="background:var(--hover)"></div><span class="t-meta">--hover</span></div>
+<div class="spec"><div class="swatch" style="background:var(--line)"></div><span class="t-meta">--line</span></div>
+<div class="spec"><div class="swatch" style="background:var(--line2)"></div><span class="t-meta">--line2</span></div>
+<div class="spec"><div class="swatch" style="background:var(--her)"></div><span class="t-meta">--her · the one orange</span></div>
+<div class="spec"><div class="swatch" style="background:var(--text)"></div><span class="t-meta">--text</span></div>
+<div class="spec"><div class="swatch" style="background:var(--quiet)"></div><span class="t-meta">--quiet</span></div>
+<div class="spec"><div class="swatch" style="background:var(--faint)"></div><span class="t-meta">--faint</span></div>
+<div class="spec"><div class="swatch" style="background:var(--ok)"></div><span class="t-meta">--ok · learned</span></div>
+<div class="spec"><div class="swatch" style="background:var(--warn)"></div><span class="t-meta">--warn · familiar</span></div>
+<div class="spec"><div class="swatch" style="background:var(--bad)"></div><span class="t-meta">--bad · weak</span></div>
+<div class="spec"><div class="swatch" style="background:var(--info)"></div><span class="t-meta">--info · running</span></div>
+<div class="spec"><div class="swatch" style="background:var(--violet)"></div><span class="t-meta">--violet · NUR</span></div>
+<div class="spec"><div class="swatch" style="background:var(--teal)"></div><span class="t-meta">--teal · practice</span></div>
+</div>
+</section>
+
+<section class="grid3">
+<div class="stack g4"><h2 class="t-label">Type · three sizes</h2><div class="stack g2"><span class="t-title">Title 20 · 600</span><span class="t-body">Body and rows 14</span><span class="t-meta">Meta and labels 12</span><span class="mono">Code 12 · JetBrains Mono</span></div></div>
+<div class="stack g4"><h2 class="t-label">Space · 8 px grid</h2><div class="stack g2"><div class="line g3"><i style="display:block;width:8px;height:8px;background:var(--line2)"></i><span class="t-meta">8 · inside a control</span></div><div class="line g3"><i style="display:block;width:16px;height:8px;background:var(--line2)"></i><span class="t-meta">16 · between controls</span></div><div class="line g3"><i style="display:block;width:40px;height:8px;background:var(--line2)"></i><span class="t-meta">40 · a row</span></div><div class="line g3"><i style="display:block;width:48px;height:8px;background:var(--line2)"></i><span class="t-meta">48 · between sections</span></div></div></div>
+<div class="stack g4"><h2 class="t-label">Radius and surfaces</h2><div class="line g3"><div style="width:48px;height:48px;border-radius:var(--r-sm);box-shadow:inset 0 0 0 1px var(--line2)"></div><div style="width:48px;height:48px;border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line2)"></div><div style="width:48px;height:48px;border-radius:var(--r-lg);box-shadow:inset 0 0 0 1px var(--line2)"></div></div><span class="t-meta">6 · 8 · 12. Two surfaces; a border only on an input or the thing you're answering.</span></div>
+</section>
+
+<section class="stack g4">
+<h2 class="t-label">Components</h2>
+<div class="grid4">
+<div class="spec"><div class="specname">Button <span class="t-meta">.btn</span></div><div class="stage"><div class="line g2"><button class="btn primary">Start</button><button class="btn secondary">Review</button><button class="btn text">Dismiss</button></div></div><span class="t-meta">One primary per screen.</span></div>
+<div class="spec"><div class="specname">Row <span class="t-meta">.row</span></div><div class="stage" style="gap:2px"><div class="row"><i class="dot d-bad"></i><span class="t"><div>Drill weak spots</div></span><span class="t-meta">15m</span></div><div class="row hover"><i class="dot d-violet"></i><span class="t"><div>Med admin</div></span><button class="btn text act">Start</button><span class="t-meta">30m</span></div></div><span class="t-meta">Actions on hover, focus, right-click.</span></div>
+<div class="spec"><div class="specname">Meter and dot <span class="t-meta">.meter .dot</span></div><div class="stage"><div class="meter"><i class="m-ok" style="width:25%"></i><i class="m-warn" style="width:31%"></i><i class="m-bad" style="width:44%"></i></div><div class="line g3 t-meta"><span class="line g1"><i class="dot d-ok"></i>learned</span><span class="line g1"><i class="dot d-warn"></i>familiar</span><span class="line g1"><i class="dot d-bad"></i>weak</span></div></div><span class="t-meta">Status is only ever these.</span></div>
+<div class="spec"><div class="specname">Tabs <span class="t-meta">.tabs</span></div><div class="stage"><div class="tabs"><button class="on">All</button><button>Sets</button><button>Weak spots · 9</button></div></div><span class="t-meta">Text tabs, an underline for the current one.</span></div>
+<div class="spec"><div class="specname">Nav item <span class="t-meta">.nav</span></div><div class="stage" style="gap:1px"><a class="nav on" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>Today<span class="n">3</span></a><a class="nav" href="#"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h3l2-4 2 8 2-4h3"/></svg>Activity<span class="n">1</span></a></div><span class="t-meta">Counts, never badges.</span></div>
+<div class="spec"><div class="specname">E.V. line <span class="t-meta">.ev-line</span></div><div class="stage"><div class="ev-line"><span class="mark" style="margin-top:3px"></span><span><b>Lab exam today.</b> Misses first, 15 min.</span></div></div><span class="t-meta">Once per screen, no box.</span></div>
+<div class="spec"><div class="specname">Suggestion <span class="t-meta">.suggest</span></div><div class="stage"><div class="suggest" style="margin:0"><span class="c-her">+</span><span class="grow">Preview Elimination, 20m</span><button class="btn text">Add</button></div></div><span class="t-meta">E.V. proposes; you approve.</span></div>
+<div class="spec"><div class="specname">Keys and tags <span class="t-meta">.kbd .tag</span></div><div class="stage"><div class="line g2 wrap"><span class="kbd">⌘K</span><span class="kbd">C</span><span class="kbd">↵</span><span class="tag">BIO 201</span><span class="tag">Ch 9 lab exam</span></div></div><span class="t-meta">Hints in tooltips and ⌘K.</span></div>
+<div class="spec" style="grid-column:span 2"><div class="specname">Question card <span class="t-meta">.qcard .opt</span></div><div class="stage"><div class="qcard"><div class="line g3"><span class="grow" style="font-weight:500">Which statements about the crossbridge cycle are correct?</span><span class="t-meta">1 of 3</span></div><div class="opt on"><span class="box"></span>Calcium binding moves tropomyosin off the sites</div><div class="opt"><span class="box"></span>The power stroke shortens myosin itself</div><div class="line g2" style="justify-content:flex-end"><button class="btn text">Skip</button><button class="btn primary">Check</button></div></div></div><span class="t-meta">The only framed thing on a screen.</span></div>
+<div class="spec"><div class="specname">Job states <span class="t-meta">.dot .spin</span></div><div class="stage"><div class="stack g1 t-meta"><span class="line g2"><i class="dot d-faint"></i>Queued</span><span class="line g2"><i class="spin"></i>Running</span><span class="line g2"><i class="dot d-her"></i>Needs you</span><span class="line g2"><i class="dot d-ok"></i>Done</span><span class="line g2"><i class="dot d-bad"></i>Failed, with why</span></div></div><span class="t-meta">The same everywhere a job shows.</span></div>
+<div class="spec"><div class="specname">Detail fields <span class="t-meta">.kv</span></div><div class="stage"><div class="kv"><span>For</span><b>Med admin revalidation</b></div><div class="kv"><span>Course</span><b>NUR 112</b></div><div class="kv"><span>Last</span><b>Type it · Fri</b></div></div><span class="t-meta">Every Detail panel uses these.</span></div>
+</div>
+</section>
+
+<section class="stack g4">
+<h2 class="t-label">Board pieces · for the informational boards</h2>
+<div class="grid4">
+<div class="spec"><div class="specname">Fact <span class="t-meta">.fact</span></div><div class="stage"><div class="fact">70<span>page scripts</span></div></div></div>
+<div class="spec"><div class="specname">Numbered item <span class="t-meta">.item-r .num</span></div><div class="stage"><div class="item-r"><span class="num">1</span><div><b>Domain</b><p class="t-meta">pure rules</p></div></div></div></div>
+<div class="spec"><div class="specname">Code and tree <span class="t-meta">.code .tree</span></div><div class="stage"><div class="code" style="padding:10px 12px"><i>// job.ts</i>
+<b>kind</b>: 'mock-exam'</div></div></div>
+<div class="spec"><div class="specname">Diagram box <span class="t-meta">.dg-box</span></div><div class="stage" style="position:relative;height:88px"><div class="dg-box key" style="left:16px;top:18px;width:150px"><b>Commands</b><span>one registry</span></div></div></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":1700}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>

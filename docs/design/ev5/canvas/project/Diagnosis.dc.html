@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>What's convoluted today</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="kit/kit.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ev board" data-theme="{{theme}}" style="width:1280px;height:900px">
+<header><h1 class="t-title">What's convoluted today</h1><p class="lead">Measured from the ev4 repo on Nov 2. Each problem is structural: fixing one bug at a time can't remove it, because the structure keeps making it.</p></header>
+<div class="grid3">
+<div class="stack g2"><div class="fact">70<span>page scripts, one global scope</span></div><h2 class="t-strong">No module boundaries</h2><p class="c-quiet">page/app/00 to 91 are joined in filename order. Any file can change any state; load order is the architecture.</p><p class="note">Why it hurts: a fix in one view breaks another (B-678).</p></div>
+<div class="stack g2"><div class="fact">5<span>files to add a mock exam</span></div><h2 class="t-strong">Organised by layer, not feature</h2><p class="c-quiet">Its tool sits in a chat file, its logic in a Study file, its matching in core, its check in a 6,778-line harness.</p><p class="note">Why it hurts: no one place says what a feature is.</p></div>
+<div class="stack g2"><div class="fact">6<span>files over 2,000 lines</span></div><h2 class="t-strong">Files grow until a cap stops them</h2><p class="c-quiet">harness 6,778 · spec 5,710 · notes harness 4,156 · chart tool 2,755 · evcore 2,474 of 2,500 · notes view 2,078.</p><p class="note">Why it hurts: a cap moves code out, not into the right place.</p></div>
+<div class="stack g2"><div class="fact">3<span>runtimes for a job</span></div><h2 class="t-strong">Jobs have no single home</h2><p class="c-quiet">Page to Worker, cloud tasks, Mac tasks; about 20 files start one. Results land in chat, Study or a side panel.</p><p class="note">Why it hurts: E.V. can't see a job's status (B-688).</p></div>
+<div class="stack g2"><div class="fact">13<span>agent tools inside a view file</span></div><h2 class="t-strong">Her actions and yours are separate code</h2><p class="c-quiet">quiz_me, start_job, tick_item live in 72-ev-talking-with-claude.js; buttons call other functions for the same thing.</p><p class="note">Why it hurts: what she and you can do drift apart.</p></div>
+<div class="stack g2"><div class="fact">~730<span>lines of rules, 425 decisions</span></div><h2 class="t-strong">Rules in many places</h2><p class="c-quiet">CLAUDE.md, five skills, spec rules, tenets, the handover; some now contradict the code.</p><p class="note">Why it hurts: each session re-reads and still guesses.</p></div>
+</div>
+<div class="rule line g8 wrap c-quiet" style="padding-top:24px;font-size:13px"><b class="t-strong" style="color:var(--text)">Keep</b><span class="line g2"><i class="dot d-ok"></i>One write path for the record</span><span class="line g2"><i class="dot d-ok"></i>Pure, tested core logic</span><span class="line g2"><i class="dot d-ok"></i>Tokens, then components</span><span class="line g2"><i class="dot d-ok"></i>Staging before live, verified</span><span class="line g2"><i class="dot d-ok"></i>Spec as data</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return { theme: this.props.theme ?? 'dark' };
+}
+}
+</script>
+</body>
+</html>
