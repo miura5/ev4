@@ -13108,9 +13108,9 @@
   "id": "B-687",
   "kind": "bug",
   "title": "Bug (reported Nov 1): In Conversation, his own message bubble wraps a short two-line message early and right-aligns the text inside it, so a line ends ragged on the left with a wide box; his bubbles should size to their text and read left-aligned.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "His message bubbles size to their text up to a set max width, with text left-aligned inside a right-aligned bubble; a one-line, two-line and long message look right at 1280 and in the narrow window; pixdiff limited to his bubbles.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13119,6 +13119,10 @@
   "reportedAt": "2026-11-02T03:13:53.595Z",
   "board": {
    "row": "v4 B-687: In Conversation, his own message bubble wraps a short two-line…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T03:14:03.777Z"
   }
  },
  {
