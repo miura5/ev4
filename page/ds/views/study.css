@@ -6,7 +6,7 @@
 .set-q,.sum-line{all:unset;box-sizing:border-box}
 .sq-t,.sum-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sq-s,.sum-k{flex:none}
-.opt kbd.opt-n{border-radius:var(--r-sm);place-items:center}
+.opt kbd.opt-n{place-items:center}
 #study-side{display:none}
 @media (min-width:1200px){#study-side:not([hidden]){position:fixed;top:var(--panel-top);bottom:8px;right:8px;width:var(--right-w);box-sizing:border-box;padding:16px;border-left:1px solid var(--line);border-radius:0 0 var(--r-lg) 0;background:var(--bg);display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;z-index:5}}
 /* B-515 lane 4b: from the carry: from 1024 the side pane stops above the bottom strip (after the 1200 place above). */

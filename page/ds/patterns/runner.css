@@ -33,7 +33,7 @@
 .qz-card .opt > .grow{flex:1;min-width:0}
 .qz-card .opt input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
 .qz-card .opt kbd.opt-n{display:inline-block;flex:0 0 20px;width:20px;height:auto;box-shadow:none;background:none;color:var(--quiet);font:var(--fw-medium) var(--fs-2) var(--sans);text-align:left}
-.qz-card .opt input:checked~kbd.opt-n{box-shadow:none!important;color:var(--text)!important}
+.qz-card .opt input:checked~kbd.opt-n{color:var(--text)!important}
 .qz-card .opt:not(.locked):has(input:checked){box-shadow:inset 0 0 0 1.5px var(--text)!important}
 .qz-card .opt:has(input:focus-visible){outline:2px solid var(--text);outline-offset:2px}
 .qz-card .opt.right{background:color-mix(in srgb,var(--sem-green) 11%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sem-green) 40%,var(--line2))}
@@ -107,7 +107,7 @@
 .q-beside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,15rem);gap:20px;align-items:start}.q-main{display:flex;flex-direction:column;gap:12px;min-width:0}.q-set{border-left:1px solid var(--line);padding-left:16px;min-width:0}
 .why-fold{align-self:flex-start}
 .sum-more{display:flex;flex-direction:column;gap:6px;padding:2px 0 8px}.sum-more p{margin:0}
-.opt input:checked~kbd.opt-n{color:var(--text);box-shadow:inset 0 0 0 1px var(--quiet)}
+.opt input:checked~kbd.opt-n{color:var(--text)}
 @media (hover:none){
   .opt kbd.opt-n,.qz-card .opt kbd.opt-n{display:none}
 }
