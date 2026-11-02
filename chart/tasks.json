@@ -13023,9 +13023,9 @@
   "id": "B-683",
   "kind": "bug",
   "title": "Bug (reported Nov 1): E.V.'s hero stage no longer shows in Conversation at desktop width (it still shows in a narrower window), and has been missing for several versions; she should be large at the start of the day and settle beside the messages once the conversation goes, as D-213 sizes her at every width.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "At 1280 and wider, with and without the right side panel, E.V.'s stage shows at D-213's size (140 px, 168 px when taller than 1000 px, 70% in a session) at the start of the day and settles as the conversation fills, as it does in a narrower window; the commit that lost it is named; a harness check at 1280 pins her stage on screen.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13034,6 +13034,10 @@
   "reportedAt": "2026-11-02T02:40:12.223Z",
   "board": {
    "row": "v4 B-683: E.V.'s hero stage no longer shows in Conversation at desktop width…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T02:40:18.300Z"
   }
  }
 ]
