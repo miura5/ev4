@@ -100,3 +100,11 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
+
+## Inbox
+
+Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
+
+| Id | Kind | Reported | Words | Source | Status | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| B-683 | bug | 2026-11-02T02:40:12.223Z | E.V.'s hero stage no longer shows in Conversation at desktop width (it still shows in a narrower window), and has been missing for several versions; she should be large at the start of the day and settle beside the messages once the conversation goes, as D-213 sizes her at every width. | Matt's screenshots and words, live v4.5.32, Nov 1 | inbox |  |
