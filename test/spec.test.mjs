@@ -205,8 +205,8 @@ test('tasks: every live pipeline has a task, every pipeline has a staging task, 
       .filter(([, t]) => t.lane === 'mac')
       .map(([id, t]) => [id, t.trigger, t.folders, t.macBound]),
     [
-      ['evening-mac', 'trig_01Ma8woo5ieoWM1s5KHuRpip', [backups], true],
-      ['restore-drill', 'trig_018VSRmz8pdNzdVSxpH42PEG', [backups], true],
+      ['evening-mac', 'trig_014osVRsNqvH86QDf9YLRxi1', [backups], true],
+      ['restore-drill', 'trig_01GERMdUZV6KLrrZnVQ4zPdS', [backups], true],
     ]
   );
 });

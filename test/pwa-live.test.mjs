@@ -219,8 +219,8 @@ test("B-320: the committed spec is cut over, with the two live Mac tasks' trigge
   assert.equal(now.readOnly, true);
   assert.equal(now.d1, true);
   assert.deepEqual(Object.keys(now.cutover), ['_why']);
-  assert.equal(spec.tasks.live['evening-mac'].trigger, 'trig_01Ma8woo5ieoWM1s5KHuRpip');
-  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_018VSRmz8pdNzdVSxpH42PEG');
+  assert.equal(spec.tasks.live['evening-mac'].trigger, 'trig_014osVRsNqvH86QDf9YLRxi1');
+  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_01GERMdUZV6KLrrZnVQ4zPdS');
   assert.equal(spec.tasks.live['evening-mac'].keepEnded, undefined);
   for (const k of ['evening-mac', 'restore-drill']) {
     assert.deepEqual(spec.tasks.live[k].folders, ['/Users/peachfritter/Documents/E.V. Backups'], k);

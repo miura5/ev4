@@ -73,8 +73,8 @@ const rowsOf = (dump, keep = c => c !== 'system') =>
 test('the backup folder is one spec value, every Worker pipeline of staging and live is targeted, and no prompt names Study Watch anew', () => {
   // B-320: since the cutover live runs on its Worker too, with its own backup folder (E.V. Backups) and Mac tasks
   const LIVE_TRIGGERS = {
-    'evening-mac': 'trig_01Ma8woo5ieoWM1s5KHuRpip',
-    'restore-drill': 'trig_018VSRmz8pdNzdVSxpH42PEG',
+    'evening-mac': 'trig_014osVRsNqvH86QDf9YLRxi1',
+    'restore-drill': 'trig_01GERMdUZV6KLrrZnVQ4zPdS',
   };
   assert.equal(spec.registry.records.live.runs.backup.folder, '/Users/peachfritter/Documents/E.V. Backups');
   assert.notEqual(spec.registry.records.live.runs.backup.folder, spec.registry.records.staging.runs.backup.folder);

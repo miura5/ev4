@@ -37,7 +37,7 @@ test('every pipeline with steps has a prompt for live and staging; the rest wait
     assert.equal(typeof p[`staging.${n}`], 'string', n);
   }
   // B-320: since the cutover live has its own drill too (into the ev-live-scratch D1); both only read the Mac
-  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_018VSRmz8pdNzdVSxpH42PEG');
+  assert.equal(spec.tasks.live['restore-drill'].trigger, 'trig_01GERMdUZV6KLrrZnVQ4zPdS');
   for (const k of ['staging.restore-drill', 'live.restore-drill']) {
     assert.match(p[k], /reads one backup file from it, with device_list_dir and device_stage_files/, k);
     assert.match(
