@@ -12750,9 +12750,9 @@
   "id": "B-670",
   "kind": "request",
   "title": "Request (reported Nov 1): Other fixed dates in the harness seed (for example the journal entry at 2026-10-01) can fall behind the synthetic record's dates relative to today, as B-661's long note did; date them relative to today too.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "No harness seed record carries a fixed calendar date that the synthetic record's today-relative dates can pass; the harness passes on any run date (a test runs it with a date a month ahead).",
+  "milestone": "Ops",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -12761,6 +12761,10 @@
   "reportedAt": "2026-11-02T00:41:22.570Z",
   "board": {
    "row": "v4 B-670: Other fixed dates in the harness seed (for example the journal entry…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T00:41:31.172Z"
   }
  }
 ]
