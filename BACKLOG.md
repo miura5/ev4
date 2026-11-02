@@ -77,6 +77,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-670 | Request (reported Nov 1): Other fixed dates in the harness seed (for example the journal entry at 2026-10-01) can fall behind the synthetic record's dates relative to today, as B-661's long note did; date them relative to today too. Done when: No harness seed record carries a fixed calendar date that the synthetic record's today-relative dates can pass; the harness passes on any run date (a test runs it with a date a month ahead). | — | Ops | open |  |
 | B-671 | Request (reported Nov 1): A practice-set job files its set under the soonest exam of any course, so a BIO 201 set can sit under a NUR exam, be dropped by the cross-course check and be missed by BIO quizzes; use the course the brief names. Done when: A practice-set job files its set under the course its brief names; a BIO 201 set lands under a BIO exam and a BIO quiz serves it; a unit test covers it. | — | After Notes | open |  |
 | B-672 | Request (reported Nov 1): A plain quiz me with only one or two questions left in the course still serves that short card instead of writing more. Done when: A plain quiz me on a course with fewer than five questions left writes a full set instead of serving a short card; the B-517 in-place check is updated to match. | — | After Notes | open |  |
+| B-673 | Request (reported Nov 1): generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run. Done when: generalTagCheck and popChatChecks run in the full harness run on CI, and pass. | — | Ops | open |  |
 
 ## Your turn
 
@@ -93,11 +94,3 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-617 (blocked): Jobs kit: one way to define a model job, with course framing,…
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
-
-## Inbox
-
-Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
-
-| Id | Kind | Reported | Words | Source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| B-673 | request | 2026-11-02T00:51:51.492Z | generalTagCheck and popChatChecks in test/harness/run.cjs run only under EV_ONLY, never in the full CI run. | B-669 builder, Nov 1 | inbox |  |
