@@ -6,7 +6,7 @@ Current state only. Rewritten and pushed at every state change. No personal data
 
 | Agent | Tasks | Worktree | Branch | Started |
 | --- | --- | --- | --- | --- |
-| nothing | | | | |
+| builder | B-678 | /Users/peachfritter/ev4-wt/b678 | b678 | Nov 1 7:50 pm CT |
 
 ## Waiting on Matt
 
@@ -23,7 +23,7 @@ Seven questions, none blocking:
 
 Check first: the live evening-mac run at 8:20 pm Nov 1 and evening-cloud at 8:15 pm are the first scheduled runs on the new start-up (B-473); read their runs/ entries (or brief's health) and file a bug if either failed. If evening-mac was refused writes on the Mac, Matt must approve its folder in the desktop app.
 
-Live v4.5.31 shipped (B-661, B-669). Next batch: Matt's other bugs
+Live v4.5.31 shipped (B-661, B-669). B-678 (ring around checked option letters, Matt's report) building. Next batch: Matt's other bugs
 (B-583, B-584, B-590, B-587, B-266). The rest of B-665 (repo layout steps 4 to 7: chart archive, split tools/chart.mjs,
 core layering, tests and page folders) goes one step per release, between bug fixes. B-668 (B-473 phase 2, the last ArtifactData uses) and B-667 (ship-live edge case) are triaged.
 
