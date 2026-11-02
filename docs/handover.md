@@ -21,9 +21,13 @@ Seven questions, none blocking:
 
 ## Next
 
+Check first: the live evening-mac run at 8:20 pm Nov 1 and evening-cloud at 8:15 pm are the first scheduled runs on the new start-up (B-473); read their runs/ entries (or brief's health) and file a bug if either failed. If evening-mac was refused writes on the Mac, Matt must approve its folder in the desktop app.
+
 Take the batch from BACKLOG.md order. B-661 first: the nightly B-412 long-note lookup check is red. Then Matt's bugs
 (B-583, B-584, B-590, B-587, B-266). The rest of B-665 (repo layout steps 4 to 7: chart archive, split tools/chart.mjs,
-core layering, tests and page folders) goes one step per release, between bug fixes.
+core layering, tests and page folders) goes one step per release, between bug fixes. B-668 is B-473 phase 2 (the last ArtifactData uses); B-667 is a small ship-live edge case.
+
+Tip: update_trigger and create_trigger echo the whole prompt twice; give cloud prompt updates to an agent (it verifies with tools/tool-result.mjs --transcript <its own transcript>). Mac tasks are created only from a chat linked to the Mac, with Matt present.
 
 ## Last release
 
