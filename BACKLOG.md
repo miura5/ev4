@@ -90,6 +90,7 @@ Closed (done and declined) tasks are in chart/tasks.json: `node tools/chart.mjs 
 | B-686 | Request (reported Nov 1): A way to delete things, like Linear: a right-click menu with Delete on list items (the main way), a three-dot menu where a row or page has no natural right click, a confirm dialog, and a Recently deleted view that keeps items for 30 days; one consistent rule for where each menu appears. Done when: A design pass decides where the right-click menu and the three-dot menu appear (right click on list rows by default); both are Proprietary components with Delete, a confirm dialog and a Recently deleted view with Restore; deleted items leave every view and count; the purge rule follows Matt's answer on the hard limit; screenshots at 1280. | — | UI polish | open | Matt, Nov 1: purge after 30 days (D-425). The CLAUDE.md hard-limits line and spec.boundaries are guarded: the builder returns the exact wording, the build manager applies it with the release. |
 | B-687 | Bug (reported Nov 1): In Conversation, his own message bubble wraps a short two-line message early and right-aligns the text inside it, so a line ends ragged on the left with a wide box; his bubbles should size to their text and read left-aligned. Done when: His message bubbles size to their text up to a set max width, with text left-aligned inside a right-aligned bubble; a one-line, two-line and long message look right at 1280 and in the narrow window; pixdiff limited to his bubbles. | — | UI polish | open |  |
 | B-688 | Bug (reported Nov 1): Asked 'is the mock exam ready yet', E.V. said she can't see its status and offered to write another, though the practice job's state (writing, posted, failed) is in the record; she should answer from it. Done when: E.V. can read the state of practice jobs she started in this thread (writing, posted with its card, failed with why) and answers 'is it ready' from it, never offering a duplicate while one is writing; a unit test pins the tool result; seen once on staging. | — | UI polish | open |  |
+| B-689 | Request (reported Nov 2): A keyboard shortcut that opens the E.V. agent window from any view and hides it again. Done when: Cmd+J (Ctrl+J elsewhere) toggles the E.V. agent window from any view: open puts the caret in its input, again (or Esc) hides it and returns focus; it works while typing in a note; shown in the button's tooltip and the Cmd+K menu; checked in the installed app window that Chrome does not take the key; a harness check pins the toggle. | — | UI polish | open |  |
 
 ## Your turn
 
@@ -107,11 +108,3 @@ What waits on Matt, by where it happens (`brief --matt` prints the same list).
 - B-618 (blocked): State-aware style diff: the computed-style and pixel diffs also open…
 - B-619 (blocked): Add-a-feature recipe skill: the checklist a small feature follows…
 - B-686 (open): A way to delete things, like Linear: a right-click menu with Delete…
-
-## Inbox
-
-Reports in Matt's words, untriaged. Declined entries stay in chart/tasks.json, with their reasons.
-
-| Id | Kind | Reported | Words | Source | Status | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| B-689 | request | 2026-11-02T09:21:28.817Z | A keyboard shortcut that opens the E.V. agent window from any view and hides it again. | Matt, build chat Nov 2 | inbox |  |

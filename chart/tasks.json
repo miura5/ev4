@@ -13150,9 +13150,9 @@
   "id": "B-689",
   "kind": "request",
   "title": "Request (reported Nov 2): A keyboard shortcut that opens the E.V. agent window from any view and hides it again.",
-  "dod": null,
-  "milestone": "Inbox",
-  "status": "inbox",
+  "dod": "Cmd+J (Ctrl+J elsewhere) toggles the E.V. agent window from any view: open puts the caret in its input, again (or Esc) hides it and returns focus; it works while typing in a note; shown in the button's tooltip and the Cmd+K menu; checked in the installed app window that Chrome does not take the key; a harness check pins the toggle.",
+  "milestone": "UI polish",
+  "status": "open",
   "depends": [],
   "notes": "",
   "commit": null,
@@ -13161,6 +13161,10 @@
   "reportedAt": "2026-11-02T09:21:28.817Z",
   "board": {
    "row": "v4 B-689: A keyboard shortcut that opens the E.V. agent window from any view…"
+  },
+  "triage": {
+   "outcome": "task",
+   "at": "2026-11-02T09:21:35.077Z"
   }
  }
 ]
